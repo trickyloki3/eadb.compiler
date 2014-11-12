@@ -1,0 +1,222 @@
+
+// status related
+bonus, bSpeedRate,0,"Movement Speed: %s",1,p,1,0
+bonus, bStr,5,"Strength: %s STR",1,n,1,0
+bonus, bAgi,5,"Agility: %s AGI",1,n,1,0
+bonus, bVit,5,"Vitality: %s VIT",1,n,1,0
+bonus, bInt,5,"Intelligence: %s INT",1,n,1,0
+bonus, bDex,5,"Dexterity: %s DEX",1,n,1,0
+bonus, bLuk,5,"Luck: %s LUK",1,n,1,0
+bonus, bAllStats,5,"All Stats: %s",1,n,1,0
+bonus, bAgiVit,5,"Agility: %s AGI\nVitality: %s VIT",1,n,2,0,0
+bonus, bAgiDexStr,5,"Strength: %s STR\nAgility: %s AGI\Dexterity: %s DEX",1,n,3,0,0,0
+bonus, bMaxHP,5,"Hit Point: %s HP",1,n,1,0
+bonus, bMaxSP,5,"Spell Power: %s SP",1,n,1,0
+bonus, bAtk,5,"Attack: %s ATK",1,n,1,0
+bonus, bAtk2,5,"Attack: %s ATK",1,n,1,0
+bonus, bBaseAtk,5,"Base Attack: %s BATK",1,n,1,0
+bonus, bMatk,5,"Magical Attack: %s MATK",1,n,1,0
+bonus, bDef,5,"Armor Defense: %s DEF",1,n,1,0
+bonus, bDef2,5,"Defense: %s DEF",1,n,1,0
+bonus, bMdef,5,"Magical Armor Defense: %s MDEF",1,n,1,0
+bonus, bMdef2,5,"Magical Defense: %s MDEF",1,n,1,0
+bonus, bHit,5,"Hit: %s",1,n,1,0
+bonus, bFlee,5,"Flee: %s",1,n,1,0
+bonus, bFlee2,5,"Perfect Dodge: %s",1,n,1,0
+bonus, bAtkRange,5,"Attack Range: %s.",1,n,1,0
+bonus, bCritical,6,"Critical: %s",1,n,1,0
+bonus, bAspd,6,"Attack Speed: %s",1,n,1,0
+bonus, bMaxHPrate,3,"%s Maximum HP.",1,p,1,0
+bonus, bMaxSPrate,3,"%s Maximum SP.",1,p,1,0
+bonus, bAtkRate,3,"%s Attack. (ATK)",1,p,1,0
+bonus, bSpeedAddRate,3,"%s Movement Speed.",1,p,1,0
+bonus, bMatkRate,3,"%s Magical Attack. (MATK)",1,p,1,0
+bonus, bDefRate,3,"%s Armor Defense. (DEF)",1,p,1,0
+bonus, bDef2Rate,3,"%s Defense. (DEF)",1,p,1,0
+bonus, bMdefRate,3,"%s Magical Armor Defense. (MDEF)",1,p,1,0
+bonus, bMdef2Rate,3,"%s Magical Defense. (MDEF)",1,p,1,0
+bonus, bHitRate,3,"%s HIT",1,p,1,0
+bonus, bCriticalRate,3,"%s Critical Chance.",1,p,1,0
+bonus, bFleeRate,3,"%s FLEE",1,p,1,0
+bonus, bFlee2Rate,3,"%s Perfect Dodge.",1,p,1,0
+bonus, bAspdRate,3,"%s Attack Speed. (ASPD)",1,p,1,0
+bonus, bLongAtkRate,3,"%s Long Ranged Damage.",1,p,1,0
+bonus, bCritAtkRate,3,"%s critical damage.",1,p,1,0
+
+// general utility
+bonus, bClassChange,17,"%s chance of transforming a monster while fighting.",1,q,1,0
+bonus, bAddStealRate,17,"%s success rate to stealing.",1,q,1,0
+bonus, bBreakWeaponRate,17,"%s chance of breaking enemy's weapon while attacking.",1,q,1,0
+bonus, bBreakArmorRate,17,"%s chance of breaking enemy's armor while attacking.",1,q,1,0
+bonus, bUnbreakable,15,"%s resistance from breaking.",1,p,1,0
+bonus, bCriticalDef,15,"%s to avoid critical damage from traps.",1,p,1,0
+bonus, bDoubleRate,15,"%s fixed-chance of double-attack.",1,p,1,0
+bonus, bDoubleAddRate,15,"%s chance of double-attack",1,p,1,0
+bonus, bPerfectHitRate,15,"%s fixed-chance of a perfect hit.",1,p,1,0
+bonus, bPerfectHitAddRate,15,"%s chance of a perfect hit.",1,p,1,0
+bonus, bSplashRange,0,"Adjust splash radius to an overpowering %s grid.",1,w,1,0
+bonus, bSplashAddRange,0,"Ajust splash radius to an overpowering %s grid.",1,w,1,0
+bonus2, bWeaponAtk,18,"Add %s ATK to %s weapons.",2,i,n,2,1,0
+bonus2, bWeaponAtkRate,18,"Add %s ATK to %s weapons.",2,i,n,2,1,0
+
+// general hp/sp
+bonus, bSPDrainValue,7,"%s SP with each physical attack.",1,n,1,0
+bonus2, bSPDrainValue,23,"%s SP with each physical attack.",2,n,h,2,1,0
+bonus, bHPDrainValue,7,"%s HP with each physical attack.",1,n,1,0
+bonus2, bHPDrainValue,23,"%s HP with each physical attack.",2,n,x,1,0
+bonus, bSPGainValue,7,"%s SP for each monster killed using physical attacks.",1,n,1,0
+bonus, bHPGainValue,7,"%s HP for each monster killed using physical attacks.",1,n,1,0
+bonus, bMagicSPGainValue,7,"%s SP for each monster killed using magical attacks.",1,n,1,0
+bonus, bMagicHPGainValue,7,"%s HP for each monster killed using magical attacks.",1,n,1,0
+bonus, bUseSPrate,3,"%s SP consumption of all magic.",1,p,1,0
+bonus, bAddItemHealRate,3,"%s HP recovery from all items.",1,p,1,0
+bonus, bHealPower,3,"%s heal amount of all healing magic.",1,p,1,0
+bonus, bHealPower2,3,"%s heal amount from ally healing magic.",1,p,1,0
+bonus, bHPrecovRate,3,"%s natural HP recovery.",1,p,1,0
+bonus, bSPrecovRate,3,"%s natural HP recovery.",1,p,1,0
+bonus2, bHPVanishRate,24,"%s chance to drain %s HP of opponent with each physical attack.",2,o,p,2,0,1
+bonus2, bSPVanishRate,24,"%s chance to drain %s SP of opponent with each physical attack.",2,o,p,2,0,1
+bonus2, bHPDrainRate,24,"%s chance to absorb %s HP on physical attack.",2,o,p,2,0,1
+bonus2, bSPDrainRate,24,"%s chance to absorb %s SP on physical attack.",2,o,p,2,0,1
+bonus3, bSPDrainRate,25,"%s chance to absorb %s SP on physical attack.",3,o,p,h,3,0,2,1
+bonus2, bHPRegenRate,0,"Gain %s HP every %s seconds.",2,n,a,2,0,1
+bonus2, bSPRegenRate,0,"Gain %s SP every %s seconds.",2,n,a,2,0,1
+bonus2, bHPLossRate,0,"Lose %s HP every %s seconds",2,n,a,2,0,1
+bonus2, bSPLossRate,0,"Lose %s SP every %s seconds",2,n,a,2,0,1
+bonus2, bAddItemHealRate,14,"%s HP recovery from %s.",2,y,p,2,1,0
+bonus2, bAddItemGroupHealRate,14,"%s HP recovery from %s.",2,y,p,2,1,0
+
+// general skill reduction
+bonus, bCastrate,15,"%s cast time of all magic.",1,p,1,0
+bonus2, bCastrate,14,"%s casting time of %s.",2,k,p,2,0,1
+bonus, bFixedCastrate,15,"%s fixed-cast time of all magic.",1,p,1,0
+bonus2, bFixedCastrate,14,"%s fixed-cast time of %s.",2,k,p,2,0,1
+bonus, bDelayrate,15,"%s after-cast skill delay of all magic.",1,p,1,0
+bonus, bVariableCastrate,15,"%s variable cast time of all magic.",1,p,1,0
+bonus2, bVariableCastrate,14,"%s variable cast time of %s.",2,k,p,2,0,1
+bonus, bFixedCast,16,"%s milliseconds to fixed cast time of all magic.",1,a,1,0
+bonus, bVariableCast,16,"%s milliseconds to variable cast time of all magic.",1,a,1,0
+bonus2, bSkillAtk,14,"%s %s damage.",2,k,p,2,1,0
+bonus2, bSkillUseSP,21,"%s SP consumption when using %s.",2,k,n,2,1,0
+bonus2, bSkillUseSPrate,21,"%s SP consumption when using %s.",2,k,p,2,1,0
+bonus2, bSkillHeal,14,"%s heal amount using %s skill.",2,k,p,2,1,0
+bonus2, bSkillHeal2,14,"%s heal amount using ally %s skill.",2,k,p,2,1,0
+bonus2, bSkillCooldown,22,"%s seconds on cooldown time for %s.",2,k,a,2,1,0
+bonus2, bSkillFixedCast,22,"%s seconds on fixed cast time for %s.",2,k,a,2,1,0
+bonus2, bSkillVariableCast,22,"%s seconds on variable cast time for %s.",2,k,a,2,1,0
+bonus2, bAddSkillBlow,0,"Knock enemy back by %s cells using %s.",2,k,f,2,1,0
+bonus3, bAddEffOnSkill,0,"Add %s%% chance of causing effect %s when using %s.",3,k,e,q,3,2,1,0
+bonus4, bAddEffOnSkill,0,"Add %s%% chance of causing effect %s when using %s and%s.",4,k,e,q,d,4,2,1,0,3
+bonus4, bAutoSpellOnSkill,29,"Add %s%% chance of auto-casting %s[Lv.%s] when using %s.",4,k,k,x,o,4,3,1,2,0
+bonus5, bAutoSpellOnSkill,29,"Add %s%% chance of auto-casting %s[Lv.%s] %s when using %s.",5,k,k,x,o,b,5,3,1,2,4,0
+
+// effect-related
+bonus3, bAddEff,26,"%s chance of causing effect %s%s.",3,e,q,d,3,1,0,2
+bonus2, bAddEff,26,"%s chance of causing effect %s when attacking.",2,e,q,2,1,0
+bonus2, bAddEff2,26,"%s chance of causing effect %s on self when attacking.",2,e,q,2,1,0
+bonus2, bAddEffWhenHit,26,"%s chance of causing effect %s on enemy when receiving physical damage.",2,e,q,2,1,0
+bonus3, bAddEffWhenHit,26,"%s chance of causing effect %s%s when receiving physical damage.",3,e,q,d,3,1,0,2
+
+// auto-bonus
+bonus3, bAutoSpell,27,"%s chance of casting %s[Lv.%s] when attacking.",3,k,x,o,3,2,0,1
+bonus4, bAutoSpell,27,"%s chance of casting %s[Lv.%s] %s when attacking.",4,k,x,o,v,4,2,0,1,3
+bonus5, bAutoSpell,27,"%s chance of casting %s[Lv.%s] %s.%s",5,k,x,o,t,v,5,2,0,1,4,3
+bonus3, bAutoSpellWhenHit,27,"%s chance of casting %s[Lv.%s] when receiving physical damage.",3,k,x,o,3,2,0,1
+bonus4, bAutoSpellWhenHit,27,"%s chance of casting %s[Lv.%s] %s when receiving physical damage.",4,k,x,o,v,4,2,0,1,3
+bonus5, bAutoSpellWhenHit,27,"%s chance of casting %s[Lv.%s] %s when attacked. %s",5,k,x,o,t,v,5,2,0,1,4,3
+
+// dirty money and drops
+bonus2, bGetZenyNum,2,"%s chance of gaining %s zeny for each monster killed.",2,n,p,2,1,0
+bonus2, bAddGetZenyNum,2,"%s chance of gaining %s zeny from each monster killed.",2,n,p,2,1,0
+bonus2, bAddMonsterDropItem,26,"%s chance of dropping '%s' from each monster defeated.",2,m,q,2,1,0
+bonus3, bAddMonsterDropItem,28,"%s chance of dropping '%s' from each %s monster defeated.",3,m,r,q,3,2,0,1
+bonus3, bAddMonsterIdDropItem,28,"%s chance of dropping '%s' from each %s defeated.",3,m,c,q,3,2,0,1
+bonus2, bAddMonsterDropItemGroup,26,"%s chance of dropping an item in %s from each monster defeated.",2,y,q,2,1,0
+bonus3, bAddMonsterDropItemGroup,28,"%s chance of dropping an item in %s from each %s monster defeated.",3,y,r,q,3,2,0,1
+bonus3, bAddClassDropItem,28,"%s chance of dropping %s from %s enemy.",3,m,c,q,3,2,0,1
+
+bonus, bDefEle,0,"Endow armor with %s element.",1,l,1,0
+bonus, bAtkEle,0,"Endow weapon with %s element.",1,l,1,0
+bonus2, bAtkEle,14,"%s %s physical damage.",2,l,p,2,1,0
+bonus2, bMagicAtkEle,14,"%s %s magical damage.",2,l,p,2,1,0
+bonus2, bMagicAddEle,14,"%s magical damage on %s enemy.",2,l,p,2,1,0
+bonus2, bMagicAddRace,14,"%s magical damage on %s enemy.",2,r,p,2,1,0
+bonus2, bMagicAddSize,14,"%s magical damage on %s size enemy.",2,s,p,2,1,0
+bonus2, bMagicAddClass,14,"%s magical damage on %s enemy.",2,j,p,2,1,0
+bonus2, bAddMagicDamageClass,14,"%s magical damage to %s.",2,c,p,2,0,1
+bonus2, bAddEle,14,"%s physical damage on %s enemy.",2,l,p,2,1,0
+bonus3, bAddEle,14,"%s physical damage on %s enemy.%s.",3,l,p,t,3,1,0,2
+bonus2, bAddRace,14,"%s physical damage on %s enemy.",2,r,p,2,1,0
+bonus2, bAddRace2,14,"%s physical damage on %s enemy.",2,r,p,2,1,0
+bonus2, bAddSize,14,"%s physical damage on %s size enemy.",2,s,p,2,1,0
+bonus2, bAddClass,14,"%s physical damage on %s enemy.",2,j,p,2,1,0
+bonus2, bAddDamageClass,14,"%s physical damage to %s.",2,c,p,2,1,0
+bonus2, bSubEle,2,"%s %s resistance.",2,l,p,2,1,0
+bonus3, bSubEle,2,"%s %s resistance.%s.",3,l,p,t,3,1,0,2
+bonus2, bSubRace,2,"%s resistance against %s enemy.",2,r,p,2,1,0
+bonus2, bSubRace2,2,"%s resistance against %s enemy.",2,r,p,2,1,0
+bonus2, bSubSize,2,"%s resistance against %s size enemy.",2,s,p,2,1,0
+bonus2, bSubClass,2,"%s resistance against %s enemy.",2,j,p,2,1,0
+bonus, bNoMiscDamage,6,"Grant %s protection from all misc damage.",1,p,1,0
+bonus, bNoWeaponDamage,6,"Grant %s protection from all physical damage.",1,p,1,0
+bonus, bNoMagicDamage,6,"Grant %s protection from all magical damage.",1,p,1,0
+bonus, bNearAtkDef,6,"Reduce %s meelee damage.",1,p,1,0
+bonus, bLongAtkDef,6,"Reduce %s long ranged damage.",1,p,1,0
+bonus, bMagicAtkDef,6,"Reduce %s magical damage.",1,p,1,0
+bonus, bMiscAtkDef,6,"Reduce %s misc damage.",1,p,1,0
+bonus, bShortWeaponDamageReturn,6,"Reflect %s of all meelee damage.",1,p,1,0
+bonus, bLongWeaponDamageReturn,6,"Reflect %s of all long range damage.",1,p,1,0
+bonus, bMagicDamageReturn,6,"Reflect %s of all magical damage.",1,p,1,0
+bonus2, bResEff,26,"%s resistance to %s status.",2,e,q,2,1,0
+bonus2, bAddDefClass,2,"%s physical resistance against %s enemy.",2,c,p,2,1,0
+bonus2, bAddMdefClass,2,"%s magical resistance against %s enemy.",2,c,p,2,1,0
+bonus2, bAddDefMonster,2,"%s physical resistance against %s enemy.",2,c,p,2,1,0
+bonus, bIgnoreMdefEle,0,"Ignore the magical defense of %s enemy.",1,l,1,0
+bonus, bIgnoreMdefRace,0,"Ignore the magical defense of %s enemy.",1,r,1,0
+bonus, bIgnoreMdefRate,6,"Pierce the magical defense of all targets by %s.",1,p,1,0
+bonus2, bIgnoreMdefRate,11,"Ignore %s magical defense of %s enemy.",2,r,p,2,1,0
+bonus2, bIgnoreMdefRaceRate,11,"Ignore %s magical defense of %s enemy.",2,r,p,2,1,0
+bonus2, bIgnoreMdefClassRate,11,"Ignore %s magical defense of %s enemy.",2,j,p,2,1,0
+bonus, bIgnoreDefEle,0,"Ignore the physical defense of %s enemy.",1,l,1,0
+bonus, bIgnoreDefRace,0,"Ignore the physical defense of %s enemy.",1,r,1,0
+bonus, bIgnoreDefClass,0,"Ignore the physical defense of %s enemy.",1,j,1,0
+bonus2, bIgnoreDefRate,11,"Ignore %s physical defense of %s enemy.",2,r,p,2,0,1
+bonus2, bIgnoreDefRaceRate,11,"Ignore %s physical defense of %s enemy.",2,r,p,2,1,0
+bonus2, bWeaponComaEle,9,"Add %s chance of inflicting coma on %s enemy.",2,l,q,2,1,0
+bonus2, bWeaponComaRace,9,"Add %s chance of inflicting coma on %s enemy.",2,r,q,2,1,0
+bonus2, bWeaponComaClass,9,"Add %s chance of inflicting coma on %s enemy.",2,j,q,2,1,0
+bonus, bDefRatioAtkEle,0,"Increase damage proportional to the target's defense for %s enemy.",1,l,1,0
+bonus, bDefRatioAtkRace,0,"Increase damage proportional to the target's defense for %s enemy.",1,r,1,0
+bonus, bDefRatioAtkClass,0,"Increase damage proportional to the target's defense for %s enemy.",1,j,1,0
+bonus2, bSPGainRace,8,"%s SP for every %s defeated.",2,r,n,2,1,0
+bonus2, bSPGainRaceAttack,8,"%s SP for every hit on %s enemy.",2,r,n,2,1,0
+bonus2, bSPDrainValueRace,8,"%s SP for every hit on %s enemy.",2,r,n,2,1,0
+bonus3, bSPDrainRateRace,12,"%s chance to absorb %s SP from %s enemy.",3,r,o,p,3,2,0,1
+bonus2, bHPGainRaceAttack,8,"%s HP for every hit on %s enemy.",2,r,n,2,1,0
+bonus2, bHPDrainValueRace,8,"%s HP for every hit on %s enemy.",2,r,n,2,1,0
+bonus3, bHPDrainRateRace	,12,"%s chance to absorb %s HP from %s enemy.",3,r,o,p,3,2,0,1
+bonus2, bCriticalAddRace,2,"%s critical chance on %s enemy.",2,r,n,2,1,0
+bonus2, bExpAddRace,10,"%s more EXP from %s enemy.",2,r,p,2,1,0
+bonus2, bExpAddClass,10,"%s more EXP from %s enemy.",2,j,p,2,1,0
+bonus4, bSetDefRace,13,"Add %s chance to reduce %s enemy's DEF to %s for %s seconds.",4,r,p,p,q,4,3,0,1,2
+bonus4, bSetMDefRace,13,"Add %s chance to reduce %s enemy's MDEF to %s for %s seconds.",4,r,p,p,q,4,3,0,1,2
+bonus, bUnbreakableGarment,0,"Garment is indestructible.",1,z,1,0
+bonus, bUnbreakableWeapon,0,"Weapon is indestructible.",1,z,1,0
+bonus, bUnbreakableArmor,0,"Armor is indestructible.",1,z,1,0
+bonus, bUnbreakableHelm,0,"Helm is indestructible.",1,z,1,0
+bonus, bUnbreakableShield,0,"Shield is indestructible.",1,z,1,0
+bonus, bUnbreakableShoes,0,"Shoe is indestructible.",1,z,1,0
+bonus, bUnstripableWeapon,0,"Weapon cannot be strip.",1,z,1,0
+bonus, bUnstripableArmor,0,"Armor cannot be strip.",1,z,1,0
+bonus, bUnstripableHelm,0,"Helm cannot be strip.",1,z,1,0
+bonus, bUnstripableShield,0,"Shield cannot be strip.",1,z,1,0
+bonus, bUnstripable,0,"Equipment cannot be strip.",1,z,1,0
+bonus, bNoRegen,0,"Disable %s natural regeneration.",1,g,1,0
+bonus, bPerfectHide,0,"Grant ability to be undetect by monsters when cloak or hidden.",1,z,1,0
+bonus, bNoKnockback,0,"Grant ability to resist knockback.",1,z,1,0
+bonus, bRestartFullRecover,0,"Grant ability to recover full HP and SP when revived.",1,z,1,0
+bonus, bNoSizeFix,0,"Grant ability to disregard size reduction on damage.",1,z,1,0
+bonus, bNoGemStone,0,"Grant ability to use magic without gemstones.",1,z,1,0
+bonus, bIntravision,0,"Grant ability to see hidden characters.",1,z,1,0
+bonus, bNoCastCancel,0,"Grant ability to cast magic without interruption.",1,z,1,0
+bonus, bNoCastCancel2,0,"Grant ability to cast magic without interruption.",1,z,1,0
