@@ -6,16 +6,19 @@ CFlags = -std=c99 -pedantic -Wall -g -O
 HDRDIR = -I hdr/
 OBJDIR = obj/
 SRCDIR = src/
-_OBJ = db.o util.o load.o api.o
+_OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
 # compile all applications or projects
-all: main
+all: conv item
 
-memchk: main
-	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./main
+memchk: conv
+	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./conv
 
-main: src/main.c $(OBJ)
+item: src/item.c $(OBJ)
+	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o $^ $(HDRDIR)
+
+conv: src/conv.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o $^ $(HDRDIR)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c

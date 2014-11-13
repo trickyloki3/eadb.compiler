@@ -1,3 +1,10 @@
+/*
+ *   file: conv.c
+ *   date: 11/12/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include "api.h"
 #include "db.h"
 #include "load.h"
@@ -31,7 +38,7 @@ int main(int argc, char * argv[]) {
 	load_db_t * db24 = load("hedb/const.txt", trim_general, load_general, const_load);
 	load_bonus(db, db->bonus_insert, db1->db, db1->size);
 	load_status(db, db->status_insert, db2->db, db2->size);
-	load_var(db, db->block_insert, db3->db, db3->size);
+	load_var(db, db->var_insert, db3->db, db3->size);
 	load_block(db, db->block_insert, db4->db, db4->size);
 	ea_load_mob(db, db->ea_mob_insert, db5->db, db5->size);
 	load_mob(db, db->ra_mob_insert, db6->db, db6->size);

@@ -10,6 +10,13 @@
 	#include "load.h"
 	#include "util.h"
 	
+ 	/* general item container */
+	typedef struct {
+		int id;
+		const unsigned char * name;
+		const unsigned char * script;
+	} ic_item_t;
+
 	typedef struct {
 		int id;
 		char * aegis;
@@ -60,6 +67,64 @@
 		char * onequip;
 		char * onunequip;
 	} ra_item_t; /* OK */
+
+	/* constant to index equip array */
+	#define EQUIP_MIN					0
+	#define EQUIP_MAX					1
+	#define EQUIP_TOTAL					2
+	/* constant to index trade array */
+	#define TRADE_OVERRIDE 				0
+	#define TRADE_NODROP				1
+	#define TRADE_NOTRADE				2
+	#define TRADE_PARTNEROVERRIDE		3
+	#define TRADE_NOSELLTONPC			4
+	#define TRADE_NOCART				5
+	#define TRADE_NOSTORAGE 			6
+	#define TRADE_NOGSTORAGE			7
+	#define TRADE_NOMAIL				8
+	#define TRADE_NOAUCTION				9
+	#define TRADE_TOTAL					10
+	/* constant to index nouse array */
+	#define NOUSE_OVERRIDE				0
+	#define NOUSE_SITTING				1
+	#define NOUSE_TOTAL					2
+	/* constant to index stack array */
+	#define STACK_AMOUNT				0
+	#define STACK_TYPE					1
+	#define STACK_TOTAL					2
+
+	typedef struct {
+		int id;
+		const char * aegis;
+		const char * name;
+		int type;
+		int buy;
+		int sell;
+		int weight;
+		int atk;
+		int matk;
+		int def;
+		int range;
+		int slots;
+		int job;
+		int upper;
+		int gender;
+		int loc;
+		int weaponlv;
+		int equiplv[EQUIP_TOTAL];
+		int refine;
+		int view;
+		int bindonequip;
+		int buyingstore;
+		int delay;
+		int trade[TRADE_TOTAL];
+		int nouse[NOUSE_TOTAL];
+		int stack[STACK_TOTAL];
+		int sprite;
+		const char * script;
+		const char * onequipscript;
+		const char * onunequipscript;
+	} he_item_t;
 
 	typedef struct {
 		int32_t mob_id;
@@ -297,9 +362,14 @@
 	} mob_t;
 
 	typedef struct {
+		/* for loading */
 		int32_t bk_id;
 		char * bk_kywd;
 		int32_t bk_flag;
+		/* for using */
+		int id;
+		char * keyword;
+		int flag;
 	} block_t;
 
 	/* type flag */

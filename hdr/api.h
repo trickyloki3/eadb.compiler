@@ -1,3 +1,10 @@
+/*
+ *   file: api.c
+ *   date: 11/12/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #ifndef SQL_H
 #define SQL_H
 	#include "db.h"
@@ -70,7 +77,7 @@
 						"Sprite Integer, " \
 						"Script TEXT, " \
 						"OnEquipScript TEXT, " \
-						"OnUnequipScript TEXT);"
+						"OnUnequipScript TEXT);" //42
 	
 	#define he_item_des "DROP TABLE IF EXISTS he_item;"
 
@@ -269,7 +276,7 @@
 	#define ra_mob_des 	"DROP TABLE IF EXISTS ra_mob;"
 	#define he_mob_des 	"DROP TABLE IF EXISTS he_mob;"
 
-	#define itm_block_tbl	"CREATE TABLE IF NOT EXISTS block(bk_id INTEGER, bk_kywd TEXT, bk_flag INTEGER);"
+	#define itm_block_tbl	"CREATE TABLE IF NOT EXISTS block(bk_id INTEGER PRIMARY KEY, bk_kywd TEXT, bk_flag INTEGER);"
 	#define itm_block_ins	"INSERT INTO block VALUES(?, ?, ?);"
 	#define itm_block_des	"DROP TABLE IF EXISTS block;"
 
@@ -358,4 +365,22 @@
 	char * array_to_string(char *, int *);
 	char * array_to_string_cnt(char *, int *, int);
 	int array_field_cnt(char *);
+
+	#define ea_item_itr "SELECT * FROM ea_item WHERE Id=1737;"
+	#define ra_item_itr "SELECT * FROM ra_item;"
+	#define he_item_itr "SELECT * FROM he_item WHERE Id=6046;"
+	#define block_search "SELECT * FROM block where bk_kywd = ? COLLATE NOCASE;"
+
+	struct ic_db_t {
+		sqlite3 * db;
+		/* item database iterators */
+		sqlite3_stmt * ea_item_iterate;
+		sqlite3_stmt * ra_item_iterate;
+		sqlite3_stmt * he_item_iterate;
+
+		sqlite3_stmt * blk_search;
+	};
+	struct ic_db_t * init_ic_db(const char *);
+	int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword);
+	void deit_ic_db(struct ic_db_t *);
 #endif

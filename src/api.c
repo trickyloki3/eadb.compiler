@@ -1,4 +1,76 @@
+/*
+ *   file: api.c
+ *   date: 11/12/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include "api.h"
+
+struct ic_db_t * init_ic_db(const char * filename) {
+	int status = 0;
+	sqlite3 * db;
+	struct ic_db_t * ic_db = NULL;
+	char buf[BUF_SIZE];
+
+	/* initialize api container to athena database */
+	ic_db = calloc(1, sizeof(struct ic_db_t));
+	build_buffer(buf, "failed to read %s", filename);
+	exit_null(buf, 1, ic_db);
+
+	/* open connection to sqlite3 database */
+	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
+
+	/* debug errors */
+	/*sqlite3_trace(db, trace_db, NULL);*/
+
+	/* prepare all the statements */
+	sqlite3_prepare_v2(db, ea_item_itr, strlen(ea_item_itr) + 1, &ic_db->ea_item_iterate, NULL);
+	sqlite3_prepare_v2(db, ra_item_itr, strlen(ra_item_itr) + 1, &ic_db->ra_item_iterate, NULL);
+	sqlite3_prepare_v2(db, he_item_itr, strlen(he_item_itr) + 1, &ic_db->he_item_iterate, NULL);
+	sqlite3_prepare_v2(db, block_search, strlen(block_search) + 1, &ic_db->blk_search, NULL);
+	assert(ic_db->ea_item_iterate != NULL);
+	assert(ic_db->ra_item_iterate != NULL);
+	assert(ic_db->he_item_iterate != NULL);
+	assert(ic_db->blk_search != NULL);
+
+	/* return api container */
+	ic_db->db = db;
+	return ic_db;
+}
+
+int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword) {
+	int status = 0;
+	exit_null("info is null.", 1, info);
+	exit_null("keyword is null.", 1, keyword);
+	if(!isalpha(keyword[0])) return 1;
+
+	sqlite3_clear_bindings(db->blk_search);
+	sqlite3_bind_text(db->blk_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
+	status = sqlite3_step(db->blk_search);
+	if(status == SQLITE_ROW) {
+		info->id = sqlite3_column_int(db->blk_search, 0);
+		info->keyword = convert_string((const char *) sqlite3_column_text(db->blk_search, 1));
+		info->flag = sqlite3_column_int(db->blk_search, 2);
+		printf("block_keyword_search; %d;%s;%d\n", info->id, info->keyword, info->flag);
+	} else {
+		sqlite3_reset(db->blk_search);
+		return 1;
+	}
+	sqlite3_reset(db->blk_search);
+	return 0;
+}
+
+void deit_ic_db(struct ic_db_t * db) {
+	sqlite3_finalize(db->ea_item_iterate);
+	sqlite3_finalize(db->ra_item_iterate);
+	sqlite3_finalize(db->he_item_iterate);
+	sqlite3_finalize(db->blk_search);
+	sqlite3_close_v2(db->db);
+	free(db);
+}
+
 
 struct lt_db_t * init_db(const char * filename) {
 	int status = 0;
@@ -9,9 +81,6 @@ struct lt_db_t * init_db(const char * filename) {
 	/* create the sqlite3 database */
 	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
-
-	/* debugging purposes */
-	/*sqlite3_trace(db, trace_db, NULL);*/
 
 	/* item tables */
 	sqlite3_exec(db, he_item_des, NULL, NULL, NULL);
@@ -571,6 +640,7 @@ void ra_load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, ra_skill_t * db, in
 void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size) {
 	int i = 0;
 	int ret = 0;
+	/*sqlite3_trace(sql->db, trace_db, NULL);*/
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -582,6 +652,7 @@ void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	/*exit(1);*/
 }
 
 void load_var(struct lt_db_t * sql, sqlite3_stmt * ins, var_t * db, int size) {
