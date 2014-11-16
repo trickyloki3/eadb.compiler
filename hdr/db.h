@@ -13,8 +13,8 @@
  	/* general item container */
 	typedef struct {
 		int id;
-		const unsigned char * name;
-		const unsigned char * script;
+		char * name;
+		char * script;
 	} ic_item_t;
 
 	typedef struct {
@@ -127,245 +127,257 @@
 	} he_item_t;
 
 	typedef struct {
-		int32_t mob_id;
+		int mob_id;
 		char * pet_name;
 		char * pet_jname;
-		int32_t lure_id;
-		int32_t egg_id;
-		int32_t equip_id;
-		int32_t food_id;
-		int32_t fullness;
-		int32_t hungry_delay;
-		int32_t r_hungry;
-		int32_t r_full;
-		int32_t intimate;
-		int32_t die;
-		int32_t capture;
-		int32_t speed;
-		int32_t s_performance;
-		int32_t talk_convert;
-		int32_t attack_rate;
-		int32_t defence_attack_rate;
-		int32_t change_target_rate;
+		int lure_id;
+		int egg_id;
+		int equip_id;
+		int food_id;
+		int fullness;
+		int hungry_delay;
+		int r_hungry;
+		int r_full;
+		int intimate;
+		int die;
+		int capture;
+		int speed;
+		int s_performance;
+		int talk_convert;
+		int attack_rate;
+		int defence_attack_rate;
+		int change_target_rate;
 		char * pet_script;
 		char * loyal_script;
 	} pet_t;
 
 	typedef struct {
-		int32_t id;
+		int id;
 		char * sprite;
 		char * name;
-		int32_t lv;
-		int32_t hp;
-		int32_t sp;
-		int32_t range1;
-		int32_t atk1;
-		int32_t atk2;
-		int32_t def;
-		int32_t mdef;
-		int32_t str;
-		int32_t agi;
-		int32_t vit;
-		int32_t intr;
-		int32_t dex;
-		int32_t luk;
-		int32_t range2;
-		int32_t range3;
-		int32_t scale;
-		int32_t race;
-		int32_t element;
-		int32_t speed;
-		int32_t adelay;
-		int32_t amotion;
-		int32_t dmotion;
+		int lv;
+		int hp;
+		int sp;
+		int range1;
+		int atk1;
+		int atk2;
+		int def;
+		int mdef;
+		int str;
+		int agi;
+		int vit;
+		int intr;
+		int dex;
+		int luk;
+		int range2;
+		int range3;
+		int scale;
+		int race;
+		int element;
+		int speed;
+		int adelay;
+		int amotion;
+		int dmotion;
 	} merc_t;
 
 	typedef struct {
-		int32_t item_id;
-		int32_t item_lv;
-		int32_t req_skill;
-		int32_t req_skill_lv;
-		int32_t material[32];
-		int32_t amount[32];
+		int item_id;
+		int item_lv;
+		int req_skill;
+		int req_skill_lv;
+		int material[32];
+		int amount[32];
 	} produce_t;
 
 	typedef struct {
-		int32_t id;
-		int32_t item_id;
-		int32_t item_lv;
-		int32_t req_skill;
-		int32_t req_skill_lv;
-		int32_t material[32];
-		int32_t amount[32];
+		int id;
+		int item_id;
+		int item_lv;
+		int req_skill;
+		int req_skill_lv;
+		int material[32];
+		int amount[32];
 	} ra_produce_t;
 
 	typedef struct {
-		int32_t id;
-		char * range;			/* array of int32_t delimit by : */
-		int32_t hit;
-		int32_t inf;
-		char * element;		/* array of int32_t delimit by : */
-		uint32_t nk;
-		char * splash;			/* array of int32_t delimit by : */
-		int32_t max;
-		char * hit_amount;		/* array of int32_t delimit by : */
+		int id;
+		int max;
+		char * name;
+		char * desc;
+	} ic_skill_t;
+
+	typedef struct {
+		int id;
+		char * range;			/* array of int delimit by : */
+		int hit;
+		int inf;
+		char * element;			/* array of int delimit by : */
+		int nk;
+		char * splash;			/* array of int delimit by : */
+		int max;
+		char * hit_amount;		/* array of int delimit by : */
 		char * cast_cancel;		/* 'yes' or 'no' string */
-		int32_t cast_def_reduce_rate;
-		uint32_t inf2;
-		char * maxcount;		/* array of int32_t delimit by : */
+		int cast_def_reduce_rate;
+		int inf2;
+		char * maxcount;		/* array of int delimit by : */
 		char * type;			/* 'none', 'weapon', 'magic', 'misc' */
-		char * blow_count;		/* array of int32_t delimit by : */
+		char * blow_count;		/* array of int delimit by : */
 		char * name;
 		char * desc;
 	} skill_t;
 
 	typedef struct {
-		int32_t id;
-		char*  range;			/* array of int32_t delimit by : */
-		int32_t hit;
-		int32_t inf;
-		char * element;		/* array of int32_t delimit by : */
-		uint32_t nk;
-		char * splash;		/* array of int32_t delimit by : */
-		int32_t max;
-		char * hit_amount;	/* array of int32_t delimit by : */
-		char * cast_cancel;	/* 'yes' or 'no' string */
-		int32_t cast_def_reduce_rate;
-		uint32_t inf2;
-		char * maxcount;		/* array of int32_t delimit by : */
+		int id;
+		char*  range;			/* array of int delimit by : */
+		int hit;
+		int inf;
+		char * element;			/* array of int delimit by : */
+		int nk;
+		char * splash;			/* array of int delimit by : */
+		int max;
+		char * hit_amount;		/* array of int delimit by : */
+		char * cast_cancel;		/* 'yes' or 'no' string */
+		int cast_def_reduce_rate;
+		int inf2;
+		char * maxcount;		/* array of int delimit by : */
 		char * type;			/* 'none', 'weapon', 'magic', 'misc' */
-		char * blow_count;	/* array of int32_t delimit by : */
-		uint32_t inf3;
+		char * blow_count;		/* array of int delimit by : */
+		int inf3;
 		char * name;
 		char * desc;
 	} ra_skill_t;
 
 	typedef struct {
-		int32_t id;
+		int id;
+		char * iro;
+	} ic_mob_t;
+
+	typedef struct {
+		int id;
 		char * sprite;
 		char * kro;
 		char * iro;
-		int32_t lv;
-		int32_t hp;
-		int32_t sp;
-		int32_t exp;
-		int32_t jexp;
-		int32_t range;
-		int32_t atk1;
-		int32_t atk2;
-		int32_t def;
-		int32_t mdef;
-		int32_t str;
-		int32_t agi;
-		int32_t vit;
-		int32_t intr;
-		int32_t dex;
-		int32_t luk;
-		int32_t range2;
-		int32_t range3;
-		int32_t scale;
-		int32_t race;
-		int32_t element;
-		uint32_t mode;
-		int32_t speed;
-		int32_t adelay;
-		int32_t amotion;
-		int32_t dmotion;
-		int32_t mexp;
-		int32_t expper;
-		int32_t mvp1id;
-		int32_t mvp1per;
-		int32_t mvp2id;
-		int32_t mvp2per;
-		int32_t mvp3id;
-		int32_t mvp3per;
-		int32_t drop1id;
-		int32_t drop1per;
-		int32_t drop2id;
-		int32_t drop2per;
-		int32_t drop3id;
-		int32_t drop3per;
-		int32_t drop4id;
-		int32_t drop4per;
-		int32_t drop5id;
-		int32_t drop5per;
-		int32_t drop6id;
-		int32_t drop6per;
-		int32_t drop7id;
-		int32_t drop7per;
-		int32_t drop8id;
-		int32_t drop8per;
-		int32_t drop9id;
-		int32_t drop9per;
-		int32_t dropcardid;
-		int32_t dropcardper;
+		int lv;
+		int hp;
+		int sp;
+		int exp;
+		int jexp;
+		int range;
+		int atk1;
+		int atk2;
+		int def;
+		int mdef;
+		int str;
+		int agi;
+		int vit;
+		int intr;
+		int dex;
+		int luk;
+		int range2;
+		int range3;
+		int scale;
+		int race;
+		int element;
+		int mode;
+		int speed;
+		int adelay;
+		int amotion;
+		int dmotion;
+		int mexp;
+		int expper;
+		int mvp1id;
+		int mvp1per;
+		int mvp2id;
+		int mvp2per;
+		int mvp3id;
+		int mvp3per;
+		int drop1id;
+		int drop1per;
+		int drop2id;
+		int drop2per;
+		int drop3id;
+		int drop3per;
+		int drop4id;
+		int drop4per;
+		int drop5id;
+		int drop5per;
+		int drop6id;
+		int drop6per;
+		int drop7id;
+		int drop7per;
+		int drop8id;
+		int drop8per;
+		int drop9id;
+		int drop9per;
+		int dropcardid;
+		int dropcardper;
 	} ea_mob_t;
 
 	typedef struct {
-		int32_t id;
+		int id;
 		char * sprite;
 		char * kro;
 		char * iro;
-		int32_t lv;
-		int32_t hp;
-		int32_t sp;
-		int32_t exp;
-		int32_t jexp;
-		int32_t range;
-		int32_t atk1;
-		int32_t atk2;
-		int32_t def;
-		int32_t mdef;
-		int32_t str;
-		int32_t agi;
-		int32_t vit;
-		int32_t intr;
-		int32_t dex;
-		int32_t luk;
-		int32_t range2;
-		int32_t range3;
-		int32_t scale;
-		int32_t race;
-		int32_t element;
-		uint32_t mode;
-		int32_t speed;
-		int32_t adelay;
-		int32_t amotion;
-		int32_t dmotion;
-		int32_t mexp;
-		int32_t mvp1id;
-		int32_t mvp1per;
-		int32_t mvp2id;
-		int32_t mvp2per;
-		int32_t mvp3id;
-		int32_t mvp3per;
-		int32_t drop1id;
-		int32_t drop1per;
-		int32_t drop2id;
-		int32_t drop2per;
-		int32_t drop3id;
-		int32_t drop3per;
-		int32_t drop4id;
-		int32_t drop4per;
-		int32_t drop5id;
-		int32_t drop5per;
-		int32_t drop6id;
-		int32_t drop6per;
-		int32_t drop7id;
-		int32_t drop7per;
-		int32_t drop8id;
-		int32_t drop8per;
-		int32_t drop9id;
-		int32_t drop9per;
-		int32_t dropcardid;
-		int32_t dropcardper;
+		int lv;
+		int hp;
+		int sp;
+		int exp;
+		int jexp;
+		int range;
+		int atk1;
+		int atk2;
+		int def;
+		int mdef;
+		int str;
+		int agi;
+		int vit;
+		int intr;
+		int dex;
+		int luk;
+		int range2;
+		int range3;
+		int scale;
+		int race;
+		int element;
+		int mode;
+		int speed;
+		int adelay;
+		int amotion;
+		int dmotion;
+		int mexp;
+		int mvp1id;
+		int mvp1per;
+		int mvp2id;
+		int mvp2per;
+		int mvp3id;
+		int mvp3per;
+		int drop1id;
+		int drop1per;
+		int drop2id;
+		int drop2per;
+		int drop3id;
+		int drop3per;
+		int drop4id;
+		int drop4per;
+		int drop5id;
+		int drop5per;
+		int drop6id;
+		int drop6per;
+		int drop7id;
+		int drop7per;
+		int drop8id;
+		int drop8per;
+		int drop9id;
+		int drop9per;
+		int dropcardid;
+		int dropcardper;
 	} mob_t;
 
 	typedef struct {
 		/* for loading */
-		int32_t bk_id;
+		int bk_id;
 		char * bk_kywd;
-		int32_t bk_flag;
+		int bk_flag;
 		/* for using */
 		int id;
 		char * keyword;
@@ -387,41 +399,41 @@
 	#define FUNC_POW        0x40000000  /* pow */
 
 	typedef struct {
-      int32_t tag;         /* in-house identification */
+      int tag;         /* in-house identification */
       char * id;           /* identifier string */
-      int32_t type;        /* type of identifer and flags */
-      int32_t vflag;
-      int32_t fflag;
-      int32_t min;         /* help calculations */
-      int32_t max;
+      int type;        /* type of identifer and flags */
+      int vflag;
+      int fflag;
+      int min;         /* help calculations */
+      int max;
    } var_t;
 
 	typedef struct {
-		int32_t scid;     /* status id */
+		int scid;     /* status id */
 		char * scstr;     /* status string identifer */
-		int32_t type;
+		int type;
 		char * scfmt;     /* format of status string */
 		char * scend;     /* format of status end string */
-		int32_t vcnt;     /* value count */
-		int32_t vmod[4];  /* modifer for value */
-		int32_t voff[4];  /* offset translation stack */
+		int vcnt;     /* value count */
+		int vmod[4];  /* modifer for value */
+		int voff[4];  /* offset translation stack */
 	} status_t;
 
 	typedef struct {
 		char * pref;         /* bonus prefix, i.e. bonus, bonus2, etc. */
 		char * buff;         /* bonus buff, i.e. bStr, bAgi, etc. */
-		int32_t attr;        /* bonus attributes */
+		int attr;        /* bonus attributes */
 		char * desc;         /* bonus format string */
-		int32_t * type;      /* bonus argument type */
-		int32_t type_cnt;
-		int32_t * order;     /* bonus order for each type */
-		int32_t order_cnt;
+		int * type;      /* bonus argument type */
+		int type_cnt;
+		int * order;     /* bonus order for each type */
+		int order_cnt;
 	} bonus_t;
 
    	typedef struct {
 		char * name;
-		int32_t value;
-		int32_t type;
+		int value;
+		int type;
 	} const_t;
 
 	load_cb_t * ea_item_load();

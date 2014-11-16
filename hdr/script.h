@@ -7,6 +7,7 @@
  */
 #ifndef SCRIPT_H
 #define SCRIPT_H
+    #include <math.h>
  	#include <stdio.h>
  	#include <stdlib.h>
  	#include <string.h>
@@ -16,11 +17,13 @@
  	#include "util.h"
  	#include "name_range.h"
  	#include "range.h"
+    #include "table.h"
 
  	/* general */
  	#define DEBUG_LEXICAL 0
  	#define BUF_SIZE 4096
  	#define BLOCK_SIZE 32
+    #define BONUS_SIZE 5
  	#define SUB_SIZE 256
 
  	/* script return status */
@@ -80,14 +83,31 @@
        logic_node_t * logic_tree;          	/* calculational and dependency information */
     } block_r;
 
+    int global_mode;
+    struct ic_db_t * global_db;
+    char global_err[BUF_SIZE];
+    #define exit_buf(X, ...) exit_abt(build_buffer(global_err, (X), __VA_ARGS__))
 	void block_init(block_r **, int);
 	void block_deinit(block_r *, int);
 
 	/* compilation processes */
-	int script_lexical(token_r *, const unsigned char *);
-	int script_analysis(token_r *, block_r *, int *, int, int, int, struct ic_db_t *);
+	int script_lexical(token_r *, char *);
+	int script_analysis(token_r *, block_r *, int *, int, int, int);
    	int script_parse(token_r *, int *, block_r *, char, char, int);
    	int script_dependencies(block_r *, int);
+    int script_translate(block_r *, int);
+
+    /* script translation functions */
+    int translate_bonus(block_r *, int);
+    int translate_const(block_r *, char *, int);
+    int translate_skill(block_r *, char *);
+    int translate_tbl(block_r *, char *, int);
+    int translate_splash(block_r *, char *);
+    int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
+    int translate_time(block_r *, char *);
+    int translate_id(block_r *, char *, int);
+    int translate_item(block_r *, char *);
+    int translate_write(block_r *, char *, int);
 
    	/* debug compiler by dumping the block list */
    	void block_debug_dump(block_r *, FILE *, char *);
@@ -147,4 +167,21 @@
     void node_expr_append(node_t *, node_t *, node_t *);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
+
+    /* support translation */
+    void argument_write(node_t *, char *);
+    int translate_bonus_desc(node_t **, block_r *, bonus_t *);
+    char * translate_bonus_template(char *, int *, char *, ...);
+    void translate_bonus_integer(block_r *, node_t *, int *);
+    void translate_bonus_integer2(block_r *, node_t *, int *, char *, char *, char *);
+    void translate_bonus_float(block_r *, node_t *, int *, int);
+    void translate_bonus_float_percentage(block_r *, node_t *, int *, int);
+    void translate_bonus_percentage(block_r *, node_t *, int *);
+    void translate_bonus_percentage2(block_r *, node_t *, int *, char *, char *, char *);
+    void translate_bonus_float_percentage2(block_r *, node_t *, int *, char *, char *, char *, int);
+    char * check_node_range(node_t *, char *);
+    char * check_node_range_float(node_t *, char *, int);
+    char * check_node_range_precentage(node_t *, char *);
+    char * check_node_range_float_percentage(node_t *, char *, int);
+    int check_node_affinity(node_t *);
 #endif

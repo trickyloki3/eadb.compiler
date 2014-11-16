@@ -31,21 +31,21 @@
 	#define ASCII_SZE 36
 	/* Generate a string using the ASCII character set.
    	   int length - length of the string to generate. */
-	char * random_string(int32_t);
+	char * random_string(int);
 
 	/* Improved non-case sensitive string comparsion;
 	 * Skip and adjust for non-digit and non-alpha;
 	 * -1 s1 < s2 | 0 s1 == s2 | 1 s1 > s2 
 	 */
-	int32_t ncs_strcmp(const char *, const char *);
+	int ncs_strcmp(const char *, const char *);
 
 	/* Convert the string into an integer.
 	 * char * str - The string containing the integer.
 	 * int base - The integer notation of the string, i.e
 	 * binary, octal, decimal, hexadecimal, ... (2 - 32) 
 	 */
-	int32_t convert_integer(const char *, int32_t);
-	uint32_t convert_uinteger(const char *, uint32_t);
+	int convert_integer(const char *, int);
+	int convert_uinteger(const char *, int);
 
 	/* Allocate memory for the string.
    	 * char * str - The string to be placed into memory. 
@@ -55,14 +55,14 @@
 	/* utility array with sub-delimiting functions */
 	typedef struct {  /* array wrapper */
 		void * array;  /* array to int, long, etc  */
-		int32_t size;  /* total number of elements */
+		int size;  /* total number of elements */
 		char delimit;  /* delimiter to separate elements when writing */
 	} array_w;
 	void array_io(array_w, FILE *);
 	void array_unload(array_w);
 
 	/* special string sub-delimiting */
-	void convert_delimit_integer(char *, char, int32_t, ...);
+	void convert_delimit_integer(char *, char, int, ...);
 	void convert_integer_list(char *, char *, array_w *);
 	char * substr_delimit(char *, char *, char);
 	char * substr_delimit_list(char *, char *, char *);

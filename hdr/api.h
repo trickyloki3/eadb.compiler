@@ -366,21 +366,83 @@
 	char * array_to_string_cnt(char *, int *, int);
 	int array_field_cnt(char *);
 
-	#define ea_item_itr "SELECT * FROM ea_item WHERE Id=1737;"
+	#define EATHENA 0
+	#define RATHENA 1
+	#define HECULES 2
+	#define ea_item_itr "SELECT * FROM ea_item;"
 	#define ra_item_itr "SELECT * FROM ra_item;"
-	#define he_item_itr "SELECT * FROM he_item WHERE Id=6046;"
-	#define block_search "SELECT * FROM block where bk_kywd = ? COLLATE NOCASE;"
-
+	#define he_item_itr "SELECT * FROM he_item;"
+	#define block_search "SELECT * FROM block WHERE bk_kywd = ? COLLATE NOCASE;"
+	#define var_search_sql "SELECT * FROM var WHERE id = ? COLLATE NOCASE;"
+	#define ea_const_search_sql "SELECT * FROM ea_const WHERE name = ? COLLATE NOCASE;"
+	#define ra_const_search_sql "SELECT * FROM ra_const WHERE name = ? COLLATE NOCASE;"
+	#define he_const_search_sql "SELECT * FROM he_const WHERE name = ? COLLATE NOCASE;"
+	#define ea_skill_search_sql "SELECT id, max, name, desc FROM ea_skill WHERE name = ? COLLATE NOCASE;"
+	#define ra_skill_search_sql "SELECT id, max, name, desc FROM ra_skill WHERE name = ? COLLATE NOCASE;"
+	#define he_skill_search_sql "SELECT id, max, name, desc FROM he_skill WHERE name = ? COLLATE NOCASE;"
+	#define ea_skill_search_id_sql "SELECT id, max, name, desc FROM ea_skill WHERE id = ? COLLATE NOCASE;"
+	#define ra_skill_search_id_sql "SELECT id, max, name, desc FROM ra_skill WHERE id = ? COLLATE NOCASE;"
+	#define he_skill_search_id_sql "SELECT id, max, name, desc FROM he_skill WHERE id = ? COLLATE NOCASE;"
+	#define ea_item_search_sql "SELECT id, eathena FROM ea_item WHERE eathena = ? COLLATE NOCASE;"
+	#define ra_item_search_sql "SELECT id, eathena FROM ra_item WHERE eathena = ? COLLATE NOCASE;"
+	#define he_item_search_sql "SELECT Id, Name FROM he_item WHERE Name = ? COLLATE NOCASE;"
+	#define ea_item_search_id_sql "SELECT id, eathena FROM ea_item WHERE id = ? COLLATE NOCASE;"
+	#define ra_item_search_id_sql "SELECT id, eathena FROM ra_item WHERE id = ? COLLATE NOCASE;"
+	#define he_item_search_id_sql "SELECT Id, Name FROM he_item WHERE Id = ? COLLATE NOCASE;"
+	#define ea_mob_search_sql "SELECT id, iro FROM ea_mob WHERE id = ?;"
+	#define ra_mob_search_sql "SELECT id, iro FROM ra_mob WHERE id = ?;"
+	#define he_mob_search_sql "SELECT id, iro FROM he_mob WHERE id = ?;"
+	#define ea_merc_search_sql "SELECT id, name FROM ea_merc WHERE id = ?;"
+	#define ra_merc_search_sql "SELECT id, name FROM ra_merc WHERE id = ?;"
+	#define he_merc_search_sql "SELECT id, name FROM he_merc WHERE id = ?;"
+	#define ea_pet_search_sql "SELECT mob_id, pet_jname FROM ea_pet WHERE mob_id = ?;"
+	#define ra_pet_search_sql "SELECT mob_id, pet_jname FROM ra_pet WHERE mob_id = ?;"
+	#define he_pet_search_sql "SELECT mob_id, pet_jname FROM he_pet WHERE mob_id = ?;"
+	#define bonus_search_sql "SELECT * FROM bonus WHERE pref = ? AND buff = ?"
 	struct ic_db_t {
 		sqlite3 * db;
-		/* item database iterators */
 		sqlite3_stmt * ea_item_iterate;
 		sqlite3_stmt * ra_item_iterate;
 		sqlite3_stmt * he_item_iterate;
-
 		sqlite3_stmt * blk_search;
+		sqlite3_stmt * var_search;
+		sqlite3_stmt * bonus_search;
+		sqlite3_stmt * ea_const_search;
+		sqlite3_stmt * ra_const_search;
+		sqlite3_stmt * he_const_search;
+		sqlite3_stmt * ea_skill_search;
+		sqlite3_stmt * ra_skill_search;
+		sqlite3_stmt * he_skill_search;
+		sqlite3_stmt * ea_skill_id_search;
+		sqlite3_stmt * ra_skill_id_search;
+		sqlite3_stmt * he_skill_id_search;		
+		sqlite3_stmt * ea_item_search;
+		sqlite3_stmt * ra_item_search;
+		sqlite3_stmt * he_item_search;
+		sqlite3_stmt * ea_item_id_search;
+		sqlite3_stmt * ra_item_id_search;
+		sqlite3_stmt * he_item_id_search;
+		sqlite3_stmt * ea_mob_id_search;
+		sqlite3_stmt * ra_mob_id_search;
+		sqlite3_stmt * he_mob_id_search;
+		sqlite3_stmt * ea_merc_id_search;
+		sqlite3_stmt * ra_merc_id_search;
+		sqlite3_stmt * he_merc_id_search;
+		sqlite3_stmt * ea_pet_id_search;
+		sqlite3_stmt * ra_pet_id_search;
+		sqlite3_stmt * he_pet_id_search;
 	};
 	struct ic_db_t * init_ic_db(const char *);
 	int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword);
+	int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword);
+	int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, int mode);
+	int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int mode);
+	int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mode);
+	int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mode);
+	int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode);
+	int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode);
+	int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode);
+	int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode);
+	int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char * attribute);
 	void deit_ic_db(struct ic_db_t *);
 #endif

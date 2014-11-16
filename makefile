@@ -15,6 +15,9 @@ all: conv item
 memchk: conv
 	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./conv
 
+test: src/test.c $(OBJ)
+	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o $^ $(HDRDIR)
+
 item: src/item.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o $^ $(HDRDIR)
 

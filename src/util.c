@@ -37,8 +37,8 @@ int exit_check_null(int argument_count, ...) {
    return 0;
 }
 
-char * random_string(int32_t length) {
-   int32_t i = 0;
+char * random_string(int length) {
+   int i = 0;
    char * random_string = malloc(sizeof(char) * (length + 1));
    if(random_string == NULL) return NULL;
    for(i = 0; i < length; i++)
@@ -47,13 +47,13 @@ char * random_string(int32_t length) {
    return random_string;
 }
 
-int32_t ncs_strcmp(const char * s1, const char * s2) {
-   int32_t inx_1 = 0;
-   int32_t inx_2 = 0;
-   int32_t s_len_adj_1 = 0;
-   int32_t s_len_adj_2 = 0;
-   int32_t s_len_1 = strlen(s1);
-   int32_t s_len_2 = strlen(s2);
+int ncs_strcmp(const char * s1, const char * s2) {
+   int inx_1 = 0;
+   int inx_2 = 0;
+   int s_len_adj_1 = 0;
+   int s_len_adj_2 = 0;
+   int s_len_1 = strlen(s1);
+   int s_len_2 = strlen(s2);
 
    for(;; inx_1++, inx_2++) {
       /* jump to the next number and alpha */
@@ -79,7 +79,7 @@ int32_t ncs_strcmp(const char * s1, const char * s2) {
       return 0;
 }
 
-int32_t convert_integer(const char * str, int32_t base) {
+int convert_integer(const char * str, int base) {
    int64_t value = 0;
    char * endptr = NULL;
 
@@ -95,18 +95,18 @@ int32_t convert_integer(const char * str, int32_t base) {
    value = strtol(str, &endptr, base);
 
    if(errno == ERANGE)                /* check if value is valid (out of range of the strtol function) */
-      fprintf(stdout,"warn: convert_integer detected out-of-range string conversion to (int32_t) %s.\n", str);
+      fprintf(stdout,"warn: convert_integer detected out-of-range string conversion to (int) %s.\n", str);
 
    if(*endptr != '\0' && 0)               /* check if string consume / DISABLE */
       fprintf(stdout,"warn: convert_integer failed to consume entire string for conversion %s; unconsumed %s; base %d.\n", str, endptr, base);
 
    if(value > INT32_MAX)            /* check if out of range (although this might not work) */
-      fprintf(stdout,"warn: convert_integer possible out-of-range string conversion to (int32_t) %s.\n", str);
+      fprintf(stdout,"warn: convert_integer possible out-of-range string conversion to (int) %s.\n", str);
 
-   return (int32_t) value;
+   return (int) value;
 }
 
-uint32_t convert_uinteger(const char * str, uint32_t base) {
+int convert_uinteger(const char * str, int base) {
    uint64_t value = 0;
    char * endptr = NULL;
 
@@ -122,9 +122,9 @@ uint32_t convert_uinteger(const char * str, uint32_t base) {
       fprintf(stdout,"warn: convert_integer failed to consume entire string for conversion %s; unconsumed %s; base %d.\n", str, endptr, base);
 
    if(value > UINT32_MAX)            /* check if out of range (although this might not work) */
-      fprintf(stdout,"warn: convert_integer possible out-of-range string conversion to (uint32_t) %s.\n", str);
+      fprintf(stdout,"warn: convert_integer possible out-of-range string conversion to (int) %s.\n", str);
 
-   return (uint32_t) value;
+   return (int) value;
 }
 
 char * convert_string(const char * str) {
@@ -137,8 +137,8 @@ char * convert_string(const char * str) {
 }
 
 char * substr_delimit(char * src, char * dest, char delimit) {
-   int32_t i;
-   int32_t src_cnt = strlen(src);
+   int i;
+   int src_cnt = strlen(src);
    for(i = 0; i < src_cnt; i++)
       if((src[i] == delimit || src[i] == '\0') && i > 0) {
          strncpy(dest, src, i);
@@ -152,9 +152,9 @@ char * substr_delimit(char * src, char * dest, char delimit) {
 }
 
 char * substr_delimit_list(char * src, char * dest, char * delimit) {
-   int32_t i, j;
-   int32_t src_cnt = strlen(src);
-   int32_t del_cnt = strlen(delimit);
+   int i, j;
+   int src_cnt = strlen(src);
+   int del_cnt = strlen(delimit);
 
    for(i = 0; i < src_cnt; i++) {
       for(j = 0; j < del_cnt; j++)
@@ -171,9 +171,9 @@ char * substr_delimit_list(char * src, char * dest, char * delimit) {
    return &src[src_cnt];
 }
 
-void convert_delimit_integer(char * str, char delimit, int32_t argc, ...) {
-   int32_t i = 0;
-   int32_t * temp = NULL;     /* current integer variable to fill */
+void convert_delimit_integer(char * str, char delimit, int argc, ...) {
+   int i = 0;
+   int * temp = NULL;     /* current integer variable to fill */
    char * curptr = str;       /* current string position */
    char * endptr = str;       /* last string position */
    va_list argv;
@@ -183,8 +183,8 @@ void convert_delimit_integer(char * str, char delimit, int32_t argc, ...) {
    if(str != NULL && *str != '\0' && strlen(str) > 0) {
       /* extract the integer from string */
       for(i = 0; i < argc && *endptr != '\0'; i++) {
-         temp = va_arg(argv, int32_t *);
-         *temp = (int32_t) strtol(curptr, &endptr, 10);
+         temp = va_arg(argv, int *);
+         *temp = (int) strtol(curptr, &endptr, 10);
          curptr = endptr + 1;                        /* skip delimiter */
 
          if(errno == ERANGE)                         /* check if conversion is valid */
@@ -201,18 +201,18 @@ void convert_delimit_integer(char * str, char delimit, int32_t argc, ...) {
 
    /* set all remaining paramaters to default */
    for(; i < argc; i++) {
-      temp = va_arg(argv, int32_t *);
+      temp = va_arg(argv, int *);
       *temp = 0;
    }
    va_end(argv);
 }
 
 void convert_integer_list(char * str, char * delimit, array_w * list) {
-   int32_t i, j;
-   int32_t * int_list = NULL;
-   int32_t str_cnt = strlen(str);
-   int32_t del_cnt = strlen(delimit);
-   int32_t fld_cnt = 1;
+   int i, j;
+   int * int_list = NULL;
+   int str_cnt = strlen(str);
+   int del_cnt = strlen(delimit);
+   int fld_cnt = 1;
    char * end_ptr = NULL;
    char fld[BUF_SIZE];
 
@@ -231,7 +231,7 @@ void convert_integer_list(char * str, char * delimit, array_w * list) {
          }
 
    /* allocate memory for the list */
-   int_list = malloc(sizeof(int32_t) * fld_cnt);
+   int_list = malloc(sizeof(int) * fld_cnt);
 
    /* extract the fields */
    end_ptr = substr_delimit_list(str, fld, delimit);
@@ -254,9 +254,9 @@ void convert_integer_list(char * str, char * delimit, array_w * list) {
 }
 
 void array_io(array_w array, FILE * file_stm) {
-   int32_t i = 0;
-   int32_t * list = array.array;
-   int32_t size = array.size;
+   int i = 0;
+   int * list = array.array;
+   int size = array.size;
    for(i = 0; i < size - 1; i++)
       fprintf(file_stm,"%d%c", list[i], array.delimit);
    fprintf(file_stm,"%d,", list[i]);
