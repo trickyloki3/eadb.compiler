@@ -491,7 +491,7 @@ int script_translate(block_r * block, int size) {
             case 46: translate_write(&block[i], "Change to Summer Outfit when worn.", 1); break;                    /* setoption */
             case 47: translate_write(&block[i], "Summon a creature to mount. [Work for all classes].", 1); break;   /* setmounting */
             case 48: translate_write(&block[i], "Summon a falcon. [Also use to recall falcon].", 1); break;         /* setfalcon */
-            /*case 49: translate_getrandgroup(&block[i], block[i].type->id); break;*/                               /* getgroupitem */
+            case 49: translate_getrandgroup(&block[i], block[i].type->id); break;                                   /* getgroupitem */
             case 50: translate_write(&block[i], "Reset all status points.", 1); break;                              /* resetstatus */
             case 52: translate_write(&block[i], "Play another background song.", 1); break;                         /* playbgm */
             case 53: translate_transform(&block[i]); break;                                                         /* transform */
@@ -1551,7 +1551,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     int expr_sub_level = 0;
 
     int op_cnt = 0;
-
+    int set_match = 0;
     const_t const_info;
     var_t var_info;
 
@@ -1713,8 +1713,13 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                             if(temp_node != NULL) freenamerange(temp_node->cond);
                             temp_node->cond = copy_any_tree(block->depd[j]->logic_tree);
                         }
+                        set_match = 1;
                     }
                 }
+                if(set_match == 0)
+                    exit_buf("invalid identifier %s in item %d", expr[i], block->item_id);
+                else
+                    set_match = 0;
             }
             op_cnt++;
         

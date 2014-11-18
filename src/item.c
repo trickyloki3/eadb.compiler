@@ -10,7 +10,7 @@
 int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item);
 
 int main(int argc, char * argv[]) {
-	global_mode = RATHENA;
+	global_mode = EATHENA;
 	int sqlite_status = 0;
 	int script_status = 0;
 	char err[BUF_SIZE];
