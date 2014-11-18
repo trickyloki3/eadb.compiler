@@ -5,10 +5,13 @@ int main(int argc, char * argv[]) {
 	merc_t merc;
 	ic_mob_t mob;
 	bonus_t bonus;
+	ic_produce_t * produce;
+	status_t status;
 	memset(&mob, 0, sizeof(ic_mob_t));
 	memset(&merc, 0, sizeof(merc_t));
 	memset(&pet, 0, sizeof(pet_t));
 	memset(&bonus, 0, sizeof(bonus_t));
+	memset(&status, 0, sizeof(status_t));
 	/*var_t var_info;
 	const_t const_info;
 	ic_skill_t skill_info;
@@ -26,8 +29,11 @@ int main(int argc, char * argv[]) {
 	mob_id_search(global_db, &mob, 1001, RATHENA);
 	merc_id_search(global_db, &merc, 1191, RATHENA);
 	pet_id_search(global_db, &pet, 1002, RATHENA);
-	bonus_name_search(global_db, &bonus, "bonus2", "bWeaponAtk", RATHENA);
-	printf("%d;%s\n", pet.mob_id, pet.pet_name);
+	bonus_name_search(global_db, &bonus, "bonus2", "bWeaponAtk");
+	prod_lv_search(global_db, &produce, 1, RATHENA);
+	status_id_search(global_db, &status, 1);
+	printf("%s\n", status.scfmt);
+	free_prod(produce);
 	deit_ic_db(global_db);
 	return 0;
 }

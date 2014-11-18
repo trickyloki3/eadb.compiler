@@ -293,8 +293,9 @@
 	#define itm_status_des	"DROP TABLE IF EXISTS status;"
 
 	#define itm_bonus_tbl	"CREATE TABLE IF NOT EXISTS bonus(" \
-							"pref TEXT, buff TEXT PRIMARY KEY, attr INTEGER, desc TEXT," \
-							"type_param TEXT, type_cnt INTEGER, order_param TEXT, order_cnt INTEGER);"
+							"pref TEXT, buff TEXT, attr INTEGER, desc TEXT," \
+							"type_param TEXT, type_cnt INTEGER, order_param TEXT, "\
+							"order_cnt INTEGER, PRIMARY KEY(pref, buff));"
 	#define itm_bonus_ins	"INSERT INTO bonus VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
 	#define itm_bonus_des	"DROP TABLE IF EXISTS bonus;"
 
@@ -398,7 +399,12 @@
 	#define ea_pet_search_sql "SELECT mob_id, pet_jname FROM ea_pet WHERE mob_id = ?;"
 	#define ra_pet_search_sql "SELECT mob_id, pet_jname FROM ra_pet WHERE mob_id = ?;"
 	#define he_pet_search_sql "SELECT mob_id, pet_jname FROM he_pet WHERE mob_id = ?;"
-	#define bonus_search_sql "SELECT * FROM bonus WHERE pref = ? AND buff = ?"
+	#define bonus_search_sql "SELECT * FROM bonus WHERE pref = ? AND buff = ? COLLATE NOCASE;"
+	#define ea_prod_search_sql "SELECT * FROM ea_prod WHERE item_lv = ?;"
+	#define ra_prod_search_sql "SELECT * FROM ra_prod WHERE item_lv = ?;"
+	#define he_prod_search_sql "SELECT * FROM he_prod WHERE item_lv = ?;"
+	#define status_search_sql "SELECT * FROM status WHERE scid = ?;"
+
 	struct ic_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * ea_item_iterate;
@@ -407,6 +413,7 @@
 		sqlite3_stmt * blk_search;
 		sqlite3_stmt * var_search;
 		sqlite3_stmt * bonus_search;
+		sqlite3_stmt * status_search;
 		sqlite3_stmt * ea_const_search;
 		sqlite3_stmt * ra_const_search;
 		sqlite3_stmt * he_const_search;
@@ -431,7 +438,11 @@
 		sqlite3_stmt * ea_pet_id_search;
 		sqlite3_stmt * ra_pet_id_search;
 		sqlite3_stmt * he_pet_id_search;
+		sqlite3_stmt * ea_prod_lv_search;
+		sqlite3_stmt * ra_prod_lv_search;
+		sqlite3_stmt * he_prod_lv_search;
 	};
+
 	struct ic_db_t * init_ic_db(const char *);
 	int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword);
 	int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword);
@@ -444,5 +455,8 @@
 	int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode);
 	int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode);
 	int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char * attribute);
+	int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int id, int mode);
+	int status_id_search(struct ic_db_t * db, status_t * status, int id);
+	void free_prod(ic_produce_t * prod);
 	void deit_ic_db(struct ic_db_t *);
 #endif

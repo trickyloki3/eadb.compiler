@@ -8,94 +8,98 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
     #include <math.h>
- 	#include <stdio.h>
- 	#include <stdlib.h>
- 	#include <string.h>
- 	#include <ctype.h>
- 	#include "db.h"
- 	#include "api.h"
- 	#include "util.h"
- 	#include "name_range.h"
- 	#include "range.h"
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <ctype.h>
+    #include "db.h"
+    #include "api.h"
+    #include "util.h"
+    #include "name_range.h"
+    #include "range.h"
     #include "table.h"
 
- 	/* general */
- 	#define DEBUG_LEXICAL 0
- 	#define BUF_SIZE 4096
- 	#define BLOCK_SIZE 32
+    /* general */
+    #define DEBUG_LEXICAL 0
+    #define BUF_SIZE 4096
+    #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
- 	#define SUB_SIZE 256
+    #define SUB_SIZE 256
 
- 	/* script return status */
- 	#define SCRIPT_PASSED 0
- 	#define SCRIPT_FAILED 1
+    /* script return status */
+    #define SCRIPT_PASSED 0
+    #define SCRIPT_FAILED 1
 
- 	/* athena syntax groups */
- 	#define ATHENA_SCRIPT_SYMBOL(X)           ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
-	#define ATHENA_SCRIPT_OPERATOR(X)         ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || (X) == '>' || (X) == '<' || (X) == '-' || (X) == '+' || (X) == '/' || (X) == '*' || (X) == '!')
-	#define ATHENA_SCRIPT_UNARY(X)            ((X) == '!' || (X) == '-')
-	#define ATHENA_SCRIPT_IDENTIFER(X)        (isalpha(X) || isdigit(X) || (X) == '_')
+    /* athena syntax groups */
+    #define ATHENA_SCRIPT_SYMBOL(X)           ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
+    #define ATHENA_SCRIPT_OPERATOR(X)         ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || (X) == '>' || (X) == '<' || (X) == '-' || (X) == '+' || (X) == '/' || (X) == '*' || (X) == '!')
+    #define ATHENA_SCRIPT_UNARY(X)            ((X) == '!' || (X) == '-')
+    #define ATHENA_SCRIPT_IDENTIFER(X)        (isalpha(X) || isdigit(X) || (X) == '_')
+    #define CHECK_ZERO(X)                     (strlen(X) == 1 && X[0] == '0')
+    #define CHECK_NEGATIVE(X)                 (strlen(X) > 0 && strstr(X,"-") != NULL)
 
-	/* BF and ATF Trigger Flags */
-	#define ATF_SELF 1
-	#define ATF_TARGET 2
-	#define ATF_SHORT 4
-	#define ATF_LONG 8
-	#define ATF_WEAPON 16
-	#define ATF_MAGIC 32
-	#define ATF_MISC 64
-	#define ATF_SKILL 96
-	#define BF_WEAPON 1
-	#define BF_MAGIC 2
-	#define BF_MISC 4
-	#define BF_SHORT 16
-	#define BF_LONG 64
-	#define BF_SKILL 256
-	#define BF_NORMAL 512
+    /* BF and ATF Trigger Flags */
+    #define ATF_SELF 1
+    #define ATF_TARGET 2
+    #define ATF_SHORT 4
+    #define ATF_LONG 8
+    #define ATF_WEAPON 16
+    #define ATF_MAGIC 32
+    #define ATF_MISC 64
+    #define ATF_SKILL 96
+    #define BF_WEAPON 1
+    #define BF_MAGIC 2
+    #define BF_MISC 4
+    #define BF_SHORT 16
+    #define BF_LONG 64
+    #define BF_SKILL 256
+    #define BF_NORMAL 512
 
-	typedef struct {
-		char script[BUF_SIZE];
-		char * script_ptr[BUF_SIZE];
-		int script_cnt;
-	} token_r;
+    typedef struct {
+        char script[BUF_SIZE];
+        char * script_ptr[BUF_SIZE];
+        int script_cnt;
+    } token_r;
 
-	typedef struct block_r {
-       int item_id;                    		/* item to which the block belongs */
-       int block_id;                   		/* unique block id (index) */
+    typedef struct block_r {
+       int item_id;                         /* item to which the block belongs */
+       int block_id;                        /* unique block id (index) */
        /* arg is where all strings should be store; ptr and eng are simply pointers to the arg buffer */
-       char * arg;                         	/* block raw and translation stack */
-       char * ptr[BUF_SIZE];               	/* raw arguments */
-       char * eng[BUF_SIZE];               	/* translated arguments */
-       char * desc;                        	/* final description translation */
-       int arg_cnt;                    		/* various counters for the above arrays */
+       char * arg;                          /* block raw and translation stack */
+       char * ptr[BUF_SIZE];                /* raw arguments */
+       char * eng[BUF_SIZE];                /* translated arguments */
+       char * desc;                         /* final description translation */
+       int arg_cnt;                         /* various counters for the above arrays */
        int ptr_cnt;
        int eng_cnt;
-       block_t * type;                     	/* access to translation information in block_db.txt from block_db */
-       int link;                       		/* indicate conditional linking for if-else statements (index to block) */
-       struct block_r * depd[BLOCK_SIZE];  	/* indicate calculation linking for set blocks */
-       int depd_cnt;                   		/* number of dependencies */
-       int set_min;                    		/* SET BLOCK SPECIFIC ONLY, i.e. CHEATING! */
+       block_t * type;                      /* access to translation information in block_db.txt from block_db */
+       int link;                            /* indicate conditional linking for if-else statements (index to block) */
+       struct block_r * depd[BLOCK_SIZE];   /* indicate calculation linking for set blocks */
+       int depd_cnt;                        /* number of dependencies */
+       int set_min;                         /* SET BLOCK SPECIFIC ONLY, i.e. CHEATING! */
        int set_max;
-       int flag;                       		/* multi-purpose flag for special conditions 
+       int flag;                            /* multi-purpose flag for special conditions 
                                               0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
                                               0x02 - multivalues must be tagged random */
-       int offset;                     		/* indicate the beginning of special arguments */
-       logic_node_t * logic_tree;          	/* calculational and dependency information */
+       int offset;                          /* indicate the beginning of special arguments */
+       logic_node_t * logic_tree;           /* calculational and dependency information */
     } block_r;
 
     int global_mode;
     struct ic_db_t * global_db;
     char global_err[BUF_SIZE];
     #define exit_buf(X, ...) exit_abt(build_buffer(global_err, (X), __VA_ARGS__))
-	void block_init(block_r **, int);
-	void block_deinit(block_r *, int);
+    void block_init(block_r **, int);
+    void block_deinit(block_r *, int);
 
-	/* compilation processes */
-	int script_lexical(token_r *, char *);
-	int script_analysis(token_r *, block_r *, int *, int, int, int);
-   	int script_parse(token_r *, int *, block_r *, char, char, int);
-   	int script_dependencies(block_r *, int);
+    /* compilation processes */
+    int script_lexical(token_r *, char *);
+    int script_analysis(token_r *, block_r *, int *, int, int, int);
+    int script_parse(token_r *, int *, block_r *, char, char, int);
+    int script_dependencies(block_r *, int);
     int script_translate(block_r *, int);
+    int script_extend(block_r *, char *);
+    int script_generate(ic_item_t *, block_r *, int);
 
     /* script translation functions */
     int translate_bonus(block_r *, int);
@@ -107,10 +111,26 @@
     int translate_time(block_r *, char *);
     int translate_id(block_r *, char *, int);
     int translate_item(block_r *, char *);
+    int translate_autobonus(block_r *, int);
+    int translate_heal(block_r *, int);
+    int translate_skill_block(block_r *, int);
+    int translate_getitem(block_r *, int);
+    int translate_rentitem(block_r *, int);
+    int translate_delitem(block_r *, int);
+    int translate_getrandgroup(block_r *, int);
+    int translate_bstore(block_r *, int);
+    int translate_hire_merc(block_r *, int);
+    int translate_pet_egg(block_r *, int);
+    int translate_getexp(block_r *, int);
+    int translate_misc(block_r *, char *);
+    int translate_transform(block_r *);
+    int translate_produce(block_r *, int);
+    int translate_status_end(block_r *);
+    int translate_status(block_r *, int);
     int translate_write(block_r *, char *, int);
 
-   	/* debug compiler by dumping the block list */
-   	void block_debug_dump(block_r *, FILE *, char *);
+    /* debug compiler by dumping the block list */
+    void block_debug_dump(block_r *, FILE *, char *);
     void block_debug_dump_all(block_r *, int, FILE *);
     void block_debug_dump_depd_recurse(struct block_r **, int, int, int, FILE *);
 
@@ -159,7 +179,7 @@
     } node_t;
 
     /* expression evaluation */
-   	node_t * evaluate_expression(block_r *, char *, int, int);
+    node_t * evaluate_expression(block_r *, char *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
     void evaluate_node(node_t *, FILE *, logic_node_t *, int);
@@ -184,4 +204,10 @@
     char * check_node_range_precentage(node_t *, char *);
     char * check_node_range_float_percentage(node_t *, char *, int);
     int check_node_affinity(node_t *);
+    int script_linkage_count(block_r *, int);
+    void script_generate_cond(logic_node_t *, FILE *, char *);
+    void script_generate_and_chain(logic_node_t *, char *, int *);
+    void script_generate_cond_node(logic_node_t *, char *, int *);
+    void script_generate_class_generic(char *, int *, range_t *, char *);
+    void script_generate_cond_generic(char *, int *, int, int, char *);
 #endif

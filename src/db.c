@@ -335,7 +335,7 @@ int produce_load_column(void * db, int row, int col, char * val) {
       case 0: 
          material_cnt = 0;
          alternate = 0;
-         produce_row->item_id = convert_integer(val,10); 
+         produce_row->item_id = convert_integer(val,10);
          break;
       case 1: produce_row->item_lv = convert_integer(val,10); break;
       case 2: produce_row->req_skill = convert_integer(val,10); break;

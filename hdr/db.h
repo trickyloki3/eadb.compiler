@@ -180,11 +180,23 @@
 		int dmotion;
 	} merc_t;
 
+	typedef struct is_produce_t {
+		int item_id;
+		int item_lv;
+		int req_skill;
+		int req_skill_lv;
+		int req_cnt;
+		int * material;
+		int * amount;
+		struct is_produce_t * next;
+	} ic_produce_t;
+
 	typedef struct {
 		int item_id;
 		int item_lv;
 		int req_skill;
 		int req_skill_lv;
+		/* loader version */
 		int material[32];
 		int amount[32];
 	} produce_t;
@@ -417,6 +429,9 @@
 		int vcnt;     /* value count */
 		int vmod[4];  /* modifer for value */
 		int voff[4];  /* offset translation stack */
+		/* compiler version */
+		int * vmod_ptr;
+		int * voff_ptr;
 	} status_t;
 
 	typedef struct {

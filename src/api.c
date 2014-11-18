@@ -56,6 +56,10 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	sqlite3_prepare_v2(db, ra_pet_search_sql, strlen(ra_pet_search_sql) + 1, &ic_db->ra_pet_id_search, NULL);
 	sqlite3_prepare_v2(db, he_pet_search_sql, strlen(he_pet_search_sql) + 1, &ic_db->he_pet_id_search, NULL);
 	sqlite3_prepare_v2(db, bonus_search_sql, strlen(bonus_search_sql) + 1, &ic_db->bonus_search, NULL);
+	sqlite3_prepare_v2(db, ea_prod_search_sql, strlen(ea_prod_search_sql) + 1, &ic_db->ea_prod_lv_search, NULL);
+	sqlite3_prepare_v2(db, ra_prod_search_sql, strlen(ra_prod_search_sql) + 1, &ic_db->ra_prod_lv_search, NULL);
+	sqlite3_prepare_v2(db, he_prod_search_sql, strlen(he_prod_search_sql) + 1, &ic_db->he_prod_lv_search, NULL);
+	sqlite3_prepare_v2(db, status_search_sql, strlen(status_search_sql) + 1, &ic_db->status_search, NULL);
 	assert(ic_db->ea_item_iterate != NULL);
 	assert(ic_db->ra_item_iterate != NULL);
 	assert(ic_db->he_item_iterate != NULL);
@@ -86,6 +90,10 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	assert(ic_db->ra_pet_id_search != NULL);
 	assert(ic_db->he_pet_id_search != NULL);
 	assert(ic_db->bonus_search != NULL);
+	assert(ic_db->ea_prod_lv_search != NULL);
+	assert(ic_db->ra_prod_lv_search != NULL);
+	assert(ic_db->he_prod_lv_search != NULL);
+	assert(ic_db->status_search != NULL);
 	/* return api container */
 	ic_db->db = db;
 	return ic_db;
@@ -529,6 +537,130 @@ int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char 
 	return (status == SQLITE_ROW) ? 0 : -1;
 }
 
+int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int lv, int mode) {
+	int status = 0;
+	array_w array;
+	ic_produce_t * root = NULL;
+	ic_produce_t * iter = NULL;
+	ic_produce_t * temp = NULL;
+	exit_null("db is null.", 1, db);
+	exit_null("prod is null.", 1, prod);
+	switch(mode) {
+		case EATHENA:
+			sqlite3_clear_bindings(db->ea_prod_lv_search);
+			sqlite3_bind_int(db->ea_prod_lv_search, 1, lv);
+			status = sqlite3_step(db->ea_prod_lv_search);
+			while(status != SQLITE_DONE) {
+				temp = calloc(1, sizeof(ic_produce_t));
+				temp->item_id = sqlite3_column_int(db->ea_prod_lv_search, 0);
+				temp->item_lv = sqlite3_column_int(db->ea_prod_lv_search, 1);
+				temp->req_skill = sqlite3_column_int(db->ea_prod_lv_search, 2);
+				temp->req_skill_lv = sqlite3_column_int(db->ea_prod_lv_search, 3);
+				convert_integer_list((char *)sqlite3_column_text(db->ea_prod_lv_search, 4), ":", &array);
+				temp->material = array.array;
+				convert_integer_list((char *)sqlite3_column_text(db->ea_prod_lv_search, 5), ":", &array);
+				temp->amount = array.array;
+				temp->next = NULL;
+				if(root == NULL)
+					root = iter = temp;
+				else
+					iter = iter->next = temp;
+				status = sqlite3_step(db->ea_prod_lv_search);
+			}
+			sqlite3_reset(db->ea_prod_lv_search);
+			break;
+		case RATHENA:
+			sqlite3_clear_bindings(db->ra_prod_lv_search);
+			sqlite3_bind_int(db->ra_prod_lv_search, 1, lv);
+			status = sqlite3_step(db->ra_prod_lv_search);
+			while(status != SQLITE_DONE) {
+				temp = calloc(1, sizeof(ic_produce_t));
+				temp->item_id = sqlite3_column_int(db->ra_prod_lv_search, 1);
+				temp->item_lv = sqlite3_column_int(db->ra_prod_lv_search, 2);
+				temp->req_skill = sqlite3_column_int(db->ra_prod_lv_search, 3);
+				temp->req_skill_lv = sqlite3_column_int(db->ra_prod_lv_search, 4);
+				convert_integer_list((char *)sqlite3_column_text(db->ra_prod_lv_search, 5), ":", &array);
+				temp->material = array.array;
+				temp->req_cnt = array.size;
+				convert_integer_list((char *)sqlite3_column_text(db->ra_prod_lv_search, 6), ":", &array);
+				temp->amount = array.array;
+				temp->next = NULL;
+				if(root == NULL)
+					root = iter = temp;
+				else
+					iter = iter->next = temp;
+				status = sqlite3_step(db->ra_prod_lv_search);
+			}
+			sqlite3_reset(db->ra_prod_lv_search);
+			break;
+		case HECULES: 
+			sqlite3_clear_bindings(db->he_prod_lv_search);
+			sqlite3_bind_int(db->he_prod_lv_search, 1, lv);
+			status = sqlite3_step(db->he_prod_lv_search);
+			while(status != SQLITE_DONE) {
+				temp = calloc(1, sizeof(ic_produce_t));
+				temp->item_id = sqlite3_column_int(db->he_prod_lv_search, 0);
+				temp->item_lv = sqlite3_column_int(db->he_prod_lv_search, 1);
+				temp->req_skill = sqlite3_column_int(db->he_prod_lv_search, 2);
+				temp->req_skill_lv = sqlite3_column_int(db->he_prod_lv_search, 3);
+				convert_integer_list((char *)sqlite3_column_text(db->he_prod_lv_search, 4), ":", &array);
+				temp->material = array.array;
+				convert_integer_list((char *)sqlite3_column_text(db->he_prod_lv_search, 5), ":", &array);
+				temp->amount = array.array;
+				temp->next = NULL;
+				if(root == NULL)
+					root = iter = temp;
+				else
+					iter = iter->next = temp;
+				status = sqlite3_step(db->he_prod_lv_search);
+			}
+			sqlite3_reset(db->he_prod_lv_search);
+			break;
+	}
+	*prod = root;
+	return (status == SQLITE_ROW) ? 0 : -1;
+}
+
+void free_prod(ic_produce_t * prod) {
+	ic_produce_t * temp = NULL;
+	while(prod != NULL) {
+		temp = prod;
+		prod = prod->next;
+		free(temp->material);
+		free(temp->amount);
+		free(temp);
+	}
+}
+
+int status_id_search(struct ic_db_t * db, status_t * status, int id) {
+	int code = 0;
+	array_w array;
+	exit_null("db is null.", 1, db);
+	exit_null("status is null.", 1, status);
+	sqlite3_clear_bindings(db->status_search);
+	sqlite3_bind_int(db->status_search, 1, id);
+	code = sqlite3_step(db->status_search);
+	if(code == SQLITE_ROW) {
+		if(status->scstr != NULL) free(status->scstr);
+		if(status->scfmt != NULL) free(status->scfmt);
+		if(status->scend != NULL) free(status->scend);
+		if(status->vmod_ptr != NULL) free(status->vmod_ptr);
+		if(status->voff_ptr != NULL) free(status->voff_ptr);
+		status->scid = sqlite3_column_int(db->status_search, 0);
+		status->scstr = convert_string((const char *) sqlite3_column_text(db->status_search, 1));
+		status->type = sqlite3_column_int(db->status_search, 2);
+		status->scfmt = convert_string((const char *) sqlite3_column_text(db->status_search, 3));
+		status->scend = convert_string((const char *) sqlite3_column_text(db->status_search, 4));
+		status->vcnt = sqlite3_column_int(db->status_search, 5);
+		convert_integer_list((char *)sqlite3_column_text(db->status_search, 6), ":", &array);
+		status->vmod_ptr = array.array;
+		convert_integer_list((char *)sqlite3_column_text(db->status_search, 7), ":", &array);
+		status->voff_ptr = array.array;
+	}
+	sqlite3_reset(db->status_search);
+	return (code == SQLITE_ROW) ? 0 : -1;
+}
+
 void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ea_item_iterate);
 	sqlite3_finalize(db->ra_item_iterate);
@@ -560,6 +692,7 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ra_pet_id_search);
 	sqlite3_finalize(db->he_pet_id_search);
 	sqlite3_finalize(db->bonus_search);
+	sqlite3_finalize(db->status_search);
 	sqlite3_close_v2(db->db);
 	free(db);
 }
@@ -896,7 +1029,7 @@ void load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, produce_t * db, int siz
 		sqlite3_bind_int(ins, 4, db[i].req_skill_lv);
 		array_to_string(buf, db[i].material);
 		sqlite3_bind_text(ins, 5, buf, strlen(buf), SQLITE_TRANSIENT);
-		array_to_string_cnt(buf, db[i].amount, array_field_cnt(buf));
+		array_to_string_cnt(buf, db[i].amount, array_field_cnt(buf) + 1);
 		sqlite3_bind_text(ins, 6, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(ins);
 		if(ret != SQLITE_OK) fprintf(stderr, "prod_id: %d failed\n", db[i].item_id);
@@ -919,7 +1052,7 @@ void ra_load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, ra_produce_t * db, i
 		sqlite3_bind_int(ins, 5, db[i].req_skill_lv);
 		array_to_string(buf, db[i].material);
 		sqlite3_bind_text(ins, 6, buf, strlen(buf), SQLITE_TRANSIENT);
-		array_to_string_cnt(buf, db[i].amount, array_field_cnt(buf));
+		array_to_string_cnt(buf, db[i].amount, array_field_cnt(buf) + 1);
 		sqlite3_bind_text(ins, 7, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(ins);
 		if(ret != SQLITE_OK) fprintf(stderr, "prod_id: %d failed\n", db[i].item_id);
@@ -1133,7 +1266,6 @@ void ra_load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, ra_skill_t * db, in
 void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size) {
 	int i = 0;
 	int ret = 0;
-	/*sqlite3_trace(sql->db, trace_db, NULL);*/
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1145,7 +1277,6 @@ void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
-	/*exit(1);*/
 }
 
 void load_var(struct lt_db_t * sql, sqlite3_stmt * ins, var_t * db, int size) {
@@ -1198,7 +1329,6 @@ void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size
 	int i = 0;
 	int ret = 0;
 	char buf[4096];
-	/*sqlite3_trace(sql->db, trace_db, NULL);*/
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1217,7 +1347,6 @@ void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
-	/*exit(0);*/
 }
 
 void load_const(struct lt_db_t * sql, sqlite3_stmt * ins, const_t * db, int size) {
