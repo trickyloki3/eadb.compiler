@@ -10,7 +10,7 @@
 int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item);
 
 int main(int argc, char * argv[]) {
-	global_mode = EATHENA;
+	global_mode = RATHENA;
 	int sqlite_status = 0;
 	int script_status = 0;
 	char err[BUF_SIZE];
@@ -20,7 +20,7 @@ int main(int argc, char * argv[]) {
 	int block_cnt = 0;
 	block_r * block_list;
 	global_db = init_ic_db("athena.db");
-
+	memset(&item, 0, sizeof(ic_item_t));
 	sqlite_status = load_by_mode(global_mode, global_db, &item);
 	while(sqlite_status == SQLITE_ROW) {
 		block_cnt = 0;
@@ -50,6 +50,8 @@ int main(int argc, char * argv[]) {
 		sqlite_status = load_by_mode(global_mode, global_db, &item);
 	}
 	deit_ic_db(global_db);
+	if(item.name != NULL) free(item.name);
+	if(item.script != NULL) free(item.script);
 	return 0;
 }
 

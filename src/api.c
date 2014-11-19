@@ -667,6 +667,8 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->he_item_iterate);
 	sqlite3_finalize(db->blk_search);
 	sqlite3_finalize(db->var_search);
+	sqlite3_finalize(db->bonus_search);
+	sqlite3_finalize(db->status_search);
 	sqlite3_finalize(db->ea_const_search);
 	sqlite3_finalize(db->ra_const_search);
 	sqlite3_finalize(db->he_const_search);
@@ -691,8 +693,9 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ea_pet_id_search);
 	sqlite3_finalize(db->ra_pet_id_search);
 	sqlite3_finalize(db->he_pet_id_search);
-	sqlite3_finalize(db->bonus_search);
-	sqlite3_finalize(db->status_search);
+	sqlite3_finalize(db->ea_prod_lv_search);
+	sqlite3_finalize(db->ra_prod_lv_search);
+	sqlite3_finalize(db->he_prod_lv_search);
 	sqlite3_close_v2(db->db);
 	free(db);
 }

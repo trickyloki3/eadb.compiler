@@ -18,7 +18,7 @@ void block_deinit(block_r * block, int size) {
         if(block[i].arg != NULL)
             free(block[i].arg);
         if(block[i].type != NULL) {
-            free(block[i].type->keyword);
+            if(block[i].type->keyword != NULL) free(block[i].type->keyword);
             free(block[i].type);
         }
         deepfreenamerange(block[i].logic_tree);
@@ -160,7 +160,7 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
             block_init->ptr_cnt = 0;
             block_init->type = calloc(1, sizeof(block_t));
             *(block_init->type) = info;
-            block_init->type->keyword = info.keyword;
+            block_init->type->keyword = convert_string(info.keyword);
             block_init->link = block_dep-1;  /* -1 to indicate top-level */
             /* set the first argument pointer */
             block_init->ptr[0] = block_init->arg;
@@ -264,7 +264,7 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
 
    /* failed to parse any blocks */
    if(block_size <= 0) return SCRIPT_PASSED;
-
+   if(info.keyword != NULL) free(info.keyword);
    /* readjust size when recursively parsing */
    *block_cnt = block_size - block_dep;
    return SCRIPT_PASSED;
@@ -491,7 +491,7 @@ int script_translate(block_r * block, int size) {
             case 46: translate_write(&block[i], "Change to Summer Outfit when worn.", 1); break;                    /* setoption */
             case 47: translate_write(&block[i], "Summon a creature to mount. [Work for all classes].", 1); break;   /* setmounting */
             case 48: translate_write(&block[i], "Summon a falcon. [Also use to recall falcon].", 1); break;         /* setfalcon */
-            case 49: translate_getrandgroup(&block[i], block[i].type->id); break;                                   /* getgroupitem */
+            /*case 49: translate_getrandgroup(&block[i], block[i].type->id); break;*/                                   /* getgroupitem */
             case 50: translate_write(&block[i], "Reset all status points.", 1); break;                              /* resetstatus */
             case 52: translate_write(&block[i], "Play another background song.", 1); break;                         /* playbgm */
             case 53: translate_transform(&block[i]); break;                                                         /* transform */
@@ -1030,23 +1030,27 @@ int translate_id(block_r * block, char * expr, int flag) {
     exit_null("null paramater", 2, block, expr);
     id = convert_integer(expr, 10);
 
-    if(!mob_id_search(global_db, &mob, id, global_mode) && flag & 0x01) {
+    if(flag & 0x01 && !mob_id_search(global_db, &mob, id, global_mode)) {
         translate_write(block, mob.iro, 0x01);
+        if(mob.iro != NULL) free(mob.iro);
         return SCRIPT_PASSED;
     }
 
-    if(!item_name_id_search(global_db, &item, id, global_mode) && flag & 0x02) {
+    if(flag & 0x02 && !item_name_id_search(global_db, &item, id, global_mode)) {
         translate_write(block, item.name, 0x01);
+        if(item.name != NULL) free(item.name);
         return SCRIPT_PASSED;
     }
 
-    if(!merc_id_search(global_db, &merc, id, global_mode) && flag & 0x04) {
+    if(flag & 0x04 && !merc_id_search(global_db, &merc, id, global_mode)) {
         translate_write(block, merc.name, 0x01);
+        if(merc.name != NULL) free(merc.name);
         return SCRIPT_PASSED;
     }
 
-    if(!pet_id_search(global_db, &pet, id, global_mode) && flag & 0x08) {
+    if(flag & 0x08 && !pet_id_search(global_db, &pet, id, global_mode)) {
         translate_write(block, pet.pet_name, 0x01);
+        if(pet.pet_name != NULL) free(pet.pet_name);
         return SCRIPT_PASSED;
     }
 
@@ -1336,7 +1340,7 @@ int translate_status(block_r * block, int handler) {
     if(off <= 0) exit_buf("failed to translate status %s of item %d", block->ptr[0], block->item_id);
     printf("[%d]%s\n", block->item_id, buf);
     translate_write(block, buf, 1);
-
+    if(const_info.name != NULL) free(const_info.name);
     if(status.scstr != NULL) free(status.scstr);
     if(status.scfmt != NULL) free(status.scfmt);
     if(status.scend != NULL) free(status.scend);
@@ -1360,6 +1364,7 @@ int translate_status_end(block_r * block) {
     offset = sprintf(buf,"Cures %s status effect.", status.scend);
     buf[offset] = '\0';
     translate_write(block, buf, 1);
+    if(const_info.name != NULL) free(const_info.name);
     if(status.scstr != NULL) free(status.scstr);
     if(status.scfmt != NULL) free(status.scfmt);
     if(status.scend != NULL) free(status.scend);
@@ -1551,7 +1556,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     int expr_sub_level = 0;
 
     int op_cnt = 0;
-    int set_match = 0;
     const_t const_info;
     var_t var_info;
 
@@ -1713,13 +1717,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                             if(temp_node != NULL) freenamerange(temp_node->cond);
                             temp_node->cond = copy_any_tree(block->depd[j]->logic_tree);
                         }
-                        set_match = 1;
                     }
                 }
-                if(set_match == 0)
-                    exit_buf("invalid identifier %s in item %d", expr[i], block->item_id);
-                else
-                    set_match = 0;
             }
             op_cnt++;
         

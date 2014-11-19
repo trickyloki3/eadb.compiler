@@ -2,3 +2,5 @@ eadb/
 radb/
 hedb/
 obj/
+lib/
+*.o
