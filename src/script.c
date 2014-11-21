@@ -1338,7 +1338,7 @@ int translate_status(block_r * block, int handler) {
 
     /* write the translation only the buffer is filled with something */
     if(off <= 0) exit_buf("failed to translate status %s of item %d", block->ptr[0], block->item_id);
-    printf("[%d]%s\n", block->item_id, buf);
+    
     translate_write(block, buf, 1);
     if(const_info.name != NULL) free(const_info.name);
     if(status.scstr != NULL) free(status.scstr);

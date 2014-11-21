@@ -175,7 +175,7 @@ int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, in
 			}
 			sqlite3_reset(db->ra_const_search);
 			break;
-		case HECULES: 
+		case HERCULES: 
 			sqlite3_clear_bindings(db->he_const_search);
 			sqlite3_bind_text(db->he_const_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
 			status = sqlite3_step(db->he_const_search);
@@ -225,7 +225,7 @@ int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int 
 			}
 			sqlite3_reset(db->ra_skill_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_skill_search);
 			sqlite3_bind_text(db->he_skill_search, 1, name, strlen(name), SQLITE_STATIC);
 			status = sqlite3_step(db->he_skill_search);
@@ -276,7 +276,7 @@ int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mo
 			}
 			sqlite3_reset(db->ra_skill_id_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_skill_id_search);
 			sqlite3_bind_int(db->he_skill_id_search, 1, id);
 			status = sqlite3_step(db->he_skill_id_search);
@@ -322,7 +322,7 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 			}
 			sqlite3_reset(db->ra_item_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_item_search);
 			sqlite3_bind_text(db->he_item_search, 1, name, strlen(name), SQLITE_STATIC);
 			status = sqlite3_step(db->he_item_search);
@@ -364,7 +364,7 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 			}
 			sqlite3_reset(db->ra_item_id_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_item_id_search);
 			sqlite3_bind_int(db->he_item_id_search, 1, id);
 			status = sqlite3_step(db->he_item_id_search);
@@ -406,7 +406,7 @@ int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode) {
 			}
 			sqlite3_reset(db->ra_mob_id_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_mob_id_search);
 			sqlite3_bind_int(db->he_mob_id_search, 1, id);
 			status = sqlite3_step(db->he_mob_id_search);
@@ -448,7 +448,7 @@ int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode) {
 			}
 			sqlite3_reset(db->ra_merc_id_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_merc_id_search);
 			sqlite3_bind_int(db->he_merc_id_search, 1, id);
 			status = sqlite3_step(db->he_merc_id_search);
@@ -490,7 +490,7 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 			}
 			sqlite3_reset(db->ra_pet_id_search);
 			break;
-		case HECULES:
+		case HERCULES:
 			sqlite3_clear_bindings(db->he_pet_id_search);
 			sqlite3_bind_int(db->he_pet_id_search, 1, id);
 			status = sqlite3_step(db->he_pet_id_search);
@@ -593,7 +593,7 @@ int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int lv, int mode) 
 			}
 			sqlite3_reset(db->ra_prod_lv_search);
 			break;
-		case HECULES: 
+		case HERCULES: 
 			sqlite3_clear_bindings(db->he_prod_lv_search);
 			sqlite3_bind_int(db->he_prod_lv_search, 1, lv);
 			status = sqlite3_step(db->he_prod_lv_search);

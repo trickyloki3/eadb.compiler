@@ -367,9 +367,9 @@
 	char * array_to_string_cnt(char *, int *, int);
 	int array_field_cnt(char *);
 
-	#define EATHENA 0
-	#define RATHENA 1
-	#define HECULES 2
+	#define EATHENA 0x1
+	#define RATHENA 0x2
+	#define HERCULES 0x4
 	#define ea_item_itr "SELECT * FROM ea_item;"
 	#define ra_item_itr "SELECT * FROM ra_item;"
 	#define he_item_itr "SELECT * FROM he_item;"

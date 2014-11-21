@@ -10,6 +10,18 @@
 int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item);
 
 int main(int argc, char * argv[]) {
+	if(argc >= 2) {
+		global_mode = (ncs_strcmp(argv[1],"rathena") == 0) ? RATHENA : 
+					  (((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
+					  ((ncs_strcmp(argv[1],"hercules") == 0) ? HERCULES : -1)));
+
+		if(global_mode != RATHENA || global_mode != EATHENA || global_mode != HERCULES)
+			exit_abt("invalid database type; only 'eathena', 'rathena', or 'hercules' is supported.");
+
+	} else {
+		exit_buf("syntax '%s [eathena | rathena | hercules]'", argv[0]);
+	}
+
 	global_mode = RATHENA;
 	int sqlite_status = 0;
 	int script_status = 0;
@@ -31,12 +43,12 @@ int main(int argc, char * argv[]) {
 			/* perform lexical analysis */
 			script_status = script_lexical(&token_list, item.script);
 			if(script_status == SCRIPT_FAILED) {
-				exit_abt(build_buffer(err, "lokic: failed to perform lexical analysis on item %d\n", item.id));
+				exit_abt(build_buffer(err, "failed to perform lexical analysis on item %d\n", item.id));
 			} else {
 				/* perform structual analysis */
 				script_status = script_analysis(&token_list, block_list, &block_cnt, item.id, 0x01, 0);
 				if(script_status == SCRIPT_FAILED) {
-					exit_abt(build_buffer(err, "lokic: failed to perform structual analysis on item %d\n", item.id));
+					exit_abt(build_buffer(err, "failed to perform structual analysis on item %d\n", item.id));
 				} else if(block_cnt > 0) {
 					/* perform set block inheritance */
 					script_dependencies(block_list, block_cnt);
@@ -78,7 +90,7 @@ int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item) {
 				item->script = convert_string((const char *) sqlite3_column_text(db->ra_item_iterate, 20));
 			}
 			break;
-		case HECULES:
+		case HERCULES:
 			status = sqlite3_step(db->he_item_iterate);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->he_item_iterate, 0);
