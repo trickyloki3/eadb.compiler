@@ -26,6 +26,8 @@ int main(int argc, char * argv[]) {
 	int sqlite_status = 0;
 	int script_status = 0;
 	char err[BUF_SIZE];
+	char translate[BUF_SIZE];
+	int translate_off = 0;
 
 	ic_item_t item;
 	token_r token_list;
@@ -61,7 +63,9 @@ int main(int argc, char * argv[]) {
 					/* translate the script */
 					script_translate(block_list, block_cnt);
 					/* generate the translation */
-					script_generate(&item, block_list, block_cnt);
+					translate_off = 0;
+					script_generate(block_list, block_cnt, translate, &translate_off);
+					printf("%s\n", translate);
 					if(DEBUG) block_debug_dump_all(block_list, block_cnt, file_dgb);
 				}
 			}

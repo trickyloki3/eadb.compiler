@@ -1275,6 +1275,8 @@ int translate_status(block_r * block, int handler) {
     int i;
     char buf[BUF_SIZE];
     int off = 0;
+    char * item_script = NULL;
+
     ic_item_t item;
     status_t status;
     const_t const_info;
@@ -1350,18 +1352,26 @@ int translate_status(block_r * block, int handler) {
                 (status.voff_ptr[3] > 0)?block->eng[status.voff_ptr[3]]:""); break;
             default: exit_abt("invalid status offset");
         }
+
+        /* write the duration */
+        off += sprintf(buf + off, " [Duration: %s]",block->eng[1]);
+
+        if(block->ptr_cnt == 5) {
+            evaluate_expression(block, block->ptr[3], 100, 0); /* rate */
+            evaluate_expression(block, block->ptr[4], 1, 0);    /* flag */
+            off += sprintf(buf + off," [Chance: %s%%]",block->eng[block->eng_cnt - 2]);
+        }
     } else {
-
+        if(item_name_id_search(global_db, &item, convert_integer(block->ptr[2], 10), global_mode))
+            exit_buf("failed to search item id %d in item %s (sc_itemscript)", block->item_id, block->ptr[2]);
+        item_script = script_compile(item.script, item.id);
+        off += sprintf(buf + off, "Status Effect [Duration: %s]\n%s", block->eng[1], item_script);
+        free(item_script);
+        if(item.name != NULL) free(item.name);
+        if(item.script != NULL) free(item.script);
     }
 
-    /* write the duration */
-    off += sprintf(buf+off," [Duration: %s]",block->eng[1]);
-
-    if(block->ptr_cnt == 5) {
-        evaluate_expression(block, block->ptr[3], 100, 0); /* rate */
-        evaluate_expression(block, block->ptr[4], 1, 0);    /* flag */
-        off += sprintf(buf + off," [Chance: %s%%]",block->eng[block->eng_cnt - 2]);
-    }
+    
 
     /* write the translation only the buffer is filled with something */
     if(off <= 0) exit_buf("failed to translate status %s of item %d", block->ptr[0], block->item_id);
@@ -2711,13 +2721,12 @@ int check_node_affinity(node_t * node) {
     return affinity;
 }
 
-int script_generate(ic_item_t * item, block_r * block, int block_cnt) {
+int script_generate(block_r * block, int block_cnt, char * buffer, int * offset) {
     int i = 0;
     int j = 0;
     int k = 0;
     int nest = 0;
     char buf[BUF_SIZE];
-    fprintf(stdout, "%d:%s\n", item->id, item->name);
 
     for(i = 0; i < block_cnt; i++) {
         /* calculate linkage nest */
@@ -2742,21 +2751,21 @@ int script_generate(ic_item_t * item, block_r * block, int block_cnt) {
         switch(block[i].type->id) {
             /* blocks that might have other blocks linked to it */
             case 5: /* autobonus */
-                fprintf(stdout,"%sAdd %s chance to limit break for %s when attacking.%s\n", 
+                *offset += sprintf(buffer + *offset, "%sAdd %s chance to limit break for %s when attacking.%s\n", 
                     buf, block[i].eng[1], block[i].eng[3], (block[i].eng[4] != NULL)?block[i].eng[4]:"");
                 break;
             case 6: /* autobonus2 */
-                fprintf(stdout,"%sAdd %s chance to armor break for %s when attacked.%s\n", 
+                *offset += sprintf(buffer + *offset, "%sAdd %s chance to armor break for %s when attacked.%s\n", 
                     buf, block[i].eng[1], block[i].eng[3], (block[i].eng[4] != NULL)?block[i].eng[4]:"");
                 break;
             case 7: /* autobonus3 */
-                fprintf(stdout,"%sAdd %s chance to limit break for %s when using skill %s.\n", 
+                *offset += sprintf(buffer + *offset, "%sAdd %s chance to limit break for %s when using skill %s.\n", 
                     buf, block[i].eng[1], block[i].eng[3], (block[i].eng[4] != NULL)?block[i].eng[4]:"");
                 break;
             case 26: /* if */
             case 27: /* else */
                 if(block[i].logic_tree != NULL)
-                    script_generate_cond(block[i].logic_tree, stdout, buf);
+                    script_generate_cond(block[i].logic_tree, stdout, buf, buffer, offset);
                 break;
             /* ignore these blocks, since they have no interpretation */
             case 28: /* set */
@@ -2768,14 +2777,14 @@ int script_generate(ic_item_t * item, block_r * block, int block_cnt) {
             /* general block writing */
             default:
                 if(block[i].desc != NULL)
-                    fprintf(stdout, "%s%s\n", buf, block[i].desc);
+                    *offset += sprintf(buffer + *offset, "%s%s\n", buf, block[i].desc);
                 else {
-                    if(block[i].eng_cnt > 0 && block[i].eng[block[i].eng_cnt - 1] != NULL) {
-                        fprintf(stdout,"%s%s\n", buf, block[i].eng[block[i].eng_cnt - 1]);
-                    }
+                    if(block[i].eng_cnt > 0 && block[i].eng[block[i].eng_cnt - 1] != NULL)
+                        *offset += sprintf(buffer + *offset, "%s%s\n", buf, block[i].eng[block[i].eng_cnt - 1]);
                 }
         }
     }
+    buffer[*offset] = '\0';
     return SCRIPT_PASSED;
 }
 
@@ -2792,25 +2801,25 @@ int script_linkage_count(block_r * block, int start) {
 }
 
 /* primary multiplexer for translating logic tree */
-void script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix) {
+void script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * buffer, int * offset) {
     char buf[BUF_SIZE];
-    int offset = 0;
+    int off = 0;
     memset(buf, 0, BUF_SIZE);
 
     switch(tree->type) {
         /* each OR node means that multiple conditions */
         case LOGIC_NODE_OR: 
-            if(tree->left != NULL) script_generate_cond(tree->left, stm, prefix);
-            if(tree->right != NULL) script_generate_cond(tree->right, stm, prefix);
+            if(tree->left != NULL) script_generate_cond(tree->left, stm, prefix, buffer, offset);
+            if(tree->right != NULL) script_generate_cond(tree->right, stm, prefix, buffer, offset);
             break;
         /* write each OR's children (non-OR node) as separate condition */
         case LOGIC_NODE_AND: 
-            script_generate_and_chain(tree, buf, &offset);
-            fprintf(stm,"%sCondition [%s]\n", prefix, buf);
+            script_generate_and_chain(tree, buf, &off);
+            *offset += sprintf(buffer + *offset, "%sCondition [%s]\n", prefix, buf);
             break;
         case LOGIC_NODE_COND: 
-            script_generate_cond_node(tree, buf, &offset);
-            fprintf(stm,"%sCondition [%s]\n", prefix, buf);
+            script_generate_cond_node(tree, buf, &off);
+            *offset += sprintf(buffer + *offset, "%sCondition [%s]\n", prefix, buf);
             break;
         default: break;
     }
@@ -3029,4 +3038,22 @@ void script_generate_cond_generic(char * buf, int * offset, int val_min, int val
         sprintf(buf + *offset, "%s %d ~ %d", template, val_min, val_max) :
         sprintf(buf + *offset, "%s %d", template, val_min);
     buf[*offset] = '\0';
+}
+
+
+char * script_compile(char * script, int item_id) {
+    int block_cnt = 0;
+    int script_status = 0;
+    token_r token_list;
+    block_r * block_list = NULL;
+    char buffer[BUF_SIZE];
+    int offset = 0;
+    block_init(&block_list, BLOCK_SIZE);
+    script_lexical(&token_list, script);
+    script_analysis(&token_list, block_list, &block_cnt, item_id, 0x01, 0);
+    script_dependencies(block_list, block_cnt);
+    script_translate(block_list, block_cnt);
+    script_generate(block_list, block_cnt, buffer, &offset);
+    block_deinit(block_list, block_cnt);
+    return convert_string(buffer);
 }

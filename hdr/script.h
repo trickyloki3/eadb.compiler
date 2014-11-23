@@ -99,7 +99,8 @@
     int script_dependencies(block_r *, int);
     int script_translate(block_r *, int);
     int script_extend(block_r *, char *);
-    int script_generate(ic_item_t *, block_r *, int);
+    int script_generate(block_r *, int, char *, int *);
+    char * script_compile(char *, int);
 
     /* script translation functions */
     int translate_bonus(block_r *, int);
@@ -205,7 +206,7 @@
     char * check_node_range_float_percentage(node_t *, char *, int);
     int check_node_affinity(node_t *);
     int script_linkage_count(block_r *, int);
-    void script_generate_cond(logic_node_t *, FILE *, char *);
+    void script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
     void script_generate_and_chain(logic_node_t *, char *, int *);
     void script_generate_cond_node(logic_node_t *, char *, int *);
     void script_generate_class_generic(char *, int *, range_t *, char *);
