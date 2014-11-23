@@ -7,8 +7,8 @@ void he_item_db_insert(struct lt_db_t *, he_item_t *);
 void load_he_item(const char *, struct lt_db_t *);
 
 int main(int argc, char * argv[]) {
-	struct lt_db_t * db = init_db("athena.db");
-	load_he_item("hedb/item_db.conf", db);
+	struct lt_db_t * db = init_db("athena.db", INITIALIZE_SKIP);
+	load_he_item("../hedb/item_db.conf", db);
 	deit_db(db);
 	exit(EXIT_SUCCESS);
 }

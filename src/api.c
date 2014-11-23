@@ -303,33 +303,42 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_item_search);
 			sqlite3_bind_text(db->ea_item_search, 1, name, strlen(name), SQLITE_STATIC);
+			sqlite3_bind_text(db->he_item_search, 2, name, strlen(name), SQLITE_STATIC);
 			status = sqlite3_step(db->ea_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ea_item_search, 0);
 				if(item->name != NULL) free(item->name);
 				item->name = convert_string((const char *) sqlite3_column_text(db->ea_item_search, 1));
+				if(item->script != NULL) free(item->script);
+				item->script = convert_string((const char *) sqlite3_column_text(db->ea_item_search, 2));
 			}
 			sqlite3_reset(db->ea_item_search);
 			break;
 		case RATHENA:
 			sqlite3_clear_bindings(db->ra_item_search);
 			sqlite3_bind_text(db->ra_item_search, 1, name, strlen(name), SQLITE_STATIC);
+			sqlite3_bind_text(db->he_item_search, 2, name, strlen(name), SQLITE_STATIC);
 			status = sqlite3_step(db->ra_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ra_item_search, 0);
 				if(item->name != NULL) free(item->name);
 				item->name = convert_string((const char *) sqlite3_column_text(db->ra_item_search, 1));
+				if(item->script != NULL) free(item->script);
+				item->script = convert_string((const char *) sqlite3_column_text(db->ra_item_search, 2));
 			}
 			sqlite3_reset(db->ra_item_search);
 			break;
 		case HERCULES:
 			sqlite3_clear_bindings(db->he_item_search);
 			sqlite3_bind_text(db->he_item_search, 1, name, strlen(name), SQLITE_STATIC);
+			sqlite3_bind_text(db->he_item_search, 2, name, strlen(name), SQLITE_STATIC);
 			status = sqlite3_step(db->he_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->he_item_search, 0);
 				if(item->name != NULL) free(item->name);
 				item->name = convert_string((const char *) sqlite3_column_text(db->he_item_search, 1));
+				if(item->script != NULL) free(item->script);
+				item->script = convert_string((const char *) sqlite3_column_text(db->he_item_search, 2));
 			}
 			sqlite3_reset(db->he_item_search);
 			break;
@@ -350,6 +359,8 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 				item->id = sqlite3_column_int(db->ea_item_id_search, 0);
 				if(item->name != NULL) free(item->name);
 				item->name = convert_string((const char *) sqlite3_column_text(db->ea_item_id_search, 1));
+				if(item->script != NULL) free(item->script);
+				item->script = convert_string((const char *) sqlite3_column_text(db->ea_item_id_search, 2));
 			}
 			sqlite3_reset(db->ea_item_id_search);
 			break;
@@ -361,6 +372,8 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 				item->id = sqlite3_column_int(db->ra_item_id_search, 0);
 				if(item->name != NULL) free(item->name);
 				item->name = convert_string((const char *) sqlite3_column_text(db->ra_item_id_search, 1));
+				if(item->script != NULL) free(item->script);
+				item->script = convert_string((const char *) sqlite3_column_text(db->ra_item_id_search, 2));
 			}
 			sqlite3_reset(db->ra_item_id_search);
 			break;
@@ -372,6 +385,8 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 				item->id = sqlite3_column_int(db->he_item_id_search, 0);
 				if(item->name != NULL) free(item->name);
 				item->name = convert_string((const char *) sqlite3_column_text(db->he_item_id_search, 1));
+				if(item->script != NULL) free(item->script);
+				item->script = convert_string((const char *) sqlite3_column_text(db->he_item_id_search, 2));
 			}
 			sqlite3_reset(db->he_item_id_search);
 			break;
@@ -632,13 +647,14 @@ void free_prod(ic_produce_t * prod) {
 	}
 }
 
-int status_id_search(struct ic_db_t * db, status_t * status, int id) {
+int status_id_search(struct ic_db_t * db, status_t * status, int id, char * name) {
 	int code = 0;
 	array_w array;
 	exit_null("db is null.", 1, db);
 	exit_null("status is null.", 1, status);
 	sqlite3_clear_bindings(db->status_search);
 	sqlite3_bind_int(db->status_search, 1, id);
+	sqlite3_bind_text(db->status_search, 2, name, strlen(name), SQLITE_STATIC);
 	code = sqlite3_step(db->status_search);
 	if(code == SQLITE_ROW) {
 		if(status->scstr != NULL) free(status->scstr);
@@ -701,7 +717,7 @@ void deit_ic_db(struct ic_db_t * db) {
 }
 
 
-struct lt_db_t * init_db(const char * filename) {
+struct lt_db_t * init_db(const char * filename, int flag) {
 	int status = 0;
 	sqlite3 * db;
 	
@@ -712,12 +728,14 @@ struct lt_db_t * init_db(const char * filename) {
 	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
 
 	/* item tables */
-	sqlite3_exec(db, he_item_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_item_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_item_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_item_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_item_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_item_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, he_item_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_item_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_item_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_item_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_item_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_item_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, he_item_ins, strlen(he_item_ins) + 1, &lt_db->he_item_insert, NULL);
 	sqlite3_prepare_v2(db, ea_item_ins, strlen(ea_item_ins) + 1, &lt_db->ea_item_insert, NULL);
 	sqlite3_prepare_v2(db, ra_item_ins, strlen(ra_item_ins) + 1, &lt_db->ra_item_insert, NULL);
@@ -726,12 +744,14 @@ struct lt_db_t * init_db(const char * filename) {
 	assert(lt_db->ra_item_insert != NULL);
 
 	/* pet tables */
-	sqlite3_exec(db, ea_pet_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_pet_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_pet_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_pet_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, he_pet_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_pet_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_pet_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_pet_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_pet_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_pet_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, he_pet_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_pet_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, ea_pet_ins, strlen(ea_pet_ins) + 1, &lt_db->ea_pet_insert, NULL);
 	sqlite3_prepare_v2(db, ra_pet_ins, strlen(ra_pet_ins) + 1, &lt_db->ra_pet_insert, NULL);
 	sqlite3_prepare_v2(db, he_pet_ins, strlen(he_pet_ins) + 1, &lt_db->he_pet_insert, NULL);
@@ -740,12 +760,14 @@ struct lt_db_t * init_db(const char * filename) {
 	assert(lt_db->he_pet_insert != NULL);
 
 	/* merc table */
-	sqlite3_exec(db, ea_merc_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_merc_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_merc_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_merc_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, he_merc_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_merc_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_merc_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_merc_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_merc_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_merc_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, he_merc_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_merc_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, ea_merc_ins, strlen(ea_merc_ins) + 1, &lt_db->ea_merc_insert, NULL);
 	sqlite3_prepare_v2(db, ra_merc_ins, strlen(ra_merc_ins) + 1, &lt_db->ra_merc_insert, NULL);
 	sqlite3_prepare_v2(db, he_merc_ins, strlen(he_merc_ins) + 1, &lt_db->he_merc_insert, NULL);
@@ -754,12 +776,14 @@ struct lt_db_t * init_db(const char * filename) {
 	assert(lt_db->he_merc_insert != NULL);
 
 	/* produce table */
-	sqlite3_exec(db, ea_prod_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_prod_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_prod_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_prod_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, he_prod_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_prod_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_prod_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_prod_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_prod_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_prod_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, he_prod_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_prod_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, ea_prod_ins, strlen(ea_prod_ins) + 1, &lt_db->ea_prod_insert, NULL);
 	sqlite3_prepare_v2(db, ra_prod_ins, strlen(ra_prod_ins) + 1, &lt_db->ra_prod_insert, NULL);
 	sqlite3_prepare_v2(db, he_prod_ins, strlen(he_prod_ins) + 1, &lt_db->he_prod_insert, NULL);
@@ -768,12 +792,14 @@ struct lt_db_t * init_db(const char * filename) {
 	assert(lt_db->he_prod_insert != NULL);
 
 	/* skill table */
-	sqlite3_exec(db, ea_skill_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_skill_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_skill_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_skill_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, he_skill_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_skill_tbl, NULL, NULL, NULL);	
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_skill_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_skill_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_skill_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_skill_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, he_skill_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_skill_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, ea_skill_ins, strlen(ea_skill_ins) + 1, &lt_db->ea_skill_insert, NULL);
 	sqlite3_prepare_v2(db, ra_skill_ins, strlen(ra_skill_ins) + 1, &lt_db->ra_skill_insert, NULL);
 	sqlite3_prepare_v2(db, he_skill_ins, strlen(he_skill_ins) + 1, &lt_db->he_skill_insert, NULL);
@@ -782,12 +808,14 @@ struct lt_db_t * init_db(const char * filename) {
 	assert(lt_db->he_skill_insert != NULL);
 
 	/* mob table */
-	sqlite3_exec(db, ea_mob_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_mob_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_mob_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_mob_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, he_mob_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_mob_tbl, NULL, NULL, NULL);	
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_mob_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_mob_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_mob_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_mob_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, he_mob_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_mob_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, ea_mob_ins, strlen(ea_mob_ins) + 1, &lt_db->ea_mob_insert, NULL);
 	sqlite3_prepare_v2(db, ra_mob_ins, strlen(ra_mob_ins) + 1, &lt_db->ra_mob_insert, NULL);
 	sqlite3_prepare_v2(db, he_mob_ins, strlen(he_mob_ins) + 1, &lt_db->he_mob_insert, NULL);
@@ -796,36 +824,46 @@ struct lt_db_t * init_db(const char * filename) {
 	assert(lt_db->he_mob_insert != NULL);
 
 	/* block table */
-	sqlite3_exec(db, itm_block_des, NULL, NULL, NULL);
-	sqlite3_exec(db, itm_block_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, itm_block_des, NULL, NULL, NULL);
+		sqlite3_exec(db, itm_block_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, itm_block_ins, strlen(itm_block_ins) + 1, &lt_db->block_insert, NULL);
 	assert(lt_db->block_insert != NULL);
 
 	/* var table */
-	sqlite3_exec(db, itm_var_des, NULL, NULL, NULL);
-	sqlite3_exec(db, itm_var_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, itm_var_des, NULL, NULL, NULL);
+		sqlite3_exec(db, itm_var_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, itm_var_ins, strlen(itm_var_ins) + 1, &lt_db->var_insert, NULL);
 	assert(lt_db->var_insert != NULL);
 
 	/* status table */
-	sqlite3_exec(db, itm_status_des, NULL, NULL, NULL);
-	sqlite3_exec(db, itm_status_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, itm_status_des, NULL, NULL, NULL);
+		sqlite3_exec(db, itm_status_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, itm_status_ins, strlen(itm_status_ins) + 1, &lt_db->status_insert, NULL);
 	assert(lt_db->status_insert != NULL);
 
 	/* bonus table */
-	sqlite3_exec(db, itm_bonus_des, NULL, NULL, NULL);
-	sqlite3_exec(db, itm_bonus_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, itm_bonus_des, NULL, NULL, NULL);
+		sqlite3_exec(db, itm_bonus_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, itm_bonus_ins, strlen(itm_bonus_ins) + 1, &lt_db->bonus_insert, NULL);
 	assert(lt_db->bonus_insert != NULL);
 
 	/* const table */
-	sqlite3_exec(db, ea_const_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ea_const_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_const_des, NULL, NULL, NULL);
-	sqlite3_exec(db, ra_const_tbl, NULL, NULL, NULL);
-	sqlite3_exec(db, he_const_des, NULL, NULL, NULL);
-	sqlite3_exec(db, he_const_tbl, NULL, NULL, NULL);
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_const_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_const_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_const_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_const_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, he_const_des, NULL, NULL, NULL);
+		sqlite3_exec(db, he_const_tbl, NULL, NULL, NULL);
+	}
 	sqlite3_prepare_v2(db, ea_const_ins, strlen(ea_const_ins) + 1, &lt_db->ea_const_insert, NULL);
 	sqlite3_prepare_v2(db, ra_const_ins, strlen(ra_const_ins) + 1, &lt_db->ra_const_insert, NULL);
 	sqlite3_prepare_v2(db, he_const_ins, strlen(he_const_ins) + 1, &lt_db->he_const_insert, NULL);

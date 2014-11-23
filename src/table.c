@@ -56,6 +56,10 @@ char * eff_tbl(int i) {
 		case 8: return "blind";
 		case 9: return "bleeding";
 		case 10: return "deadly Poison";
+		case 11: return "fear";
+		case 12: return "cold";
+		case 13: return "burning";
+		case 14: return "deep sleep";
 		case 309: return "fear";
 		case 310: return "burning";
 		default: return "error";

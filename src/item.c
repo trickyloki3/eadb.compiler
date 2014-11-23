@@ -5,6 +5,7 @@
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
  */
+#define DEBUG 1
 #include "api.h"
 #include "script.h"
 int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item);
@@ -15,14 +16,13 @@ int main(int argc, char * argv[]) {
 					  (((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
 					  ((ncs_strcmp(argv[1],"hercules") == 0) ? HERCULES : -1)));
 
-		if(global_mode != RATHENA || global_mode != EATHENA || global_mode != HERCULES)
+		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES)
 			exit_abt("invalid database type; only 'eathena', 'rathena', or 'hercules' is supported.");
 
 	} else {
 		exit_buf("syntax '%s [eathena | rathena | hercules]'", argv[0]);
 	}
 
-	global_mode = RATHENA;
 	int sqlite_status = 0;
 	int script_status = 0;
 	char err[BUF_SIZE];
@@ -31,13 +31,19 @@ int main(int argc, char * argv[]) {
 	token_r token_list;
 	int block_cnt = 0;
 	block_r * block_list;
+	FILE * file_dgb;
+	if(DEBUG) {
+		file_dgb = fopen("block_dump.txt", "w");
+		if(file_dgb == NULL) exit_abt("failed to open block_dump.txt.");
+	}
+
 	global_db = init_ic_db("athena.db");
 	memset(&item, 0, sizeof(ic_item_t));
 	sqlite_status = load_by_mode(global_mode, global_db, &item);
 	while(sqlite_status == SQLITE_ROW) {
 		block_cnt = 0;
 		block_init(&block_list, BLOCK_SIZE);
-		if(strlen(item.script) > 0) {
+		if(item.script != NULL && strlen(item.script) > 0) {
 			/*printf("%d:%s;%s\n", item.id, item.name, item.script); fflush(NULL);*/
 
 			/* perform lexical analysis */
@@ -54,6 +60,9 @@ int main(int argc, char * argv[]) {
 					script_dependencies(block_list, block_cnt);
 					/* translate the script */
 					script_translate(block_list, block_cnt);
+					/* generate the translation */
+					script_generate(&item, block_list, block_cnt);
+					if(DEBUG) block_debug_dump_all(block_list, block_cnt, file_dgb);
 				}
 			}
 		}
@@ -62,6 +71,7 @@ int main(int argc, char * argv[]) {
 		sqlite_status = load_by_mode(global_mode, global_db, &item);
 	}
 	deit_ic_db(global_db);
+	if(DEBUG) fclose(file_dgb);
 	if(item.name != NULL) free(item.name);
 	if(item.script != NULL) free(item.script);
 	return 0;

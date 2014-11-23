@@ -76,6 +76,7 @@ bonus, bHPrecovRate,3,"%s natural HP recovery.",1,p,1,0
 bonus, bSPrecovRate,3,"%s natural HP recovery.",1,p,1,0
 bonus2, bHPVanishRate,24,"%s chance to drain %s HP of opponent with each physical attack.",2,o,p,2,0,1
 bonus2, bSPVanishRate,24,"%s chance to drain %s SP of opponent with each physical attack.",2,o,p,2,0,1
+bonus3, bSPVanishRate,24,"%s chance to drain %s SP of opponent with each physical attack.",3,o,p,t,3,0,1,2
 bonus2, bHPDrainRate,24,"%s chance to absorb %s HP on physical attack.",2,o,p,2,0,1
 bonus2, bSPDrainRate,24,"%s chance to absorb %s SP on physical attack.",2,o,p,2,0,1
 bonus3, bSPDrainRate,25,"%s chance to absorb %s SP on physical attack.",3,o,p,h,3,0,2,1
@@ -134,6 +135,7 @@ bonus3, bAddMonsterIdDropItem,28,"%s chance of dropping '%s' from each %s defeat
 bonus2, bAddMonsterDropItemGroup,26,"%s chance of dropping an item in %s from each monster defeated.",2,y,q,2,1,0
 bonus3, bAddMonsterDropItemGroup,28,"%s chance of dropping an item in %s from each %s monster defeated.",3,y,r,q,3,2,0,1
 bonus3, bAddClassDropItem,28,"%s chance of dropping %s from %s enemy.",3,m,c,q,3,2,0,1
+bonus, bAddMonsterDropChainItem,0,"Able to get item of chain type %s",1,n,1,0
 
 bonus, bDefEle,0,"Endow armor with %s element.",1,l,1,0
 bonus, bAtkEle,0,"Endow weapon with %s element.",1,l,1,0

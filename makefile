@@ -16,7 +16,7 @@ HE_LIBDIR = ../lib/hconfig.a
 all: conv item
 
 memchk: item
-	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./item
+	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./item hercules
 
 hitem: src/he_item.c $(OBJ)
 	$(CCompiler) -c -o he_item.o $(CFlags) src/he_item.c $(HDRDIR) $(HE_HDRDIR)
@@ -38,6 +38,10 @@ lclean:
 	mkdir obj
 	rm -f conv
 	rm -f item
+	rm -f hitem
+	rm -f he_item.o
+	rm -f block_dump.txt
+	rm -f itemc_mem_check.log
 
 wclean:
 	rmdir obj /S /Q

@@ -412,7 +412,7 @@
 
 	typedef struct {
       int tag;         /* in-house identification */
-      char * id;           /* identifier string */
+      char * id;       /* identifier string */
       int type;        /* type of identifer and flags */
       int vflag;
       int fflag;

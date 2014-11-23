@@ -287,8 +287,8 @@
 	#define itm_var_des		"DROP TABLE IF EXISTS var;"
 
 	#define itm_status_tbl	"CREATE TABLE IF NOT EXISTS status("\
-							"scid INTEGER PRIMARY KEY, scstr TEXT, type INTEGER, scfmt TEXT, "\
-							"scend TEXT, vcnt INTEGER, vmod TEXT, voff TEXT);"
+							"scid INTEGER, scstr TEXT, type INTEGER, scfmt TEXT, "\
+							"scend TEXT, vcnt INTEGER, vmod TEXT, voff TEXT, PRIMARY KEY(scid, scstr));"
 	#define itm_status_ins	"INSERT INTO status VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
 	#define itm_status_des	"DROP TABLE IF EXISTS status;"
 
@@ -345,7 +345,9 @@
 		sqlite3_stmt * he_const_insert;
 	};
 
-	struct lt_db_t * init_db(const char *);
+	#define INITIALIZE_DB 0x1
+	#define INITIALIZE_SKIP 0x2
+	struct lt_db_t * init_db(const char *, int);
 	void load_ea_item(struct lt_db_t *, ea_item_t *, int);
 	void load_ra_item(struct lt_db_t *, ra_item_t *, int);
 	void load_pet(struct lt_db_t *, sqlite3_stmt *, pet_t *, int);
@@ -371,8 +373,8 @@
 	#define RATHENA 0x2
 	#define HERCULES 0x4
 	#define ea_item_itr "SELECT * FROM ea_item;"
-	#define ra_item_itr "SELECT * FROM ra_item;"
-	#define he_item_itr "SELECT * FROM he_item;"
+	#define ra_item_itr "SELECT * FROM ra_item WHERE Id = 14597;"
+	#define he_item_itr "SELECT * FROM he_item WHERE Id = 14597;"
 	#define block_search "SELECT * FROM block WHERE bk_kywd = ? COLLATE NOCASE;"
 	#define var_search_sql "SELECT * FROM var WHERE id = ? COLLATE NOCASE;"
 	#define ea_const_search_sql "SELECT * FROM ea_const WHERE name = ? COLLATE NOCASE;"
@@ -384,12 +386,12 @@
 	#define ea_skill_search_id_sql "SELECT id, max, name, desc FROM ea_skill WHERE id = ? COLLATE NOCASE;"
 	#define ra_skill_search_id_sql "SELECT id, max, name, desc FROM ra_skill WHERE id = ? COLLATE NOCASE;"
 	#define he_skill_search_id_sql "SELECT id, max, name, desc FROM he_skill WHERE id = ? COLLATE NOCASE;"
-	#define ea_item_search_sql "SELECT id, eathena FROM ea_item WHERE eathena = ? COLLATE NOCASE;"
-	#define ra_item_search_sql "SELECT id, eathena FROM ra_item WHERE eathena = ? COLLATE NOCASE;"
-	#define he_item_search_sql "SELECT Id, Name FROM he_item WHERE Name = ? COLLATE NOCASE;"
-	#define ea_item_search_id_sql "SELECT id, eathena FROM ea_item WHERE id = ? COLLATE NOCASE;"
-	#define ra_item_search_id_sql "SELECT id, eathena FROM ra_item WHERE id = ? COLLATE NOCASE;"
-	#define he_item_search_id_sql "SELECT Id, Name FROM he_item WHERE Id = ? COLLATE NOCASE;"
+	#define ea_item_search_sql "SELECT id, eathena, script FROM ea_item WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
+	#define ra_item_search_sql "SELECT id, eathena, script FROM ra_item WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
+	#define he_item_search_sql "SELECT Id, Name, Script FROM he_item WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"
+	#define ea_item_search_id_sql "SELECT id, eathena, script FROM ea_item WHERE id = ? COLLATE NOCASE;"
+	#define ra_item_search_id_sql "SELECT id, eathena, script FROM ra_item WHERE id = ? COLLATE NOCASE;"
+	#define he_item_search_id_sql "SELECT Id, Name, Script FROM he_item WHERE Id = ? COLLATE NOCASE;"
 	#define ea_mob_search_sql "SELECT id, iro FROM ea_mob WHERE id = ?;"
 	#define ra_mob_search_sql "SELECT id, iro FROM ra_mob WHERE id = ?;"
 	#define he_mob_search_sql "SELECT id, iro FROM he_mob WHERE id = ?;"
@@ -403,7 +405,7 @@
 	#define ea_prod_search_sql "SELECT * FROM ea_prod WHERE item_lv = ?;"
 	#define ra_prod_search_sql "SELECT * FROM ra_prod WHERE item_lv = ?;"
 	#define he_prod_search_sql "SELECT * FROM he_prod WHERE item_lv = ?;"
-	#define status_search_sql "SELECT * FROM status WHERE scid = ?;"
+	#define status_search_sql "SELECT * FROM status WHERE scid = ? AND scstr = ? COLLATE NOCASE;"
 
 	struct ic_db_t {
 		sqlite3 * db;
@@ -456,7 +458,7 @@
 	int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode);
 	int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char * attribute);
 	int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int id, int mode);
-	int status_id_search(struct ic_db_t * db, status_t * status, int id);
+	int status_id_search(struct ic_db_t * db, status_t * status, int id, char * name);
 	void free_prod(ic_produce_t * prod);
 	void deit_ic_db(struct ic_db_t *);
 #endif
