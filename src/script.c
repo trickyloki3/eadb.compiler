@@ -455,7 +455,7 @@ int script_translate(block_r * block, int size) {
             case 17: translate_getitem(&block[i], block[i].type->id); break;                                        /* getitem */
             case 18: translate_rentitem(&block[i], block[i].type->id); break;                                       /* rentitem */
             case 19: translate_delitem(&block[i], block[i].type->id); break;                                        /* delitem */
-            /*case 20: translate_getrandgroup(&block[i], block[i].type->id); break;*/                               /* getrandgroupitem */
+            case 20: translate_getrandgroup(&block[i], block[i].type->id); break;                                   /* getrandgroupitem */
             case 23: translate_write(&block[i], "Set new font.", 1); break;                                         /* setfont */
             case 24: translate_bstore(&block[i], block[i].type->id); break;                                         /* buyingstore */
             case 25: translate_bstore(&block[i], block[i].type->id); break;                                         /* searchstores */
@@ -491,7 +491,7 @@ int script_translate(block_r * block, int size) {
             case 46: translate_write(&block[i], "Change to Summer Outfit when worn.", 1); break;                    /* setoption */
             case 47: translate_write(&block[i], "Summon a creature to mount. [Work for all classes].", 1); break;   /* setmounting */
             case 48: translate_write(&block[i], "Summon a falcon. [Also use to recall falcon].", 1); break;         /* setfalcon */
-            /*case 49: translate_getrandgroup(&block[i], block[i].type->id); break;*/                               /* getgroupitem */
+            case 49: translate_getrandgroup(&block[i], block[i].type->id); break;                                   /* getgroupitem */
             case 50: translate_write(&block[i], "Reset all status points.", 1); break;                              /* resetstatus */
             case 52: translate_write(&block[i], "Play another background song.", 1); break;                         /* playbgm */
             case 53: translate_transform(&block[i]); break;                                                         /* transform */
@@ -573,8 +573,12 @@ int translate_getitem(block_r * block, int handler) {
         }
     } else {
         translate_item(block, block->eng[0]);
-        offset = sprintf(buf, "Retrieve %s %s.", block->eng[1], block->eng[2]);
+        if(block->eng_cnt < 4)
+            offset = sprintf(buf, "Retrieve %s %s.", block->eng[1], block->eng[2]);
+        else
+            offset = sprintf(buf, "Retrieve %s %s.", block->eng[2], block->eng[3]);
     }
+
     buf[offset] = '\0';
     translate_write(block, buf, 1);
     return SCRIPT_PASSED;
@@ -606,21 +610,27 @@ int translate_getrandgroup(block_r * block, int handler) {
     char buf[BUF_SIZE];
 
     /* getrandgroupitem for has weir call syntax */
-    if(block->ptr_cnt >= 2) {
-        evaluate_expression(block, block->ptr[0], 1, 0);
-        evaluate_expression(block, block->ptr[1], 1, 0);
-        /* translate the group constant */
-        translate_const(block, block->eng[0], 0x20);
-        offset = sprintf(buf,"Collect %s item(s) from %s.", block->eng[1], block->eng[2]);
-    } else {
-        /* require parsing the paramaters out */
+    if(handler == 20) {
+        if(block->ptr_cnt == 1) {
+            script_extend(block, block->ptr[0]);
+            translate_const(block, block->ptr[1], 0x20);
+            evaluate_expression(block, block->ptr[2], 1, 0);
+            offset = sprintf(buf,"Collect %s item%s from %s.", block->eng[1], (convert_integer(block->eng[1], 10) > 1)?"s":"", block->eng[0]);
+        } else if(block->ptr_cnt == 2) {
+            evaluate_expression(block, block->ptr[0], 1, 0);
+            evaluate_expression(block, block->ptr[1], 1, 0);
+            translate_const(block, block->eng[0], 0x20);
+            offset = sprintf(buf,"Collect %s item%s from %s.", block->eng[1], (convert_integer(block->eng[2], 10) > 1)?"s":"", block->eng[2]);
+        }
+    } else if(handler == 49) {
         script_extend(block, block->ptr[0]);
         evaluate_expression(block, block->ptr[1], 1, 0);
-        evaluate_expression(block, block->ptr[2], 1, 0);
-        /* translate the group constant */
         translate_const(block, block->eng[0], 0x20);
-        offset = sprintf(buf,"Collect %s item(s) from %s.", block->eng[1], block->eng[2]);
+        offset = sprintf(buf,"Collect 1 item from %s.", block->eng[1]);
+    } else {
+        exit_abt("invalid code path");
     }
+
     buf[offset] = '\0';
     translate_write(block, buf, 1);
     return SCRIPT_PASSED;
@@ -816,7 +826,8 @@ int translate_bonus(block_r * block, int flag) {
 int translate_const(block_r * block, char * expr, int flag) {
     int tbl_index = 0;
     char * tbl_str = NULL;
- 
+    char buffer[BUF_SIZE];
+
     const_t const_info;
     memset(&const_info, 0, sizeof(const_t));
     exit_null("null paramater", 2, block, expr);
@@ -840,11 +851,23 @@ int translate_const(block_r * block, char * expr, int flag) {
         tbl_str = size_tbl(tbl_index);
     if(flag & 0x10) 
         tbl_str = class_tbl(tbl_index);
-    if(flag & 0x20) 
-        tbl_str = itemgrp_tbl(tbl_index);
+    if(flag & 0x20) {
+        if(global_mode == EATHENA) {
+            ea_item_group_search(global_db, tbl_index, global_mode, buffer);
+            tbl_str = buffer;
+        } else if(global_mode == RATHENA) {
+            ra_item_group_search(global_db, tbl_index, global_mode, buffer);
+            tbl_str = buffer;
+        }
+        /*tbl_str = itemgrp_tbl(tbl_index);*/
+    }
  
+    /* indicate unresolve item group; there are many I am too lazy to add */
+    if(strcmp(tbl_str,"error") == 0)
+        printf("warning: failed to map constant %d in item %d on flag %d\n", tbl_index, block->item_id, flag);
+
     /* check for invalid index */
-    if(tbl_str == NULL || strcmp(tbl_str,"error") == 0)
+    if(tbl_str == NULL)
         exit_abt(build_buffer(global_err, "failed to resolve constant %s for %d", expr, block->item_id));
  
     /* write the tbl_str */
@@ -1077,10 +1100,8 @@ int translate_item(block_r * block, char * expr) {
     /* search the const id if identifer */
     else if(isalpha(expr[0])) {
         memset(&item, 0, sizeof(ic_item_t));
-        if(item_name_search(global_db, &item, expr, global_mode)) {
-            printf("failed to search item name: %s", expr);
+        if(item_name_search(global_db, &item, expr, global_mode))
             return translate_const(block, expr, 0x20);
-        }
         translate_write(block, item.name, 0x01);
         if(item.name != NULL) free(item.name);
         if(item.script != NULL) free(item.script);
@@ -1292,7 +1313,7 @@ int translate_status(block_r * block, int handler) {
                 if(status_id_search(global_db, &status, const_info.value + 1, block->ptr[0]))
                     exit_buf("failed to search status id %d name %s in item %d", const_info.value, block->ptr[0], block->item_id);
         } else {
-            exit_buf("failed to search status id %d in item %d", const_info.value, block->item_id);
+            exit_buf("failed to search status id %d name %s in item %d", const_info.value, block->ptr[0], block->item_id);
         }
     }
     /* evaluate the duration of the status */
@@ -1881,6 +1902,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
 
     /* parsing variables */
     int subexpr_level = 0;
+    /*char buffer[BUF_SIZE];*/
 
     /* operand variables */
     node_t * resultOne = NULL;
@@ -1891,9 +1913,11 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     ic_skill_t skill;
     ic_item_t item;
     const_t const_info;
+    ea_item_group_t ea_item_group;
     memset(&skill, 0, sizeof(ic_skill_t));
     memset(&item, 0, sizeof(ic_item_t));
     memset(&const_info, 0, sizeof(const_t));
+    memset(&ea_item_group, 0, sizeof(ea_item_group_t));
 
     if(ncs_strcmp(func,"getskilllv") == 0) {
         /* search by skill id or skill constant for max level */
@@ -2130,9 +2154,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 argument_write(node, item.name);
             }
         }
+    } else if(ncs_strcmp(func,"groupranditem") == 0) {
+        /*if(const_keyword_search(global_db, &const_info, expr[start], global_mode))
+            exit_abt(build_buffer(global_err, "failed to search for const %s in %d", expr[start], block->item_id));
+        ea_item_group_search(global_db, &ea_item_group, const_info.value, global_mode, buffer);
+        block->flag |= 0x04;*/
+        translate_write(block, expr[start], 1);
     } else {
-        fprintf(stderr,"warn[%d]: unable to search for handler for function %s.\n", block->item_id, func);
-        return SCRIPT_FAILED;
+        exit_buf("failed to search function handler for %s in item %d", func, block->item_id);
     }
 
     if(resultOne != NULL) node_free(resultOne);
@@ -2987,6 +3016,9 @@ void script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
                 break;
             default: exit_buf("invalid logic node;%d;%s", var.tag, tree->name); break;
         }
+        if(var.id != NULL) free(var.id);
+        if(item.name != NULL) free(item.name);
+        if(item.script != NULL) free(item.script);
         return;
     }
 
@@ -2997,16 +3029,13 @@ void script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
         else
             *offset = sprintf(buf + *offset,"%s Lv.%d", skill.desc, val_max);
         buf[*offset] = '\0';
+        if(skill.name != NULL) free(skill.name);
+        if(skill.desc != NULL) free(skill.desc);
         return;
     } else {
         exit_abt(build_buffer(global_err, "failed to search skill %s", tree->name));
     }
 
-    if(var.id != NULL) free(var.id);
-    if(skill.name != NULL) free(skill.name);
-    if(skill.desc != NULL) free(skill.desc);
-    if(item.name != NULL) free(item.name);
-    if(item.script != NULL) free(item.script);
     dmprange(tree->range, stdout, "nim");
 }
 
@@ -3040,10 +3069,8 @@ void script_generate_cond_generic(char * buf, int * offset, int val_min, int val
     buf[*offset] = '\0';
 }
 
-
 char * script_compile(char * script, int item_id) {
     int block_cnt = 0;
-    int script_status = 0;
     token_r token_list;
     block_r * block_list = NULL;
     char buffer[BUF_SIZE];

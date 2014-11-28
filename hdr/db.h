@@ -451,6 +451,27 @@
 		int type;
 	} const_t;
 
+	typedef struct {
+		int group_id;
+		int item_id;
+		int rate;
+	} ea_item_group_t;
+
+	typedef struct {
+		int group_id;
+		char * group_name;
+		int item_id;
+		int rate;
+	} ra_item_group_t;
+
+	typedef struct {
+		int group_id;
+		char * group_name;
+		int item_id;
+		char * item_name;
+		int rate;
+	} ra_item_package_t;
+
 	load_cb_t * ea_item_load();
 	load_cb_t * ra_item_load();
 	load_cb_t * pet_load();
@@ -466,6 +487,9 @@
 	load_cb_t * status_load();
 	load_cb_t * bonus_load();
 	load_cb_t * const_load();
+	load_cb_t * ea_item_group_load();
+	load_cb_t * ra_item_group_load();
+	load_cb_t * ra_item_package_load();
 	int ea_load_column(void *, int, int, char *);
 	int ra_load_column(void *, int, int, char *);
 	int pet_load_column(void *, int, int, char *);
@@ -481,9 +505,13 @@
 	int status_load_column(void *, int, int, char *);
 	int bonus_load_column(void *, int, int, char *);
 	int const_load_column(void *, int, int, char *);
+	int ea_item_group_load_column(void *, int, int, char *);
+	int ra_item_group_load_column(void *, int, int, char *);
+	int ra_item_package_column(void *, int, int, char *);
 	int is_row_sentinel(char);
 	int is_row_sentinel_comment(char);
 	int is_row_sentinel_semicolon(char);
+	int is_row_sentinel_whitespace(char);
 	int is_row_delimiter(char);
 	int is_row_delimiter_comment(char);
 	int is_row_delimiter_semicolon(char);
@@ -502,4 +530,6 @@
 	void var_dealloc(void *, int);
 	void status_dealloc(void *, int);
 	void bonus_dealloc(void *, int);
+	void ra_item_group_dealloc(void *, int);
+	void ra_item_package_dealloc(void *, int);
 #endif

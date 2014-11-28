@@ -4,7 +4,7 @@
    #include <stdlib.h>
    #include "util.h"
    #include "range.h"
-   #define BUF_SIZE 4096
+   #define BUF_SIZE 8192
    #define SUB_SIZE 256
    #define LOGIC_NODE_COND 1
    #define LOGIC_NODE_AND  2

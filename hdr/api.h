@@ -11,6 +11,7 @@
 	#include "util.h"
 	#include "sqlite3.h"
 	#include <assert.h>
+ 	
 	#define ea_item_tbl "CREATE TABLE IF NOT EXISTS ea_item(" \
 						"id INTEGER PRIMARY KEY, aegis TEXT, eathena TEXT," \
 						"type INTEGER, buy INTEGER, sell INTEGER, weight INTEGER, " \
@@ -309,6 +310,14 @@
 	#define ra_const_des 	"DROP TABLE IF EXISTS ra_const;"
 	#define he_const_des 	"DROP TABLE IF EXISTS he_const;"
 	
+	#define ea_item_group_tbl "CREATE TABLE IF NOT EXISTS ea_item_group(group_id INTEGER, item_id INTEGER, rate INTEGER, PRIMARY KEY(group_id, item_id));"
+	#define ea_item_group_ins "INSERT INTO ea_item_group VALUES(?, ?, ?);"
+	#define ea_item_group_des "DROP TABLE IF NOT EXISTS ea_item_group;"
+
+	#define ra_item_group_tbl "CREATE TABLE IF NOT EXISTS ra_item_group(group_id INTEGER, item_id INTEGER, rate INTEGER);"
+	#define ra_item_group_ins "INSERT INTO ra_item_group VALUES(?, ?, ?);"
+	#define ra_item_group_des "DROP TABLE IF NOT EXISTS ra_item_group;"
+
 	struct lt_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * he_item_insert;
@@ -343,6 +352,9 @@
 		sqlite3_stmt * ea_const_insert;
 		sqlite3_stmt * ra_const_insert;
 		sqlite3_stmt * he_const_insert;
+		/* item group */
+		sqlite3_stmt * ea_item_group_insert;
+		sqlite3_stmt * ra_item_group_insert;
 	};
 
 	#define INITIALIZE_DB 0x1
@@ -363,6 +375,9 @@
 	void load_status(struct lt_db_t * sql, sqlite3_stmt * ins, status_t * db, int size);
 	void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size);
 	void load_const(struct lt_db_t * sql, sqlite3_stmt * ins, const_t * db, int size);
+	void load_ea_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ea_item_group_t * db, int size);
+	void load_ra_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_group_t * db, int size);
+	void load_ra_item_package(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_package_t * db, int size);
 	void deit_db(struct lt_db_t *);
 	void trace_db(void *, const char *);
 	char * array_to_string(char *, int *);
@@ -380,6 +395,7 @@
 	#define ea_const_search_sql "SELECT * FROM ea_const WHERE name = ? COLLATE NOCASE;"
 	#define ra_const_search_sql "SELECT * FROM ra_const WHERE name = ? COLLATE NOCASE;"
 	#define he_const_search_sql "SELECT * FROM he_const WHERE name = ? COLLATE NOCASE;"
+	#define ra_const_search_id_sql "SELECT * FROM ra_const WHERE value = ? COLLATE NOCASE;"
 	#define ea_skill_search_sql "SELECT id, max, name, desc FROM ea_skill WHERE name = ? COLLATE NOCASE;"
 	#define ra_skill_search_sql "SELECT id, max, name, desc FROM ra_skill WHERE name = ? COLLATE NOCASE;"
 	#define he_skill_search_sql "SELECT id, max, name, desc FROM he_skill WHERE name = ? COLLATE NOCASE;"
@@ -406,6 +422,8 @@
 	#define ra_prod_search_sql "SELECT * FROM ra_prod WHERE item_lv = ?;"
 	#define he_prod_search_sql "SELECT * FROM he_prod WHERE item_lv = ?;"
 	#define status_search_sql "SELECT * FROM status WHERE scid = ? AND scstr = ? COLLATE NOCASE;"
+	#define ea_item_group_search_sql "SELECT * FROM ea_item_group WHERE group_id = ?;"
+	#define ra_item_group_search_sql "SELECT * FROM ra_item_group WHERE group_id = ?;"
 
 	struct ic_db_t {
 		sqlite3 * db;
@@ -419,6 +437,7 @@
 		sqlite3_stmt * ea_const_search;
 		sqlite3_stmt * ra_const_search;
 		sqlite3_stmt * he_const_search;
+		sqlite3_stmt * ra_const_id_search;
 		sqlite3_stmt * ea_skill_search;
 		sqlite3_stmt * ra_skill_search;
 		sqlite3_stmt * he_skill_search;
@@ -443,12 +462,15 @@
 		sqlite3_stmt * ea_prod_lv_search;
 		sqlite3_stmt * ra_prod_lv_search;
 		sqlite3_stmt * he_prod_lv_search;
+		sqlite3_stmt * ea_item_group_search;
+		sqlite3_stmt * ra_item_group_search;
 	};
 
 	struct ic_db_t * init_ic_db(const char *);
 	int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword);
 	int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword);
 	int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, int mode);
+	int ra_const_id_search(struct ic_db_t * db, const_t * info, int id);
 	int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int mode);
 	int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mode);
 	int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mode);
@@ -459,6 +481,8 @@
 	int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char * attribute);
 	int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int id, int mode);
 	int status_id_search(struct ic_db_t * db, status_t * status, int id, char * name);
+	int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
+	int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
 	void free_prod(ic_produce_t * prod);
 	void deit_ic_db(struct ic_db_t *);
 #endif

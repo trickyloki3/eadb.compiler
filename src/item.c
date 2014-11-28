@@ -34,10 +34,14 @@ int main(int argc, char * argv[]) {
 	int block_cnt = 0;
 	block_r * block_list;
 	FILE * file_dgb;
+	FILE * file_itm;
 	if(DEBUG) {
-		file_dgb = fopen("block_dump.txt", "w");
-		if(file_dgb == NULL) exit_abt("failed to open block_dump.txt.");
+		file_dgb = fopen("dump.txt", "w");
+		if(file_dgb == NULL) exit_abt("failed to open dump.txt.");
 	}
+	/* write the item translations to item.txt */
+	file_itm = fopen("item.txt", "w");
+	if(file_itm == NULL) exit_abt("failed to open item.txt.");
 
 	global_db = init_ic_db("athena.db");
 	memset(&item, 0, sizeof(ic_item_t));
@@ -65,7 +69,8 @@ int main(int argc, char * argv[]) {
 					/* generate the translation */
 					translate_off = 0;
 					script_generate(block_list, block_cnt, translate, &translate_off);
-					printf("%s\n", translate);
+					fprintf(file_itm,"%d#\n%s#\n", block_list->item_id, translate);
+					/* translate the block list */
 					if(DEBUG) block_debug_dump_all(block_list, block_cnt, file_dgb);
 				}
 			}
@@ -76,6 +81,7 @@ int main(int argc, char * argv[]) {
 	}
 	deit_ic_db(global_db);
 	if(DEBUG) fclose(file_dgb);
+	fclose(file_itm);
 	if(item.name != NULL) free(item.name);
 	if(item.script != NULL) free(item.script);
 	return 0;

@@ -202,6 +202,45 @@ load_cb_t * const_load() {
    return interface;
 }
 
+load_cb_t * ea_item_group_load() {
+   load_cb_t * interface = calloc(1, sizeof(load_cb_t));
+   exit_null("failed to load interface", 1, interface);
+   interface->load_column = ea_item_group_load_column;
+   interface->is_row_sentinel = is_row_sentinel_whitespace;
+   interface->is_row_delimiter = is_row_delimiter_semicolon;
+   interface->flag = SKIP_NEXT_WS;
+   interface->column_count = 0;
+   interface->type_size = sizeof(ea_item_group_t);
+   interface->dealloc = blank_dealloc;
+   return interface;  
+}
+
+load_cb_t * ra_item_group_load() {
+   load_cb_t * interface = calloc(1, sizeof(load_cb_t));
+   exit_null("failed to load interface", 1, interface);
+   interface->load_column = ra_item_group_load_column;
+   interface->is_row_sentinel = is_row_sentinel_whitespace;
+   interface->is_row_delimiter = is_row_delimiter_semicolon;
+   interface->flag = SKIP_NEXT_WS;
+   interface->column_count = 0;
+   interface->type_size = sizeof(ra_item_group_t);
+   interface->dealloc = ra_item_group_dealloc;
+   return interface;  
+}
+
+load_cb_t * ra_item_package_load() {
+   load_cb_t * interface = calloc(1, sizeof(load_cb_t));
+   exit_null("failed to load interface", 1, interface);
+   interface->load_column = ra_item_package_column;
+   interface->is_row_sentinel = is_row_sentinel_whitespace;
+   interface->is_row_delimiter = is_row_delimiter_semicolon;
+   interface->flag = SKIP_NEXT_WS;
+   interface->column_count = 0;
+   interface->type_size = sizeof(ra_item_package_t);
+   interface->dealloc = ra_item_package_dealloc;
+   return interface;  
+}
+
 int ea_load_column(void * db, int row, int col, char * val) {
    ea_item_t * item_row = &((ea_item_t *) db)[row];
    switch(col) {
@@ -658,8 +697,43 @@ int const_load_column(void * db, int row, int col, char * val) {
    return 0;
 }
 
+
+int ea_item_group_load_column(void * db, int row, int col, char * val) {
+   ea_item_group_t * ea_item_group = &((ea_item_group_t *) db)[row];
+   switch(col) {
+      case 0: ea_item_group->group_id = convert_integer(val, 10); break;
+      case 1: ea_item_group->item_id = convert_integer(val, 10); break;
+      case 2: ea_item_group->rate = convert_integer(val, 10); break;
+      default: exit_abt("invalid column");
+   }
+   return 0;  
+}
+
+int ra_item_group_load_column(void * db, int row, int col, char * val) {
+   ra_item_group_t * ra_item_group = &((ra_item_group_t *) db)[row];
+   switch(col) {
+      case 0: ra_item_group->group_name = convert_string(val); break;
+      case 1: ra_item_group->item_id = convert_integer(val, 10); break;
+      case 2: ra_item_group->rate = convert_integer(val, 10); break;
+      default: printf("%d;%s\n", col, val); exit_abt("invalid column");
+   }
+   return 0;
+}
+
+int ra_item_package_column(void * db, int row, int col, char * val) {
+   ra_item_package_t * ra_item_package = &((ra_item_package_t *) db)[row];
+   switch(col) {
+      case 0: ra_item_package->group_name = convert_string(val); break;
+      case 1: ra_item_package->item_name = convert_string(val); break;
+      case 2: ra_item_package->rate = convert_integer(val, 10); break;
+      default: break;
+   }
+   return 0;
+}
+
 int is_row_sentinel(char buf) { return (buf == '\n' || buf == '\0'); }
 int is_row_delimiter(char buf) { return (buf == ',' || buf == '\n' || buf == '\0'); }
+int is_row_sentinel_whitespace(char buf) { return (buf == '\n' || buf == '\0' || isspace(buf)); }
 int is_row_sentinel_comment(char buf) { return (buf == '\n' || buf == '\0' || buf == '/'); }
 int is_row_delimiter_comment(char buf) { return (buf == ',' || buf == '\n' || buf == '\0' || buf == '/'); }
 int is_row_sentinel_semicolon(char buf) { return (buf == '\n' || buf == '\0' || buf == ';'); }
@@ -820,6 +894,24 @@ void bonus_dealloc(void * mem, int cnt) {
       if(db[i].desc != NULL) free(db[i].desc);
       if(db[i].type != NULL) free(db[i].type);
       if(db[i].order != NULL) free(db[i].order);
+   }
+   free(db);
+}
+
+void ra_item_group_dealloc(void * mem, int cnt) {
+   int i = 0;
+   ra_item_group_t * db = (ra_item_group_t *) mem;
+   for(i = 0; i < cnt; i++)
+      if(db[i].group_name != NULL) free(db[i].group_name);
+   free(db);
+}
+
+void ra_item_package_dealloc(void * mem, int cnt) {
+   int i = 0;
+   ra_item_package_t * db = (ra_item_package_t *) mem;
+   for(i = 0; i < cnt; i++) {
+      if(db[i].group_name != NULL) free(db[i].group_name);
+      if(db[i].item_name != NULL) free(db[i].item_name);
    }
    free(db);
 }

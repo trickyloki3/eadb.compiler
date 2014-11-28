@@ -19,7 +19,7 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	exit_null(buf, 1, ic_db);
 
 	/* open connection to sqlite3 database */
-	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE, NULL);
 	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
 
 	/* debug errors */
@@ -60,6 +60,9 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	sqlite3_prepare_v2(db, ra_prod_search_sql, strlen(ra_prod_search_sql) + 1, &ic_db->ra_prod_lv_search, NULL);
 	sqlite3_prepare_v2(db, he_prod_search_sql, strlen(he_prod_search_sql) + 1, &ic_db->he_prod_lv_search, NULL);
 	sqlite3_prepare_v2(db, status_search_sql, strlen(status_search_sql) + 1, &ic_db->status_search, NULL);
+	sqlite3_prepare_v2(db, ea_item_group_search_sql, strlen(ea_item_group_search_sql) + 1, &ic_db->ea_item_group_search, NULL);
+	sqlite3_prepare_v2(db, ra_item_group_search_sql, strlen(ra_item_group_search_sql) + 1, &ic_db->ra_item_group_search, NULL);
+	sqlite3_prepare_v2(db, ra_const_search_id_sql, strlen(ra_const_search_id_sql) + 1, &ic_db->ra_const_id_search, NULL);
 	assert(ic_db->ea_item_iterate != NULL);
 	assert(ic_db->ra_item_iterate != NULL);
 	assert(ic_db->he_item_iterate != NULL);
@@ -94,6 +97,9 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	assert(ic_db->ra_prod_lv_search != NULL);
 	assert(ic_db->he_prod_lv_search != NULL);
 	assert(ic_db->status_search != NULL);
+	assert(ic_db->ea_item_group_search != NULL);
+	assert(ic_db->ra_item_group_search != NULL);
+	assert(ic_db->ra_const_id_search != NULL);
 	/* return api container */
 	ic_db->db = db;
 	return ic_db;
@@ -189,6 +195,23 @@ int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, in
 			break;
 	}
 	return (status == SQLITE_ROW) ? 0 : -1;
+}
+
+int ra_const_id_search(struct ic_db_t * db, const_t * info, int id) {
+	int status = 0;
+	exit_null("db is null.", 1, db);
+	exit_null("info is null.", 1, info);
+	sqlite3_clear_bindings(db->ra_const_id_search);
+	sqlite3_bind_int(db->ra_const_id_search, 1, id);
+	status = sqlite3_step(db->ra_const_id_search);
+	if(status == SQLITE_ROW) {
+		if(info->name != NULL) free(info->name);
+		info->name = convert_string((const char *) sqlite3_column_text(db->ra_const_id_search, 0));
+		info->value = sqlite3_column_int(db->ra_const_id_search, 1);
+		info->type = sqlite3_column_int(db->ra_const_id_search, 2);
+	}
+	sqlite3_reset(db->ra_const_id_search);
+	return (status == SQLITE_ROW) ? 0 : -1;	
 }
 
 int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int mode) {
@@ -317,7 +340,7 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 		case RATHENA:
 			sqlite3_clear_bindings(db->ra_item_search);
 			sqlite3_bind_text(db->ra_item_search, 1, name, strlen(name), SQLITE_STATIC);
-			sqlite3_bind_text(db->he_item_search, 2, name, strlen(name), SQLITE_STATIC);
+			sqlite3_bind_text(db->ra_item_search, 2, name, strlen(name), SQLITE_STATIC);
 			status = sqlite3_step(db->ra_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ra_item_search, 0);
@@ -636,6 +659,112 @@ int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int lv, int mode) 
 	return (status == SQLITE_ROW) ? 0 : -1;
 }
 
+int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
+	int status = 0;
+	int offset = 0;
+	int count = 0;		/* allow up to a certain amount of items */
+	ic_item_t item;
+	ea_item_group_t item_group;
+	exit_null("db is null.", 1, db);
+	sqlite3_clear_bindings(db->ea_item_group_search);
+	sqlite3_bind_int(db->ea_item_group_search, 1, id);
+	memset(&item, 0, sizeof(ic_item_t));
+	status = sqlite3_step(db->ea_item_group_search);
+	offset += sprintf(buffer + offset,"item from the list of ");
+	while(status == SQLITE_ROW) {
+		item_group.group_id = sqlite3_column_int(db->ea_item_group_search, 0);
+		item_group.item_id = sqlite3_column_int(db->ea_item_group_search, 1);
+		item_group.rate = sqlite3_column_int(db->ea_item_group_search, 2);
+		/* map the item id to item name */
+		if(item.name != NULL) {
+			free(item.name);
+			item.name = NULL;
+		}
+		if(item.script != NULL) {
+			free(item.script);
+			item.script = NULL;
+		}
+		item_name_id_search(db, &item, item_group.item_id, mode);
+
+		if(item.name != NULL && count < 5) {
+			offset += sprintf(buffer + offset,"%s, ", item.name);
+			count++;
+		}
+		status = sqlite3_step(db->ea_item_group_search);
+	}
+
+	/* make a shorten list or report error */
+	if(offset > 2) {
+		if(count < 5) {
+			buffer[offset - 2] = '\0';
+		} else {
+			offset += sprintf(buffer + offset, "..., %s", item.name);
+			buffer[offset] = '\0';
+		}
+	} else {
+		offset += sprintf(buffer + offset, "error");
+		buffer[offset] = '\0';
+	}
+
+	sqlite3_reset(db->ea_item_group_search);
+	if(item.name != NULL) free(item.name);
+	if(item.script != NULL) free(item.script);
+	return (status == SQLITE_DONE) ? 0 : -1;	
+}
+
+int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
+	int status = 0;
+	int offset = 0;
+	int count = 0;		/* allow up to a certain amount of items */
+	ic_item_t item;
+	ra_item_group_t item_group;
+	exit_null("db is null.", 1, db);
+	sqlite3_clear_bindings(db->ra_item_group_search);
+	sqlite3_bind_int(db->ra_item_group_search, 1, id);
+	memset(&item, 0, sizeof(ic_item_t));
+	status = sqlite3_step(db->ra_item_group_search);
+	if(status == SQLITE_ROW) offset += sprintf(buffer + offset,"the list of ");
+	while(status == SQLITE_ROW) {
+		item_group.group_id = sqlite3_column_int(db->ra_item_group_search, 0);
+		item_group.item_id = sqlite3_column_int(db->ra_item_group_search, 1);
+		item_group.rate = sqlite3_column_int(db->ra_item_group_search, 2);
+		/* map the item id to item name */
+		if(item.name != NULL) {
+			free(item.name);
+			item.name = NULL;
+		}
+		if(item.script != NULL) {
+			free(item.script);
+			item.script = NULL;
+		}
+		item_name_id_search(db, &item, item_group.item_id, mode);
+
+		if(item.name != NULL && count < 5) {
+			offset += sprintf(buffer + offset,"%s, ", item.name);
+			count++;
+		}
+		status = sqlite3_step(db->ra_item_group_search);
+	}
+
+	/* make a shorten list or report error */
+	if(offset > 2) {
+		if(count < 5) {
+			buffer[offset - 2] = '\0';
+		} else {
+			offset += sprintf(buffer + offset, "..., %s", item.name);
+			buffer[offset] = '\0';
+		}
+	} else {
+		offset += sprintf(buffer + offset, "error");
+		buffer[offset] = '\0';
+	}
+
+	sqlite3_reset(db->ra_item_group_search);
+	if(item.name != NULL) free(item.name);
+	if(item.script != NULL) free(item.script);
+	return (status == SQLITE_DONE) ? 0 : -1;	
+}
+
 void free_prod(ic_produce_t * prod) {
 	ic_produce_t * temp = NULL;
 	while(prod != NULL) {
@@ -688,6 +817,7 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ea_const_search);
 	sqlite3_finalize(db->ra_const_search);
 	sqlite3_finalize(db->he_const_search);
+	sqlite3_finalize(db->ra_const_id_search);
 	sqlite3_finalize(db->ea_skill_search);
 	sqlite3_finalize(db->ra_skill_search);
 	sqlite3_finalize(db->he_skill_search);
@@ -712,6 +842,8 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ea_prod_lv_search);
 	sqlite3_finalize(db->ra_prod_lv_search);
 	sqlite3_finalize(db->he_prod_lv_search);
+	sqlite3_finalize(db->ea_item_group_search);
+	sqlite3_finalize(db->ra_item_group_search);
 	sqlite3_close_v2(db->db);
 	free(db);
 }
@@ -726,6 +858,7 @@ struct lt_db_t * init_db(const char * filename, int flag) {
 	/* create the sqlite3 database */
 	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
+	/*sqlite3_trace(db, trace_db, NULL);*/
 
 	/* item tables */
 	if(flag & INITIALIZE_DB) {
@@ -871,6 +1004,18 @@ struct lt_db_t * init_db(const char * filename, int flag) {
 	assert(lt_db->ra_const_insert != NULL);	
 	assert(lt_db->he_const_insert != NULL);	
 
+	/* item group */
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ea_item_group_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ea_item_group_tbl, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_item_group_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_item_group_tbl, NULL, NULL, NULL);
+	}
+	sqlite3_prepare_v2(db, ea_item_group_ins, strlen(ea_item_group_ins) + 1, &lt_db->ea_item_group_insert, NULL);
+	sqlite3_prepare_v2(db, ra_item_group_ins, strlen(ra_item_group_ins) + 1, &lt_db->ra_item_group_insert, NULL);
+	assert(lt_db->ea_item_group_insert != NULL);
+	assert(lt_db->ra_item_group_insert != NULL);
+
 	lt_db->db = db;
 	return lt_db;
 }
@@ -901,6 +1046,8 @@ void deit_db(struct lt_db_t * db) {
 	sqlite3_finalize(db->ea_const_insert);
 	sqlite3_finalize(db->ra_const_insert);
 	sqlite3_finalize(db->he_const_insert);
+	sqlite3_finalize(db->ea_item_group_insert);
+	sqlite3_finalize(db->ra_item_group_insert);
 	sqlite3_close_v2(db->db);
 	free(db);
 }
@@ -911,7 +1058,6 @@ void trace_db(void * bundle_data, const char * sql_stmt) {
 
 void load_ea_item(struct lt_db_t * sql, ea_item_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(sql->ea_item_insert);
@@ -938,7 +1084,6 @@ void load_ea_item(struct lt_db_t * sql, ea_item_t * db, int size) {
 		sqlite3_bind_text(sql->ea_item_insert, 21, db[i].onequip, strlen(db[i].onequip), SQLITE_STATIC);
 		sqlite3_bind_text(sql->ea_item_insert, 22, db[i].onunequip, strlen(db[i].onunequip), SQLITE_STATIC);
 		sqlite3_step(sql->ea_item_insert);
-		if(ret != SQLITE_OK) fprintf(stderr, "item_id: %d failed\n", db[i].id);
 		sqlite3_reset(sql->ea_item_insert);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -946,7 +1091,6 @@ void load_ea_item(struct lt_db_t * sql, ea_item_t * db, int size) {
 
 void load_ra_item(struct lt_db_t * sql, ra_item_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(sql->ra_item_insert);
@@ -974,7 +1118,6 @@ void load_ra_item(struct lt_db_t * sql, ra_item_t * db, int size) {
 		sqlite3_bind_text(sql->ra_item_insert, 22, db[i].onequip, strlen(db[i].onequip), SQLITE_STATIC);
 		sqlite3_bind_text(sql->ra_item_insert, 23, db[i].onunequip, strlen(db[i].onunequip), SQLITE_STATIC);
 		sqlite3_step(sql->ra_item_insert);
-		if(ret != SQLITE_OK) fprintf(stderr, "item_id: %d failed\n", db[i].id);
 		sqlite3_reset(sql->ra_item_insert);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -982,7 +1125,6 @@ void load_ra_item(struct lt_db_t * sql, ra_item_t * db, int size) {
 
 void load_pet(struct lt_db_t * sql, sqlite3_stmt * ins, pet_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1012,7 +1154,6 @@ void load_pet(struct lt_db_t * sql, sqlite3_stmt * ins, pet_t * db, int size) {
 		sqlite3_bind_text(ins, 24, db[i].pet_script, strlen(db[i].pet_script), SQLITE_STATIC);
 		sqlite3_bind_text(ins, 25, db[i].loyal_script, strlen(db[i].loyal_script), SQLITE_STATIC);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "pet_id: %d failed\n", db[i].mob_id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1020,7 +1161,6 @@ void load_pet(struct lt_db_t * sql, sqlite3_stmt * ins, pet_t * db, int size) {
 
 void load_merc(struct lt_db_t * sql, sqlite3_stmt * ins, merc_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1051,7 +1191,6 @@ void load_merc(struct lt_db_t * sql, sqlite3_stmt * ins, merc_t * db, int size) 
 		sqlite3_bind_int(ins, 25, db[i].amotion);
 		sqlite3_bind_int(ins, 26, db[i].dmotion);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "merc_id: %d failed\n", db[i].id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1059,7 +1198,6 @@ void load_merc(struct lt_db_t * sql, sqlite3_stmt * ins, merc_t * db, int size) 
 
 void load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, produce_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	char buf[4096];
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
@@ -1073,7 +1211,6 @@ void load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, produce_t * db, int siz
 		array_to_string_cnt(buf, db[i].amount, array_field_cnt(buf) + 1);
 		sqlite3_bind_text(ins, 6, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "prod_id: %d failed\n", db[i].item_id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1081,7 +1218,6 @@ void load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, produce_t * db, int siz
 
 void ra_load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, ra_produce_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	char buf[4096];
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
@@ -1096,7 +1232,6 @@ void ra_load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, ra_produce_t * db, i
 		array_to_string_cnt(buf, db[i].amount, array_field_cnt(buf) + 1);
 		sqlite3_bind_text(ins, 7, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "prod_id: %d failed\n", db[i].item_id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1104,7 +1239,6 @@ void ra_load_prod(struct lt_db_t * sql, sqlite3_stmt * ins, ra_produce_t * db, i
 
 void ea_load_mob(struct lt_db_t * sql, sqlite3_stmt * ins, ea_mob_t * db, int size) {
 	int i = 0;
-	int ret = 0;
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1167,7 +1301,6 @@ void ea_load_mob(struct lt_db_t * sql, sqlite3_stmt * ins, ea_mob_t * db, int si
 		sqlite3_bind_int(ins, 57, db[i].dropcardid);
 		sqlite3_bind_int(ins, 58, db[i].dropcardper);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "mob_id: %d failed\n", db[i].id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1175,7 +1308,7 @@ void ea_load_mob(struct lt_db_t * sql, sqlite3_stmt * ins, ea_mob_t * db, int si
 
 void load_mob(struct lt_db_t * sql, sqlite3_stmt * ins, mob_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1237,7 +1370,6 @@ void load_mob(struct lt_db_t * sql, sqlite3_stmt * ins, mob_t * db, int size) {
 		sqlite3_bind_int(ins, 56, db[i].dropcardid);
 		sqlite3_bind_int(ins, 57, db[i].dropcardper);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "mob_id: %d failed\n", db[i].id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1245,7 +1377,7 @@ void load_mob(struct lt_db_t * sql, sqlite3_stmt * ins, mob_t * db, int size) {
 
 void load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, skill_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1267,7 +1399,6 @@ void load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, skill_t * db, int size
 		sqlite3_bind_text(ins, 16, db[i].name, strlen(db[i].name), SQLITE_STATIC);
 		sqlite3_bind_text(ins, 17, db[i].desc, strlen(db[i].desc), SQLITE_STATIC);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "skill_id: %d failed\n", db[i].id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1275,7 +1406,7 @@ void load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, skill_t * db, int size
 
 void ra_load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, ra_skill_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1298,7 +1429,6 @@ void ra_load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, ra_skill_t * db, in
 		sqlite3_bind_text(ins, 17, db[i].name, strlen(db[i].name), SQLITE_STATIC);
 		sqlite3_bind_text(ins, 18, db[i].desc, strlen(db[i].desc), SQLITE_STATIC);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "ra_skill_id: %d failed\n", db[i].id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1306,7 +1436,7 @@ void ra_load_skill(struct lt_db_t * sql, sqlite3_stmt * ins, ra_skill_t * db, in
 
 void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1314,7 +1444,6 @@ void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size
 		sqlite3_bind_text(ins, 2, db[i].bk_kywd, strlen(db[i].bk_kywd), SQLITE_STATIC);
 		sqlite3_bind_int(ins, 3, db[i].bk_flag);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "block_id: %d failed\n", db[i].bk_id);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1322,7 +1451,7 @@ void load_block(struct lt_db_t * sql, sqlite3_stmt * ins, block_t * db, int size
 
 void load_var(struct lt_db_t * sql, sqlite3_stmt * ins, var_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1334,7 +1463,6 @@ void load_var(struct lt_db_t * sql, sqlite3_stmt * ins, var_t * db, int size) {
 		sqlite3_bind_int(ins, 6, db[i].min);
 		sqlite3_bind_int(ins, 7, db[i].max);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "var_id: %d failed\n", db[i].tag);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1342,7 +1470,7 @@ void load_var(struct lt_db_t * sql, sqlite3_stmt * ins, var_t * db, int size) {
 
 void load_status(struct lt_db_t * sql, sqlite3_stmt * ins, status_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	char buf[4096];
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
@@ -1360,7 +1488,7 @@ void load_status(struct lt_db_t * sql, sqlite3_stmt * ins, status_t * db, int si
 		array_to_string_cnt(buf, db[i].voff, 4);
 		sqlite3_bind_text(ins, 8, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "status_id: %d failed\n", db[i].scid);
+
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1368,7 +1496,7 @@ void load_status(struct lt_db_t * sql, sqlite3_stmt * ins, status_t * db, int si
 
 void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	char buf[4096];
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
@@ -1384,7 +1512,6 @@ void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size
 		array_to_string_cnt(buf, db[i].order, db[i].order_cnt);
 		sqlite3_bind_text(ins, 8, buf, strlen(buf), SQLITE_TRANSIENT);	
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "bonus: %s failed\n", db[i].buff);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
@@ -1392,7 +1519,7 @@ void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size
 
 void load_const(struct lt_db_t * sql, sqlite3_stmt * ins, const_t * db, int size) {
 	int i = 0;
-	int ret = 0;
+	
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
@@ -1400,10 +1527,82 @@ void load_const(struct lt_db_t * sql, sqlite3_stmt * ins, const_t * db, int size
 		sqlite3_bind_int(ins, 2, db[i].value);
 		sqlite3_bind_int(ins, 3, db[i].type);
 		sqlite3_step(ins);
-		if(ret != SQLITE_OK) fprintf(stderr, "status: %s failed\n", db[i].name);
 		sqlite3_reset(ins);
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+}
+
+void load_ea_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ea_item_group_t * db, int size) {
+	int i = 0;
+	
+	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0; i < size; i++) {
+		sqlite3_clear_bindings(ins);
+		sqlite3_bind_int(ins, 1, db[i].group_id);
+		sqlite3_bind_int(ins, 2, db[i].item_id);
+		sqlite3_bind_int(ins, 3, db[i].rate);
+		sqlite3_step(ins);
+		sqlite3_reset(ins);
+	}
+	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+}
+
+void load_ra_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_group_t * db, int size) {
+	int i = 0;	
+	struct ic_db_t * const_db = init_ic_db("athena.db");
+	const_t const_info;
+	memset(&const_info, 0, sizeof(const_t));
+	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0; i < size; i++) {
+		sqlite3_clear_bindings(ins);
+		if(const_keyword_search(const_db, &const_info, db[i].group_name, RATHENA))
+			exit_abt("failed to resolve constant");
+		sqlite3_bind_int(ins, 1, const_info.value);
+		sqlite3_bind_int(ins, 2, db[i].item_id);
+		sqlite3_bind_int(ins, 3, db[i].rate);
+		sqlite3_step(ins);
+		sqlite3_reset(ins);
+	}
+	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	deit_ic_db(const_db);
+}
+
+void load_ra_item_package(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_package_t * db, int size) {
+	int i = 0;
+	struct ic_db_t * athena = init_ic_db("athena.db");
+	char buf[4096];
+	const_t const_info;
+	ic_item_t item_info;
+	memset(&const_info, 0, sizeof(const_t));
+	memset(&item_info, 0, sizeof(ic_item_t));
+	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0; i < size; i++) {
+		sqlite3_clear_bindings(ins);
+		if(const_keyword_search(athena, &const_info, db[i].group_name, RATHENA))
+			exit_abt("failed to resolve constant");
+		if(item_name_search(athena, &item_info, db[i].item_name, RATHENA))
+			if(item_name_id_search(athena, &item_info, convert_integer(db[i].item_name, 10), RATHENA))
+				exit_abt(build_buffer(buf,"failed to resolve item name %s.", db[i].item_name));
+		sqlite3_bind_int(ins, 1, const_info.value);
+		sqlite3_bind_int(ins, 2, item_info.id);
+		sqlite3_bind_int(ins, 3, db[i].rate);
+		sqlite3_step(ins);
+		sqlite3_reset(ins);
+		if(const_info.name != NULL) {
+			free(const_info.name);
+			const_info.name = NULL;
+		}
+		if(item_info.name != NULL) {
+			free(item_info.name);
+			item_info.name = NULL;
+		}
+		if(item_info.script != NULL) {
+			free(item_info.script);
+			item_info.script = NULL;
+		}
+	}
+	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	deit_ic_db(athena);
 }
 
 char * array_to_string(char * buffer, int * array) {

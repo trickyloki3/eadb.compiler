@@ -34,6 +34,10 @@
 62 ,        sc_plusmagicpower,  1,                                                                                         "Increase magical power. (MATK +%s)",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
 63 ,               sc_wedding,  1,                                                                                          "Play absurdly loud wedding music.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 64 ,              sc_slowdown,  1,                                                                                                   "Decrease movement speed.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+72 ,			 sc_cp_weapon,  1,                                                                                           "Prevent weapon from being strip.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+73 ,			 sc_cp_shield,  1,                                                                                           "Prevent shield from being strip.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+74 ,			  sc_cp_armor,  1,                                                                                            "Prevent armor from being strip.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+75 ,			   sc_cp_helm,  1,                                                                                             "Prevent helm from being strip.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 97 ,           sc_waterweapon,  1,                                                                                "Enchant weapon with water property. [Lv.%s]",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
 97 ,         sc_propertywater,  1,                                                                                "Enchant weapon with water property. [Lv.%s]",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
 98 ,            sc_windweapon,  1,                                                                                 "Enchant weapon with wind property. [Lv.%s]",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
@@ -151,6 +155,7 @@
 592,            sc_all_riding,  1,                                                                                       "Mount a creature depending on class.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 527,                sc_incmsp,  1,                                                                                                   "Increase Max SP by %s%%.",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
 587,              sc_moonstar,  1,                                                                                  "Probably play some stupid special effect.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+587,	     sc_strangelights,  1,                                                                                  "Probably play some stupid special effect.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 588,   sc_decoration_of_music,  1,                                                                                           "Probably play some stupid music.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 586,           sc_oktoberfest,  1,                                                                                                                    "UNKNOWN",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 // special case

@@ -21,7 +21,7 @@
 
     /* general */
     #define DEBUG_LEXICAL 0
-    #define BUF_SIZE 4096
+    #define BUF_SIZE 8192
     #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
     #define SUB_SIZE 256
@@ -80,7 +80,8 @@
        int set_max;
        int flag;                            /* multi-purpose flag for special conditions 
                                               0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
-                                              0x02 - multivalues must be tagged random */
+                                              0x02 - multivalues must be tagged random 
+                                              0x04 - use verbatim string */
        int offset;                          /* indicate the beginning of special arguments */
        logic_node_t * logic_tree;           /* calculational and dependency information */
     } block_r;
