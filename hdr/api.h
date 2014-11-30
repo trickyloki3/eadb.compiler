@@ -283,8 +283,8 @@
 
 	#define itm_var_tbl		"CREATE TABLE IF NOT EXISTS var("\
 							"tag INTEGER PRIMARY KEY, id TEXT, type INTEGER, vflag INTEGER, "\
-							"fflag INTEGER, min INTEGER, max INTEGER);"
-	#define itm_var_ins		"INSERT INTO var VALUES(?, ?, ?, ?, ?, ?, ?);"
+							"fflag INTEGER, min INTEGER, max INTEGER, str TEXT);"
+	#define itm_var_ins		"INSERT INTO var VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
 	#define itm_var_des		"DROP TABLE IF EXISTS var;"
 
 	#define itm_status_tbl	"CREATE TABLE IF NOT EXISTS status("\

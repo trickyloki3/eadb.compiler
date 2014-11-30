@@ -62,28 +62,32 @@
     } token_r;
 
     typedef struct block_r {
-       int item_id;                         /* item to which the block belongs */
-       int block_id;                        /* unique block id (index) */
-       /* arg is where all strings should be store; ptr and eng are simply pointers to the arg buffer */
-       char * arg;                          /* block raw and translation stack */
-       char * ptr[BUF_SIZE];                /* raw arguments */
-       char * eng[BUF_SIZE];                /* translated arguments */
-       char * desc;                         /* final description translation */
-       int arg_cnt;                         /* various counters for the above arrays */
-       int ptr_cnt;
-       int eng_cnt;
-       block_t * type;                      /* access to translation information in block_db.txt from block_db */
-       int link;                            /* indicate conditional linking for if-else statements (index to block) */
-       struct block_r * depd[BLOCK_SIZE];   /* indicate calculation linking for set blocks */
-       int depd_cnt;                        /* number of dependencies */
-       int set_min;                         /* SET BLOCK SPECIFIC ONLY, i.e. CHEATING! */
-       int set_max;
-       int flag;                            /* multi-purpose flag for special conditions 
-                                              0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
-                                              0x02 - multivalues must be tagged random 
-                                              0x04 - use verbatim string */
-       int offset;                          /* indicate the beginning of special arguments */
-       logic_node_t * logic_tree;           /* calculational and dependency information */
+        int item_id;                         /* item to which the block belongs */
+        int block_id;                        /* unique block id (index) */
+        /* arg is where all strings should be store; ptr and eng are simply pointers to the arg buffer */
+        char * arg;                          /* block raw and translation stack */
+        char * ptr[BUF_SIZE];                /* raw arguments */
+        char * eng[BUF_SIZE];                /* translated arguments */
+        char * exp[BUF_SIZE];                /* expression formula */
+        char * desc;                         /* final description translation */
+        int arg_cnt;                         /* various counters for the above arrays */
+        int ptr_cnt;
+        int eng_cnt;
+        int exp_cnt;
+        block_t * type;                      /* access to translation information in block_db.txt from block_db */
+        int link;                            /* indicate conditional linking for if-else statements (index to block) */
+        struct block_r * depd[BLOCK_SIZE];   /* indicate calculation linking for set blocks */
+        int depd_cnt;                        /* number of dependencies */
+        int set_min;                         /* SET BLOCK SPECIFIC ONLY, i.e. CHEATING! */
+        int set_max;
+        int set_cond_cnt;
+        char set_expr[BUF_SIZE];             /* contain the formula for the set block */
+        int flag;                            /* multi-purpose flag for special conditions 
+                                                0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
+                                                0x02 - multivalues must be tagged random 
+                                                0x04 - use verbatim string */
+        int offset;                          /* indicate the beginning of special arguments */
+        logic_node_t * logic_tree;           /* calculational and dependency information */
     } block_r;
 
     int global_mode;
@@ -132,7 +136,6 @@
     int translate_write(block_r *, char *, int);
 
     /* debug compiler by dumping the block list */
-    void block_debug_dump(block_r *, FILE *, char *);
     void block_debug_dump_all(block_r *, int, FILE *);
     void block_debug_dump_depd_recurse(struct block_r **, int, int, int, FILE *);
 
@@ -149,10 +152,21 @@
     #define PRED_LEVEL_MAX        11
     #define PRED_LEVEL_PER        5
     /* flags for keeping node or logic */
-    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x1
-    #define EVALUATE_FLAG_KEEP_NODE        0x2
+    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01
+    #define EVALUATE_FLAG_KEEP_NODE        0x02
     /* flag for evaluating relational operators to either 0 or 1 */
-    #define EVALUATE_FLAG_EXPR_BOOL        0x4
+    #define EVALUATE_FLAG_EXPR_BOOL        0x04
+    /* write the formula for expression */
+    #define EVALUATE_FLAG_WRITE_FORMULA    0x08
+    #define EVALUATE_FLAG_LIST_FORMULA     0x10
+
+    typedef struct dep {
+        char buf[BUF_SIZE];
+        int cnt;
+        int buf_ptr[BUF_SIZE];
+        int buf_ptr_cnt;
+        int complex;            /* indicate that the expression contain ?: operator which makes it complex */
+    } dep_t;
 
     /* expression handling */
     typedef struct node {
@@ -164,8 +178,14 @@
         /* dependency */
         range_t * range;        /* min max range */
         logic_node_t * cond;
+        int cond_cnt;           /* total count of variable and functions; cascaded by operator */
         /* expression translation */
+        int var_id;             /* useful for multplexing different schemes */
         char expr[BUF_SIZE];    /* verbatim translation string */
+        int expr_id;            /* the expression written by function; may contain an id */
+        /* function and variable list */
+        dep_t * dep;
+        int dep_bool;           /* indicate that ? expression exist */
         /* function argument stack */
         char args[BUF_SIZE];    /* function argument stack */
         int args_cnt;           /* function argument stack offset (top of stack) */

@@ -146,6 +146,7 @@ int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword) {
 		info->fflag = sqlite3_column_int(db->var_search, 4);
 		info->min = sqlite3_column_int(db->var_search, 5);
 		info->max = sqlite3_column_int(db->var_search, 6);
+		info->str = convert_string((const char *) sqlite3_column_text(db->var_search, 7));
 	}
 	sqlite3_reset(db->var_search);
 	return (status == SQLITE_ROW) ? 0 : -1;
@@ -1462,6 +1463,7 @@ void load_var(struct lt_db_t * sql, sqlite3_stmt * ins, var_t * db, int size) {
 		sqlite3_bind_int(ins, 5, db[i].fflag);
 		sqlite3_bind_int(ins, 6, db[i].min);
 		sqlite3_bind_int(ins, 7, db[i].max);
+		sqlite3_bind_text(ins, 8, db[i].str, strlen(db[i].str), SQLITE_STATIC);
 		sqlite3_step(ins);
 		sqlite3_reset(ins);
 	}

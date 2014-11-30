@@ -18,8 +18,6 @@ all:
 	make conv
 	make item
 	make hitem
-	./conv all
-	./hitem
 memchk: item
 	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
 

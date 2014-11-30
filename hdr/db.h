@@ -418,6 +418,7 @@
       int fflag;
       int min;         /* help calculations */
       int max;
+      char * str;
    } var_t;
 
 	typedef struct {

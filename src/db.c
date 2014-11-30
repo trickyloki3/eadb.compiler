@@ -156,8 +156,8 @@ load_cb_t * var_load() {
    interface->load_column = var_load_column;
    interface->is_row_sentinel = is_row_sentinel_semicolon;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
-   interface->flag = 0;
-   interface->column_count = 7;
+   interface->flag = CHECK_QUOTE;
+   interface->column_count = 8;
    interface->type_size = sizeof(var_t);
    interface->dealloc = var_dealloc;
    return interface;
@@ -616,6 +616,7 @@ int var_load_column(void * db, int row, int col, char * val) {
       case 4: var_row->fflag = convert_integer(val, 16); break;
       case 5: var_row->min = convert_integer(val, 10); break;
       case 6: var_row->max = convert_integer(val, 10); break;
+      case 7: var_row->str = convert_string(val); break;
       default:  exit_abt("invalid column");
    }
    return 0;
@@ -869,8 +870,10 @@ void block_dealloc(void * mem, int cnt) {
 void var_dealloc(void * mem, int cnt) {
    int i = 0;
    var_t * db = (var_t *) mem;
-   for(i = 0; i < cnt; i++)
+   for(i = 0; i < cnt; i++) {
       if(db[i].id != NULL) free(db[i].id);
+      if(db[i].str != NULL) free(db[i].str);
+   }
    free(db);
 }
 
