@@ -482,7 +482,7 @@ int script_translate(block_r * block, int size) {
             case 35: translate_write(&block[i], "Hatch a pet egg.", 1); break;                                      /* bpet */
             case 36: translate_hire_merc(&block[i], block[i].type->id); break;                                      /* mercenary_create */
             case 37: translate_heal(&block[i], block[i].type->id); break;                                           /* mercenary_heal */
-            case 38: translate_status(&block[i], block[i].type->id);                                                /* mercenary_sc_status */
+            case 38: translate_status(&block[i], block[i].type->id); break;                                         /* mercenary_sc_status */
             case 39: translate_produce(&block[i], block[i].type->id); break;                                        /* produce */
             case 40: translate_produce(&block[i], block[i].type->id); break;                                        /* cooking */
             case 41: translate_produce(&block[i], block[i].type->id); break;                                        /* makerune */
@@ -1396,7 +1396,9 @@ int translate_status(block_r * block, int handler) {
             evaluate_expression(block, block->ptr[4], 1, 0);   /* flag */
             off += sprintf(buf + off," [Chance: %s%%]",block->eng[block->eng_cnt - 2]);
         }
+        buf[off] = '\0';
     } else {
+        /* translate an item script within an item script */
         if(item_name_id_search(global_db, &item, convert_integer(block->ptr[2], 10), global_mode))
             exit_buf("failed to search item id %d in item %s (sc_itemscript)", block->item_id, block->ptr[2]);
         item_script = script_compile(item.script, item.id);
