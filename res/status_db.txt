@@ -127,11 +127,11 @@
 306,         sc_food_dex_cash,  1,                                                                                              "Increase dexterity. (DEX +%s)",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
 307,         sc_food_int_cash,  1,                                                                                           "Increase intelligence. (INT +%s)",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
 308,         sc_food_luk_cash,  1,                                                                                                   "Increase luck. (LUK +%s)",                       "",  1,  n,  0,  0,  0,  2,  0,  0,  0
-368,                 sc_toxin,  1,                  "Target enemy will be interrupted from skill-casting every 3 seconds and lose 3%% SP every %s%s%s seconds.",                       "",  3,  n,  n,  n,  0, -1,  3, -1,  0
-369,              sc_paralyse,  1,                                     "Target enemy decreases attack speed by -10%%, evasion -10%%, and movement speed -50%%.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
-370,            sc_venombleed,  1,                                                                                    "Target enemy reduce maximum HP by 15%%.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+368,                 sc_toxin,  1,                   "Target enemy will be interrupted from skill-casting every 3 seconds and lose 3% SP every %s%s%s seconds.",                       "",  3,  n,  n,  n,  0, -1,  3, -1,  0
+369,              sc_paralyse,  1,                                        "Target enemy decreases attack speed by -10%, evasion -10%, and movement speed -50%.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+370,            sc_venombleed,  1,                                                                                     "Target enemy reduce maximum HP by 15%.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 371,         sc_magicmushroom,  1,                                        "Target enemy lose 3% of HP and involuntarially cast a random skill every 4 seconds.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
-372,             sc_deathhurt,  1,                                                                  "Target enemy decrease natural HP and SP recovery by 20%%.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
+372,             sc_deathhurt,  1,                                                                   "Target enemy decrease natural HP and SP recovery by 20%.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 373,               sc_pyrexia,  1,                                       "Target enemy will be blinded and will randomly inflict 100 damage during the poison.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 374,         sc_oblivioncurse,  1,                                                                                     "Target enemy stop natural SP recovery.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 375,            sc_leechesend,  1,                                                                                        "Drain target enemy HP every second.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
@@ -157,7 +157,6 @@
 587,              sc_moonstar,  1,                                                                                  "Probably play some stupid special effect.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 587,         sc_strangelights,  1,                                                                                  "Probably play some stupid special effect.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 588,   sc_decoration_of_music,  1,                                                                                           "Probably play some stupid music.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
-586,           sc_oktoberfest,  1,                                                                                                                    "UNKNOWN",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
-// special case
+586,           sc_oktoberfest,  1,                                                                                                "Special oktoberfest effect.",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 289,            sc_itemscript,  4,                                                                                                                           "",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 290,            sc_itemscript,  4,                                                                                                                           "",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0

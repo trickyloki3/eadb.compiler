@@ -1371,7 +1371,11 @@ int translate_status(block_r * block, int handler) {
         /* fill status format string */
         /*off += sprintf(buf + off, "Status: ");*/
         switch(status.vcnt) {
-            case 0: off += sprintf(buf + off,"%s",status.scfmt); break;
+            case 0: 
+                off += sprintf(buf + off,"%s",status.scfmt); 
+                printf("fmt: %s\n", status.scfmt);
+                printf("buf: %s\n", buf);
+                break;
             case 1: off += sprintf(buf + off,status.scfmt, block->eng[status.voff_ptr[0]]); break;
             case 2: off += sprintf(buf + off,status.scfmt, 
                 (status.voff_ptr[0] > 0)?block->eng[status.voff_ptr[0]]:"", 
