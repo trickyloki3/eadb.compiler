@@ -708,18 +708,24 @@ int translate_transform(block_r * block) {
 }
 
 int translate_skill_block(block_r * block, int handler) {
-    char buf[BUF_SIZE];
+    char buf[BUF_SIZE];     /* description */
+    char aux[BUF_SIZE];     /* formula */
+    node_t * result = NULL; /* formula expression */
     int offset = 1;
 
     /* skip GID for unitskilluseid */
     offset = (handler == 13)?1:0;
     /* translate skill and level */
     translate_skill(block, block->ptr[offset]);
-    evaluate_expression(block, block->ptr[offset+1], 1, EVALUATE_FLAG_WRITE_FORMULA); 
-    /* enable for skill block and cast for others */
+    /* check whether level has a formula or not */
+    result = evaluate_expression(block, block->ptr[offset+1], 1, 
+        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA); 
+        exit_null("result is null", 1, result);
+    /* enable for skill block and cast for others;
+     * add support for formula on level. */
     offset += (handler == 11) ?
-        sprintf(buf,"Enable %s [Lv. %s]",block->eng[0],block->eng[1]):
-        sprintf(buf,"Cast %s [Lv. %s]",block->eng[0],block->eng[1]);
+        sprintf(buf,"Enable %s [Lv. %s]",block->eng[0], formula(aux, block->eng[1], result)):
+        sprintf(buf,"Cast %s [Lv. %s]",block->eng[0], formula(aux, block->eng[1], result));
     buf[offset] = '\0';
     translate_write(block, buf, 1);
     return SCRIPT_PASSED;
