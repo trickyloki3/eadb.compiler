@@ -1572,7 +1572,7 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
 
     /* evaluate the expression */
     root_node = evaluate_expression_recursive(block, expr_token.script_ptr, 0, expr_token.script_cnt, block->logic_tree, flag);
-    if(root_node == NULL) return NULL;
+    if(root_node == NULL) exit_buf("failed to evaluate %s in item %d", expr, block->item_id);
 
     /* write the result into argument translation */
     if(modifier != 0) {
@@ -2370,6 +2370,7 @@ void evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int fla
         /* extract the local min and max from the range */
         node->min = minrange(node->range);
         node->max = maxrange(node->range);
+        node->cond_cnt += node->left->cond_cnt;
     }
 
     /* handle operators nodes */
@@ -2727,7 +2728,7 @@ int translate_bonus_desc(node_t ** result, block_r * block, bonus_t * bonus) {
     switch(arg_cnt) {
         case 1: 
             translate_bonus_template(buffer, &offset, bonus->desc, 
-                formula(aux[0], block->eng[order[0]], result[bonus->order[0]])); 
+                formula(aux[0], block->eng[order[0]], result[bonus->order[0]]));
             break;
         case 2: 
             translate_bonus_template(buffer, &offset, bonus->desc, 
