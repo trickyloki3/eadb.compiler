@@ -55,6 +55,13 @@
     #define BF_SKILL 256
     #define BF_NORMAL 512
 
+    typedef struct dep {
+        char buf[BUF_SIZE];
+        int cnt;
+        int buf_ptr[BUF_SIZE];
+        int buf_ptr_cnt;
+    } dep_t;
+
     typedef struct {
         char script[BUF_SIZE];
         char * script_ptr[BUF_SIZE];
@@ -78,10 +85,14 @@
         int link;                            /* indicate conditional linking for if-else statements (index to block) */
         struct block_r * depd[BLOCK_SIZE];   /* indicate calculation linking for set blocks */
         int depd_cnt;                        /* number of dependencies */
-        int set_min;                         /* SET BLOCK SPECIFIC ONLY, i.e. CHEATING! */
+        /* set_* variable allows a block to be inherited as a
+         * node, which can be used when evaluating expressions. */
+        int set_min;
         int set_max;
         int set_cond_cnt;
+        dep_t * set_dep;
         char set_expr[BUF_SIZE];             /* contain the formula for the set block */
+        int set_complexity;                  /* indicate that the set block contains a complex expression */
         int flag;                            /* multi-purpose flag for special conditions 
                                                 0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
                                                 0x02 - multivalues must be tagged random 
@@ -154,21 +165,17 @@
     /* flags for keeping node or logic */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01
     #define EVALUATE_FLAG_KEEP_NODE        0x02
-    /* flag for evaluating relational operators to either 0 or 1 */
+    /* flag for evaluating relational operators to either 0 or 1
+     * ignore expression simplification for conditional expression */
     #define EVALUATE_FLAG_EXPR_BOOL        0x04
     /* write the formula for expression */
     #define EVALUATE_FLAG_WRITE_FORMULA    0x08
     #define EVALUATE_FLAG_LIST_FORMULA     0x10
+    /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_COND_LOGIC_TREE  0x20
 
-    typedef struct dep {
-        char buf[BUF_SIZE];
-        int cnt;
-        int buf_ptr[BUF_SIZE];
-        int buf_ptr_cnt;
-        int complex;            /* indicate that the expression contain ?: operator which makes it complex */
-    } dep_t;
-
-    /* expression handling */
+    /* I've gotten really lazy with proper state mangagement; 
+     * I hope the comments are good enough explanation. */
     typedef struct node {
         int type;               /* see node types macros */
         int op;                 /* operator (NODE_TYPE_OPERATOR) */
@@ -180,12 +187,12 @@
         logic_node_t * cond;
         int cond_cnt;           /* total count of variable and functions; cascaded by operator */
         /* expression translation */
-        int var_id;             /* useful for multplexing different schemes */
+        int var_id;             /* useful for multplexing different schemes; unused */
         char expr[BUF_SIZE];    /* verbatim translation string */
-        int expr_id;            /* the expression written by function; may contain an id */
+        int expr_cnt;           /* size of expr */
         /* function and variable list */
         dep_t * dep;
-        int dep_bool;           /* indicate that ? expression exist */
+        int complexity;         /* count the number of relational, equality, logical, or conditional operators */
         /* function argument stack */
         char args[BUF_SIZE];    /* function argument stack */
         int args_cnt;           /* function argument stack offset (top of stack) */
@@ -204,9 +211,10 @@
     node_t * evaluate_expression(block_r *, char *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
-    void evaluate_node(node_t *, FILE *, logic_node_t *, int);
+    void evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
     void node_inherit_cond(node_t *);
     void node_expr_append(node_t *, node_t *, node_t *);
+    char * formula(char *, char *, node_t *);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
 
