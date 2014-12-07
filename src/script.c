@@ -1130,8 +1130,9 @@ int translate_item(block_r * block, char * expr) {
 
 int translate_autobonus(block_r * block, int flag) {
     int offset = 0;
+    char buf[BUF_SIZE];
+    char aux[BUF_SIZE];
     node_t * rate = NULL;
-    /*node_t * duration = NULL;*/
     exit_null("null paramater", 1, block);
  
     /* translate for autobonus and autobonus2 */
@@ -1141,6 +1142,8 @@ int translate_autobonus(block_r * block, int flag) {
         translate_bonus_float_percentage(block, rate, &offset, 100);
         translate_time(block, block->ptr[2]);
         if(block->ptr_cnt > 3) translate_trigger(block, block->ptr[3], 1);
+        offset = sprintf(buf,"Add %s chance to armor break for %s when attacked.%s",
+            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[4] != NULL)?block->eng[4]:"");
     }
  
     if(flag & 0x04) {
@@ -1149,10 +1152,13 @@ int translate_autobonus(block_r * block, int flag) {
         translate_bonus_float_percentage(block, rate, &offset, 100);
         translate_time(block, block->ptr[2]);
         if(block->ptr_cnt > 3) translate_skill(block, block->ptr[3]);
+        offset = sprintf(buf,"Add %s chance to limit break for %s when using skill %s.",
+            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[4] != NULL)?block->eng[4]:"");
     }
- 
+    buf[offset] = '\0';
+    
+    translate_write(block, buf, 1);
     if(rate != NULL) node_free(rate);
-    /*if(duration != NULL) node_free(duration);*/
     return SCRIPT_PASSED;
 }
 
@@ -3042,18 +3048,6 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
         }
         switch(block[i].type->id) {
             /* blocks that might have other blocks linked to it */
-            case 5: /* autobonus */
-                *offset += sprintf(buffer + *offset, "%sAdd %s chance to limit break for %s when attacking.%s\n", 
-                    buf, block[i].eng[1], block[i].eng[3], (block[i].eng[4] != NULL)?block[i].eng[4]:"");
-                break;
-            case 6: /* autobonus2 */
-                *offset += sprintf(buffer + *offset, "%sAdd %s chance to armor break for %s when attacked.%s\n", 
-                    buf, block[i].eng[1], block[i].eng[3], (block[i].eng[4] != NULL)?block[i].eng[4]:"");
-                break;
-            case 7: /* autobonus3 */
-                *offset += sprintf(buffer + *offset, "%sAdd %s chance to limit break for %s when using skill %s.\n", 
-                    buf, block[i].eng[1], block[i].eng[3], (block[i].eng[4] != NULL)?block[i].eng[4]:"");
-                break;
             case 26: /* if */
             case 27: /* else */
                 if(block[i].logic_tree != NULL)
