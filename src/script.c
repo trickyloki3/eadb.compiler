@@ -1648,6 +1648,12 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
       
         if(length <= 0) return NULL;
 
+        /* write the modifier in to the expression */
+        if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0) {
+            root_node->expr_cnt = sprintf(root_node->expr,"%s / %d", root_node->expr, modifier);
+            root_node->expr[root_node->expr_cnt] = '\0';
+        }
+
         /* extend the buffer to the next length */
         block->arg_cnt += length + 1;
         block->eng_cnt++;
