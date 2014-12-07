@@ -145,6 +145,7 @@
     int translate_status_end(block_r *);
     int translate_status(block_r *, int);
     int translate_bonus_script(block_r *);
+    int translate_setfalcon(block_r *);
     int translate_write(block_r *, char *, int);
 
     /* debug compiler by dumping the block list */

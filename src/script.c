@@ -492,7 +492,7 @@ int script_translate(block_r * block, int size) {
             case 45: translate_write(&block[i], "Evolve homunculus when requirements are met.", 1); break;          /* homevolution */
             case 46: translate_write(&block[i], "Change to Summer Outfit when worn.", 1); break;                    /* setoption */
             case 47: translate_write(&block[i], "Summon a creature to mount. [Work for all classes].", 1); break;   /* setmounting */
-            case 48: translate_write(&block[i], "Summon a falcon. [Also use to recall falcon].", 1); break;         /* setfalcon */
+            case 48: translate_setfalcon(&block[i]); break;                                                         /* setfalcon */
             case 49: translate_getrandgroup(&block[i], block[i].type->id); break;                                   /* getgroupitem */
             case 50: translate_write(&block[i], "Reset all status points.", 1); break;                              /* resetstatus */
             case 51: translate_bonus_script(&block[i]); break;                                                      /* bonus_script */
@@ -1482,11 +1482,24 @@ int translate_bonus_script(block_r * block) {
             default: break;
         }
     }
-    printf("%s\n", buf);
+
     translate_write(block, buf, 1);
     if(duration != NULL) node_free(duration);
     if(type != NULL) node_free(type);
     if(flag != NULL) node_free(flag);
+    return SCRIPT_PASSED;
+}
+
+int translate_setfalcon(block_r * block) {
+    node_t * result = NULL;
+    exit_null("block is null", 1, block);
+    result = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(result->max == 0) {
+        translate_write(block, "Recall a falcon.", 1);
+    } else {
+        translate_write(block, "Summon a falcon.", 1);
+    }
+    node_free(result);
     return SCRIPT_PASSED;
 }
 
@@ -3072,8 +3085,8 @@ int script_linkage_count(block_r * block, int start) {
     int iter = start;
     /* count the number of links until 'if' or 'root' (-1) */
     while(block[iter].link >= 0) {
-        if(block[iter].type->id == 27) break;
-        nest++;
+        if(block[iter].type->id != 27)
+            nest++;
         iter = block[iter].link;
     }
     return nest;
@@ -3167,7 +3180,7 @@ void script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
             case 40: script_generate_cond_generic(buf, offset, val_min, val_max, "Intelligence"); break; /* intelligence */
             case 41: *offset += sprintf(buf + *offset,"Non-riding Wug"); buf[*offset] = '\0'; break; /* option_wug */
             case 42: *offset += sprintf(buf + *offset,"Riding Wug"); buf[*offset] = '\0'; break; /* option_wugrider */
-            case 43: *offset += sprintf(buf + *offset,"Rented Falcon"); buf[*offset] = '\0'; break; /* HT_FALCON */
+            case 43: *offset += sprintf(buf + *offset,"Falcon Skill"); buf[*offset] = '\0'; break; /* HT_FALCON */
             /* complex dependencies */
             case 20: /* baseclass */
                 if(val_min == val_max) {
