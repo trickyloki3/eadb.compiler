@@ -495,6 +495,7 @@ int script_translate(block_r * block, int size) {
             case 48: translate_write(&block[i], "Summon a falcon. [Also use to recall falcon].", 1); break;         /* setfalcon */
             case 49: translate_getrandgroup(&block[i], block[i].type->id); break;                                   /* getgroupitem */
             case 50: translate_write(&block[i], "Reset all status points.", 1); break;                              /* resetstatus */
+            case 51: translate_bonus_script(&block[i]); break;                                                      /* bonus_script */
             case 52: translate_write(&block[i], "Play another background song.", 1); break;                         /* playbgm */
             case 53: translate_transform(&block[i]); break;                                                         /* transform */
             case 54: translate_status(&block[i], block[i].type->id); break;                                         /* sc_start2 */
@@ -1371,11 +1372,7 @@ int translate_status(block_r * block, int handler) {
         /* fill status format string */
         /*off += sprintf(buf + off, "Status: ");*/
         switch(status.vcnt) {
-            case 0: 
-                off += sprintf(buf + off,"%s",status.scfmt); 
-                printf("fmt: %s\n", status.scfmt);
-                printf("buf: %s\n", buf);
-                break;
+            case 0: off += sprintf(buf + off,"%s",status.scfmt); break;
             case 1: off += sprintf(buf + off,status.scfmt, block->eng[status.voff_ptr[0]]); break;
             case 2: off += sprintf(buf + off,status.scfmt, 
                 (status.voff_ptr[0] > 0)?block->eng[status.voff_ptr[0]]:"", 
@@ -1448,6 +1445,48 @@ int translate_status_end(block_r * block) {
     if(status.scend != NULL) free(status.scend);
     if(status.vmod_ptr != NULL) free(status.vmod_ptr);
     if(status.voff_ptr != NULL) free(status.voff_ptr);
+    return SCRIPT_PASSED;
+}
+
+int translate_bonus_script(block_r * block) {
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * duration = NULL;
+    node_t * type = NULL;
+    node_t * flag = NULL;
+    exit_null("block is null", 1, block);
+    duration = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE); /* duration (in seconds) */
+    if(duration->min != duration->max) exit_buf("unsupported expression; duration dependence; %d item id.", block->item_id);
+    offset += sprintf(buf + offset,"Unstackable bonus lasting for %d seconds ", duration->min);
+    if(block->ptr_cnt >= 3) {
+        type = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE); /* flag */
+        if(type->min != type->max) exit_buf("unsupported expression; type dependence; %d item id.", block->item_id);
+        if(type->min > 0) {
+            offset += sprintf(buf + offset, "[");
+            if(type->min & 1) offset += sprintf(buf + offset, "%s", "Remove when dead");
+            if(type->min - 1 > 0) offset += sprintf(buf + offset, " | ");
+            if(type->min & 2) offset += sprintf(buf + offset, "%s", "Removable by dispell");
+            if(type->min - 2 > 0) offset += sprintf(buf + offset, " | ");
+            if(type->min & 4) offset += sprintf(buf + offset, "%s", "Removable by Clearance");
+            if(type->min - 4 > 0) offset += sprintf(buf + offset, " | ");
+            if(type->min & 8) offset += sprintf(buf + offset, "%s", "Remove when logout");
+            offset += sprintf(buf + offset, "] ");
+        }
+    }
+    if(block->ptr_cnt >= 4) {
+        flag = evaluate_expression(block, block->ptr[3], 1, EVALUATE_FLAG_KEEP_NODE); /* type */
+        if(flag->min != flag->max) exit_buf("unsupported expression; flag dependence; %d item id.", block->item_id);
+        switch(flag->min) {
+            case 1: offset += sprintf(buf + offset, "[Buff] "); break;
+            case 2: offset += sprintf(buf + offset, "[Debuff] "); break;
+            default: break;
+        }
+    }
+    printf("%s\n", buf);
+    translate_write(block, buf, 1);
+    if(duration != NULL) node_free(duration);
+    if(type != NULL) node_free(type);
+    if(flag != NULL) node_free(flag);
     return SCRIPT_PASSED;
 }
 
