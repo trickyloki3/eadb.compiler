@@ -474,7 +474,9 @@ int script_translate(block_r * block, int size) {
                         if(block[i].ptr_cnt > 1)
                             evaluate_expression(&block[i], block[i].ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
                         break;                                                                                      /* else */
-            case 28: evaluate_expression(&block[i], block[i].ptr[1], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE|EVALUATE_FLAG_WRITE_FORMULA|EVALUATE_FLAG_COND_LOGIC_TREE); break;      /* set */
+            case 28: evaluate_expression(&block[i], block[i].ptr[1], 1, 
+                     EVALUATE_FLAG_KEEP_LOGIC_TREE|EVALUATE_FLAG_WRITE_FORMULA|
+                     EVALUATE_FLAG_KEEP_TEMP_TREE|EVALUATE_FLAG_EXPR_BOOL); break;      /* set */
             case 30: translate_write(&block[i], "Send a message through the announcement system.", 1); break;       /* announce */
             case 31: translate_misc(&block[i], "callfunc"); break;                                                  /* callfunc */
             case 33: translate_misc(&block[i], "warp"); break;                                                      /* warp */
@@ -729,6 +731,7 @@ int translate_skill_block(block_r * block, int handler) {
         sprintf(buf,"Cast %s [Lv. %s]",block->eng[0], formula(aux, block->eng[1], result));
     buf[offset] = '\0';
     translate_write(block, buf, 1);
+    if(result != NULL) node_free(result);
     return SCRIPT_PASSED;
 }
 
@@ -1743,6 +1746,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     var_t var_info;
     dep_t * dep = calloc(1, sizeof(dep_t));
     dep_t * set_dep = NULL;
+    range_t * temp_range = NULL;
+    range_t * temp_range2 = NULL;
     /* operator precedence tree */
     int op_pred[PRED_LEVEL_MAX][PRED_LEVEL_PER] = {
         {'*'          ,'/'          ,'\0' ,'\0'         ,'\0'},
@@ -1917,6 +1922,20 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                             temp_node->cond = copy_any_tree(block->depd[j]->logic_tree);
                         }
                         set_dep = block->depd[j]->set_dep;
+                        /* aggregate all the possible set values */
+                        if(temp_node->range == NULL) {
+                            temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
+                        } else {
+                            temp_range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
+                            temp_range2 = temp_node->range;
+                            temp_node->range = orrange(temp_range, temp_range2);
+                            freerange(temp_range);
+                            freerange(temp_range2);
+                            temp_range = NULL;
+                            temp_range2 = NULL;
+                            temp_node->min = minrange(temp_node->range);
+                            temp_node->max = maxrange(temp_node->range);
+                        }
                     }
                 }
                 /* retrieve the dependencies */
@@ -1939,7 +1958,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
         if(temp_node != NULL) {
             /* generate range for everything but subexpression and operators */
-            if(temp_node->type & 0x3e)
+            if(temp_node->type & 0x3e && temp_node->range == NULL)
                 temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
 
             temp_node->dep = dep;
@@ -2371,6 +2390,9 @@ void evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int fla
                 if(node->left->cond != NULL) {
                     new_tree = node->left->cond;
                     new_tree->stack = logic_tree;
+                    /* keep the logic tree of ? conditional */
+                    if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
+                        node->cond = copy_any_tree(new_tree);
                     if(node->right != NULL) evaluate_node(node->right, stm, new_tree, flag, complexity);
                 } else {
                     if(node->right != NULL) evaluate_node(node->right, stm, logic_tree, flag, complexity);

@@ -174,7 +174,7 @@
     #define EVALUATE_FLAG_WRITE_FORMULA    0x08
     #define EVALUATE_FLAG_LIST_FORMULA     0x10
     /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_COND_LOGIC_TREE  0x20
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE  0x20
 
     /* I've gotten really lazy with proper state mangagement; 
      * I hope the comments are good enough explanation. */

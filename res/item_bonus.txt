@@ -94,7 +94,7 @@ bonus, bFixedCastrate,15,"%s fixed-cast time of all magic.",1,p,1,0
 bonus2, bFixedCastrate,14,"%s fixed-cast time of %s.",2,k,p,2,0,1
 bonus, bDelayrate,15,"%s after-cast skill delay of all magic.",1,p,1,0
 bonus, bVariableCastrate,15,"%s variable cast time of all magic.",1,p,1,0
-bonus2, bVariableCastrate,14,"%s variable cast time of %s.",2,k,p,2,0,1
+bonus2, bVariableCastrate,14,"%s variable cast time of %s%%.",2,k,p,2,0,1
 bonus, bFixedCast,16,"%s milliseconds to fixed cast time of all magic.",1,a,1,0
 bonus, bVariableCast,16,"%s milliseconds to variable cast time of all magic.",1,a,1,0
 bonus2, bSkillAtk,14,"%s %s damage.",2,k,p,2,1,0
