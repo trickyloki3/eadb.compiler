@@ -2785,7 +2785,16 @@ int translate_bonus_desc(node_t ** result, block_r * block, bonus_t * bonus) {
         case 19: translate_bonus_percentage2(block, result[1], &order[0], "Add %s", "Reduce %s", "Receive %s"); break;
         case 20: translate_bonus_percentage2(block, result[2], &order[0], "Add %s", "Add %s", "Reduce %s"); break;
         case 21: translate_bonus_percentage2(block, result[1], &order[0], "Reduce %s", "Reduce %s", "Add %s"); break;
-        case 22: translate_bonus_float_percentage2(block, result[1], &order[0], "Reduce %s", "Reduce %s", "Add %s", 1000); break;
+        case 22: 
+            /* missing a modifier function for integer based */
+            if((result[1]->min / 1000) != 0 && (result[1]->max / 1000) != 0) {
+                result[1]->min /= 1000;
+                result[1]->max /= 1000;
+                translate_bonus_integer2(block, result[1], &order[0], "Add %s seconds", "Add %s seconds", "Reduce %s seconds"); 
+            } else {
+                translate_bonus_integer2(block, result[1], &order[0], "Add %s millisecond", "Add %s millisecond", "Reduce %s millisecond"); 
+            }
+            break;
         case 23: /* special case */
             if(result[1]->min == 0) {
                 translate_bonus_integer2(block, result[0], &order[0], "Gain %s", "Gain %s", "Drain %s"); break;
@@ -2862,7 +2871,10 @@ int translate_bonus_desc(node_t ** result, block_r * block, bonus_t * bonus) {
 char * formula(char * buf, char * eng, node_t * result) {
     int len = 0;
     if(result != NULL && result->cond_cnt > 0) {
-        len = sprintf(buf, "%s (%s)", eng, result->expr);
+        if(result->expr[0] == '(' && result->expr[strlen(result->expr) - 1] == ')')
+            len = sprintf(buf, "%s %s", eng, result->expr);
+        else
+            len = sprintf(buf, "%s (%s)", eng, result->expr);
         buf[len] = '\0';
         return buf;
     }
@@ -3081,8 +3093,12 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
                 if(block[i].logic_tree != NULL)
                     script_generate_cond(block[i].logic_tree, stdout, buf, buffer, offset);
                 break;
-            /* ignore these blocks, since they have no interpretation */
             case 28: /* set */
+                /* special case for zeny */
+                if(ncs_strcmp(block->ptr[0], "zeny") == 0)
+                    *offset += sprintf(buffer + *offset, "%sCurrent %s\n", buf, block[i].exp[0]);
+                break;
+            /* ignore these blocks, since they have no interpretation */
             case 21: /* skilleffect */
             case 22: /* specialeffect2 */
             case 29: /* input */

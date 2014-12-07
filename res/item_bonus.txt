@@ -102,9 +102,9 @@ bonus2, bSkillUseSP,21,"%s SP consumption when using %s.",2,k,n,2,1,0
 bonus2, bSkillUseSPrate,21,"%s SP consumption when using %s.",2,k,p,2,1,0
 bonus2, bSkillHeal,14,"%s heal amount using %s skill.",2,k,p,2,1,0
 bonus2, bSkillHeal2,14,"%s heal amount using ally %s skill.",2,k,p,2,1,0
-bonus2, bSkillCooldown,22,"%s seconds on cooldown time for %s.",2,k,a,2,1,0
-bonus2, bSkillFixedCast,22,"%s seconds on fixed cast time for %s.",2,k,a,2,1,0
-bonus2, bSkillVariableCast,22,"%s seconds on variable cast time for %s.",2,k,a,2,1,0
+bonus2, bSkillCooldown,22,"%s on cooldown time for %s.",2,k,a,2,1,0
+bonus2, bSkillFixedCast,22,"%s on fixed cast time for %s.",2,k,a,2,1,0
+bonus2, bSkillVariableCast,22,"%s on variable cast time for %s.",2,k,a,2,1,0
 bonus2, bAddSkillBlow,0,"Knock enemy back by %s cells using %s.",2,k,f,2,1,0
 bonus3, bAddEffOnSkill,0,"Add %s%% chance of causing effect %s when using %s.",3,k,e,q,3,2,1,0
 bonus4, bAddEffOnSkill,0,"Add %s%% chance of causing effect %s when using %s and%s.",4,k,e,q,d,4,2,1,0,3
@@ -196,7 +196,7 @@ bonus2, bSPDrainValueRace,8,"%s SP for every hit on %s enemy.",2,r,n,2,1,0
 bonus3, bSPDrainRateRace,12,"%s chance to absorb %s SP from %s enemy.",3,r,o,p,3,2,0,1
 bonus2, bHPGainRaceAttack,8,"%s HP for every hit on %s enemy.",2,r,n,2,1,0
 bonus2, bHPDrainValueRace,8,"%s HP for every hit on %s enemy.",2,r,n,2,1,0
-bonus3, bHPDrainRateRace	,12,"%s chance to absorb %s HP from %s enemy.",3,r,o,p,3,2,0,1
+bonus3, bHPDrainRateRace,12,"%s chance to absorb %s HP from %s enemy.",3,r,o,p,3,2,0,1
 bonus2, bCriticalAddRace,2,"%s critical chance on %s enemy.",2,r,n,2,1,0
 bonus2, bExpAddRace,10,"%s more EXP from %s enemy.",2,r,p,2,1,0
 bonus2, bExpAddClass,10,"%s more EXP from %s enemy.",2,j,p,2,1,0
