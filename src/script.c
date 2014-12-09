@@ -1470,6 +1470,7 @@ int translate_status_end(block_r * block) {
         exit_buf("failed to search const %s in item %d", block->ptr[0], block->item_id);
     if(status_id_search(global_db, &status, const_info.value, block->ptr[0]))
         exit_buf("failed to search status id %d name %s in item %d", const_info.value, block->ptr[0], block->item_id);
+    translate_write(block, status.scend, 1);
     offset = sprintf(buf,"Cures %s status effect.", status.scend);
     buf[offset] = '\0';
     translate_write(block, buf, 1);
@@ -3113,6 +3114,7 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
     int j = 0;
     int k = 0;
     int nest = 0;
+    int sc_end_cnt = 0;
     char buf[BUF_SIZE];
 
     for(i = 0; i < block_cnt; i++) {
@@ -3136,6 +3138,33 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
             buf[k] = '\0';
         }
         switch(block[i].type->id) {
+            case 16: /* merge all sc_end into one block */
+                /* figure out how many sc_end blocks there are */
+                for(j = i; j < block_cnt; j++)
+                    if(block[i].type->id == 16)
+                        sc_end_cnt++;
+                *offset += sprintf(buffer + *offset, "Cures ");
+                /* if there exist only one sc_end, then assume the current one is the only one */
+                if(sc_end_cnt == 1) {
+                    *offset += sprintf(buffer + *offset, "%s", block[i].eng[0]);
+                } else {
+                    *offset += sprintf(buffer + *offset, "%s", block[i].eng[0]);
+                    for(j = i + 1; j < block_cnt; j++) {
+                        /* steal the status effect */
+                        if(block[j].type->id == 16) {
+                            if(j < block_cnt - 1) {
+                                *offset += sprintf(buffer + *offset, ", %s", block[j].eng[0]);
+                            } else {
+                                *offset += sprintf(buffer + *offset, ", and %s", block[j].eng[0]);
+                            }
+                            /* nullified the block from being read */
+                            block[j].type->id = -1;
+                        }
+                    }
+                }
+                *offset += sprintf(buffer + *offset, " status effects.\n");
+                
+                break;
             /* blocks that might have other blocks linked to it */
             case 26: /* if */
             case 27: /* else */
@@ -3153,6 +3182,7 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
             case 29: /* input */
             case 32: /* end */
                 break;
+            case -1: break; /* nullified */
             /* general block writing */
             default:
                 if(block[i].desc != NULL)
