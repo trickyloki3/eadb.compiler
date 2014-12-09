@@ -1915,8 +1915,10 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                         temp_node->max = var_info.max;
                     /* dynamic function value */
                     } else if(var_info.fflag & FUNC_PARAMS) {
+                        temp_node->dep = dep;
                         evaluate_function(block, expr, expr[expr_inx_open], expr_inx_open + 2, expr_inx_close,
                                                 &(temp_node->min), &(temp_node->max), temp_node);
+                        root_node->complexity++;
                     }
 
                 /* handle variable */
@@ -2173,7 +2175,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         /* maths; evaluate operand one and two, pow them both.*/
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        *min = *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
+        *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+        *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
         node->expr_cnt = sprintf(node->expr,"Minimum value of (%s) and (%s)",resultOne->expr, resultTwo->expr);
         node->expr[node->expr_cnt] = '\0';
     } else if(ncs_strcmp(func,"max") == 0) {
@@ -2191,7 +2194,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         /* maths; evaluate operand one and two, pow them both.*/
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        *min = *max = (int) (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
+        *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+        *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
         node->expr_cnt = sprintf(node->expr,"Maximum value of (%s) and (%s)",resultOne->expr, resultTwo->expr);
         node->expr[node->expr_cnt] = '\0';
     } else if(ncs_strcmp(func,"rand") == 0) {
@@ -2384,6 +2388,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     } else {
         exit_buf("failed to search function handler for %s in item %d", func, block->item_id);
     }
+
+    /* borrow deps from results one and two */
+    if(resultOne != NULL)
+        for(i = 0; i < resultOne->dep->buf_ptr_cnt; i++)
+            dep_write(node->dep, &resultOne->dep->buf[resultOne->dep->buf_ptr[i]]);
+    if(resultTwo != NULL)
+        for(i = 0; i < resultTwo->dep->buf_ptr_cnt; i++)
+            dep_write(node->dep, &resultTwo->dep->buf[resultTwo->dep->buf_ptr[i]]);
 
     if(resultOne != NULL) node_free(resultOne);
     if(resultTwo != NULL) node_free(resultTwo);
