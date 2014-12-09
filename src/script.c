@@ -1822,7 +1822,11 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
             if(!expr_inx_close || expr_sub_level)
                 exit_buf("failed interpreting item %d; unmatch parentheses.\n", block->item_id);
-            temp_node = evaluate_expression_recursive(block, expr, expr_inx_open + 1, expr_inx_close, logic_tree, flag);
+            /* ? operator require setting the EVALUATE_FLAG_EXPR_BOOL */            
+            if(i + 1 < end && expr[i+1][0] == '?')
+                temp_node = evaluate_expression_recursive(block, expr, expr_inx_open + 1, expr_inx_close, logic_tree, flag | EVALUATE_FLAG_EXPR_BOOL);
+            else
+                temp_node = evaluate_expression_recursive(block, expr, expr_inx_open + 1, expr_inx_close, logic_tree, flag);
             temp_node->type = NODE_TYPE_SUB;    /* subexpression value is now a special operand */
             op_cnt++;
             for(j = 0; j < temp_node->dep->buf_ptr_cnt; j++)
