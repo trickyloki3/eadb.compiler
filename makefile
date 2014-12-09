@@ -19,7 +19,7 @@ all:
 	make item
 	make hitem
 memchk: item
-	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
+	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./item hercules
 
 hitem: src/he_item.c $(OBJ)
 	$(CCompiler) -c -o he_item.o $(CFlags) src/he_item.c $(HDRDIR) $(HE_HDRDIR)

@@ -878,8 +878,9 @@ int translate_const(block_r * block, char * expr, int flag) {
         } else if(global_mode == RATHENA) {
             ra_item_group_search(global_db, tbl_index, global_mode, buffer);
             tbl_str = buffer;
+        } else {
+            tbl_str = itemgrp_tbl(tbl_index);
         }
-        /*tbl_str = itemgrp_tbl(tbl_index);*/
     }
  
     /* indicate unresolve item group; there are many I am too lazy to add */
@@ -1025,7 +1026,8 @@ int translate_trigger(block_r * block, char * expr, int type) {
 int translate_time(block_r * block, char * expr) {
     int tick_min = 0;
     int tick_max = 0;
-    char buf[256];
+    char buf[BUF_SIZE];
+    char aux[BUF_SIZE];
     int offset = 0;
     node_t * result = NULL;
     exit_null("null paramater", 2, block, expr);
@@ -1059,7 +1061,7 @@ int translate_time(block_r * block, char * expr) {
                     sprintf(buf,"%d ~ %d seconds", tick_min, tick_max);
     }
     buf[offset] = '\0';
-    translate_write(block, buf, 1);
+    translate_write(block, formula(aux, buf, result), 1);
     if(result != NULL) node_free(result);
     return SCRIPT_PASSED;
 }
@@ -1169,6 +1171,7 @@ int translate_misc(block_r * block, char * expr) {
     int type;
     int offset = 0;
     char buf[BUF_SIZE];
+    node_t * result = NULL;
     
     if(ncs_strcmp(expr,"warp") == 0) {
         if(ncs_strcmp(block->ptr[0],"bif_fild01") == 0)
@@ -1191,8 +1194,8 @@ int translate_misc(block_r * block, char * expr) {
     }
     
     if(ncs_strcmp(expr,"monster") == 0) {
-        evaluate_expression(block, block->ptr[4], 1, 0);
-        type = convert_integer(block->eng[0],10);
+        result = evaluate_expression(block, block->ptr[4], 1, EVALUATE_FLAG_KEEP_NODE);
+        type = result->max;
         if(type < 0) type *= -1;
         if(type >= 1324 && type <= 1363)
             offset = sprintf(buf,"Summon a treasure box.");
@@ -1211,8 +1214,8 @@ int translate_misc(block_r * block, char * expr) {
 
     if(ncs_strcmp(expr,"callfunc") == 0) {
         if(ncs_strcmp(block->ptr[0],"F_CashCity") == 0) {
-            evaluate_expression(block, block->ptr[1], 1, 0);
-            type = convert_integer(block->eng[0],10);
+            result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+            type = result->max;
             switch(type) {
                 case 1: offset = sprintf(buf,"Teleport to any town, city, etc."); break;
                 case 2: offset = sprintf(buf,"Teleport to Juno, Lighthalzen, Einbroch, or Hugel."); break;
@@ -1224,8 +1227,8 @@ int translate_misc(block_r * block, char * expr) {
         } else if(ncs_strcmp(block->ptr[0],"F_CashStore") == 0) {
             offset = sprintf(buf,"Emergency Kafra service dispatch.");  
         } else if(ncs_strcmp(block->ptr[0],"F_CashTele") == 0) {
-            evaluate_expression(block, block->ptr[1], 1, 0);
-            type = convert_integer(block->eng[0],10);
+            result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+            type = result->max;
             switch(type) {
                 case 1: offset = sprintf(buf,"Teleport to the Save Point, Prontera, Geffen, Al De Baran or Izlude."); break;
                 case 2: offset = sprintf(buf,"Teleport to the Save Point, Payon, Alberta, Morocc or Comodo Island."); break;
@@ -1257,7 +1260,7 @@ int translate_misc(block_r * block, char * expr) {
         buf[offset] = '\0';
         translate_write(block, buf, 1);
     }
-    
+    if(result != NULL) node_free(result);
     return SCRIPT_PASSED;
 }
 
@@ -1270,12 +1273,13 @@ int translate_produce(block_r * block, int handler) {
     ic_produce_t * iter = NULL;
     char buf[BUF_SIZE];
     char num[BUF_SIZE];
+    node_t * result = NULL;
     memset(buf,0,BUF_SIZE);
     memset(num,0,BUF_SIZE);
  
     /* evaluate the item level */
-    evaluate_expression(block, block->ptr[0], 1, 0);
-    item_lv = convert_integer(block->eng[0], 10);
+    result = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
+    item_lv = result->max;
  
     /* Write the header information */
     if(handler != 41) {
@@ -1313,26 +1317,33 @@ int translate_produce(block_r * block, int handler) {
     free_prod(produce);
     buf[offset] = '\0';
     translate_write(block, buf, 1);
+    if(result != NULL) node_free(result);
     return SCRIPT_PASSED;
 }
 
 int translate_status(block_r * block, int handler) {
     int i;
     char buf[BUF_SIZE];
+    char aux[BUF_SIZE];
     int off = 0;
     char * item_script = NULL;
 
     ic_item_t item;
     status_t status;
     const_t const_info;
+    node_t * result[BONUS_SIZE];
+    node_t * rate = NULL;
+    exit_null("block paramater", 1, block);
     memset(&item, 0, sizeof(ic_item_t));
     memset(&status, 0, sizeof(status_t));
     memset(&const_info, 0, sizeof(const_t));
-    exit_null("block paramater", 1, block);
+    memset(&result, 0, sizeof(node_t *) * BONUS_SIZE);
+
     if(const_keyword_search(global_db, &const_info, block->ptr[0], global_mode))
         exit_buf("failed to search const %s in item %d", block->ptr[0], block->item_id);
     if(status_id_search(global_db, &status, const_info.value, block->ptr[0])) {
         if(global_mode == HERCULES) {
+            /* Hercules decided to change the status constants by + or - 1; what the fuck? */
             if(status_id_search(global_db, &status, const_info.value - 1, block->ptr[0]))
                 if(status_id_search(global_db, &status, const_info.value + 1, block->ptr[0]))
                     exit_buf("failed to search status id %d name %s in item %d", const_info.value, block->ptr[0], block->item_id);
@@ -1343,69 +1354,72 @@ int translate_status(block_r * block, int handler) {
     /* evaluate the duration of the status */
     translate_time(block, block->ptr[1]);
 
-    /* special case for sc_itemscript */
     if(ncs_strcmp(status.scstr, "sc_itemscript") != 0) {
         /* evaluate the val1, val2, ... , valN */
         for(i = 0; i < status.vcnt; i++) {
             switch(status.vmod_ptr[i]) {
-                case 'n': evaluate_expression(block, block->ptr[2+i], 1, EVALUATE_FLAG_WRITE_FORMULA);  break; /* Integer Value */
-                case 'p': evaluate_expression(block, block->ptr[2+i], 1, EVALUATE_FLAG_WRITE_FORMULA);  break; /* Integer Percentage */
-                case 'r': translate_const(block, block->ptr[2+i], 0x01);      break; /* Race */
-                case 'l': translate_const(block, block->ptr[2+i], 0x02);      break; /* Element */
-                case 'w': translate_splash(block, block->ptr[2+i]);           break; /* Splash */
-                case 'z': block->eng_cnt++;                                   break; /* Meaningless */
-                case 'e': translate_const(block, block->ptr[2+i], 0x04);      break; /* Effect */
-                case 'q': evaluate_expression(block, block->ptr[2+i], 100, EVALUATE_FLAG_WRITE_FORMULA);break; /* Integer Percentage / 100 */
-                case 'k': translate_skill(block, block->ptr[2+i]);            break; /* Skill */
-                case 's': translate_const(block, block->ptr[2+i], 0x08);      break; /* Size */
-                case 'c': translate_id(block, block->ptr[2+i], 0x01);         break; /* Monster Class & Job ID * Monster ID */
-                case 'o': evaluate_expression(block, block->ptr[2+i], 10, EVALUATE_FLAG_WRITE_FORMULA); break; /* Integer Percentage / 10 */
-                case 'm': translate_item(block, block->ptr[2+i]);             break; /* Item ID */
-                case 'x': evaluate_expression(block, block->ptr[2+i], 1, EVALUATE_FLAG_WRITE_FORMULA);  break; /* Level */
-                case 'g': translate_tbl(block, block->ptr[2+i], 0x01);        break; /* Regen */
-                case 'a': evaluate_expression(block, block->ptr[2+i], 1000, EVALUATE_FLAG_WRITE_FORMULA);break; /* Millisecond */
-                case 'h': translate_tbl(block, block->ptr[2+i], 0x02);        break; /* SP Gain Bool */
-                case 'v': translate_tbl(block, block->ptr[2+i], 0x04);        break; /* Cast Self, Enemy */
-                case 't': translate_trigger(block, block->ptr[2+i], 1);       break; /* Trigger */
-                case 'y': translate_item(block, block->ptr[2+i]);             break; /* Item Group */
-                case 'd': translate_trigger(block, block->ptr[2+i], 2);       break; /* Triger ATF */
-                case 'f': evaluate_expression(block, block->ptr[2+i], 1, EVALUATE_FLAG_WRITE_FORMULA);  break; /* Cell */
-                case 'b': translate_tbl(block, block->ptr[2+i], 0x08);        break; /* Flag Bitfield */
-                case 'i': translate_tbl(block, block->ptr[2+i], 0x10);        break; /* Weapon Type */
-                case 'j': translate_const(block, block->ptr[2+i], 0x10);      break; /* Class Group */
-                case 'u': evaluate_expression(block, block->ptr[2+i], -1, EVALUATE_FLAG_WRITE_FORMULA); break; /* Integer Value */
-                default: break;
+                case 'n': 
+                        result[i] = evaluate_expression(block, block->ptr[2+i], 1, 
+                        EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  
+                        break; /* Integer Value */
+                case 'm': 
+                        result[i] = evaluate_expression(block, block->ptr[2+i], 1, 
+                        EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  
+                        break; /* Integer Value */
+                case 'p': 
+                        result[i] = evaluate_expression(block, block->ptr[2+i], 1, 
+                        EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
+                        break; /* Integer Percentage */
+                case 'e': 
+                        translate_const(block, block->ptr[2+i], 0x02);                                           
+                        break; /* Effect */
+                case 'u': 
+                        evaluate_expression(block, block->ptr[2+i], -1, 
+                        EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); 
+                        break; /* Integer Value */
+                default: exit_buf("invalid bonus type %d in item %d", status.vmod_ptr[i], block->item_id);
             }
         }
 
-        /* fill status format string */
-        /*off += sprintf(buf + off, "Status: ");*/
+        /* I like things unnecessarily complicated =.=; this can be improved */
         switch(status.vcnt) {
-            case 0: off += sprintf(buf + off,"%s",status.scfmt); break;
-            case 1: off += sprintf(buf + off,status.scfmt, block->eng[status.voff_ptr[0]]); break;
-            case 2: off += sprintf(buf + off,status.scfmt, 
-                (status.voff_ptr[0] > 0)?block->eng[status.voff_ptr[0]]:"", 
-                (status.voff_ptr[1] > 0)?block->eng[status.voff_ptr[1]]:""); break;
-            case 3: off += sprintf(buf + off,status.scfmt, 
-                (status.voff_ptr[0] > 0)?block->eng[status.voff_ptr[0]]:"", 
-                (status.voff_ptr[1] > 0)?block->eng[status.voff_ptr[1]]:"", 
-                (status.voff_ptr[2] > 0)?block->eng[status.voff_ptr[2]]:""); break;
-            case 4: off += sprintf(buf + off,status.scfmt, 
-                (status.voff_ptr[0] > 0)?block->eng[status.voff_ptr[0]]:"", 
-                (status.voff_ptr[1] > 0)?block->eng[status.voff_ptr[1]]:"", 
-                (status.voff_ptr[2] > 0)?block->eng[status.voff_ptr[2]]:"", 
-                (status.voff_ptr[3] > 0)?block->eng[status.voff_ptr[3]]:""); break;
+            case 0: 
+                off += sprintf(buf + off,"%s",status.scfmt);
+                break;
+            case 1: 
+                off += sprintf(buf + off,status.scfmt, 
+                status_formula(aux, block->eng[status.voff_ptr[0]], result[0], status.vmod_ptr[0], status.voff_ptr[0]));
+                break;
+            case 2: 
+                off += sprintf(buf + off,status.scfmt, 
+                status_formula(aux, block->eng[status.voff_ptr[0]], result[0], status.vmod_ptr[0], status.voff_ptr[0]), 
+                status_formula(aux, block->eng[status.voff_ptr[1]], result[1], status.vmod_ptr[1], status.voff_ptr[1]));
+                break;
+            case 3: 
+                off += sprintf(buf + off,status.scfmt, 
+                status_formula(aux, block->eng[status.voff_ptr[0]], result[0], status.vmod_ptr[0], status.voff_ptr[0]), 
+                status_formula(aux, block->eng[status.voff_ptr[1]], result[1], status.vmod_ptr[1], status.voff_ptr[1]), 
+                status_formula(aux, block->eng[status.voff_ptr[2]], result[2], status.vmod_ptr[2], status.voff_ptr[2]));
+                break;
+            case 4: 
+                off += sprintf(buf + off,status.scfmt, 
+                status_formula(aux, block->eng[status.voff_ptr[0]], result[0], status.vmod_ptr[0], status.voff_ptr[0]), 
+                status_formula(aux, block->eng[status.voff_ptr[1]], result[1], status.vmod_ptr[1], status.voff_ptr[1]), 
+                status_formula(aux, block->eng[status.voff_ptr[2]], result[2], status.vmod_ptr[2], status.voff_ptr[2]), 
+                status_formula(aux, block->eng[status.voff_ptr[3]], result[3], status.vmod_ptr[3], status.voff_ptr[3]));
+                break;
             default: exit_abt("invalid status offset");
         }
 
         /* write the duration */
-        off += sprintf(buf + off, " [Duration: %s]",block->eng[1]);
-
+        off += sprintf(buf + off, " for %s",block->eng[1]);
         if(block->ptr_cnt == 5) {
-            evaluate_expression(block, block->ptr[3], 100, EVALUATE_FLAG_WRITE_FORMULA); /* rate */
-            evaluate_expression(block, block->ptr[4], 1, 0);   /* flag */
-            off += sprintf(buf + off," [Chance: %s%%]",block->eng[block->eng_cnt - 2]);
+            rate = evaluate_expression(block, block->ptr[3], 100, EVALUATE_FLAG_DEBUG_DUMP|EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); /* rate */
+            if(rate->min != 0 && rate->max != 0)
+                off += sprintf(buf + off," with %s%% chance",block->eng[block->eng_cnt - 1]);
+            node_free(rate);
         }
+        off += sprintf(buf + off,".");
         buf[off] = '\0';
     } else {
         /* translate an item script within an item script */
@@ -1413,16 +1427,15 @@ int translate_status(block_r * block, int handler) {
             exit_buf("failed to search item id %d in item %s (sc_itemscript)", block->item_id, block->ptr[2]);
         item_script = script_compile(item.script, item.id);
         off += sprintf(buf + off, "Status Effect [Duration: %s]\n%s", block->eng[1], item_script);
+        buf[off] = '\0';
         free(item_script);
         if(item.name != NULL) free(item.name);
         if(item.script != NULL) free(item.script);
     }
 
-    
-
     /* write the translation only the buffer is filled with something */
     if(off <= 0) exit_buf("failed to translate status %s of item %d", block->ptr[0], block->item_id);
-    /*printf("[%d]%s\n", block->item_id, buf);*/
+    
     translate_write(block, buf, 1);
     if(const_info.name != NULL) free(const_info.name);
     if(status.scstr != NULL) free(status.scstr);
@@ -1431,6 +1444,18 @@ int translate_status(block_r * block, int handler) {
     if(status.vmod_ptr != NULL) free(status.vmod_ptr);
     if(status.voff_ptr != NULL) free(status.voff_ptr);
     return SCRIPT_PASSED;
+}
+
+char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
+    int offset = 0;
+    if(blank < 0) return "";
+    if(result == NULL) return eng;
+    switch(type) {
+        case 'n': check_node_range(result, aux); break;
+        case 'p': check_node_range_precentage(result, aux); break;
+        default: offset = sprintf(aux, "%s", eng); aux[offset] = '\0'; break;
+    }
+    return formula(aux, aux, result);
 }
 
 int translate_status_end(block_r * block) {
@@ -1644,11 +1669,19 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     /* write the result into argument translation */
     if(modifier != 0) {
         block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
-        if(root_node->min == root_node->max)
-            length = sprintf(&block->arg[block->arg_cnt],"%d",(root_node->min) / modifier);
-        else
-            length = sprintf(&block->arg[block->arg_cnt],"%d ~ %d",(root_node->min) / modifier, (root_node->max) / modifier);
-      
+        if(root_node->min == root_node->max) {
+            if((root_node->min / modifier) == 0 && root_node->min > 0)
+                length = sprintf(&block->arg[block->arg_cnt],"%.2f",((double)(root_node->min) / modifier));
+            else
+                length = sprintf(&block->arg[block->arg_cnt],"%d",(root_node->min) / modifier);
+        } else {
+            if(((root_node->min / modifier) == 0 && root_node->min > 0) || 
+               ((root_node->max / modifier) == 0 && root_node->max > 0))
+                length = sprintf(&block->arg[block->arg_cnt],"%.2f ~ %.2f",
+                    ((double)(root_node->min) / modifier), ((double)(root_node->max) / modifier));
+            else
+                length = sprintf(&block->arg[block->arg_cnt],"%d ~ %d",(root_node->min) / modifier, (root_node->max) / modifier);
+        }
         if(length <= 0) return NULL;
 
         /* write the modifier in to the expression */
@@ -2175,12 +2208,12 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
             *min = (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
             *max = (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
-            node->expr_cnt = sprintf(node->expr,"Random value between (%s) ~ (%s)",resultOne->expr, resultTwo->expr);
+            node->expr_cnt = sprintf(node->expr,"random %s ~ %s",resultOne->expr, resultTwo->expr);
             node->expr[node->expr_cnt] = '\0';
         } else {
             *min = resultOne->min;
             *max = resultOne->max;
-            node->expr_cnt = sprintf(node->expr,"Random value between (%s)",resultOne->expr);
+            node->expr_cnt = sprintf(node->expr,"random %s",resultOne->expr);
             node->expr[node->expr_cnt] = '\0';
         }
     /* callfunc calls global functions; just enumerate .. */

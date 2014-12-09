@@ -174,7 +174,9 @@
     #define EVALUATE_FLAG_WRITE_FORMULA    0x08
     #define EVALUATE_FLAG_LIST_FORMULA     0x10
     /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE  0x20
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20
+    /* dump information when evaluating expression */
+    #define EVALUATE_FLAG_DEBUG_DUMP       0x40
 
     /* I've gotten really lazy with proper state mangagement; 
      * I hope the comments are good enough explanation. */
@@ -217,6 +219,7 @@
     void node_inherit_cond(node_t *);
     void node_expr_append(node_t *, node_t *, node_t *);
     char * formula(char *, char *, node_t *);
+    char * status_formula(char *, char *, node_t *, int, int);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
 
