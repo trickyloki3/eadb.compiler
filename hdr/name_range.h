@@ -1,3 +1,10 @@
+/*
+ *   file: name_range.h
+ *   date: 12/9/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #ifndef NAME_RANGE_H
 #define NAME_RANGE_H
    #include <stdio.h>

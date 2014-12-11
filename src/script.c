@@ -3224,11 +3224,11 @@ void script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char *
         /* write each OR's children (non-OR node) as separate condition */
         case LOGIC_NODE_AND: 
             script_generate_and_chain(tree, buf, &off);
-            *offset += sprintf(buffer + *offset, "%sCondition [%s]\n", prefix, buf);
+            *offset += sprintf(buffer + *offset, "%s[%s]\n", prefix, buf);
             break;
         case LOGIC_NODE_COND: 
             script_generate_cond_node(tree, buf, &off);
-            *offset += sprintf(buffer + *offset, "%sCondition [%s]\n", prefix, buf);
+            *offset += sprintf(buffer + *offset, "%s[%s]\n", prefix, buf);
             break;
         default: break;
     }

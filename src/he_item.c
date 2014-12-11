@@ -1,3 +1,10 @@
+/*
+ *   file: he_item.c
+ *   date: 12/9/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include "api.h"

@@ -1,3 +1,10 @@
+/*
+ *   file: range.h
+ *   date: 12/9/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #ifndef RANGE_H
 #define RANGE_H
    #include <stdio.h>

@@ -1,3 +1,10 @@
+/*
+ *   file: name_range.c
+ *   date: 12/9/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include "name_range.h"
 
 /* generate a new condition node; the leaf node of the logical tree structure */

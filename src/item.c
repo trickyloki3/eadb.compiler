@@ -50,8 +50,6 @@ int main(int argc, char * argv[]) {
 		block_cnt = 0;
 		block_init(&block_list, BLOCK_SIZE);
 		if(item.script != NULL && strlen(item.script) > 0) {
-			/*printf("%d:%s;%s\n", item.id, item.name, item.script); fflush(NULL);*/
-
 			/* perform lexical analysis */
 			script_status = script_lexical(&token_list, item.script);
 			if(script_status == SCRIPT_FAILED) {

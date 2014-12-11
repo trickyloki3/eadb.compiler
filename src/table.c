@@ -1,10 +1,10 @@
-/*=============================================================================
-   file: table.c
-   date: 5/11/2014
- update: 5/24/2014
-   auth: trickyloki3
-   desc: table management
-=============================================================================*/
+/*
+ *   file: table.c
+ *   date: 12/9/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include "table.h"
 
 char * race_tbl(int i) {

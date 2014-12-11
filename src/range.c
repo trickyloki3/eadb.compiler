@@ -1,3 +1,10 @@
+/*
+ *   file: range.c
+ *   date: 12/9/2014
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include "range.h"
 
 /* range_mk is called by a relational and equality operator handlers */
