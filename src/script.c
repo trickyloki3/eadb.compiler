@@ -1374,8 +1374,7 @@ int translate_status(block_r * block, int handler) {
                         translate_const(block, block->ptr[2+i], 0x02);                                           
                         break; /* Effect */
                 case 'u': 
-                        evaluate_expression(block, block->ptr[2+i], -1, 
-                        EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); 
+                        evaluate_expression(block, block->ptr[2+i], -1, EVALUATE_FLAG_WRITE_FORMULA); 
                         break; /* Integer Value */
                 default: exit_buf("invalid bonus type %d in item %d", status.vmod_ptr[i], block->item_id);
             }
@@ -1436,6 +1435,8 @@ int translate_status(block_r * block, int handler) {
     /* write the translation only the buffer is filled with something */
     if(off <= 0) exit_buf("failed to translate status %s of item %d", block->ptr[0], block->item_id);
     
+    for(i = 0; i < BONUS_SIZE; i++)
+        if(result[i] != NULL) node_free(result[i]);
     translate_write(block, buf, 1);
     if(const_info.name != NULL) free(const_info.name);
     if(status.scstr != NULL) free(status.scstr);

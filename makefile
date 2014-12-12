@@ -2,22 +2,21 @@
 CCompiler = gcc
 CFlags = -std=c99 -pedantic -Wall -g -O
 
-# eadb library variables
+# db library variables
 HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
 _OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
+# hercule item database require libconfig
 HE_HDRDIR = -I../lib
 HE_LIBDIR = ../lib/hconfig.a
 
 # compile all applications or projects
 all: 
-	make lclean
 	make conv
 	make item
-	make hitem
 
 memchk: item
 	valgrind --leak-check=full --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
