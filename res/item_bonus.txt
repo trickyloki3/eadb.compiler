@@ -73,7 +73,7 @@ bonus, bAddItemHealRate,3,"%s HP recovery from all items.",1,p,1,0
 bonus, bHealPower,3,"%s heal amount of all healing magic.",1,p,1,0
 bonus, bHealPower2,3,"%s heal amount from ally healing magic.",1,p,1,0
 bonus, bHPrecovRate,3,"%s natural HP recovery.",1,p,1,0
-bonus, bSPrecovRate,3,"%s natural HP recovery.",1,p,1,0
+bonus, bSPrecovRate,3,"%s natural SP recovery.",1,p,1,0
 bonus2, bHPVanishRate,24,"%s chance to drain %s HP of opponent with each physical attack.",2,o,p,2,0,1
 bonus2, bSPVanishRate,24,"%s chance to drain %s SP of opponent with each physical attack.",2,o,p,2,0,1
 bonus3, bSPVanishRate,24,"%s chance to drain %s SP of opponent with each physical attack.",3,o,p,t,3,0,1,2

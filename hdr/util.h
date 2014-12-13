@@ -17,7 +17,7 @@
    #include <stdint.h>
 
 	/* BUF_SIZE is the standard static buffer size */
-	#define BUF_SIZE 8192
+	#define BUF_SIZE 4096
 
 	/* standard program abortion function */
 	#define exit_abt(X)	exit_throw_error((X), __FILE__, __func__, __LINE__)

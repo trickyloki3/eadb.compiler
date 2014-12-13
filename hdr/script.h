@@ -21,7 +21,8 @@
 
     /* general */
     #define DEBUG_LEXICAL 0
-    #define BUF_SIZE 8192
+    #define BUF_SIZE 4096
+    #define PTR_SIZE 64
     #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
     #define SUB_SIZE 256
@@ -58,13 +59,13 @@
     typedef struct dep {
         char buf[BUF_SIZE];
         int cnt;
-        int buf_ptr[BUF_SIZE];
+        int buf_ptr[PTR_SIZE];
         int buf_ptr_cnt;
     } dep_t;
 
     typedef struct {
         char script[BUF_SIZE];
-        char * script_ptr[BUF_SIZE];
+        char * script_ptr[PTR_SIZE];
         int script_cnt;
     } token_r;
 
@@ -73,9 +74,9 @@
         int block_id;                        /* unique block id (index) */
         /* arg is where all strings should be store; ptr and eng are simply pointers to the arg buffer */
         char * arg;                          /* block raw and translation stack */
-        char * ptr[BUF_SIZE];                /* raw arguments */
-        char * eng[BUF_SIZE];                /* translated arguments */
-        char * exp[BUF_SIZE];                /* expression formula */
+        char * ptr[PTR_SIZE];                /* raw arguments */
+        char * eng[PTR_SIZE];                /* translated arguments */
+        char * exp[PTR_SIZE];                /* expression formula */
         char * desc;                         /* final description translation */
         int arg_cnt;                         /* various counters for the above arrays */
         int ptr_cnt;
@@ -202,7 +203,7 @@
         /* function argument stack */
         char args[BUF_SIZE];    /* function argument stack */
         int args_cnt;           /* function argument stack offset (top of stack) */
-        int args_ptr[SUB_SIZE]; /* support up to 256 strings in stack */
+        int args_ptr[PTR_SIZE]; /* support up to 256 strings in stack */
         int args_ptr_cnt;
         /* expression precedence and associative */
         struct node * left;
@@ -249,4 +250,7 @@
     void script_generate_cond_node(logic_node_t *, char *, int *);
     void script_generate_class_generic(char *, int *, range_t *, char *);
     void script_generate_cond_generic(char *, int *, int, int, char *);
+
+    /* block minimization */
+    
 #endif

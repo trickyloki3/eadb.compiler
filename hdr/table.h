@@ -8,7 +8,6 @@
 #ifndef TABLE_H
 #define TABLE_H
 	#include "util.h"
-
    char * race_tbl(int i);				/* case 'r': return 3;	// Race */
    char * ele_tbl(int i);				/* case 'l': return 4;	// Element */
    char * eff_tbl(int i);				/* case 'e': return 7;	// Effect */
