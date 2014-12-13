@@ -12,6 +12,7 @@ int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item);
 
 int main(int argc, char * argv[]) {
 	if(argc >= 2) {
+		node_dbg = NULL; /* by default don't dump node output */
 		global_mode = (ncs_strcmp(argv[1],"rathena") == 0) ? RATHENA : 
 					  (((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
 					  ((ncs_strcmp(argv[1],"hercules") == 0) ? HERCULES : -1)));
@@ -45,6 +46,11 @@ int main(int argc, char * argv[]) {
 	global_db = init_ic_db("athena.db");
 	memset(&item, 0, sizeof(ic_item_t));
 	sqlite_status = load_by_mode(global_mode, global_db, &item);
+	if(sqlite_status == SQLITE_DONE) {
+		printf("%s: athena.db must be loaded with at least one database; eAthena, rAthena, or Hercules.\n"
+				 "%s: use 'conv [ eathena | rathena | hercules | all ]' to load a database.\n", argv[0], argv[0]);
+		exit(EXIT_FAILURE);
+	}
 	while(sqlite_status == SQLITE_ROW) {
 		block_cnt = 0;
 		block_init(&block_list, BLOCK_SIZE);
@@ -86,6 +92,8 @@ int main(int argc, char * argv[]) {
 
 int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item) {
 	int status = 0;
+	exit_null("db is null", 1, db);
+	exit_null("item is null", 1, item);
 	switch(mode) {
 		case EATHENA:
 			status = sqlite3_step(db->ea_item_iterate);
@@ -117,6 +125,7 @@ int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item) {
 				item->script = convert_string((const char *) sqlite3_column_text(db->he_item_iterate, 39));
 			}
 			break;
+		default: exit_abt("invalid database mode.");
 	}
 	return status;
 }

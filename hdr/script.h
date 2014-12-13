@@ -22,10 +22,10 @@
     /* general */
     #define DEBUG_LEXICAL 0
     #define BUF_SIZE 4096
-    #define PTR_SIZE 64
+    #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
-    #define SUB_SIZE 256
+    #define BLOCK_COUNT 55 /* total number ofunique blocks */
 
     /* script return status */
     #define SCRIPT_PASSED 0
@@ -100,11 +100,15 @@
                                                 0x04 - use verbatim string */
         int offset;                          /* indicate the beginning of special arguments */
         logic_node_t * logic_tree;           /* calculational and dependency information */
+        /* block minimization */
+        int type_link;
+        int mini_link;
     } block_r;
 
     int global_mode;
     struct ic_db_t * global_db;
     char global_err[BUF_SIZE];
+    FILE * node_dbg;
     #define exit_buf(X, ...) exit_abt(build_buffer(global_err, (X), __VA_ARGS__))
     void block_init(block_r **, int);
     void block_deinit(block_r *, int);
@@ -119,7 +123,8 @@
 
     /* compilation processes called internally */
     int script_extend(block_r *, char *);
-    char * script_compile(char *, int);
+    #define script_compile(X, Y) script_compile_raw(X, Y, NULL)
+    char * script_compile_raw(char *, int, FILE *);
 
     /* script translation functions */
     int translate_bonus(block_r *, int);
@@ -252,5 +257,8 @@
     void script_generate_cond_generic(char *, int *, int, int, char *);
 
     /* block minimization */
-    
+    void block_type_link(block_r *, int);
+
+    /* only perform block minimization, i.e. grouping of
+     * r, l, e, k, s, c, m, v, y, i, and j */
 #endif

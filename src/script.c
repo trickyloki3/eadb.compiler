@@ -795,31 +795,31 @@ int translate_bonus(block_r * block, int flag) {
     */
     for(i = 0, j = 1; i < bonus.type_cnt; i++, j++) {
         switch(bonus.type[i]) {
-            case 'n': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Integer Value */
-            case 'p': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Integer Percentage */
-            case 'r': translate_const(block, block->ptr[j], 0x01);                                           break; /* Race */
-            case 'l': translate_const(block, block->ptr[j], 0x02);                                           break; /* Element */
-            case 'w': translate_splash(block, block->ptr[j]);                                                break; /* Splash */
-            case 'z': block->eng_cnt++;                                                                      break; /* Meaningless */
-            case 'e': translate_const(block, block->ptr[j], 0x04);                                           break; /* Effect */
-            case 'q': result[i] = evaluate_expression(block, block->ptr[j], 100, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);   break; /* Integer Percentage / 100 */
-            case 'k': translate_skill(block, block->ptr[j]);                                                 break; /* Skill */
-            case 's': translate_const(block, block->ptr[j], 0x08);                                           break; /* Size */
-            case 'c': translate_id(block, block->ptr[j], 0x01);                                              break; /* Monster Class & Job ID * Monster ID */
-            case 'o': result[i] = evaluate_expression(block, block->ptr[j], 10, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Integer Percentage / 10 */
-            case 'm': translate_item(block, block->ptr[j]);                                                  break; /* Item ID */
-            case 'x': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Level */
-            case 'g': translate_tbl(block, block->ptr[j], 0x01);                                             break; /* Regen */
-            case 'a': result[i] = evaluate_expression(block, block->ptr[j], 1000, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  break; /* Millisecond */
-            case 'h': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* SP Gain Bool */
-            case 'v': translate_tbl(block, block->ptr[j], 0x04);                                             break; /* Cast Self, Enemy */
-            case 't': translate_trigger(block, block->ptr[j], 1);                                            break; /* Trigger */
-            case 'y': translate_item(block, block->ptr[j]);                                                  break; /* Item Group */
-            case 'd': translate_trigger(block, block->ptr[j], 2);                                            break; /* Triger ATF */
-            case 'f': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Cell */
-            case 'b': translate_tbl(block, block->ptr[j], 0x08);                                             break; /* Flag Bitfield */
-            case 'i': translate_tbl(block, block->ptr[j], 0x10);                                             break; /* Weapon Type */
-            case 'j': translate_const(block, block->ptr[j], 0x10);                                           break; /* Class Group */
+            case 'n': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Integer Value */
+            case 'p': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Integer Percentage */
+            case 'r': translate_const(block, block->ptr[j], 0x01);                                                                      break; /* Race */
+            case 'l': translate_const(block, block->ptr[j], 0x02);                                                                      break; /* Element */
+            case 'w': translate_splash(block, block->ptr[j]);                                                                           break; /* Splash */
+            case 'z': block->eng_cnt++;                                                                                                 break; /* Meaningless */
+            case 'e': translate_const(block, block->ptr[j], 0x04);                                                                      break; /* Effect */
+            case 'q': result[i] = evaluate_expression(block, block->ptr[j], 100, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  break; /* Integer Percentage / 100 */
+            case 'k': translate_skill(block, block->ptr[j]);                                                                            break; /* Skill */
+            case 's': translate_const(block, block->ptr[j], 0x08);                                                                      break; /* Size */
+            case 'c': translate_id(block, block->ptr[j], 0x01);                                                                         break; /* Monster Class & Job ID * Monster ID */
+            case 'o': result[i] = evaluate_expression(block, block->ptr[j], 10, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);   break; /* Integer Percentage / 10 */
+            case 'm': translate_item(block, block->ptr[j]);                                                                             break; /* Item ID */
+            case 'x': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Level */
+            case 'g': translate_tbl(block, block->ptr[j], 0x01);                                                                        break; /* Regen */
+            case 'a': result[i] = evaluate_expression(block, block->ptr[j], 1000, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); break; /* Millisecond */
+            case 'h': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* SP Gain Bool */
+            case 'v': translate_tbl(block, block->ptr[j], 0x04);                                                                        break; /* Cast Self, Enemy */
+            case 't': translate_trigger(block, block->ptr[j], 1);                                                                       break; /* Trigger */
+            case 'y': translate_item(block, block->ptr[j]);                                                                             break; /* Item Group */
+            case 'd': translate_trigger(block, block->ptr[j], 2);                                                                       break; /* Triger ATF */
+            case 'f': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Cell */
+            case 'b': translate_tbl(block, block->ptr[j], 0x08);                                                                        break; /* Flag Bitfield */
+            case 'i': translate_tbl(block, block->ptr[j], 0x10);                                                                        break; /* Weapon Type */
+            case 'j': translate_const(block, block->ptr[j], 0x10);                                                                      break; /* Class Group */
             default: break;
         }
     }
@@ -2072,7 +2072,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     }
 
     /* evaluate the infix expression with pre-order traversal */
-    evaluate_node(root_node->next, NULL, logic_tree, flag, &root_node->complexity);
+    evaluate_node(root_node->next, node_dbg, logic_tree, flag, &root_node->complexity);
 
     /* setup the subexpression or expression node */
     strncpy(root_node->expr, root_node->next->expr, strlen(root_node->next->expr));
@@ -2626,7 +2626,7 @@ void node_inherit_cond(node_t * node) {
 
 void node_dmp(node_t * node, FILE * stm) {
     if(stm != NULL) {
-        fprintf(stm,"     Node: %p\n", (void *) node);
+        fprintf(stm," -- Node %p --\n", (void *) node);
         switch(node->type) {
             case NODE_TYPE_OPERATOR:   
                 switch(node->op) {
@@ -2648,22 +2648,20 @@ void node_dmp(node_t * node, FILE * stm) {
             case NODE_TYPE_SUB: fprintf(stm,"     Type: Subexpression %s; %d:%d\n", node->expr, node->min, node->max); break;
             default: fprintf(stm,"     Type: %d\n", node->op); break;
         }
-        fprintf(stm,"  Minimum: %d\n", node->min);
-        fprintf(stm,"  Maximum: %d\n", node->max);
+        /*fprintf(stm,"  Minimum: %d\n", node->min);
+        fprintf(stm,"  Maximum: %d\n", node->max);*/
         fprintf(stm,"  Arg_Cnt: %d\n", node->args_cnt);
         fprintf(stm,"  Arg_Ptr: %d\n", node->args_ptr_cnt);
-        fprintf(stm,"  Maximum: %d\n", node->max);
-        fprintf(stm,"   Parent: %p\n", (void *) node->parent);
+        /*fprintf(stm,"   Parent: %p\n", (void *) node->parent);
         fprintf(stm,"     Left: %p\n", (void *) node->left);
         fprintf(stm,"    Right: %p\n", (void *) node->right);      
         fprintf(stm,"     Next: %p\n", (void *) node->next);
-        fprintf(stm,"     Prev: %p\n", (void *) node->prev);
+        fprintf(stm,"     Prev: %p\n", (void *) node->prev);*/
         fprintf(stm," Cond Cnt: %d\n", node->cond_cnt);
-        fprintf(stm," Expr Len: %d\n", node->expr_cnt);
+        /*fprintf(stm," Expr Len: %d\n", node->expr_cnt);*/
         fprintf(stm,"     Expr: %s\n", node->expr);
-        dmprange(node->range, stdout, "node_dmp");
+        dmprange(node->range, stm, "range; ");
         dmpnamerange(node->cond, stdout, 0);
-        fprintf(stm,"  --  \n");
     }
 }
 
@@ -3451,18 +3449,43 @@ void script_generate_cond_generic(char * buf, int * offset, int val_min, int val
     buf[*offset] = '\0';
 }
 
-char * script_compile(char * script, int item_id) {
+char * script_compile_raw(char * script, int item_id, FILE * dbg) {
+    int script_status = 0;
     int block_cnt = 0;
     token_r token_list;
     block_r * block_list = NULL;
     char buffer[BUF_SIZE];
     int offset = 0;
+
+    /* compact all-in-one mini script compiler */
     block_init(&block_list, BLOCK_SIZE);
-    script_lexical(&token_list, script);
-    script_analysis(&token_list, block_list, &block_cnt, item_id, 0x01, 0);
-    script_dependencies(block_list, block_cnt);
-    script_translate(block_list, block_cnt);
-    script_generate(block_list, block_cnt, buffer, &offset);
+    script_status = script_lexical(&token_list, script);
+    if(script_status != SCRIPT_PASSED) exit_abt("failed lexical.");
+    script_status = script_analysis(&token_list, block_list, &block_cnt, item_id, 0x01, 0);
+    if(script_status != SCRIPT_PASSED) exit_abt("failed parser.");
+    script_status = script_dependencies(block_list, block_cnt);
+    if(script_status != SCRIPT_PASSED) exit_abt("failed dependency.");
+    script_status = script_translate(block_list, block_cnt);
+    if(script_status != SCRIPT_PASSED) exit_abt("failed translation.");
+    script_status = script_generate(block_list, block_cnt, buffer, &offset);
+    if(script_status != SCRIPT_PASSED) exit_abt("failed generation.");
+    if(dbg != NULL) block_debug_dump_all(block_list, block_cnt, dbg);
     block_deinit(block_list, block_cnt);
     return convert_string(buffer);
+}
+
+void block_type_link(block_r * block, int block_cnt) {
+    int i = 0;
+    int j = 0;
+    block_r * block_ptr = NULL;
+    for(i = 0; i < block_cnt; i++) {
+        block_ptr = &block[i];
+        /* block type link down one level */
+        for(j = i + 1; j < block_cnt; j++) {
+            /* block type and link level must match */
+            if(block_ptr->type->id == block[j].type->id
+               && block_ptr->link == block[j].link)
+                block_ptr->type_link = j;
+        }
+    }
 }

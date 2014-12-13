@@ -28,18 +28,18 @@ bonus, bCritical,6,"Critical: %s",1,n,1,0
 bonus, bAspd,6,"Attack Speed: %s",1,n,1,0
 bonus, bMaxHPrate,3,"%s Maximum HP.",1,p,1,0
 bonus, bMaxSPrate,3,"%s Maximum SP.",1,p,1,0
-bonus, bAtkRate,3,"%s Attack. (ATK)",1,p,1,0
+bonus, bAtkRate,3,"%s Attack.",1,p,1,0
 bonus, bSpeedAddRate,3,"%s Movement Speed.",1,p,1,0
-bonus, bMatkRate,3,"%s Magical Attack. (MATK)",1,p,1,0
-bonus, bDefRate,3,"%s Armor Defense. (DEF)",1,p,1,0
-bonus, bDef2Rate,3,"%s Defense. (DEF)",1,p,1,0
-bonus, bMdefRate,3,"%s Magical Armor Defense. (MDEF)",1,p,1,0
-bonus, bMdef2Rate,3,"%s Magical Defense. (MDEF)",1,p,1,0
+bonus, bMatkRate,3,"%s Magical Attack.",1,p,1,0
+bonus, bDefRate,3,"%s Armor Defense.",1,p,1,0
+bonus, bDef2Rate,3,"%s Defense.",1,p,1,0
+bonus, bMdefRate,3,"%s Magical Armor Defense.",1,p,1,0
+bonus, bMdef2Rate,3,"%s Magical Defense.",1,p,1,0
 bonus, bHitRate,3,"%s HIT",1,p,1,0
 bonus, bCriticalRate,3,"%s Critical Chance.",1,p,1,0
 bonus, bFleeRate,3,"%s FLEE",1,p,1,0
 bonus, bFlee2Rate,3,"%s Perfect Dodge.",1,p,1,0
-bonus, bAspdRate,3,"%s Attack Speed. (ASPD)",1,p,1,0
+bonus, bAspdRate,3,"%s Attack Speed.",1,p,1,0
 bonus, bLongAtkRate,3,"%s Long Ranged Damage.",1,p,1,0
 bonus, bCritAtkRate,3,"%s critical damage.",1,p,1,0
 
