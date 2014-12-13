@@ -21,14 +21,4 @@
    char * weapon_tbl(int i);			/* case 'i': return 24;	// Weapon Type */
    char * itemgrp_tbl(int i);
    char * job_tbl(int i);
-   
-   /* UNUSED */
-	char * readparam_number(char * param);
-	/*char * getskilllv_const(char * param, skill_t * db, int size);*/
-	char * getiteminfo_itemid(char ** arg, int start, int end);
-	char * getiteminfo_type(int type);
-	char * gettime_type(int type);
-	char * strcharinfo_type(int type);
-	/*char * checkoption_type(char * type, const_t * db, int size);*/
-	char * retrieve_mapname(char * map);
 #endif

@@ -108,14 +108,16 @@
     void block_init(block_r **, int);
     void block_deinit(block_r *, int);
 
-    /* compilation processes */
+    /* compilation processes called publicly */
     int script_lexical(token_r *, char *);
     int script_analysis(token_r *, block_r *, int *, int, int, int);
     int script_parse(token_r *, int *, block_r *, char, char, int);
     int script_dependencies(block_r *, int);
     int script_translate(block_r *, int);
-    int script_extend(block_r *, char *);
     int script_generate(block_r *, int, char *, int *);
+
+    /* compilation processes called internally */
+    int script_extend(block_r *, char *);
     char * script_compile(char *, int);
 
     /* script translation functions */
@@ -240,6 +242,8 @@
     char * check_node_range_float_percentage(node_t *, char *, int);
     int check_node_affinity(node_t *);
     int script_linkage_count(block_r *, int);
+
+    /* support generation */
     void script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
     void script_generate_and_chain(logic_node_t *, char *, int *);
     void script_generate_cond_node(logic_node_t *, char *, int *);

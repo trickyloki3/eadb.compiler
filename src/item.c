@@ -18,7 +18,6 @@ int main(int argc, char * argv[]) {
 
 		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES)
 			exit_abt("invalid database type; only 'eathena', 'rathena', or 'hercules' is supported.");
-
 	} else {
 		exit_buf("syntax '%s [eathena | rathena | hercules]'", argv[0]);
 	}
