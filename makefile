@@ -35,7 +35,7 @@ itemr: src/itemr.c $(OBJ)
 conv: src/conv.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR)
 
-test: src/test.c $(OBJ)
+lab: src/lab.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c

@@ -14,17 +14,34 @@ void block_init(block_r ** block, int size) {
 
 void block_deinit(block_r * block, int size) {
     int i = 0;
+    int j = 0;
     for(i = 0; i < size; i++) {
         if(block[i].arg != NULL)
             free(block[i].arg);
+
         if(block[i].type != NULL) {
             if(block[i].type->keyword != NULL) free(block[i].type->keyword);
             free(block[i].type);
         }
+
         if(block[i].set_dep != NULL)
             free(block[i].set_dep);
         deepfreenamerange(block[i].logic_tree);
+
+        for(j = 0; j < BONUS_SIZE; j++)
+            if(block[i].result[j] != NULL)
+                node_free(block[i].result[j]);
+
+        if(block[i].bonus.pref != NULL) free(block[i].bonus.pref);
+        if(block[i].bonus.buff != NULL) free(block[i].bonus.buff);
+        if(block[i].bonus.desc != NULL) free(block[i].bonus.desc);
+        if(block[i].bonus.type != NULL) free(block[i].bonus.type);
+        if(block[i].bonus.order != NULL) free(block[i].bonus.order);
     }
+    memset(block, 0, sizeof(block_r) * size);
+}
+
+void block_finalize(block_r * block, int size) {
     free(block);
 }
 
@@ -164,6 +181,10 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
             *(block_init->type) = info;
             block_init->type->keyword = convert_string(info.keyword);
             block_init->link = block_dep-1;  /* -1 to indicate top-level */
+            block_init->bonus_id = -1;
+            block_init->block_link = -1;
+            block_init->bonus_link = -1;
+            block_init->mini_link = -1;
             /* set the first argument pointer */
             block_init->ptr[0] = block_init->arg;
             block_init->ptr_cnt++;
@@ -764,27 +785,25 @@ int translate_bonus(block_r * block, int flag) {
      * only integer type bonus arguments keep their node; these
      * nodes also keep track of variables use to calculation final
      * result. */
-    node_t * result[BONUS_SIZE];  
-    bonus_t bonus;
-    memset(&bonus, 0, sizeof(bonus_t));
-    memset(result, 0, sizeof(node_t *) * BONUS_SIZE);
+    memset(&block->bonus, 0, sizeof(bonus_t));
+    memset(block->result, 0, sizeof(node_t *) * BONUS_SIZE);
     exit_null("bonus is null", 1, block);
 
     /* search the bonus database for the buff identifier */
     if(flag & 0x01)
-        if(bonus_name_search(global_db, &bonus, "bonus", block->ptr[0]))
+        if(bonus_name_search(global_db, &block->bonus, "bonus", block->ptr[0]))
             exit_abt(build_buffer(global_err,"failed to search for bonus %s for item %d", block->ptr[0], block->item_id));
     if(flag & 0x02)
-        if(bonus_name_search(global_db, &bonus, "bonus2", block->ptr[0]))
+        if(bonus_name_search(global_db, &block->bonus, "bonus2", block->ptr[0]))
             exit_abt(build_buffer(global_err,"failed to search for bonus %s for item %d", block->ptr[0], block->item_id));
     if(flag & 0x04)
-        if(bonus_name_search(global_db, &bonus, "bonus3", block->ptr[0]))
+        if(bonus_name_search(global_db, &block->bonus, "bonus3", block->ptr[0]))
             exit_abt(build_buffer(global_err,"failed to search for bonus %s for item %d", block->ptr[0], block->item_id));
     if(flag & 0x08)
-        if(bonus_name_search(global_db, &bonus, "bonus4", block->ptr[0]))
+        if(bonus_name_search(global_db, &block->bonus, "bonus4", block->ptr[0]))
             exit_abt(build_buffer(global_err,"failed to search for bonus %s for item %d", block->ptr[0], block->item_id));
     if(flag & 0x10)
-        if(bonus_name_search(global_db, &bonus, "bonus5", block->ptr[0]))
+        if(bonus_name_search(global_db, &block->bonus, "bonus5", block->ptr[0]))
             exit_abt(build_buffer(global_err,"failed to search for bonus %s for item %d", block->ptr[0], block->item_id));
 
     /* translate each argument individually 
@@ -793,53 +812,40 @@ int translate_bonus(block_r * block, int flag) {
         j = 0; is the buff identifier
         j = 1; is where the arguments start
     */
-    for(i = 0, j = 1; i < bonus.type_cnt; i++, j++) {
-        switch(bonus.type[i]) {
-            case 'n': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Integer Value */
-            case 'p': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Integer Percentage */
-            case 'r': translate_const(block, block->ptr[j], 0x01);                                                                      break; /* Race */
-            case 'l': translate_const(block, block->ptr[j], 0x02);                                                                      break; /* Element */
-            case 'w': translate_splash(block, block->ptr[j]);                                                                           break; /* Splash */
-            case 'z': block->eng_cnt++;                                                                                                 break; /* Meaningless */
-            case 'e': translate_const(block, block->ptr[j], 0x04);                                                                      break; /* Effect */
-            case 'q': result[i] = evaluate_expression(block, block->ptr[j], 100, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  break; /* Integer Percentage / 100 */
-            case 'k': translate_skill(block, block->ptr[j]);                                                                            break; /* Skill */
-            case 's': translate_const(block, block->ptr[j], 0x08);                                                                      break; /* Size */
-            case 'c': translate_id(block, block->ptr[j], 0x01);                                                                         break; /* Monster Class & Job ID * Monster ID */
-            case 'o': result[i] = evaluate_expression(block, block->ptr[j], 10, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);   break; /* Integer Percentage / 10 */
-            case 'm': translate_item(block, block->ptr[j]);                                                                             break; /* Item ID */
-            case 'x': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Level */
-            case 'g': translate_tbl(block, block->ptr[j], 0x01);                                                                        break; /* Regen */
-            case 'a': result[i] = evaluate_expression(block, block->ptr[j], 1000, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); break; /* Millisecond */
-            case 'h': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* SP Gain Bool */
-            case 'v': translate_tbl(block, block->ptr[j], 0x04);                                                                        break; /* Cast Self, Enemy */
-            case 't': translate_trigger(block, block->ptr[j], 1);                                                                       break; /* Trigger */
-            case 'y': translate_item(block, block->ptr[j]);                                                                             break; /* Item Group */
-            case 'd': translate_trigger(block, block->ptr[j], 2);                                                                       break; /* Triger ATF */
-            case 'f': result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Cell */
-            case 'b': translate_tbl(block, block->ptr[j], 0x08);                                                                        break; /* Flag Bitfield */
-            case 'i': translate_tbl(block, block->ptr[j], 0x10);                                                                        break; /* Weapon Type */
-            case 'j': translate_const(block, block->ptr[j], 0x10);                                                                      break; /* Class Group */
+    block->bonus_id = block->bonus.id;
+    for(i = 0, j = 1; i < block->bonus.type_cnt; i++, j++) {
+        switch(block->bonus.type[i]) {
+            case 'n': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Integer Value */
+            case 'p': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Integer Percentage */
+            case 'r': translate_const(block, block->ptr[j], 0x01);                                                                              break; /* Race */
+            case 'l': translate_const(block, block->ptr[j], 0x02);                                                                              break; /* Element */
+            case 'w': translate_splash(block, block->ptr[j]);                                                                                   break; /* Splash */
+            case 'z': block->eng_cnt++;                                                                                                         break; /* Meaningless */
+            case 'e': translate_const(block, block->ptr[j], 0x04);                                                                              break; /* Effect */
+            case 'q': block->result[i] = evaluate_expression(block, block->ptr[j], 100, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);   break; /* Integer Percentage / 100 */
+            case 'k': translate_skill(block, block->ptr[j]);                                                                                    break; /* Skill */
+            case 's': translate_const(block, block->ptr[j], 0x08);                                                                              break; /* Size */
+            case 'c': translate_id(block, block->ptr[j], 0x01);                                                                                 break; /* Monster Class & Job ID * Monster ID */
+            case 'o': block->result[i] = evaluate_expression(block, block->ptr[j], 10, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);    break; /* Integer Percentage / 10 */
+            case 'm': translate_item(block, block->ptr[j]);                                                                                     break; /* Item ID */
+            case 'x': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Level */
+            case 'g': translate_tbl(block, block->ptr[j], 0x01);                                                                                break; /* Regen */
+            case 'a': block->result[i] = evaluate_expression(block, block->ptr[j], 1000, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  break; /* Millisecond */
+            case 'h': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* SP Gain Bool */
+            case 'v': translate_tbl(block, block->ptr[j], 0x04);                                                                                break; /* Cast Self, Enemy */
+            case 't': translate_trigger(block, block->ptr[j], 1);                                                                               break; /* Trigger */
+            case 'y': translate_item(block, block->ptr[j]);                                                                                     break; /* Item Group */
+            case 'd': translate_trigger(block, block->ptr[j], 2);                                                                               break; /* Triger ATF */
+            case 'f': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Cell */
+            case 'b': translate_tbl(block, block->ptr[j], 0x08);                                                                                break; /* Flag Bitfield */
+            case 'i': translate_tbl(block, block->ptr[j], 0x10);                                                                                break; /* Weapon Type */
+            case 'j': translate_const(block, block->ptr[j], 0x10);                                                                              break; /* Class Group */
             default: break;
         }
     }
 
     /* the number of arguments must match the number of translations */
-    if(block->ptr_cnt-1 != block->eng_cnt) exit_abt("failed to translate block");
-
-    /* process the bonus block's integers and write translation */
-    translate_bonus_desc(result, block, &bonus);
-
-    /* free all the result nodes */
-    for(i = 0; i < BONUS_SIZE; i++)
-        if(result[i] != NULL)
-            node_free(result[i]);
-
-    if(bonus.pref != NULL) free(bonus.pref);
-    if(bonus.buff != NULL) free(bonus.buff);
-    if(bonus.desc != NULL) free(bonus.desc);
-    if(bonus.type != NULL) free(bonus.type);
-    if(bonus.order != NULL) free(bonus.order);
+    if(block->ptr_cnt-1 != block->eng_cnt) exit_buf("failed to translate block on item %d", block[0].item_id);
     return SCRIPT_PASSED;
 }
 
@@ -1555,6 +1561,21 @@ int translate_write(block_r * block, char * desc, int flag) {
     return SCRIPT_PASSED;
 }
 
+int translate_overwrite(block_r * block, char * desc, int position) {
+    int length = 0;
+    exit_null("null paramater", 2, block, desc);
+    /* write the translation on the buffer and assign pointer to the start */
+    block->eng[position] = &block->arg[block->arg_cnt];
+    /* select the proper format to write the argument */
+    length = sprintf(&block->arg[block->arg_cnt],"%s",desc);
+    /* check that the write was successful */
+    if(length <= 0)
+        exit_abt(build_buffer(global_err, "failed to write translation (%s) on item %d.\n", desc, block->item_id));
+    /* extend the buffer to the next length */
+    block->arg_cnt += length + 1;
+    return SCRIPT_PASSED;   
+}
+
 int formula_write(block_r * block, char * formula) {
     int len = 0;
     exit_null("block is null", 1, block);
@@ -1596,6 +1617,10 @@ void block_debug_dump_all(block_r * block, int size, FILE * stm) {
         fprintf(stm,"Block ID: %d\n", block[i].block_id);
         fprintf(stm,"Block Link: %d\n", block[i].link);
         fprintf(stm,"Block Type: %s\n", block[i].type->keyword);
+        fprintf(stm,"Block Bonus ID: %d\n", block[i].bonus_id);
+        fprintf(stm,"Block Block Link: %d\n", block[i].block_link);
+        fprintf(stm,"Block Type Link: %d\n", block[i].bonus_link);
+        fprintf(stm,"Block Mini Link: %d\n", block[i].mini_link);
         /* argument stack */
         fprintf(stm,"Block Argument Count: %d\n", block[i].ptr_cnt);
         for(j = 0; j < block[i].ptr_cnt; j++)
@@ -3467,25 +3492,167 @@ char * script_compile_raw(char * script, int item_id, FILE * dbg) {
     if(script_status != SCRIPT_PASSED) exit_abt("failed dependency.");
     script_status = script_translate(block_list, block_cnt);
     if(script_status != SCRIPT_PASSED) exit_abt("failed translation.");
+    script_status = script_bonus(block_list, block_cnt);
+    if(script_status != SCRIPT_PASSED) exit_abt("failed bonus writing.");
     script_status = script_generate(block_list, block_cnt, buffer, &offset);
     if(script_status != SCRIPT_PASSED) exit_abt("failed generation.");
     if(dbg != NULL) block_debug_dump_all(block_list, block_cnt, dbg);
-    block_deinit(block_list, block_cnt);
+    block_deinit(block_list, BLOCK_SIZE);
+    block_finalize(block_list, BLOCK_SIZE);
     return convert_string(buffer);
 }
 
 void block_type_link(block_r * block, int block_cnt) {
     int i = 0;
-    int j = 0;
+    block_r * block_ptr = NULL;
+    int block_link_table[BLOCK_COUNT];
+    int bonus_link_table[BONUS_COUNT];
+    exit_null("block is null", 1, block);
+
+    /* dynamic table for O(n) type linking 
+     * set all to -1 because block 0 is used */
+    for(i = 0; i < BLOCK_COUNT; i++)
+        block_link_table[i] = -1;
+    for(i = 0; i < BONUS_COUNT; i++)
+        bonus_link_table[i] = -1;
+
+    /* blocku ann bonusu typo linkuuu */
+    for(i = block_cnt - 1; i >= 0 ; i--) {
+        block_ptr = &block[i];
+        /* block link table for block id is empty */
+        if(block_link_table[block_ptr->type->id] == -1) {
+            block_link_table[block_ptr->type->id] = i;
+        } else {
+            block_ptr->block_link = block_link_table[block_ptr->type->id];
+            block_link_table[block_ptr->type->id] = i;
+        }
+        /* bonus link table for bonus id is empty */
+        if(block_ptr->bonus_id > 0) {
+            if(bonus_link_table[block_ptr->bonus_id] == -1) {
+                bonus_link_table[block_ptr->bonus_id] = i;
+            } else {
+                /* bonus link only if bonus type are same */
+                block_ptr->bonus_link = bonus_link_table[block_ptr->bonus_id];
+                bonus_link_table[block_ptr->bonus_id] = i;
+            }
+        }
+    }
+}
+
+void bonus_mini_link(block_r * block, int block_cnt) {
+    int i = 0;
+    int block_iter = 0;
+    block_r * block_ptr = NULL;
+    exit_null("block is null", 1, block);
+    for(i = 0; i < block_cnt; i++) {
+        block_ptr = &block[i];
+        /* skip nullified blocks */
+        if(block_ptr->type->id == -1) continue;
+        /* call a minimize handler for each block type */
+        block_iter = block_ptr->bonus_link;
+        while(block_iter != -1) {
+            /* check to make sure the block link is valid */
+            if(block_iter < 0 || block_iter >= block_cnt) 
+                exit_buf("failed to block minimize for item %d\n", block_ptr->item_id);
+            if(bonus_mini_check(block_ptr, &block[block_iter]) == SCRIPT_PASSED) {
+                /* minimization link */
+                block_ptr->mini_link = block_iter;
+                break;
+            }
+            block_iter = block[block_iter].bonus_link;
+        }
+    }
+}
+
+int bonus_mini_check(block_r * parent, block_r * child) {
+    /* check that the blocks are non-null */
+    exit_null("parent is null", 1, parent);
+    exit_null("child is null", 1, child);
+
+    /* check that the parent and child block are on the same level */
+    if(parent->link != child->link) return SCRIPT_FAILED;
+
+    /* redundant type check to validate block_type_link */
+    if(parent->type->id != child->type->id)
+        exit_buf("block_type_link; mismatch block type on item %d\n", parent->item_id);
+    if(parent->bonus_id != child->bonus_id)
+        exit_buf("block_type_link; mismatch bonus type on item %d\n", parent->item_id);
+
+    switch(parent->bonus_id) {
+        case 135: case 136: 
+            return (ncs_strcmp(parent->eng[1], child->eng[1]) == 0 &&
+                    ncs_strcmp(parent->eng[0], child->eng[0]) != 0)
+                    ?SCRIPT_PASSED:SCRIPT_FAILED; break;
+        default: break;
+    }
+
+    /* if the bonus blocks are linkable, SCRIPT_PASSED is returned from
+     * switch statement above and the caller will do the actual linking. */
+    return SCRIPT_FAILED;
+}
+
+void bonus_mini_rewrite(block_r * block, int block_cnt) {
+    int i = 0;
     block_r * block_ptr = NULL;
     for(i = 0; i < block_cnt; i++) {
         block_ptr = &block[i];
-        /* block type link down one level */
-        for(j = i + 1; j < block_cnt; j++) {
-            /* block type and link level must match */
-            if(block_ptr->type->id == block[j].type->id
-               && block_ptr->link == block[j].link)
-                block_ptr->type_link = j;
+        /* check if block is nullified */
+        if(block_ptr->type->id == -1) continue;
+        /* check if the block is a bonus block */
+        if(block_ptr->bonus_id < 0) continue;
+        /* check if bonus block can be minimize */
+        if(block_ptr->mini_link < 0) continue;
+        /* minimize by grouping specific bonus field types */
+        switch(block_ptr->bonus_id) {
+            case 135: case 136:
+                bonus_mini_group(block, block_cnt, block_ptr, 0);
+                break;
+            default: break;
         }
     }
+}
+
+void bonus_mini_group(block_r * block, int block_cnt, block_r * block_ptr, int field) {
+    int off = 0;
+    char buf[BUF_SIZE];
+    int block_iter = block_ptr->mini_link;
+
+    /* aggregate all the fields from minimize linked list */
+    if(block[block_iter].mini_link == -1) {
+        /* x and y format */
+        off += sprintf(buf + off, "%s and %s", block_ptr->eng[field], block[block_iter].eng[field]);
+    } else {
+        /* x, y, and z format */
+        off += sprintf(buf + off, "%s", block_ptr->eng[field]);
+        while(block_iter > 0) {
+            off += (block[block_iter].mini_link == -1) ?
+                sprintf(buf + off,", and %s", block[block_iter].eng[field]):
+                sprintf(buf + off,", %s", block[block_iter].eng[field]);
+            block_iter = block[block_iter].mini_link;
+        }
+    }
+    buf[off] = '\0';
+
+    /* nullify all minimize blocks; separate loop for clarity */
+    block_iter = block_ptr->mini_link;
+    while(block_iter > 0) {
+        block[block_iter].type->id = -1;
+        block_iter = block[block_iter].mini_link;
+    }
+
+    /* replace specific field with aggregate of all fields from other blocks */
+    translate_overwrite(block_ptr, buf, field);
+}
+
+int script_bonus(block_r * block, int block_cnt) {
+    int i = 0;
+    /* minimize bonus blocks */
+    block_type_link(block, block_cnt);
+    bonus_mini_link(block, block_cnt);
+    bonus_mini_rewrite(block, block_cnt);
+    /* process the bonus block's integers and write translation */
+    for(i = 0; i < block_cnt; i++)
+        if(block[i].type->id >= 0 && block[i].type->id <= 4)
+            translate_bonus_desc(block[i].result, &block[i], &block[i].bonus);
+    return SCRIPT_PASSED;
 }

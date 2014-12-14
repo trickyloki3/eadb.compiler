@@ -172,7 +172,7 @@ int main(int argc, char * argv[]) {
 		}
 
 		/* load compiler databases */
-		load_db_t * db1 = load("res/item_bonus.txt", trim_alpha, load_general, bonus_load);
+		load_db_t * db1 = load("res/item_bonus.txt", trim_numeric, load_general, bonus_load);
 		load_db_t * db2 = load("res/status_db.txt", trim_numeric, load_general, status_load);
 		load_db_t * db3 = load("res/var_db.txt", trim_numeric, load_general, var_load);
 		load_db_t * db4 = load("res/block_db.txt", trim_numeric, load_general, block_load);

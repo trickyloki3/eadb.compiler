@@ -436,6 +436,7 @@
 	} status_t;
 
 	typedef struct {
+		int id;
 		char * pref;         /* bonus prefix, i.e. bonus, bonus2, etc. */
 		char * buff;         /* bonus buff, i.e. bStr, bAgi, etc. */
 		int attr;        /* bonus attributes */

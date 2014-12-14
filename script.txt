@@ -1,1 +1,10 @@
-bonus bStr,10;
+bonus2 bAddRace,RC_DemiHuman,3; 
+bonus2 bAddRace,RC_Player,getrefine();
+bonus2 bAddRace,RC_Plant,3;
+bonus2 bIgnoreMdefRate,RC_Insect,10;
+if(getrefine() < 3) {
+	bonus2 bAddRace,RC_Insect,3;
+	bonus2 bAddRace,RC_Demon,3;
+}
+bonus2 bAddRace,RC_Demon,getrefine();
+bonus2 bAddRace,RC_Dragon,3;

@@ -14,6 +14,7 @@ int main(int argc, char * argv[]) {
 	int buf_size = BUF_SIZE * 2;
 	char fld[buf_size];
 	char buf[buf_size];
+	char * result = NULL;
 	memset(buf, 0, sizeof(buf_size));
 
 	if(argc >= 3) {
@@ -38,7 +39,7 @@ int main(int argc, char * argv[]) {
 	/* initialize the global database */
 	global_db = init_ic_db("athena.db");
 	file_dbg = fopen("dump.txt", "w");
-	node_dbg = file_dbg;
+	node_dbg = NULL;
 	if(file_dbg == NULL) exit_abt("failed to open dump.txt.");
 
 	/* load the script file into the buffer */
@@ -48,8 +49,10 @@ int main(int argc, char * argv[]) {
 
 	/* compile the script and display to stdout 
 	 * use output redirection to store in a file */
-	printf(" -- itemr -- \n%s\n", script_compile_raw(buf, 0, file_dbg));
-
+	result = script_compile_raw(buf, 0, file_dbg);
+	printf(" -- itemr -- \n%s\n", result);
+	free(result);
+	
 	/* clean up everything */
 	deit_ic_db(global_db);
 	fclose(file);

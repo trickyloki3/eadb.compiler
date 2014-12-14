@@ -25,7 +25,8 @@
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
-    #define BLOCK_COUNT 55 /* total number ofunique blocks */
+    #define BLOCK_COUNT 55  /* total number of unique blocks */
+    #define BONUS_COUNT 209 /* total number of unique bonuses */
 
     /* script return status */
     #define SCRIPT_PASSED 0
@@ -69,6 +70,39 @@
         int script_cnt;
     } token_r;
 
+    /* I've gotten really lazy with proper state mangagement; 
+     * I hope the comments are good enough explanation. */
+    typedef struct node {
+        int type;               /* see node types macros */
+        int op;                 /* operator (NODE_TYPE_OPERATOR) */
+        char * id;              /* identifier (NODE_TYPE_FUNCTION / VARIABLE / LOCAL / CONSTANT / SUB) */
+        int min;                /* minrange() and maxrange() values */
+        int max;
+        /* dependency */
+        range_t * range;        /* min max range */
+        logic_node_t * cond;
+        int cond_cnt;           /* total count of variable and functions; cascaded by operator */
+        /* expression translation */
+        int var_id;             /* useful for multplexing different schemes; unused */
+        char expr[BUF_SIZE];    /* verbatim translation string */
+        int expr_cnt;           /* size of expr */
+        /* function and variable list */
+        dep_t * dep;
+        int complexity;         /* count the number of relational, equality, logical, or conditional operators */
+        /* function argument stack */
+        char args[BUF_SIZE];    /* function argument stack */
+        int args_cnt;           /* function argument stack offset (top of stack) */
+        int args_ptr[PTR_SIZE]; /* support up to 256 strings in stack */
+        int args_ptr_cnt;
+        /* expression precedence and associative */
+        struct node * left;
+        struct node * right;
+        struct node * parent;   /* allow bridging through parent (L>P^P<R) mini diagram */
+        struct node * next;
+        struct node * prev;
+        struct node * list;     /* arbitrary chain in sequence of creation; this allow freeing everything easier */
+    } node_t;
+
     typedef struct block_r {
         int item_id;                         /* item to which the block belongs */
         int block_id;                        /* unique block id (index) */
@@ -100,9 +134,13 @@
                                                 0x04 - use verbatim string */
         int offset;                          /* indicate the beginning of special arguments */
         logic_node_t * logic_tree;           /* calculational and dependency information */
-        /* block minimization */
-        int type_link;
+        /* bonus minimization */
+        int bonus_id;
+        int block_link;                      /* minimize by block type */
+        int bonus_link;                      /* minimize by bonus type */
         int mini_link;
+        node_t * result[BONUS_SIZE];         /* keep until after minimization */
+        bonus_t bonus;                       /* ahhhhhhhhhhhhhhhhhhhhhhhhhhhh */
     } block_r;
 
     int global_mode;
@@ -112,6 +150,7 @@
     #define exit_buf(X, ...) exit_abt(build_buffer(global_err, (X), __VA_ARGS__))
     void block_init(block_r **, int);
     void block_deinit(block_r *, int);
+    void block_finalize(block_r *, int);
 
     /* compilation processes called publicly */
     int script_lexical(token_r *, char *);
@@ -119,6 +158,7 @@
     int script_parse(token_r *, int *, block_r *, char, char, int);
     int script_dependencies(block_r *, int);
     int script_translate(block_r *, int);
+    int script_bonus(block_r *, int);
     int script_generate(block_r *, int, char *, int *);
 
     /* compilation processes called internally */
@@ -155,6 +195,7 @@
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
     int translate_write(block_r *, char *, int);
+    int translate_overwrite(block_r *, char *, int);
 
     /* debug compiler by dumping the block list */
     void block_debug_dump_all(block_r *, int, FILE *);
@@ -185,39 +226,6 @@
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20
     /* dump information when evaluating expression */
     #define EVALUATE_FLAG_DEBUG_DUMP       0x40
-
-    /* I've gotten really lazy with proper state mangagement; 
-     * I hope the comments are good enough explanation. */
-    typedef struct node {
-        int type;               /* see node types macros */
-        int op;                 /* operator (NODE_TYPE_OPERATOR) */
-        char * id;              /* identifier (NODE_TYPE_FUNCTION / VARIABLE / LOCAL / CONSTANT / SUB) */
-        int min;                /* minrange() and maxrange() values */
-        int max;
-        /* dependency */
-        range_t * range;        /* min max range */
-        logic_node_t * cond;
-        int cond_cnt;           /* total count of variable and functions; cascaded by operator */
-        /* expression translation */
-        int var_id;             /* useful for multplexing different schemes; unused */
-        char expr[BUF_SIZE];    /* verbatim translation string */
-        int expr_cnt;           /* size of expr */
-        /* function and variable list */
-        dep_t * dep;
-        int complexity;         /* count the number of relational, equality, logical, or conditional operators */
-        /* function argument stack */
-        char args[BUF_SIZE];    /* function argument stack */
-        int args_cnt;           /* function argument stack offset (top of stack) */
-        int args_ptr[PTR_SIZE]; /* support up to 256 strings in stack */
-        int args_ptr_cnt;
-        /* expression precedence and associative */
-        struct node * left;
-        struct node * right;
-        struct node * parent;   /* allow bridging through parent (L>P^P<R) mini diagram */
-        struct node * next;
-        struct node * prev;
-        struct node * list;     /* arbitrary chain in sequence of creation; this allow freeing everything easier */
-    } node_t;
 
     /* expression evaluation */
     node_t * evaluate_expression(block_r *, char *, int, int);
@@ -258,7 +266,8 @@
 
     /* block minimization */
     void block_type_link(block_r *, int);
-
-    /* only perform block minimization, i.e. grouping of
-     * r, l, e, k, s, c, m, v, y, i, and j */
+    void bonus_mini_link(block_r *, int);
+    int bonus_mini_check(block_r *, block_r *);
+    void bonus_mini_rewrite(block_r *, int);
+    void bonus_mini_group(block_r *, int, block_r *, int);
 #endif

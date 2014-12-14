@@ -51,9 +51,9 @@ int main(int argc, char * argv[]) {
 				 "%s: use 'conv [ eathena | rathena | hercules | all ]' to load a database.\n", argv[0], argv[0]);
 		exit(EXIT_FAILURE);
 	}
+	block_init(&block_list, BLOCK_SIZE);
 	while(sqlite_status == SQLITE_ROW) {
 		block_cnt = 0;
-		block_init(&block_list, BLOCK_SIZE);
 		if(item.script != NULL && strlen(item.script) > 0) {
 			/* perform lexical analysis */
 			script_status = script_lexical(&token_list, item.script);
@@ -69,6 +69,8 @@ int main(int argc, char * argv[]) {
 					script_dependencies(block_list, block_cnt);
 					/* translate the script */
 					script_translate(block_list, block_cnt);
+					/* write bonus translation after minimization */
+					script_bonus(block_list, block_cnt);
 					/* generate the translation */
 					translate_off = 0;
 					script_generate(block_list, block_cnt, translate, &translate_off);
@@ -82,6 +84,7 @@ int main(int argc, char * argv[]) {
 		block_deinit(block_list, BLOCK_SIZE);
 		sqlite_status = load_by_mode(global_mode, global_db, &item);
 	}
+	block_finalize(block_list, BLOCK_SIZE);
 	deit_ic_db(global_db);
 	if(DEBUG) fclose(file_dgb);
 	fclose(file_itm);
