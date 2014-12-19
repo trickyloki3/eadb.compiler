@@ -6,6 +6,7 @@ CFlags = -std=c99 -pedantic -Wall -g -O
 HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
+LIB = -lsqlite3 -ldl -lpthread
 _OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
@@ -24,19 +25,19 @@ memchk: item
 
 hitem: src/he_item.c $(OBJ)
 	$(CCompiler) -c -o he_item.o $(CFlags) src/he_item.c $(HDRDIR) $(HE_HDRDIR)
-	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR) $(HE_HDRDIR) $(HE_LIBDIR)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(HE_LIBDIR) $(LIB)
 
 item: src/item.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
 itemr: src/itemr.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
 conv: src/conv.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
 lab: src/lab.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) lib/sqlite3.o -lm -ldl -lpthread $^ $(HDRDIR)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR)  $(LIB)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
 	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR)
@@ -54,6 +55,7 @@ lclean:
 	rm -f dump.txt
 	rm -f item.txt
 	rm -f itemc_mem_check.log
+	rm -rf *.dSYM
 
 wclean:
 	rmdir obj /S /Q

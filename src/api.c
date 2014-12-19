@@ -1632,5 +1632,4 @@ int array_field_cnt(char * buf) {
 	for(i = 0; i < len; i++)
 		if(buf[i] == ':') cnt++;
 	return cnt;
-
 }
