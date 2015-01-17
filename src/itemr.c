@@ -50,7 +50,7 @@ int main(int argc, char * argv[]) {
 	/* compile the script and display to stdout 
 	 * use output redirection to store in a file */
 	result = script_compile_raw(buf, 0, file_dbg);
-	printf(" -- itemr -- \n%s\n", result);
+	printf(" -- script --\n%s\n-- item description --\n%s\n", buf, result);
 	free(result);
 	
 	/* clean up everything */

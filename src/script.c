@@ -196,10 +196,6 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
             *(block_init->type) = info;
             block_init->type->keyword = convert_string(info.keyword);
             block_init->link = block_dep-1;  /* -1 to indicate top-level */
-            block_init->bonus_id = -1;
-            block_init->block_link = -1;
-            block_init->bonus_link = -1;
-            block_init->mini_link = -1;
             /* set the first argument pointer */
             block_init->ptr[0] = block_init->arg;
             block_init->ptr_cnt++;
@@ -551,6 +547,18 @@ int script_translate(block_r * block, int size) {
     return SCRIPT_PASSED;
 }
 
+int script_bonus(block_r * block, int block_cnt) {
+    int i = 0;
+
+    
+
+    /* generate the final item description for bonus blocks */
+    for(i = 0; i < block_cnt; i++)
+        if(block[i].type->id >= 0 && block[i].type->id <= 4)
+            translate_bonus_desc(block[i].result, &block[i], &block[i].bonus);
+    return SCRIPT_PASSED;
+}
+
 int script_extend(block_r * block, char * expr) {
     int offset = 0;
     token_r token;
@@ -881,7 +889,6 @@ int translate_bonus(block_r * block, int flag) {
         j = 0; is the buff identifier
         j = 1; is where the arguments start
     */
-    block->bonus_id = block->bonus.id;
     for(i = 0, j = 1; i < block->bonus.type_cnt; i++, j++) {
         switch(block->bonus.type[i]) {
             case 'n': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);     break; /* Integer Value */
@@ -1687,10 +1694,6 @@ void block_debug_dump_all(block_r * block, int size, FILE * stm) {
         fprintf(stm,"Block ID: %d\n", block[i].block_id);
         fprintf(stm,"Block Link: %d\n", block[i].link);
         fprintf(stm,"Block Type: %s\n", block[i].type->keyword);
-        fprintf(stm,"Block Bonus ID: %d\n", block[i].bonus_id);
-        fprintf(stm,"Block Block Link: %d\n", block[i].block_link);
-        fprintf(stm,"Block Type Link: %d\n", block[i].bonus_link);
-        fprintf(stm,"Block Mini Link: %d\n", block[i].mini_link);
         /* argument stack */
         fprintf(stm,"Block Argument Count: %d\n", block[i].ptr_cnt);
         for(j = 0; j < block[i].ptr_cnt; j++)
@@ -3543,14 +3546,4 @@ void script_generate_cond_generic(char * buf, int * offset, int val_min, int val
         sprintf(buf + *offset, "%s %d ~ %d", template, val_min, val_max) :
         sprintf(buf + *offset, "%s %d", template, val_min);
     buf[*offset] = '\0';
-}
-
-int script_bonus(block_r * block, int block_cnt) {
-    int i = 0;
-
-    /* generate the final item description for bonus blocks */
-    for(i = 0; i < block_cnt; i++)
-        if(block[i].type->id >= 0 && block[i].type->id <= 4)
-            translate_bonus_desc(block[i].result, &block[i], &block[i].bonus);
-    return SCRIPT_PASSED;
 }

@@ -19,6 +19,8 @@ all:
 	make lclean
 	make conv
 	make item
+	make itemr
+	make lab
 
 memchk: item
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
@@ -51,12 +53,12 @@ lclean:
 	rm -f item
 	rm -f itemr
 	rm -f hitem
+	rm -f lab
 	rm -f he_item.o
 	rm -f dump.txt
 	rm -f item.txt
 	rm -f itemc_mem_check.log
 	rm -rf *.dSYM
-	rm -f lab
 	
 wclean:
 	rmdir obj /S /Q

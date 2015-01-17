@@ -20,14 +20,12 @@
     #include "table.h"
 
     /* general */
-    #define DEBUG_LEXICAL 0
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
     #define BLOCK_COUNT 55  /* total number of unique blocks */
     #define BONUS_COUNT 209 /* total number of unique bonuses */
-
     /* script return status */
     #define SCRIPT_PASSED 0
     #define SCRIPT_FAILED 1
@@ -56,6 +54,54 @@
     #define BF_LONG 64
     #define BF_SKILL 256
     #define BF_NORMAL 512
+
+    /* node types */
+    #define NODE_TYPE_OPERATOR    0x01
+    #define NODE_TYPE_OPERAND     0x02
+    #define NODE_TYPE_UNARY       0x80  /* unary operator */
+    #define NODE_TYPE_FUNCTION    0x04  /* var.txt function */
+    #define NODE_TYPE_VARIABLE    0x08  /* var.txt variable */
+    #define NODE_TYPE_LOCAL       0x10  /* set block variable */
+    #define NODE_TYPE_CONSTANT    0x20  /* const.txt */
+    #define NODE_TYPE_SUB         0x40  /* subexpression node */
+    /* operator precedence array sizes */
+    #define PRED_LEVEL_MAX        11
+    #define PRED_LEVEL_PER        5
+    /* flags for keeping node or logic */
+    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01
+    #define EVALUATE_FLAG_KEEP_NODE        0x02
+    /* flag for evaluating relational operators to either 0 or 1
+     * ignore expression simplification for conditional expression */
+    #define EVALUATE_FLAG_EXPR_BOOL        0x04
+    /* write the formula for expression */
+    #define EVALUATE_FLAG_WRITE_FORMULA    0x08
+    #define EVALUATE_FLAG_LIST_FORMULA     0x10
+    /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20
+    /* dump information when evaluating expression */
+    #define EVALUATE_FLAG_DEBUG_DUMP       0x40
+
+    /* bonus flags for block minimization */
+    #define BONUS_FLAG_STACK        0x00010000  /* default: no stack */
+    #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
+    /* check a set of arguments for equality */
+    #define BONUS_FLAG_EQ_1         0x00000001  /* check 1st argument are equal */
+    #define BONUS_FLAG_EQ_2         0x00000002  /* check 2nd argument are equal */
+    #define BONUS_FLAG_EQ_3         0x00000004  /* check 3rd argument are equal */
+    #define BONUS_FLAG_EQ_4         0x00000008  /* check 4th argument are equal */
+    #define BONUS_FLAG_EQ_5         0x00000010  /* check 5th argument are equal */
+    /* aggregate a set of arguments */
+    #define BONUS_FLAG_AG_1         0x00000100  /* aggregate 1st argument */
+    #define BONUS_FLAG_AG_2         0x00000200  /* aggregate 2nd argument */
+    #define BONUS_FLAG_AG_3         0x00000400  /* aggregate 3rd argument */
+    #define BONUS_FLAG_AG_4         0x00000800  /* aggregate 4th argument */
+    #define BONUS_FLAG_AG_5         0x00001000  /* aggregate 5th argument */
+    /* stack a set of integer arguments */
+    #define BONUS_FLAG_ST_1         0x01000000  /* stack 1st argument */
+    #define BONUS_FLAG_ST_2         0x02000000  /* stack 2nd argument */
+    #define BONUS_FLAG_ST_3         0x04000000  /* stack 3rd argument */
+    #define BONUS_FLAG_ST_4         0x08000000  /* stack 4th argument */
+    #define BONUS_FLAG_ST_5         0x10000000  /* stack 5th argument */
 
     typedef struct dep {
         char buf[BUF_SIZE];
@@ -106,7 +152,10 @@
     typedef struct block_r {
         int item_id;                         /* item to which the block belongs */
         int block_id;                        /* unique block id (index) */
-        /* arg is where all strings should be store; ptr and eng are simply pointers to the arg buffer */
+
+        /* The argument, translation, and formula stacks 
+         * arg is where all strings should be store; ptr 
+         * and eng are simply pointers to the arg buffer */
         char * arg;                          /* block raw and translation stack */
         char * ptr[PTR_SIZE];                /* raw arguments */
         char * eng[PTR_SIZE];                /* translated arguments */
@@ -116,10 +165,14 @@
         int ptr_cnt;
         int eng_cnt;
         int exp_cnt;
+
+        /* handle conditional and calculational 'dependencies' for
+         * expressions with variable and function or set blocks */
         block_t * type;                      /* access to translation information in block_db.txt from block_db */
         int link;                            /* indicate conditional linking for if-else statements (index to block) */
         struct block_r * depd[BLOCK_SIZE];   /* indicate calculation linking for set blocks */
         int depd_cnt;                        /* number of dependencies */
+        
         /* set_* variable allows a block to be inherited as a
          * node, which can be used when evaluating expressions. */
         int set_min;
@@ -128,17 +181,16 @@
         dep_t * set_dep;
         char set_expr[BUF_SIZE];             /* contain the formula for the set block */
         int set_complexity;                  /* indicate that the set block contains a complex expression */
+
+        /* flag and offset are use for variable length arguments in functions */
         int flag;                            /* multi-purpose flag for special conditions 
                                                 0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
                                                 0x02 - multivalues must be tagged random 
                                                 0x04 - use verbatim string */
         int offset;                          /* indicate the beginning of special arguments */
         logic_node_t * logic_tree;           /* calculational and dependency information */
-        /* bonus minimization */
-        int bonus_id;
-        int block_link;                      /* minimize by block type */
-        int bonus_link;                      /* minimize by bonus type */
-        int mini_link;
+
+        /* bonus blocks will defer writing the final item description until script_bonus */
         node_t * result[BONUS_SIZE];         /* keep until after minimization */
         bonus_t bonus;                       /* ahhhhhhhhhhhhhhhhhhhhhhhhhhhh */
     } block_r;
@@ -201,32 +253,6 @@
     void block_debug_dump_all(block_r *, int, FILE *);
     void block_debug_dump_set_link(struct block_r **, int, int, int, FILE *);
 
-     /* node types */
-    #define NODE_TYPE_OPERATOR    0x01
-    #define NODE_TYPE_OPERAND     0x02
-    #define NODE_TYPE_UNARY       0x80  /* unary operator */
-    #define NODE_TYPE_FUNCTION    0x04  /* var.txt function */
-    #define NODE_TYPE_VARIABLE    0x08  /* var.txt variable */
-    #define NODE_TYPE_LOCAL       0x10  /* set block variable */
-    #define NODE_TYPE_CONSTANT    0x20  /* const.txt */
-    #define NODE_TYPE_SUB         0x40  /* subexpression node */
-    /* operator precedence array sizes */
-    #define PRED_LEVEL_MAX        11
-    #define PRED_LEVEL_PER        5
-    /* flags for keeping node or logic */
-    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01
-    #define EVALUATE_FLAG_KEEP_NODE        0x02
-    /* flag for evaluating relational operators to either 0 or 1
-     * ignore expression simplification for conditional expression */
-    #define EVALUATE_FLAG_EXPR_BOOL        0x04
-    /* write the formula for expression */
-    #define EVALUATE_FLAG_WRITE_FORMULA    0x08
-    #define EVALUATE_FLAG_LIST_FORMULA     0x10
-    /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20
-    /* dump information when evaluating expression */
-    #define EVALUATE_FLAG_DEBUG_DUMP       0x40
-
     /* expression evaluation */
     node_t * evaluate_expression(block_r *, char *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
@@ -265,4 +291,5 @@
     void script_generate_cond_generic(char *, int *, int, int, char *);
 
     /* support minimization */
+
 #endif
