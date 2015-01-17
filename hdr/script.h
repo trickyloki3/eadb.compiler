@@ -29,6 +29,9 @@
     /* script return status */
     #define SCRIPT_PASSED 0
     #define SCRIPT_FAILED 1
+    /* explicit defined over hardcoded constants */
+    #define BONUS_ID_MAX 5  /* bonus block id are 0 to 4; great for checking if block is a bonus block or not */
+    #define BLOCK_NULLIFIED -1 /* indicates that the block is deleted; used by block->type->id */
 
     /* athena syntax groups */
     #define ATHENA_SCRIPT_SYMBOL(X)           ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
@@ -84,6 +87,8 @@
     /* bonus flags for block minimization */
     #define BONUS_FLAG_STACK        0x00010000  /* default: no stack */
     #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
+    #define BONUS_FLAG_MINIS        0x00040000  /* minimize by expanding list */
+    #define BONUS_FLAG_MINIZ        0x00080000  /* minimize by checking arguments */
     /* check a set of arguments for equality */
     #define BONUS_FLAG_EQ_1         0x00000001  /* check 1st argument are equal */
     #define BONUS_FLAG_EQ_2         0x00000002  /* check 2nd argument are equal */
@@ -291,5 +296,5 @@
     void script_generate_cond_generic(char *, int *, int, int, char *);
 
     /* support minimization */
-
+    int minimize_stack(node_t * left, node_t * right);
 #endif

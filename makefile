@@ -22,6 +22,16 @@ all:
 	make itemr
 	make lab
 
+ball:
+	rm athena.db
+	./conv rathena
+	make bmin
+
+bmin:
+	rm -f itemr
+	make itemr
+	./itemr rathena script.txt
+
 memchk: item
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
 

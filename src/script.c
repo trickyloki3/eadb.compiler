@@ -71,10 +71,10 @@ int script_lexical(token_r * token, char * buffer) {
 
     /* lexical data */
     int i = 0;
-    char * script_buf = NULL;     /* script's buffer */
-    char ** script_ptr = NULL;    /* script's string */
-    int script_buf_cnt = 0;   /* script's buffer index */
-    int script_ptr_cnt = 0;   /* script's string index */
+    char * script_buf = NULL;   /* script's buffer */
+    char ** script_ptr = NULL;  /* script's string */
+    int script_buf_cnt = 0;     /* script's buffer index */
+    int script_ptr_cnt = 0;     /* script's string index */
     int comment_level = 0;
 
     /* check paramaters for NULL references */
@@ -98,13 +98,13 @@ int script_lexical(token_r * token, char * buffer) {
     for(i = 0; i < script_len; i++) {
         /* skipped multiline comments embedded in script */
         if(i+1 < script_len && script[i] == '/' && script[i+1] == '*')
-         comment_level++;
+            comment_level++;
         else if(i+1 < script_len && script[i] == '*' && script[i+1] == '/') {
-         comment_level--;
-         i += 2;
+            comment_level--;
+            i += 2;
         }
         if(comment_level) 
-         continue;
+            continue;
 
         /* tokenize operators, identifiers, and syntax */
         if(ATHENA_SCRIPT_IDENTIFER(script[i]) || ATHENA_SCRIPT_SYMBOL(script[i])) {
@@ -547,15 +547,206 @@ int script_translate(block_r * block, int size) {
     return SCRIPT_PASSED;
 }
 
+/* for each non-nullified block, attempt to minimize with
+ * blocks on the same enclosing block and bonus id */
 int script_bonus(block_r * block, int block_cnt) {
     int i = 0;
+    int j = 0;
+    int k = 0;
 
-    
+    /* cache current and block pointer */
+    int cur_blk_type = 0;
+    int cur_blk_flag = 0;
+    block_r * cur_blk;      /* attempt to minimize current block */
+    block_r * cmp_blk;      /* compare current block with this block */
+
+    /* hold the aggregated strings into these buffers,
+     * should be ok to put these massive buffers on stack */
+    int total[BONUS_SIZE];              /* total strings aggregated */
+    int offset[BONUS_SIZE];             /* length of string */
+    char buffer[BONUS_SIZE][BUF_SIZE];  /* aggregate buffer holding strings */
+    char aux[BUF_SIZE];     /* =.= */   /* formatting buffer */
+
+    for(i = 0; i < block_cnt; i++) {
+        memset(total, 0, sizeof(int) * BONUS_SIZE);
+        memset(offset, 0, sizeof(int) * BONUS_SIZE);
+        cur_blk = &block[i];
+        cur_blk_type = cur_blk->type->id;
+        cur_blk_flag = cur_blk->bonus.flag;
+
+        /* check block is a bonus block and 
+         * not nullified and can be minimized */
+        if(cur_blk_type > BONUS_ID_MAX ||
+           cur_blk_type == BLOCK_NULLIFIED ||
+           !(cur_blk_flag & 0x000C0000))
+            continue;
+
+        for(j = i + 1; j < block_cnt; j++) {
+            cmp_blk = &block[j];
+
+            /* bonus must be in same enclosing 
+             * block and bonus id must match. */
+            if( cur_blk->bonus.id != cmp_blk->bonus.id || 
+                cur_blk->link != cmp_blk->link) 
+                continue;
+
+            /* MINIZ - indicates that arguments must be checked 
+             * MINIS - indicates that only one single argument
+             *         for the bonus and also an aggregate. */
+            if(cur_blk_flag & BONUS_FLAG_MINIZ) {
+                /* check all specified arguments in item_bonus.txt 
+                 * all arguments are process from left to right in
+                 * translate_bonus, therefore indexing the same
+                 * block->eng[i] yields the same argument order. 
+                 * bonus block supports only up to 5 arguments. */
+                if( (cur_blk_flag & BONUS_FLAG_EQ_1 &&
+                    ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_2 &&
+                    ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_3 &&
+                    ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_4 &&
+                    ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_5 &&
+                    ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) != 0)) 
+                    continue;
+            } else if(cur_blk_flag * BONUS_FLAG_MINIS) {
+                /* single argument for bonus is also an aggregate */
+            } else {
+                /* BONUS_FLAG_MINIS or BONUS_FLAG_MINIZ must be set */
+                fprintf(stderr, "[warn]: bonus flag must be either MINIS or MINIZ\n"
+                                "[warn]: check item_bonus.txt on bonus id %d\n"
+                                "[warn]: abort current bonus on item id %d\n",
+                                cur_blk->bonus.id, cur_blk->item_id);
+                break;
+            }
+
+            /* bonus blocks that are exactly the same should throw 
+             * an error when NODUP is set; both NODUP and STACK are 
+             * mutually exclusive. Supports only one aggregate 
+             * variable at the moment. */
+            if(cur_blk_flag & BONUS_FLAG_NODUP) {
+                /* check that the aggregate fields are not the same */
+                if( (cur_blk_flag & BONUS_FLAG_AG_1 &&
+                    ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_2 &&
+                    ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_3 &&
+                    ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_4 &&
+                    ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_5 &&
+                    ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) == 0)) {
+                    /* throw error and nullified duplicate block */
+                    fprintf(stderr,
+                        "[error]: bonus duplicated on item id %d.\n"
+                        "[error]: %s in block %d and %s in block %d.\n", 
+                        cur_blk->item_id, 
+                        cur_blk->bonus.buff, i,
+                        cmp_blk->bonus.buff, j);
+                    block[j].type->id = BLOCK_NULLIFIED;
+                    continue;
+                }
+            } else if(cur_blk_flag & BONUS_FLAG_STACK) {
+                /* stack only arguments with a result node from translate_bonus,
+                 * i.e. stack only arguments with integer values. 
+                 * Indexing the block->result also uses the same left to right
+                 * ordering, thereforce is safe. */
+                if(cur_blk_flag & BONUS_FLAG_ST_1)
+                    minimize_stack(cur_blk->result[0], cmp_blk->result[0]);
+                if(cur_blk_flag & BONUS_FLAG_ST_2)
+                    minimize_stack(cur_blk->result[1], cmp_blk->result[1]);
+                if(cur_blk_flag & BONUS_FLAG_ST_3)
+                    minimize_stack(cur_blk->result[2], cmp_blk->result[2]);
+                if(cur_blk_flag & BONUS_FLAG_ST_4)
+                    minimize_stack(cur_blk->result[3], cmp_blk->result[3]);
+                if(cur_blk_flag & BONUS_FLAG_ST_5)
+                    minimize_stack(cur_blk->result[4], cmp_blk->result[4]);
+            } else {
+                /* BONUS_FLAG_NODUP or BONUS_FLAG_STACK must be set */
+                fprintf(stderr, "[warn]: bonus flag must be either STACK or NODUP\n"
+                                "[warn]: check item_bonus.txt on bonus id %d\n"
+                                "[warn]: abort current bonus on item id %d\n",
+                                cur_blk->bonus.id, cur_blk->item_id);
+                break;
+            }
+
+            /* aggregating strings and stacking integers
+             * are mutually exclusive; aggregate strings
+             * here */
+            if(!(cur_blk_flag & BONUS_FLAG_STACK)) {
+                if(cur_blk_flag & BONUS_FLAG_AG_1) {
+                    offset[0] += (offset[0] <= 0) ?
+                        sprintf(buffer[0] + offset[0],"%s, %s", cur_blk->eng[0], cmp_blk->eng[0]):
+                        sprintf(buffer[0] + offset[0],", %s", cmp_blk->eng[0]);
+                    total[0]++;
+                }
+                if(cur_blk_flag & BONUS_FLAG_AG_2) {
+                    offset[1] += (offset[1] <= 0) ?
+                        sprintf(buffer[1] + offset[1],"%s, %s", cur_blk->eng[1], cmp_blk->eng[1]):
+                        sprintf(buffer[1] + offset[1],", %s", cmp_blk->eng[1]);
+                    total[1]++;
+                }
+                if(cur_blk_flag & BONUS_FLAG_AG_3) {
+                    offset[2] += (offset[2] <= 0) ?
+                        sprintf(buffer[2] + offset[2],"%s, %s", cur_blk->eng[2], cmp_blk->eng[2]):
+                        sprintf(buffer[2] + offset[2],", %s", cmp_blk->eng[2]);
+                    total[2]++;
+                }
+                if(cur_blk_flag & BONUS_FLAG_AG_4) {
+                    offset[3] += (offset[3] <= 0) ?
+                        sprintf(buffer[3] + offset[3],"%s, %s", cur_blk->eng[3], cmp_blk->eng[3]):
+                        sprintf(buffer[3] + offset[3],", %s", cmp_blk->eng[3]);
+                    total[3]++;
+                }
+                if(cur_blk_flag & BONUS_FLAG_AG_5) {
+                    offset[4] += (offset[4] <= 0) ?
+                        sprintf(buffer[4] + offset[4],"%s, %s", cur_blk->eng[4], cmp_blk->eng[4]):
+                        sprintf(buffer[4] + offset[4],", %s", cmp_blk->eng[4]);
+                    total[4]++;
+                }
+            }
+
+            /* nullified the minimized block */
+            block[j].type->id = BLOCK_NULLIFIED;
+
+            /*fprintf(stderr, 
+                "block_index: %d | %d\n"
+                "bonus_id: %d | %d - %s\n"
+                "bonus_link: %d | %d - %s\n\n",
+                i, j,
+                cur_blk->bonus.id, cmp_blk->bonus.id, 
+                (cur_blk->bonus.id == cmp_blk->bonus.id) ? 
+                "matched" : "nonmatched",
+                cur_blk->link, cmp_blk->link,
+                (cur_blk->link == cmp_blk->link) ? 
+                "matched" : "nonmatched");*/
+        }
+
+        /* substitute the aggregate string into the argument translation 
+         * and fix the english x and y or x, y, and z formats */
+        for(j = 0; j < BONUS_SIZE; j++)
+            if(offset[j] > 0) {
+                /* locate the last argument delimit by comma */
+                for(k = strlen(buffer[j]) - 1; k >= 0; k--)
+                    if(buffer[j][k] == ',')
+                        break;
+                buffer[j][k] = '\0';
+
+                /* write the new argument with the 'and' inserted */
+                k = (total[j] > 1) ?
+                    sprintf(aux, "%s, and %s", buffer[j], &buffer[j][k + 2]):
+                    sprintf(aux, "%s and %s", buffer[j], &buffer[j][k + 2]);
+                aux[k] = '\0';
+                translate_overwrite(cur_blk, aux, j);
+            }
+    }
 
     /* generate the final item description for bonus blocks */
     for(i = 0; i < block_cnt; i++)
         if(block[i].type->id >= 0 && block[i].type->id <= 4)
             translate_bonus_desc(block[i].result, &block[i], &block[i].bonus);
+
     return SCRIPT_PASSED;
 }
 
@@ -3236,6 +3427,7 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
             buf[k] = '\0';
         }
         switch(block[i].type->id) {
+            case BLOCK_NULLIFIED: break; /* nullified block mean they're deleted */
             case 16: /* merge all sc_end into one block */
                 /* figure out how many sc_end blocks there are */
                 for(j = i; j < block_cnt; j++)
@@ -3256,7 +3448,7 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
                                 *offset += sprintf(buffer + *offset, ", and %s", block[j].eng[0]);
                             }
                             /* nullified the block from being read */
-                            block[j].type->id = -1;
+                            block[j].type->id = BLOCK_NULLIFIED;
                         }
                     }
                 }
@@ -3280,7 +3472,6 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
             case 29: /* input */
             case 32: /* end */
                 break;
-            case -1: break; /* nullified */
             /* general block writing */
             default:
                 if(block[i].desc != NULL)
@@ -3546,4 +3737,8 @@ void script_generate_cond_generic(char * buf, int * offset, int val_min, int val
         sprintf(buf + *offset, "%s %d ~ %d", template, val_min, val_max) :
         sprintf(buf + *offset, "%s %d", template, val_min);
     buf[*offset] = '\0';
+}
+
+int minimize_stack(node_t * left, node_t * right) {
+    return SCRIPT_PASSED;
 }
