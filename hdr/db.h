@@ -423,10 +423,10 @@
 
 	typedef struct {
 		int scid;     /* status id */
-		char * scstr;     /* status string identifer */
+		char * scstr; /* status string identifer */
 		int type;
-		char * scfmt;     /* format of status string */
-		char * scend;     /* format of status end string */
+		char * scfmt; /* format of status string */
+		char * scend; /* format of status end string */
 		int vcnt;     /* value count */
 		int vmod[4];  /* modifer for value */
 		int voff[4];  /* offset translation stack */
@@ -437,10 +437,11 @@
 
 	typedef struct {
 		int id;
-		char * pref;         /* bonus prefix, i.e. bonus, bonus2, etc. */
-		char * buff;         /* bonus buff, i.e. bStr, bAgi, etc. */
+		int flag;
 		int attr;        /* bonus attributes */
-		char * desc;         /* bonus format string */
+		char * pref;     /* bonus prefix, i.e. bonus, bonus2, etc. */
+		char * buff;     /* bonus buff, i.e. bStr, bAgi, etc. */
+		char * desc;     /* bonus format string */
 		int * type;      /* bonus argument type */
 		int type_cnt;
 		int * order;     /* bonus order for each type */

@@ -143,29 +143,29 @@
         bonus_t bonus;                       /* ahhhhhhhhhhhhhhhhhhhhhhhhhhhh */
     } block_r;
 
-    int global_mode;
-    struct ic_db_t * global_db;
-    char global_err[BUF_SIZE];
-    FILE * node_dbg;
+    int global_mode;                /* indicates eathena, rathena, or hercules mode */
+    struct ic_db_t * global_db;     /* global sqlite3 database reference */
+    char global_err[BUF_SIZE];      /* static buffer to hold the error string */
+    FILE * node_dbg;                /* file to dump evaluate expression */
     #define exit_buf(X, ...) exit_abt(build_buffer(global_err, (X), __VA_ARGS__))
+
+    /* block structure memory management functions */
     void block_init(block_r **, int);
     void block_deinit(block_r *, int);
     void block_finalize(block_r *, int);
 
-    /* compilation processes called publicly */
+    /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);
     int script_analysis(token_r *, block_r *, int *, int, int, int);
     int script_parse(token_r *, int *, block_r *, char, char, int);
+    int script_extend(block_r *, char *);
     int script_dependencies(block_r *, int);
     int script_translate(block_r *, int);
     int script_bonus(block_r *, int);
     int script_generate(block_r *, int, char *, int *);
-
-    /* compilation processes called internally */
-    int script_extend(block_r *, char *);
+    char * script_compile_raw(char *, int, FILE *);     /* high level functions compiles from lexical to generate */
     #define script_compile(X, Y) script_compile_raw(X, Y, NULL)
-    char * script_compile_raw(char *, int, FILE *);
-
+    
     /* script translation functions */
     int translate_bonus(block_r *, int);
     int translate_const(block_r *, char *, int);
@@ -199,7 +199,7 @@
 
     /* debug compiler by dumping the block list */
     void block_debug_dump_all(block_r *, int, FILE *);
-    void block_debug_dump_depd_recurse(struct block_r **, int, int, int, FILE *);
+    void block_debug_dump_set_link(struct block_r **, int, int, int, FILE *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR    0x01
@@ -264,10 +264,5 @@
     void script_generate_class_generic(char *, int *, range_t *, char *);
     void script_generate_cond_generic(char *, int *, int, int, char *);
 
-    /* block minimization */
-    void block_type_link(block_r *, int);
-    void bonus_mini_link(block_r *, int);
-    int bonus_mini_check(block_r *, block_r *);
-    void bonus_mini_rewrite(block_r *, int);
-    void bonus_mini_group(block_r *, int, block_r *, int);
+    /* support minimization */
 #endif

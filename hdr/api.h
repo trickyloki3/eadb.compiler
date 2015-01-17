@@ -294,10 +294,10 @@
 	#define itm_status_des	"DROP TABLE IF EXISTS status;"
 
 	#define itm_bonus_tbl	"CREATE TABLE IF NOT EXISTS bonus(" \
-							"id INTEGER, pref TEXT, buff TEXT, attr INTEGER, desc TEXT," \
+							"id INTEGER, flag INTEGER, attr INTEGER, pref TEXT, buff TEXT, desc TEXT," \
 							"type_param TEXT, type_cnt INTEGER, order_param TEXT, "\
 							"order_cnt INTEGER, PRIMARY KEY(id, pref, buff));"
-	#define itm_bonus_ins	"INSERT INTO bonus VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define itm_bonus_ins	"INSERT INTO bonus VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define itm_bonus_des	"DROP TABLE IF EXISTS bonus;"
 
 	#define ea_const_tbl	"CREATE TABLE IF NOT EXISTS ea_const(name TEXT, value INTEGER, type INTEGER);"

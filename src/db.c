@@ -658,11 +658,12 @@ int bonus_load_column(void * db, int row, int col, char * val) {
          order_cnt = 0;
          var_state = 0;
          bonus_row->id = convert_integer(val, 10); break;
-      case 1: bonus_row->pref = convert_string(val); break;
-      case 2: bonus_row->buff = convert_string(val); break;
-      case 3: bonus_row->attr = convert_integer(val, 10); break;
-      case 4: bonus_row->desc = convert_string(val); break;
-      case 5: bonus_row->type_cnt = convert_integer(val, 10); 
+      case 1: bonus_row->flag = convert_integer(val, 16); break;
+      case 2: bonus_row->attr = convert_integer(val, 10); break;
+      case 3: bonus_row->pref = convert_string(val); break;
+      case 4: bonus_row->buff = convert_string(val); break;
+      case 5: bonus_row->desc = convert_string(val); break;
+      case 6: bonus_row->type_cnt = convert_integer(val, 10); 
               bonus_row->type = calloc(5, sizeof(int32_t));
               break;
       default: 

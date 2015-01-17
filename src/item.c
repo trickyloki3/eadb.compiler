@@ -14,7 +14,7 @@ int main(int argc, char * argv[]) {
 	if(argc >= 2) {
 		node_dbg = NULL; /* by default don't dump node output */
 		global_mode = (ncs_strcmp(argv[1],"rathena") == 0) ? RATHENA : 
-					  (((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
+					  	(((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
 					  ((ncs_strcmp(argv[1],"hercules") == 0) ? HERCULES : -1)));
 
 		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES)

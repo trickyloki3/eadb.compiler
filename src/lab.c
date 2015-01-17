@@ -5,7 +5,7 @@ int main(int argc, char * argv[]) {
 	int j = 0;
 	int id = 0;
 	FILE * file = fopen("item_bonus.txt", "w");
-	load_db_t * db1 = load("res/item_bonus.txt", trim_alpha, load_general, bonus_load);
+	load_db_t * db1 = load("res/item_bonus.txt", trim_numeric, load_general, bonus_load);
 	bonus_t * bonus = NULL;
 	bonus_t * bonus_db = NULL;
 
@@ -14,7 +14,7 @@ int main(int argc, char * argv[]) {
 	bonus_db = db1->db;
 	for(i = 0; i < db1->size; i++, id++) {
 		bonus = &bonus_db[i];
-		fprintf(file,"%d,%s,%s,%d,\"%s\",%d", id, bonus->pref, bonus->buff, bonus->attr, bonus->desc, bonus->type_cnt);
+		fprintf(file,"%d,0x%x,%d,%s,%s,\"%s\",%d", bonus->id, bonus->flag, bonus->attr, bonus->pref, bonus->buff, bonus->desc, bonus->type_cnt);
 		for(j = 0; j < bonus->type_cnt; j++) fprintf(file,",%c",bonus->type[j]);
 		fprintf(file,",%d", bonus->order_cnt);
 		for(j = 0; j < bonus->order_cnt; j++) fprintf(file,",%d",bonus->order[j]);

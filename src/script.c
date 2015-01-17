@@ -16,22 +16,38 @@ void block_deinit(block_r * block, int size) {
     int i = 0;
     int j = 0;
     for(i = 0; i < size; i++) {
+        /* buffer contains the stack of all strings */
         if(block[i].arg != NULL)
             free(block[i].arg);
 
+        /* block information from res/block_db.txt is
+         * store for any purpose, mostly minimization */
         if(block[i].type != NULL) {
-            if(block[i].type->keyword != NULL) free(block[i].type->keyword);
+            if(block[i].type->keyword != NULL) 
+                free(block[i].type->keyword);
             free(block[i].type);
         }
 
+        /* set blocks may contain variable and function
+         * calls in the expression, we'll free all the
+         * strings of the variable and functions here */
         if(block[i].set_dep != NULL)
             free(block[i].set_dep);
+
+        /* logic trees are generated from conditional blocks
+         * and inherited by enclosing scope of the conditional
+         * block; the function checks null, so this is safe to
+         * call on NULL logic trees. */
         deepfreenamerange(block[i].logic_tree);
 
+        /* the result calculated from bonus integer arguments are
+         * kept for post-integer analysis on writing the final string. */
         for(j = 0; j < BONUS_SIZE; j++)
             if(block[i].result[j] != NULL)
                 node_free(block[i].result[j]);
 
+        /* bonus blocks retain their bonus data return by sqlite 
+         * for purpose of minimization and handling bonus argument. */
         if(block[i].bonus.pref != NULL) free(block[i].bonus.pref);
         if(block[i].bonus.buff != NULL) free(block[i].bonus.buff);
         if(block[i].bonus.desc != NULL) free(block[i].bonus.desc);
@@ -42,6 +58,9 @@ void block_deinit(block_r * block, int size) {
 }
 
 void block_finalize(block_r * block, int size) {
+    /* high level function call that might have
+     * addition statements, this is to make the 
+     * calling script more consistent. */
     free(block);
 }
 
@@ -109,11 +128,6 @@ int script_lexical(token_r * token, char * buffer) {
         script_buf[script_buf_cnt++] = '\0';
     }
 
-    /* dump the token list */
-    if(DEBUG_LEXICAL)
-        for(i = 0; i < script_ptr_cnt; i++)
-            printf("%s ", script_ptr[i]);
-
    /* set the total number of tokens */
    token->script_cnt = script_ptr_cnt;
    return SCRIPT_PASSED;
@@ -126,6 +140,7 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
     char ** script_ptr = NULL;
     int script_cnt = 0;
     char err[BUF_SIZE];
+
     /* sqlite related variables */
     block_t info;
     int status = 0;
@@ -288,6 +303,7 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
    /* failed to parse any blocks */
    if(block_size <= 0) return SCRIPT_PASSED;
    if(info.keyword != NULL) free(info.keyword);
+
    /* readjust size when recursively parsing */
    *block_cnt = block_size - block_dep;
    return SCRIPT_PASSED;
@@ -295,7 +311,9 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
 
 int script_parse(token_r * token, int * position, block_r * block, char delimit, char end, int flag) {
     /* token reading data */
-    int i, j;
+    int i = 0;
+    int j = 0;
+    int len = 0;
     char ** script_ptr = NULL;
     int script_cnt = 0;
     int bracket_level = 0;
@@ -321,7 +339,8 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
     ptr = block->ptr;
     arg_cnt = block->arg_cnt;
     ptr_cnt = block->ptr_cnt;
-    if(*position < 0 || *position >= script_cnt) return SCRIPT_FAILED;
+    if(*position < 0 || *position >= script_cnt) 
+        return SCRIPT_FAILED;
 
     /* parse the block */
     for(i = *position + 1; i < script_cnt; i++) {
@@ -352,7 +371,8 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
                 /* include last token */
                 if(flag & 0x01) {
                     /* write the argument */
-                    for(j = 0; j < strlen(script_ptr[i]); j++) 
+                    len = strlen(script_ptr[i]);
+                    for(j = 0; j < len; j++) 
                         arg[arg_cnt++] = script_ptr[i][j];
 
                     /* don't add space after athena symbol prefixes */
@@ -372,15 +392,17 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
         }
 
         /* skip the comma at top level */
-        if(script_ptr[i][0] == ',' && !bracket_level && !subexpr_level && !(flag & 0x02)) continue;
+        if(script_ptr[i][0] == ',' && !bracket_level && !subexpr_level && !(flag & 0x02)) 
+            continue;
 
         /* write the argument */
-        for(j = 0; j < strlen(script_ptr[i]); j++) 
-        arg[arg_cnt++] = script_ptr[i][j];
+        len = strlen(script_ptr[i]);
+        for(j = 0; j < len; j++) 
+            arg[arg_cnt++] = script_ptr[i][j];
 
         /* don't add space after athena symbol prefixes */
         if(!ATHENA_SCRIPT_SYMBOL(script_ptr[i][0]))
-        arg[arg_cnt++] = ' ';
+            arg[arg_cnt++] = ' ';
     }
 
     block->arg_cnt = arg_cnt;
@@ -534,15 +556,61 @@ int script_extend(block_r * block, char * expr) {
     token_r token;
     /* lexical analysis on expression and return failed if failed */
     if(script_lexical(&token, expr) == SCRIPT_FAILED)
-        exit_buf("failed to perform lexical analysis on %s in item %d", expr, block->item_id);
+        exit_buf("failed to perform lexical analysis on '%s' in item %d", expr, block->item_id);
     /* check that tokens exist */
     if(token.script_cnt <= 0)
-        exit_buf("zero tokens on %s in item %d", expr, block->item_id);
+        exit_buf("zero tokens on '%s' in item %d", expr, block->item_id);
     /* parse the callfunc paramaters */
     block->ptr_cnt++; /* last pointer still contains a argument */
     script_parse(&token, &offset, block, ',',')',4);
     block->ptr_cnt--; /* off by one */
     return SCRIPT_PASSED;
+}
+
+char * script_compile_raw(char * script, int item_id, FILE * dbg) {
+    token_r token_list;
+    block_r * block_list = NULL;
+    int block_cnt = 0;
+    char buffer[BUF_SIZE];
+    int offset = 0;
+
+    /* only lexical, parser, and translator are likely to fail, 
+     * however, the other functions may fail in the future. */
+    block_init(&block_list, BLOCK_SIZE);
+    if(script_lexical(&token_list, script) == SCRIPT_PASSED) {
+        if(script_analysis(&token_list, block_list, &block_cnt, item_id, 0x01, 0) == SCRIPT_PASSED) {
+            if(script_dependencies(block_list, block_cnt) == SCRIPT_PASSED) {
+                if(script_translate(block_list, block_cnt) == SCRIPT_PASSED) {
+                    if(script_bonus(block_list, block_cnt) == SCRIPT_PASSED) {
+                        if(script_generate(block_list, block_cnt, buffer, &offset) == SCRIPT_PASSED) {
+                            if(dbg != NULL) block_debug_dump_all(block_list, block_cnt, dbg);
+                        } else {
+                            fprintf(stderr,"%s;%d; generator failed; invalid blocks in %s "
+                                "for item id %d\n", __func__, __LINE__, script, item_id);        
+                        }
+                    } else {
+                        fprintf(stderr,"%s;%d; optimizer failed; invalid bonuses in %s "
+                            "for item id %d\n", __func__, __LINE__, script, item_id);    
+                    }
+                } else {
+                    fprintf(stderr,"%s;%d; translator failed; invalid blocks in %s "
+                        "for item id %d\n", __func__, __LINE__, script, item_id);
+                }
+            } else {
+                fprintf(stderr,"%s;%d; dependency matching failed; invalid set blocks in %s "
+                    "for item id %d\n", __func__, __LINE__, script, item_id);
+            }        
+        } else {
+            fprintf(stderr,"%s;%d; parser failed; invalid grammer in %s "
+                "for item id %d\n", __func__, __LINE__, script, item_id);
+        }
+    } else {
+        fprintf(stderr,"%s;%d; lexer failed; invalid tokens in %s "
+            "for item id %d\n", __func__, __LINE__, script, item_id);
+    }
+    block_deinit(block_list, BLOCK_SIZE);
+    block_finalize(block_list, BLOCK_SIZE);
+    return (offset > 0) ? convert_string(buffer) : NULL;
 }
 
 int translate_getitem(block_r * block, int handler) {
@@ -779,11 +847,12 @@ int translate_heal(block_r * block, int handler) {
     return SCRIPT_PASSED;
 }
 
+/* the final item description is deferred until script bonus */
 int translate_bonus(block_r * block, int flag) {
     int i, j;
     /* keep expression information to improve translation quality;
      * only integer type bonus arguments keep their node; these
-     * nodes also keep track of variables use to calculation final
+     * nodes also keep track of variables use to calculate final
      * result. */
     memset(&block->bonus, 0, sizeof(bonus_t));
     memset(block->result, 0, sizeof(node_t *) * BONUS_SIZE);
@@ -845,7 +914,8 @@ int translate_bonus(block_r * block, int flag) {
     }
 
     /* the number of arguments must match the number of translations */
-    if(block->ptr_cnt-1 != block->eng_cnt) exit_buf("failed to translate block on item %d", block[0].item_id);
+    if(block->ptr_cnt-1 != block->eng_cnt) 
+        exit_buf("failed to translate block on item %d", block[0].item_id);
     return SCRIPT_PASSED;
 }
 
@@ -1649,7 +1719,7 @@ void block_debug_dump_all(block_r * block, int size, FILE * stm) {
         /* dump the set block linking */
         if(block[i].depd_cnt > 0) {
             fprintf(stm,"Block Dependence: ");
-            block_debug_dump_depd_recurse(block[i].depd, block[i].depd_cnt, block[i].block_id, 0, stm);
+            block_debug_dump_set_link(block[i].depd, block[i].depd_cnt, block[i].block_id, 0, stm);
         } else {
             fprintf(stm,"Block Dependence: N/A\n");
         }
@@ -1661,14 +1731,15 @@ void block_debug_dump_all(block_r * block, int size, FILE * stm) {
     }
 }
 
-void block_debug_dump_depd_recurse(struct block_r ** block, int block_cnt, int block_id, int depth, FILE * stm) {
-    int i, j;
+void block_debug_dump_set_link(struct block_r ** block, int block_cnt, int block_id, int depth, FILE * stm) {
+    int i = 0;
+    int j = 0;
     fprintf(stm,"\n");
     if(block_cnt > 0) {
         for(i = 0; i < block_cnt; i++) {
             for(j = 0; j < depth; j++) fprintf(stm,"\t");
             fprintf(stm,"%d -> %d ", block_id, block[i]->block_id);
-            block_debug_dump_depd_recurse(block[i]->depd, block[i]->depd_cnt, block[i]->block_id, depth + 1,stm);
+            block_debug_dump_set_link(block[i]->depd, block[i]->depd_cnt, block[i]->block_id, depth + 1,stm);
         }
     } else {
         for(j = 0; j < depth; j++) fprintf(stm,"\t");
@@ -3474,183 +3545,10 @@ void script_generate_cond_generic(char * buf, int * offset, int val_min, int val
     buf[*offset] = '\0';
 }
 
-char * script_compile_raw(char * script, int item_id, FILE * dbg) {
-    int script_status = 0;
-    int block_cnt = 0;
-    token_r token_list;
-    block_r * block_list = NULL;
-    char buffer[BUF_SIZE];
-    int offset = 0;
-
-    /* compact all-in-one mini script compiler */
-    block_init(&block_list, BLOCK_SIZE);
-    script_status = script_lexical(&token_list, script);
-    if(script_status != SCRIPT_PASSED) exit_abt("failed lexical.");
-    script_status = script_analysis(&token_list, block_list, &block_cnt, item_id, 0x01, 0);
-    if(script_status != SCRIPT_PASSED) exit_abt("failed parser.");
-    script_status = script_dependencies(block_list, block_cnt);
-    if(script_status != SCRIPT_PASSED) exit_abt("failed dependency.");
-    script_status = script_translate(block_list, block_cnt);
-    if(script_status != SCRIPT_PASSED) exit_abt("failed translation.");
-    script_status = script_bonus(block_list, block_cnt);
-    if(script_status != SCRIPT_PASSED) exit_abt("failed bonus writing.");
-    script_status = script_generate(block_list, block_cnt, buffer, &offset);
-    if(script_status != SCRIPT_PASSED) exit_abt("failed generation.");
-    if(dbg != NULL) block_debug_dump_all(block_list, block_cnt, dbg);
-    block_deinit(block_list, BLOCK_SIZE);
-    block_finalize(block_list, BLOCK_SIZE);
-    return convert_string(buffer);
-}
-
-void block_type_link(block_r * block, int block_cnt) {
-    int i = 0;
-    block_r * block_ptr = NULL;
-    int block_link_table[BLOCK_COUNT];
-    int bonus_link_table[BONUS_COUNT];
-    exit_null("block is null", 1, block);
-
-    /* dynamic table for O(n) type linking 
-     * set all to -1 because block 0 is used */
-    for(i = 0; i < BLOCK_COUNT; i++)
-        block_link_table[i] = -1;
-    for(i = 0; i < BONUS_COUNT; i++)
-        bonus_link_table[i] = -1;
-
-    /* blocku ann bonusu typo linkuuu */
-    for(i = block_cnt - 1; i >= 0 ; i--) {
-        block_ptr = &block[i];
-        /* block link table for block id is empty */
-        if(block_link_table[block_ptr->type->id] == -1) {
-            block_link_table[block_ptr->type->id] = i;
-        } else {
-            block_ptr->block_link = block_link_table[block_ptr->type->id];
-            block_link_table[block_ptr->type->id] = i;
-        }
-        /* bonus link table for bonus id is empty */
-        if(block_ptr->bonus_id > 0) {
-            if(bonus_link_table[block_ptr->bonus_id] == -1) {
-                bonus_link_table[block_ptr->bonus_id] = i;
-            } else {
-                /* bonus link only if bonus type are same */
-                block_ptr->bonus_link = bonus_link_table[block_ptr->bonus_id];
-                bonus_link_table[block_ptr->bonus_id] = i;
-            }
-        }
-    }
-}
-
-void bonus_mini_link(block_r * block, int block_cnt) {
-    int i = 0;
-    int block_iter = 0;
-    block_r * block_ptr = NULL;
-    exit_null("block is null", 1, block);
-    for(i = 0; i < block_cnt; i++) {
-        block_ptr = &block[i];
-        /* skip nullified blocks */
-        if(block_ptr->type->id == -1) continue;
-        /* call a minimize handler for each block type */
-        block_iter = block_ptr->bonus_link;
-        while(block_iter != -1) {
-            /* check to make sure the block link is valid */
-            if(block_iter < 0 || block_iter >= block_cnt) 
-                exit_buf("failed to block minimize for item %d\n", block_ptr->item_id);
-            if(bonus_mini_check(block_ptr, &block[block_iter]) == SCRIPT_PASSED) {
-                /* minimization link */
-                block_ptr->mini_link = block_iter;
-                break;
-            }
-            block_iter = block[block_iter].bonus_link;
-        }
-    }
-}
-
-int bonus_mini_check(block_r * parent, block_r * child) {
-    /* check that the blocks are non-null */
-    exit_null("parent is null", 1, parent);
-    exit_null("child is null", 1, child);
-
-    /* check that the parent and child block are on the same level */
-    if(parent->link != child->link) return SCRIPT_FAILED;
-
-    /* redundant type check to validate block_type_link */
-    if(parent->type->id != child->type->id)
-        exit_buf("block_type_link; mismatch block type on item %d\n", parent->item_id);
-    if(parent->bonus_id != child->bonus_id)
-        exit_buf("block_type_link; mismatch bonus type on item %d\n", parent->item_id);
-
-    switch(parent->bonus_id) {
-        case 135: case 136: 
-            return (ncs_strcmp(parent->eng[1], child->eng[1]) == 0 &&
-                    ncs_strcmp(parent->eng[0], child->eng[0]) != 0)
-                    ?SCRIPT_PASSED:SCRIPT_FAILED; break;
-        default: break;
-    }
-
-    /* if the bonus blocks are linkable, SCRIPT_PASSED is returned from
-     * switch statement above and the caller will do the actual linking. */
-    return SCRIPT_FAILED;
-}
-
-void bonus_mini_rewrite(block_r * block, int block_cnt) {
-    int i = 0;
-    block_r * block_ptr = NULL;
-    for(i = 0; i < block_cnt; i++) {
-        block_ptr = &block[i];
-        /* check if block is nullified */
-        if(block_ptr->type->id == -1) continue;
-        /* check if the block is a bonus block */
-        if(block_ptr->bonus_id < 0) continue;
-        /* check if bonus block can be minimize */
-        if(block_ptr->mini_link < 0) continue;
-        /* minimize by grouping specific bonus field types */
-        switch(block_ptr->bonus_id) {
-            case 135: case 136:
-                bonus_mini_group(block, block_cnt, block_ptr, 0);
-                break;
-            default: break;
-        }
-    }
-}
-
-void bonus_mini_group(block_r * block, int block_cnt, block_r * block_ptr, int field) {
-    int off = 0;
-    char buf[BUF_SIZE];
-    int block_iter = block_ptr->mini_link;
-
-    /* aggregate all the fields from minimize linked list */
-    if(block[block_iter].mini_link == -1) {
-        /* x and y format */
-        off += sprintf(buf + off, "%s and %s", block_ptr->eng[field], block[block_iter].eng[field]);
-    } else {
-        /* x, y, and z format */
-        off += sprintf(buf + off, "%s", block_ptr->eng[field]);
-        while(block_iter > 0) {
-            off += (block[block_iter].mini_link == -1) ?
-                sprintf(buf + off,", and %s", block[block_iter].eng[field]):
-                sprintf(buf + off,", %s", block[block_iter].eng[field]);
-            block_iter = block[block_iter].mini_link;
-        }
-    }
-    buf[off] = '\0';
-
-    /* nullify all minimize blocks; separate loop for clarity */
-    block_iter = block_ptr->mini_link;
-    while(block_iter > 0) {
-        block[block_iter].type->id = -1;
-        block_iter = block[block_iter].mini_link;
-    }
-
-    /* replace specific field with aggregate of all fields from other blocks */
-    translate_overwrite(block_ptr, buf, field);
-}
-
 int script_bonus(block_r * block, int block_cnt) {
     int i = 0;
-    /* minimize bonus blocks */
-    block_type_link(block, block_cnt);
-    bonus_mini_link(block, block_cnt);
-    bonus_mini_rewrite(block, block_cnt);
-    /* process the bonus block's integers and write translation */
+
+    /* generate the final item description for bonus blocks */
     for(i = 0; i < block_cnt; i++)
         if(block[i].type->id >= 0 && block[i].type->id <= 4)
             translate_bonus_desc(block[i].result, &block[i], &block[i].bonus);

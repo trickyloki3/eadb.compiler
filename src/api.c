@@ -562,14 +562,15 @@ int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char 
 		if(bonus->type != NULL) free(bonus->type);
 		if(bonus->order != NULL) free(bonus->order);
 		bonus->id = sqlite3_column_int(db->bonus_search, 0);
-		bonus->pref = convert_string((const char *) sqlite3_column_text(db->bonus_search, 1));
-		bonus->buff = convert_string((const char *) sqlite3_column_text(db->bonus_search, 2));
-		bonus->attr = sqlite3_column_int(db->bonus_search, 3);
-		bonus->desc = convert_string((const char *) sqlite3_column_text(db->bonus_search, 4));
-		convert_integer_list((char *)sqlite3_column_text(db->bonus_search, 6), ":", &array);
+		bonus->flag = sqlite3_column_int(db->bonus_search, 1);
+		bonus->attr = sqlite3_column_int(db->bonus_search, 2);
+		bonus->pref = convert_string((const char *) sqlite3_column_text(db->bonus_search, 3));
+		bonus->buff = convert_string((const char *) sqlite3_column_text(db->bonus_search, 4));
+		bonus->desc = convert_string((const char *) sqlite3_column_text(db->bonus_search, 5));
+		convert_integer_list((char *)sqlite3_column_text(db->bonus_search, 7), ":", &array);
 		bonus->type = array.array;
 		bonus->type_cnt = array.size;
-		convert_integer_list((char *)sqlite3_column_text(db->bonus_search, 8), ":", &array);
+		convert_integer_list((char *)sqlite3_column_text(db->bonus_search, 9), ":", &array);
 		bonus->order = array.array;
 		bonus->order_cnt = array.size;
 	}
@@ -846,7 +847,7 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->he_prod_lv_search);
 	sqlite3_finalize(db->ea_item_group_search);
 	sqlite3_finalize(db->ra_item_group_search);
-	sqlite3_close_v2(db->db);
+	sqlite3_close(db->db);
 	free(db);
 }
 
@@ -1050,7 +1051,7 @@ void deit_db(struct lt_db_t * db) {
 	sqlite3_finalize(db->he_const_insert);
 	sqlite3_finalize(db->ea_item_group_insert);
 	sqlite3_finalize(db->ra_item_group_insert);
-	sqlite3_close_v2(db->db);
+	sqlite3_close(db->db);
 	free(db);
 }
 
@@ -1505,16 +1506,17 @@ void load_bonus(struct lt_db_t * sql, sqlite3_stmt * ins, bonus_t * db, int size
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
 		sqlite3_bind_int(ins, 1, db[i].id);
-		sqlite3_bind_text(ins, 2, db[i].pref, strlen(db[i].pref), SQLITE_STATIC);
-		sqlite3_bind_text(ins, 3, db[i].buff, strlen(db[i].buff), SQLITE_STATIC);
-		sqlite3_bind_int(ins, 4, db[i].attr);
-		sqlite3_bind_text(ins, 5, db[i].desc, strlen(db[i].desc), SQLITE_STATIC);
-		sqlite3_bind_int(ins, 6, db[i].type_cnt);
+		sqlite3_bind_int(ins, 2, db[i].flag);
+		sqlite3_bind_int(ins, 3, db[i].attr);
+		sqlite3_bind_text(ins, 4, db[i].pref, strlen(db[i].pref), SQLITE_STATIC);
+		sqlite3_bind_text(ins, 5, db[i].buff, strlen(db[i].buff), SQLITE_STATIC);		
+		sqlite3_bind_text(ins, 6, db[i].desc, strlen(db[i].desc), SQLITE_STATIC);
+		sqlite3_bind_int(ins, 7, db[i].type_cnt);
 		array_to_string_cnt(buf, db[i].type, db[i].type_cnt);
-		sqlite3_bind_text(ins, 7, buf, strlen(buf), SQLITE_TRANSIENT);
-		sqlite3_bind_int(ins, 8, db[i].order_cnt);
+		sqlite3_bind_text(ins, 8, buf, strlen(buf), SQLITE_TRANSIENT);
+		sqlite3_bind_int(ins, 9, db[i].order_cnt);
 		array_to_string_cnt(buf, db[i].order, db[i].order_cnt);
-		sqlite3_bind_text(ins, 9, buf, strlen(buf), SQLITE_TRANSIENT);	
+		sqlite3_bind_text(ins, 10, buf, strlen(buf), SQLITE_TRANSIENT);	
 		sqlite3_step(ins);
 		sqlite3_reset(ins);
 	}

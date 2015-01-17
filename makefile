@@ -6,7 +6,7 @@ CFlags = -std=c99 -pedantic -Wall -g -O
 HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
-LIB = -lsqlite3 -ldl -lpthread
+LIB = -lsqlite3 -ldl -lpthread -lm
 _OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
@@ -56,7 +56,8 @@ lclean:
 	rm -f item.txt
 	rm -f itemc_mem_check.log
 	rm -rf *.dSYM
-
+	rm -f lab
+	
 wclean:
 	rmdir obj /S /Q
 	mkdir obj
