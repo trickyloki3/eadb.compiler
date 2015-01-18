@@ -659,7 +659,7 @@ int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int lv, int mode) 
 			break;
 	}
 	*prod = root;
-	return (status == SQLITE_ROW) ? 0 : -1;
+	return (root != NULL) ? 0 : -1;
 }
 
 int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
