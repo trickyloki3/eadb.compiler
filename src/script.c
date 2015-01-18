@@ -610,7 +610,7 @@ int script_bonus(block_r * block, int block_cnt) {
                     (cur_blk_flag & BONUS_FLAG_EQ_5 &&
                     ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) != 0)) 
                     continue;
-            } else if(cur_blk_flag * BONUS_FLAG_MINIS) {
+            } else if(cur_blk_flag & BONUS_FLAG_MINIS) {
                 /* single argument for bonus is also an aggregate */
             } else {
                 /* BONUS_FLAG_MINIS or BONUS_FLAG_MINIZ must be set */
@@ -639,11 +639,9 @@ int script_bonus(block_r * block, int block_cnt) {
                     ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) == 0)) {
                     /* throw error and nullified duplicate block */
                     fprintf(stderr,
-                        "[error]: bonus duplicated on item id %d.\n"
-                        "[error]: %s in block %d and %s in block %d.\n", 
-                        cur_blk->item_id, 
-                        cur_blk->bonus.buff, i,
-                        cmp_blk->bonus.buff, j);
+                        "[warn]: bonus duplicated on item id %d; in block "
+                        "%d and %d; see dump.txt.\n", 
+                        cur_blk->item_id, i, j);
                     block[j].type->id = BLOCK_NULLIFIED;
                     continue;
                 }
@@ -662,13 +660,6 @@ int script_bonus(block_r * block, int block_cnt) {
                     minimize_stack(cur_blk->result[3], cmp_blk->result[3]);
                 if(cur_blk_flag & BONUS_FLAG_ST_5)
                     minimize_stack(cur_blk->result[4], cmp_blk->result[4]);
-            } else {
-                /* BONUS_FLAG_NODUP or BONUS_FLAG_STACK must be set */
-                fprintf(stderr, "[warn]: bonus flag must be either STACK or NODUP\n"
-                                "[warn]: check item_bonus.txt on bonus id %d\n"
-                                "[warn]: abort current bonus on item id %d\n",
-                                cur_blk->bonus.id, cur_blk->item_id);
-                break;
             }
 
             /* aggregating strings and stacking integers
@@ -709,18 +700,6 @@ int script_bonus(block_r * block, int block_cnt) {
 
             /* nullified the minimized block */
             block[j].type->id = BLOCK_NULLIFIED;
-
-            /*fprintf(stderr, 
-                "block_index: %d | %d\n"
-                "bonus_id: %d | %d - %s\n"
-                "bonus_link: %d | %d - %s\n\n",
-                i, j,
-                cur_blk->bonus.id, cmp_blk->bonus.id, 
-                (cur_blk->bonus.id == cmp_blk->bonus.id) ? 
-                "matched" : "nonmatched",
-                cur_blk->link, cmp_blk->link,
-                (cur_blk->link == cmp_blk->link) ? 
-                "matched" : "nonmatched");*/
         }
 
         /* substitute the aggregate string into the argument translation 
@@ -739,6 +718,7 @@ int script_bonus(block_r * block, int block_cnt) {
                     sprintf(aux, "%s and %s", buffer[j], &buffer[j][k + 2]);
                 aux[k] = '\0';
                 translate_overwrite(cur_blk, aux, j);
+                /*printf("[%d]: minimize %s\n", cur_blk->item_id, aux);*/
             }
     }
 
@@ -1159,7 +1139,7 @@ int translate_const(block_r * block, char * expr, int flag) {
  
     /* indicate unresolve item group; there are many I am too lazy to add */
     if(strcmp(tbl_str,"error") == 0)
-        printf("warning: failed to map constant %d in item %d on flag %d\n", tbl_index, block->item_id, flag);
+        printf("[warn]: failed to map constant %d in item %d on flag %d\n", tbl_index, block->item_id, flag);
 
     /* check for invalid index */
     if(tbl_str == NULL)
@@ -1268,9 +1248,9 @@ int translate_trigger(block_r * block, char * expr, int type) {
             if(trigger&ATF_SELF && trigger&ATF_TARGET) {
                 strcat(trigger_buf," on self and enemy");
             } else if(trigger&ATF_SELF) {
-                strcat(trigger_buf," on self.");
+                strcat(trigger_buf," on self");
             } else {
-                strcat(trigger_buf," on enemy.");
+                strcat(trigger_buf," on enemy");
             }
             
             if(trigger&ATF_SHORT) {
@@ -3107,8 +3087,8 @@ int translate_bonus_desc(node_t ** result, block_r * block, bonus_t * bonus) {
         case 10: translate_bonus_percentage2(block, result[1], &order[0], "Induce %s damage", "Receive %s", "Reduce %s"); break;
         case 11: translate_bonus_percentage(block, result[1], &order[0]); break;
         case 12:
-            translate_bonus_float_percentage2(block, result[1], &order[1], "Add %s", "Add %s", "Reduce %s", 10); 
-            translate_bonus_percentage(block, result[2], &order[2]); 
+            translate_bonus_float_percentage2(block, result[1], &order[0], "Add %s", "Add %s", "Reduce %s", 10); 
+            translate_bonus_percentage(block, result[2], &order[1]); 
             break;
         case 13:
             translate_bonus_integer(block, result[3], &order[2]);
@@ -3160,7 +3140,7 @@ int translate_bonus_desc(node_t ** result, block_r * block, bonus_t * bonus) {
         case 27: translate_bonus_float_percentage2(block, result[2], &order[0], "Add %s", "Add %s", "Reduce %s", 10); break;
         case 28: translate_bonus_float_percentage2(block, result[2], &order[0], "Add %s", "Add %s", "Reduce %s", 100); break;
         case 29: translate_bonus_float(block, result[3], &order[0], 10); break;
-        case 30: /* future debugggin print purposes */
+        case 30: translate_bonus_float_percentage2(block, result[2], &order[0], "%s", "%s", "%s", 100); break; /* inefficient */
         default: break;
     }
 

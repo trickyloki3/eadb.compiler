@@ -23,7 +23,7 @@ all:
 	make lab
 
 ball:
-	rm athena.db
+	rm -f athena.db
 	./conv rathena
 	make bmin
 
