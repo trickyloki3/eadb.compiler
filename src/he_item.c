@@ -44,7 +44,7 @@ void load_he_item(const char * filename, struct lt_db_t * db) {
 			config_error_line(cfg),
 			config_error_text(cfg));
 		error[offset] = '\0';
-		/*exit_abt(error);*/
+		exit_abt(error);
 	}
 
 	/* retrieve data */

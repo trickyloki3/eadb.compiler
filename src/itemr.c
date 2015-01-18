@@ -40,7 +40,8 @@ int main(int argc, char * argv[]) {
 	global_db = init_ic_db("athena.db");
 	file_dbg = fopen("dump.txt", "w");
 	node_dbg = NULL;
-	if(file_dbg == NULL) exit_abt("failed to open dump.txt.");
+	if(file_dbg == NULL) 
+		exit_abt("failed to open dump.txt.");
 
 	/* load the script file into the buffer */
 	while(fgets(fld, buf_size, file) != NULL)

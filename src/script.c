@@ -2685,6 +2685,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     iter_node = root_node;
 
     for(i = start; i < end; i++) {
+        iter_node->list = NULL;
         /* handle sub-expression by calling evaluate_expression_recursive */
         if(expr[i][0] == '(') {
             expr_inx_open = 0;
@@ -2704,7 +2705,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 #if EXIT_ON_ERROR
                 exit_buf("failed interpreting item %d; unmatch parentheses.\n", block->item_id);
 #else
-                        goto failed_expression;
+                goto failed_expression;
 #endif
             /* ? operator require setting the EVALUATE_FLAG_EXPR_BOOL */            
             if(i + 1 < end && expr[i+1][0] == '?')
@@ -2906,6 +2907,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             iter_node->list = temp_node;
             temp_node->prev = iter_node;
             iter_node = temp_node;
+            iter_node->list = NULL;
             temp_node = NULL;
         }
     }
@@ -2920,8 +2922,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 #if EXIT_ON_ERROR
         exit_buf("failed interpreting item %d; detected zero nodes.\n", block->item_id, expr[i]);
 #else
-        free(root_node);
-        return NULL;
+        goto failed_expression;
 #endif
     }
     /* check that the list is completely linked */
@@ -3014,6 +3015,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     } while(iter_node != root_node);
 
     if(ret == SCRIPT_FAILED) {
+        free(dep);
         free(root_node);
         root_node = NULL;
     }
@@ -3022,19 +3024,15 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
     failed_expression:
         /* attempt to free the linked list */
-        iter_node = root_node->list;
-        if(iter_node != NULL) {
-            do {
-                if(iter_node != root_node) {
-                    temp_node = iter_node;
-                    iter_node = iter_node->list;
-                    freenamerange(temp_node->cond);
-                    freerange(temp_node->range);
-                    free(temp_node);
-                }
-            } while(iter_node != root_node);
+        iter_node = root_node;
+        while(iter_node != NULL) {
+            temp_node = iter_node;
+            iter_node = iter_node->list;
+            freenamerange(temp_node->cond);
+            freerange(temp_node->range);
+            free(temp_node);
         }
-        free(root_node);
+        free(dep);
         return NULL;
 }
 
@@ -4444,6 +4442,7 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
     } else {
 #if EXIT_ON_ERROR
         exit_abt(build_buffer(global_err, "failed to search skill %s", tree->name));
+        return SCRIPT_FAILED;
 #else
         return SCRIPT_FAILED;
 #endif

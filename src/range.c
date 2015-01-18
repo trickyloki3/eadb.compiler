@@ -662,6 +662,7 @@ range_t * copyrange(range_t * root) {
 void freerange(range_t * root) {
    struct range * temp = NULL;
    struct range * iter = root;
+   if(root == NULL) return;
    while(iter != NULL) {
       temp = iter;
       iter = iter->next;
