@@ -109,6 +109,7 @@ int script_lexical(token_r * token, char * buffer) {
             comment_level--;
             i += 2;
         }
+        /*printf("%c %c\n", script[i], script[i+1]);*/
         if(comment_level) 
             continue;
 
@@ -117,8 +118,11 @@ int script_lexical(token_r * token, char * buffer) {
             /* add identifier tokens */
             script_ptr[script_ptr_cnt++] = &script_buf[script_buf_cnt];
             while(ATHENA_SCRIPT_IDENTIFER(script[i]) || ATHENA_SCRIPT_SYMBOL(script[i]))
-            script_buf[script_buf_cnt++] = script[i++];
+                script_buf[script_buf_cnt++] = script[i++];
             script_buf[script_buf_cnt++] = '\0';
+            /* =.= lexer skips one character after reading variable or number */
+            i--;
+            continue;
         }
 
         /* skip space / single quote / double quote / slash characters */
@@ -990,6 +994,7 @@ int translate_getitem(block_r * block, int handler) {
 #else
             return SCRIPT_FAILED;
 #endif
+
         /* chop off the parenthesis on both open by +- index */
         for(i = 1; i < token_list.script_cnt - 1; i++) {
             switch(token_list.script_ptr[i][0]) {
@@ -3755,14 +3760,8 @@ void node_expr_append(node_t * left, node_t * right, node_t * dest) {
 char * formula(char * buf, char * eng, node_t * result) {
     int len = 0;
 
-#if EXIT_ON_ERROR
-    exit_null("buf is null", 1, buf);
-    exit_null("eng is null", 1, eng);
-    exit_null("result is null", 1, result);
-#else
     if(buf == NULL || eng == NULL || result == NULL)
         return eng;
-#endif
 
     if(result != NULL && result->cond_cnt > 0) {
         if(result->expr[0] == '(' && result->expr[strlen(result->expr) - 1] == ')')
@@ -3799,14 +3798,9 @@ int formula_write(block_r * block, char * formula) {
 
 char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
     int offset = 0;
-#if EXIT_ON_ERROR
-    exit_null("aux is null", 1, aux);    
-    exit_null("eng is null", 1, eng);
-    exit_null("result is null", 1, result);
-#else
-    if(aux == NULL || eng == NULL || result == NULL)
+
+    if(aux == NULL || eng == NULL)
         return "";
-#endif
 
     if(blank < 0) return "";
     if(result == NULL) return eng;
@@ -4260,6 +4254,9 @@ int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset) {
 
 int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
     int i = 0;
+    int len = 0;
+    int ret = 0;
+    int skill_id = 0;
     int val_min = 0;
     int val_max = 0;
     int var_id = 0;
@@ -4430,7 +4427,17 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
     }
 
     /* resolve the condition by using skill database */
-    if(!skill_name_search(global_db, &skill, tree->name, global_mode)) {
+    len = strlen(tree->name);
+    for(i = 0; i < len; i++)
+        if(!isdigit(tree->name[i]))
+            break;
+    skill_id = (len == i) ? convert_integer(tree->name, 10) : 0;
+
+    ret = (len == i) ? 
+        skill_name_search_id(global_db, &skill, skill_id, global_mode):
+        skill_name_search(global_db, &skill, tree->name, global_mode);
+
+    if(!ret) {
         if(val_min != val_max)
             *offset = sprintf(buf + *offset,"%s Lv.%d ~ Lv.%d", skill.desc, val_min, val_max);
         else
