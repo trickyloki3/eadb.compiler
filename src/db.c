@@ -737,8 +737,8 @@ int ra_item_package_column(void * db, int row, int col, char * val) {
 int is_row_sentinel(char buf) { return (buf == '\n' || buf == '\0'); }
 int is_row_delimiter(char buf) { return (buf == ',' || buf == '\n' || buf == '\0'); }
 int is_row_sentinel_whitespace(char buf) { return (buf == '\n' || buf == '\0' || isspace(buf)); }
-int is_row_sentinel_comment(char buf) { return (buf == '\n' || buf == '\0' || buf == '/'); }
-int is_row_delimiter_comment(char buf) { return (buf == ',' || buf == '\n' || buf == '\0' || buf == '/'); }
+int is_row_sentinel_comment(char buf) { return (buf == '\r' || buf == '\n' || buf == '\0' || buf == '/'); }
+int is_row_delimiter_comment(char buf) { return (buf == '\r' || buf == ',' || buf == '\n' || buf == '\0' || buf == '/'); }
 int is_row_sentinel_semicolon(char buf) { return (buf == '\n' || buf == '\0' || buf == ';'); }
 int is_row_delimiter_semicolon(char buf) { return (buf == ',' || buf == '\n' || buf == '\0' || buf == ';'); }
 int is_row_delimiter_whitespace(char buf) { return (buf == ',' || buf == '\n' || buf == '\0' || isspace(buf)); }
