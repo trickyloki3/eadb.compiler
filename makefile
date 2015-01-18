@@ -20,7 +20,6 @@ all:
 	make conv
 	make item
 	make itemr
-	make lab
 
 ball:
 	rm -f athena.db
@@ -48,9 +47,6 @@ itemr: src/itemr.c $(OBJ)
 conv: src/conv.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
-lab: src/lab.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR)  $(LIB)
-
 $(OBJDIR)%.o: $(SRCDIR)%.c
 	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR)
 
@@ -63,7 +59,6 @@ lclean:
 	rm -f item
 	rm -f itemr
 	rm -f hitem
-	rm -f lab
 	rm -f he_item.o
 	rm -f dump.txt
 	rm -f item.txt

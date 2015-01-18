@@ -24,15 +24,8 @@ int main(int argc, char * argv[]) {
 	}
 
 	int sqlite_status = 0;
-	int script_status = 0;
-	char err[BUF_SIZE];
-	char translate[BUF_SIZE];
-	int translate_off = 0;
-
 	ic_item_t item;
-	token_r token_list;
-	int block_cnt = 0;
-	block_r * block_list;
+	char * item_desc = NULL;
 	FILE * file_dgb;
 	FILE * file_itm;
 	if(DEBUG) {
@@ -51,40 +44,15 @@ int main(int argc, char * argv[]) {
 				 "%s: use 'conv [ eathena | rathena | hercules | all ]' to load a database.\n", argv[0], argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	block_init(&block_list, BLOCK_SIZE);
-	while(sqlite_status == SQLITE_ROW) {
-		block_cnt = 0;
-		if(item.script != NULL && strlen(item.script) > 0) {
-			/* perform lexical analysis */
-			script_status = script_lexical(&token_list, item.script);
-			if(script_status == SCRIPT_FAILED) {
-				exit_abt(build_buffer(err, "failed to perform lexical analysis on item %d\n", item.id));
-			} else {
-				/* perform structual analysis */
-				script_status = script_analysis(&token_list, block_list, &block_cnt, item.id, 0x01, 0);
-				if(script_status == SCRIPT_FAILED) {
-					exit_abt(build_buffer(err, "failed to perform structual analysis on item %d\n", item.id));
-				} else if(block_cnt > 0) {
-					/* perform set block inheritance */
-					script_dependencies(block_list, block_cnt);
-					/* translate the script */
-					script_translate(block_list, block_cnt);
-					/* write bonus translation after minimization */
-					script_bonus(block_list, block_cnt);
-					/* generate the translation */
-					translate_off = 0;
-					script_generate(block_list, block_cnt, translate, &translate_off);
-					fprintf(file_itm,"%d#\n%s#\n", block_list->item_id, translate);
-					/* translate the block list */
-					if(DEBUG) block_debug_dump_all(block_list, block_cnt, file_dgb);
-				}
-			}
-		}
 
-		block_deinit(block_list, BLOCK_SIZE);
+	while(sqlite_status == SQLITE_ROW) {
+		if(item.script != NULL && strlen(item.script) > 0) {
+			item_desc = script_compile_raw(item.script, item.id, file_dgb);
+			fprintf(file_itm,"%d#\n%s#\n", item.id, (item_desc) ? item_desc : "");
+			if(item_desc != NULL) free(item_desc);
+		}
 		sqlite_status = load_by_mode(global_mode, global_db, &item);
 	}
-	block_finalize(block_list, BLOCK_SIZE);
 	deit_ic_db(global_db);
 	if(DEBUG) fclose(file_dgb);
 	fclose(file_itm);

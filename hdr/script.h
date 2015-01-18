@@ -20,6 +20,7 @@
     #include "table.h"
 
     /* general */
+    #define EXIT_ON_ERROR 0
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
@@ -262,10 +263,11 @@
     node_t * evaluate_expression(block_r *, char *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
-    void evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
+    int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
     void node_inherit_cond(node_t *);
     void node_expr_append(node_t *, node_t *, node_t *);
     char * formula(char *, char *, node_t *);
+    int formula_write(block_r *, char *);
     char * status_formula(char *, char *, node_t *, int, int);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
@@ -289,11 +291,11 @@
     int script_linkage_count(block_r *, int);
 
     /* support generation */
-    void script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
-    void script_generate_and_chain(logic_node_t *, char *, int *);
-    void script_generate_cond_node(logic_node_t *, char *, int *);
-    void script_generate_class_generic(char *, int *, range_t *, char *);
-    void script_generate_cond_generic(char *, int *, int, int, char *);
+    int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
+    int script_generate_and_chain(logic_node_t *, char *, int *);
+    int script_generate_cond_node(logic_node_t *, char *, int *);
+    int script_generate_class_generic(char *, int *, range_t *, char *);
+    int script_generate_cond_generic(char *, int *, int, int, char *);
 
     /* support minimization */
     int minimize_stack(node_t * left, node_t * right);
