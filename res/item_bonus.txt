@@ -24,21 +24,21 @@
 23,0x00000000,5,bonus,bAtkRange,"Attack Range: %s.",1,n,1,0
 24,0x00000000,6,bonus,bCritical,"Critical: %s",1,n,1,0
 25,0x00000000,6,bonus,bAspd,"Attack Speed: %s",1,n,1,0
-26,0x00000000,3,bonus,bMaxHPrate,"%s Maximum HP.",1,p,1,0
-27,0x00000000,3,bonus,bMaxSPrate,"%s Maximum SP.",1,p,1,0
-28,0x00000000,3,bonus,bAtkRate,"%s Attack.",1,p,1,0
-29,0x00000000,3,bonus,bSpeedAddRate,"%s Movement Speed.",1,p,1,0
-30,0x00000000,3,bonus,bMatkRate,"%s Magical Attack.",1,p,1,0
-31,0x00000000,3,bonus,bDefRate,"%s Armor Defense.",1,p,1,0
-32,0x00000000,3,bonus,bDef2Rate,"%s Defense.",1,p,1,0
-33,0x00000000,3,bonus,bMdefRate,"%s Magical Armor Defense.",1,p,1,0
-34,0x00000000,3,bonus,bMdef2Rate,"%s Magical Defense.",1,p,1,0
-35,0x00000000,3,bonus,bHitRate,"%s HIT",1,p,1,0
-36,0x00000000,3,bonus,bCriticalRate,"%s Critical Chance.",1,p,1,0
-37,0x00000000,3,bonus,bFleeRate,"%s FLEE",1,p,1,0
-38,0x00000000,3,bonus,bFlee2Rate,"%s Perfect Dodge.",1,p,1,0
-39,0x00000000,3,bonus,bAspdRate,"%s Attack Speed.",1,p,1,0
-40,0x00000000,3,bonus,bLongAtkRate,"%s Long Ranged Damage.",1,p,1,0
+26,0x00000000,3,bonus,bMaxHPrate,"%s maximum HP.",1,p,1,0
+27,0x00000000,3,bonus,bMaxSPrate,"%s maximum SP.",1,p,1,0
+28,0x00000000,3,bonus,bAtkRate,"%s attack.",1,p,1,0
+29,0x00000000,3,bonus,bSpeedAddRate,"%s movement speed.",1,p,1,0
+30,0x00000000,3,bonus,bMatkRate,"%s magical attack.",1,p,1,0
+31,0x00000000,3,bonus,bDefRate,"%s armor defense.",1,p,1,0
+32,0x00000000,3,bonus,bDef2Rate,"%s defense.",1,p,1,0
+33,0x00000000,3,bonus,bMdefRate,"%s magical armor defense.",1,p,1,0
+34,0x00000000,3,bonus,bMdef2Rate,"%s magical defense.",1,p,1,0
+35,0x00000000,3,bonus,bHitRate,"%s hit",1,p,1,0
+36,0x00000000,3,bonus,bCriticalRate,"%s critical chance.",1,p,1,0
+37,0x00000000,3,bonus,bFleeRate,"%s flee",1,p,1,0
+38,0x00000000,3,bonus,bFlee2Rate,"%s perfect dodge.",1,p,1,0
+39,0x00000000,3,bonus,bAspdRate,"%s attack speed.",1,p,1,0
+40,0x00000000,3,bonus,bLongAtkRate,"%s long ranged damage.",1,p,1,0
 41,0x00000000,3,bonus,bCritAtkRate,"%s critical damage.",1,p,1,0
 42,0x00000000,17,bonus,bClassChange,"%s chance of transforming a monster while fighting.",1,q,1,0
 43,0x00000000,17,bonus,bAddStealRate,"%s success rate to stealing.",1,q,1,0
