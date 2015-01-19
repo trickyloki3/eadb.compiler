@@ -14,7 +14,7 @@
 //    * Pretty String   - dependency string
 //==================================================================================
 1  ,                getrefine,0x00000001,0x00000000,0x00000001,         0,        15,"Refine Level";
-2  ,      getequiprefinerycnt,0x00000001,0x00000000,0x00000001,         0,        15,"Refine Level";
+2  ,      getequiprefinerycnt,0x00000001,0x00000000,0x00000002,         0,        15,"Refine Level";
 3  ,                readparam,0x00000001,0x00000000,0x00000001,         1,       150,"Paramater";
 4  ,               getskilllv,0x00000001,0x00000000,0x00000002,         0,2147483647,"Skill";
 5  ,                     rand,0x00000001,0x00000000,0x00000002,         0,2147483647,"Random";

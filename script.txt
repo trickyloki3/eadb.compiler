@@ -1,1 +1,2 @@
-petheal 400,60,33,100;
+if(getequiprefinerycnt(EQI_GARMENT) < 6)
+	bonus bAtk,10;

@@ -3135,6 +3135,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                     /* dynamic function value */
                     } else if(var_info.fflag & FUNC_PARAMS) {
                         temp_node->dep = dep;
+                        temp_node->min = var_info.min;
+                        temp_node->max = var_info.max;
                         if(evaluate_function(block, expr, expr[expr_inx_open], 
                             expr_inx_open + 2, expr_inx_close, &(temp_node->min), 
                             &(temp_node->max), temp_node) == SCRIPT_FAILED)
@@ -3698,6 +3700,36 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         ea_item_group_search(global_db, &ea_item_group, const_info.value, global_mode, buffer);
         block->flag |= 0x04;*/
         translate_write(block, expr[start], 1);
+    } else if(ncs_strcmp(func,"getequiprefinerycnt") == 0) {
+        resultOne = evaluate_expression_recursive(block, expr, start, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
+        if(resultOne == NULL)
+#if EXIT_ON_ERROR
+            exit_buf("failed to evaluate getequiprefinerycnt arguments in item id %d\n", block->item_id);
+#else
+            goto failed_function;
+#endif
+        switch(resultOne->min) {
+            case 1: argument_write(node, "Upper Headgear"); break;
+            case 2: argument_write(node, "Armor"); break;
+            case 3: argument_write(node, "Left Hand"); break;
+            case 4: argument_write(node, "Right Hand"); break;
+            case 5: argument_write(node, "Garment"); break;
+            case 6: argument_write(node, "Shoes"); break;
+            case 7: argument_write(node, "Left Accessory"); break;
+            case 8: argument_write(node, "Right Accessory"); break;
+            case 9: argument_write(node, "Middle Headgear"); break;
+            case 10: argument_write(node, "Lower Headgear"); break;
+            case 11: argument_write(node, "Lower Costume Headgear"); break;
+            case 12: argument_write(node, "Middle Costume Headgear"); break;
+            case 13: argument_write(node, "Upper Costume Headgear"); break;
+            case 14: argument_write(node, "Costume Garment"); break;
+            case 15: argument_write(node, "Shadow Armor"); break;
+            case 16: argument_write(node, "Shadow Weapon"); break;
+            case 17: argument_write(node, "Shadow Shield"); break;
+            case 18: argument_write(node, "Shadow Shoes"); break;
+            case 19: argument_write(node, "Shadow Left Accessory"); break;
+            case 20: argument_write(node, "Shadow Right Accessory"); break;
+        }
     } else {
 #if EXIT_ON_ERROR
         exit_buf("failed to search function handler for %s in item %d", func, block->item_id);
@@ -3990,7 +4022,12 @@ void node_expr_append(node_t * left, node_t * right, node_t * dest) {
                         printf("warning: failed to resolve function name %s\n", dest->id);
                         sprintf(dest->expr,"%s", dest->id);
                     } else {
-                        sprintf(dest->expr,"%s", var_info.str);
+                        /* getequiprefinery requires the equipment location to be display */
+                        if(var_info.tag == 2) {
+                            sprintf(dest->expr,"%s's %s", &dest->args[dest->args_ptr[0]], var_info.str);
+                        } else {
+                            sprintf(dest->expr,"%s", var_info.str);
+                        }
                     }
                     if(var_info.id != NULL) free(var_info.id);
                     if(var_info.str != NULL) free(var_info.str);
@@ -4615,7 +4652,6 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
         switch(var_id) {
             /* simple dependencies */
             case 1: script_generate_cond_generic(buf, offset, val_min, val_max, "Refine Rate"); break; /* getrefine */
-            case 2: script_generate_cond_generic(buf, offset, val_min, val_max, "Refine Rate"); break; /* getequiprefinerycnt */
             case 5: script_generate_cond_generic(buf, offset, val_min, val_max, "Random Roll"); break; /* rand */
             case 17: script_generate_cond_generic(buf, offset, val_min, val_max, "Job Level"); break; /* job level */
             case 18: script_generate_cond_generic(buf, offset, val_min, val_max, "Base Level"); break; /* base level */            
@@ -4732,6 +4768,10 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
                     case 7: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
                     case 8: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
                 }
+                break;
+            case 2:
+                *offset += sprintf(buf + *offset,"%s's Refine Rate", &tree->args[tree->args_ptr[0]]); 
+                buf[*offset] = '\0';
                 break;
             default: 
 #if EXIT_ON_ERROR
