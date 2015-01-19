@@ -1,2 +1,2 @@
-if(getequiprefinerycnt(EQI_GARMENT) < 6)
-	bonus bAtk,10;
+.@refine = getrefine();
+bonus bAtk, .@refine;

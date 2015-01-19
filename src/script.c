@@ -76,6 +76,7 @@ int script_lexical(token_r * token, char * buffer) {
     int script_buf_cnt = 0;     /* script's buffer index */
     int script_ptr_cnt = 0;     /* script's string index */
     int comment_level = 0;
+    char * temp = NULL;
 
     /* check paramaters for NULL references */
 #if EXIT_ON_ERROR
@@ -132,15 +133,36 @@ int script_lexical(token_r * token, char * buffer) {
         /* abort the lexical analysis when \0 encounter */
         if(script[i] == '\0') break;
 
-        /* add the operator or syntax */
-        script_ptr[script_ptr_cnt++] = &script_buf[script_buf_cnt];
-        script_buf[script_buf_cnt++] = script[i];
-        script_buf[script_buf_cnt++] = '\0';
-    }
+        if(script[i] == '=') {
+            /* convert = into a set block */
+            script_ptr[script_ptr_cnt] = &script_buf[script_buf_cnt];
+            script_buf_cnt += sprintf(script_ptr[script_ptr_cnt], "set");
+            script_buf[script_buf_cnt++] = '\0';
 
-   /* set the total number of tokens */
-   token->script_cnt = script_ptr_cnt;
-   return SCRIPT_PASSED;
+            /* swap identifier with the set identifier */
+            temp = script_ptr[script_ptr_cnt];
+            script_ptr[script_ptr_cnt] = script_ptr[script_ptr_cnt - 1];
+            script_ptr[script_ptr_cnt - 1] = temp;
+            script_ptr_cnt++;
+
+            /* add the , operator or syntax */
+            script_ptr[script_ptr_cnt++] = &script_buf[script_buf_cnt];
+            script_buf[script_buf_cnt++] = ',';
+            script_buf[script_buf_cnt++] = '\0';
+        } else {
+            /* add the operator or syntax */
+            script_ptr[script_ptr_cnt++] = &script_buf[script_buf_cnt];
+            script_buf[script_buf_cnt++] = script[i];
+            script_buf[script_buf_cnt++] = '\0';
+        }
+    }
+    printf("Lexical: ");
+    for(i = 0; i < script_ptr_cnt - 1; i++)
+        printf("%s ", script_ptr[i]);
+    printf("%s\n", script_ptr[i]);
+    /* set the total number of tokens */
+    token->script_cnt = script_ptr_cnt;
+    return SCRIPT_PASSED;
 }
 
 int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_id, int flag, int block_dep) {   
