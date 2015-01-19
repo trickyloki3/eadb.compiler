@@ -20,7 +20,7 @@
     #include "table.h"
 
     /* general */
-    #define EXIT_ON_ERROR 1
+    #define EXIT_ON_ERROR 0
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
@@ -252,6 +252,13 @@
     int translate_status(block_r *, int);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
+    int translate_petloot(block_r *);
+    int translate_petrecovery(block_r *);
+    int translate_petskillbonus(block_r *);
+    int translate_petskillattack(block_r *);
+    int translate_petskillattack2(block_r *);
+    int translate_petskillsupport(block_r *);
+    int translate_petheal(block_r *);
     int translate_write(block_r *, char *, int);
     int translate_overwrite(block_r *, char *, int);
 
@@ -260,6 +267,7 @@
     void block_debug_dump_set_link(struct block_r **, int, int, int, FILE *);
 
     /* expression evaluation */
+    node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);

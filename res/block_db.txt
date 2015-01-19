@@ -53,3 +53,10 @@
 52 ,                  playbgm,0
 53 ,                transform,0
 54 ,                sc_start2,0
+55 ,                  petloot,0
+56 ,              petrecovery,0
+57 ,            petskillbonus,0
+58 ,           petskillattack,0
+59 ,          petskillattack2,0
+60 ,          petskillsupport,0
+61 ,                  petheal,0

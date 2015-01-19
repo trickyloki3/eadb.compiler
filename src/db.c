@@ -241,6 +241,19 @@ load_cb_t * ra_item_package_load() {
    return interface;  
 }
 
+load_cb_t * ra_item_combo_load() {
+   load_cb_t * interface = calloc(1, sizeof(load_cb_t));
+   exit_null("failed to load interface", 1, interface);
+   interface->load_column = ra_item_combo_colum;
+   interface->is_row_sentinel = is_row_sentinel;
+   interface->is_row_delimiter = is_row_delimiter;
+   interface->flag = CHECK_BRACKET;
+   interface->column_count = 0;
+   interface->type_size = sizeof(ra_item_combo_t);
+   interface->dealloc = ra_item_combo_dealloc;
+   return interface;  
+}
+
 int ea_load_column(void * db, int row, int col, char * val) {
    ea_item_t * item_row = &((ea_item_t *) db)[row];
    switch(col) {
@@ -734,6 +747,16 @@ int ra_item_package_column(void * db, int row, int col, char * val) {
    return 0;
 }
 
+int ra_item_combo_colum(void * db, int row, int col, char * val) {
+   ra_item_combo_t * ra_item_combo = &((ra_item_combo_t *) db)[row];
+   switch(col) {
+      case 0: ra_item_combo->item_id_list = convert_string(val); break;
+      case 1: ra_item_combo->script = convert_string(val); break;
+      default: break;
+   }
+   return 0;
+}
+
 int is_row_sentinel(char buf) { return (buf == '\n' || buf == '\0'); }
 int is_row_delimiter(char buf) { return (buf == ',' || buf == '\n' || buf == '\0'); }
 int is_row_sentinel_whitespace(char buf) { return (buf == '\n' || buf == '\0' || isspace(buf)); }
@@ -917,6 +940,16 @@ void ra_item_package_dealloc(void * mem, int cnt) {
    for(i = 0; i < cnt; i++) {
       if(db[i].group_name != NULL) free(db[i].group_name);
       if(db[i].item_name != NULL) free(db[i].item_name);
+   }
+   free(db);
+}
+
+void ra_item_combo_dealloc(void * mem, int cnt) {
+   int i = 0;
+   ra_item_combo_t * db = (ra_item_combo_t *) mem;
+   for(i = 0; i < cnt; i++) {
+      if(db[i].item_id_list != NULL) free(db[i].item_id_list);
+      if(db[i].script != NULL) free(db[i].script);
    }
    free(db);
 }

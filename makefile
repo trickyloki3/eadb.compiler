@@ -47,6 +47,9 @@ itemr: src/itemr.c $(OBJ)
 conv: src/conv.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
+loki: src/loki.c $(OBJ)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
+
 $(OBJDIR)%.o: $(SRCDIR)%.c
 	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR)
 

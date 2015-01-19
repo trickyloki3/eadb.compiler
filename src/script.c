@@ -614,6 +614,13 @@ int script_translate(block_r * block, int size) {
             case 52: ret_value = translate_write(&block[i], "Play another background song.", 1); break;                         /* playbgm */
             case 53: ret_value = translate_transform(&block[i]); break;                                                         /* transform */
             case 54: ret_value = translate_status(&block[i], block[i].type->id); break;                                         /* sc_start2 */
+            case 55: ret_value = translate_petloot(&block[i]); break;                                                           /* petloot */
+            case 56: ret_value = translate_petrecovery(&block[i]); break;                                                       /* petrecovery */
+            case 57: ret_value = translate_petskillbonus(&block[i]); break;                                                     /* petskillbonus */
+            case 58: ret_value = translate_petskillattack(&block[i]); break;                                                    /* petskillattack */
+            case 59: ret_value = translate_petskillattack2(&block[i]); break;                                                   /* petskillattack2 */
+            case 60: ret_value = translate_petskillsupport(&block[i]); break;                                                   /* petskillsupport */
+            case 61: ret_value = translate_petheal(&block[i]); break;                                                           /* petheal */
             default: break;
         }
 
@@ -1189,8 +1196,15 @@ int translate_hire_merc(block_r * block, int handler) {
 }
 
 int translate_pet_egg(block_r * block, int handler) {
+    int i = 0;
+    int len = 0;
     int offset = 0;
     char buf[BUF_SIZE];
+    pet_t pet;
+    node_t * pet_id = NULL;
+    char * pet_script = NULL;
+    char * loyal_script = NULL;
+    int statement_count = 0;
 
 #if EXIT_ON_ERROR
     exit_null("block is null", 1, block);
@@ -1202,8 +1216,87 @@ int translate_pet_egg(block_r * block, int handler) {
         return SCRIPT_FAILED;
     offset = sprintf(buf,"Egg containing %s.", block->eng[0]);
     buf[offset] = '\0';
+    
+    /* convert the integer expression into constant integer result,
+     * i.e. pet_id evaluated correctly and min and max are equal */
+    pet_id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(pet_id == NULL || pet_id->min != pet_id->max) 
+#if EXIT_ON_ERROR
+    exit_buf("failed to search for pet id or pet id is not constant %d ~ %d "
+        "in item %d\n", pet_id->min, pet_id->max, block->item_id);
+#else
+        return SCRIPT_FAILED;
+#endif
+
+    /* search for pet and loyal script using pet id */
+    memset(&pet, 0, sizeof(pet_t));
+    if(pet_id_search(global_db, &pet, pet_id->min, global_mode))
+#if EXIT_ON_ERROR
+        exit_buf("failed to search for pet id %d in item %d\n", 
+            pet_id->min, block->item_id);
+#else
+        return SCRIPT_FAILED;
+#endif
+
+    /* check that pet script is not empty */
+    statement_count = 0;
+    len = strlen(pet.pet_script);
+    for(i = 0; i < len; i++)
+        if(pet.pet_script[i] == ';')
+            statement_count++;
+    if(statement_count > 0) {
+        pet_script = script_compile(pet.pet_script, block->item_id);
+        if(pet_script == NULL)
+            #if EXIT_ON_ERROR
+                exit_buf("failed to compile pet script %s in item %d\n", 
+                    pet.pet_script, block->item_id);
+            #else
+                goto failed_pet;
+            #endif
+        /* write the pet script */
+        offset += sprintf(buf + offset, "\n[Pet Bonus]\n%s", pet_script);
+        buf[offset] = '\0';
+    }
+
+    /* check that loyal script is not empty */
+    statement_count = 0;
+    len = strlen(pet.loyal_script);
+    for(i = 0; i < len; i++)
+        if(pet.loyal_script[i] == ';')
+            statement_count++;
+    if(statement_count > 0) {
+        /* compile the loyal script */
+        loyal_script = script_compile(pet.loyal_script, block->item_id);
+        if(loyal_script == NULL)
+            #if EXIT_ON_ERROR
+                exit_buf("failed to compile loyal script %s in item %d\n", 
+                    pet.loyal_script, block->item_id);
+            #else
+                goto failed_pet;
+            #endif
+        /* write the loyal script */
+        offset += sprintf(buf + offset, "\n[Loyal Bonus]\n%s", loyal_script);   
+        buf[offset] = '\0';
+    }
+
+    /* write the monster pet name, pet script and loyal script */
     translate_write(block, buf, 1);
+
+    /* free the scripts and result node */
+    if(pet.pet_script != NULL) free(pet.pet_script);
+    if(pet.loyal_script != NULL) free(pet.loyal_script);
+    if(pet_id != NULL) node_free(pet_id);
+    if(pet_script != NULL) free(pet_script);
+    if(loyal_script != NULL) free(loyal_script);
     return SCRIPT_PASSED;
+
+    failed_pet:
+        if(pet.pet_script != NULL) free(pet.pet_script);
+        if(pet.loyal_script != NULL) free(pet.loyal_script);
+        if(pet_id != NULL) node_free(pet_id);
+        if(pet_script != NULL) free(pet_script);
+        if(loyal_script != NULL) free(loyal_script);
+        return SCRIPT_FAILED;
 }
 
 int translate_getexp(block_r * block, int handler) {
@@ -1431,13 +1524,6 @@ int translate_bonus(block_r * block, int flag) {
         }
     }
 
-    /* the number of arguments must match the number of translations */
-    if(block->ptr_cnt-1 != block->eng_cnt) 
-#if EXIT_ON_ERROR
-        exit_buf("failed to translate block on item %d", block[0].item_id);
-#else
-        return SCRIPT_FAILED;
-#endif
     return SCRIPT_PASSED;
 }
 
@@ -1445,9 +1531,9 @@ int translate_const(block_r * block, char * expr, int flag) {
     int tbl_index = 0;
     char * tbl_str = NULL;
     char buffer[BUF_SIZE];
-
     const_t const_info;
     memset(&const_info, 0, sizeof(const_t));
+
 #if EXIT_ON_ERROR
     exit_null("block or expr is null", 2, block, expr);
 #else
@@ -2108,6 +2194,7 @@ int translate_status(block_r * block, int handler) {
 #endif
         }
     }
+
     /* evaluate the duration of the status */
     if(translate_time(block, block->ptr[1]) == SCRIPT_FAILED)
         goto fail_status;
@@ -2370,21 +2457,256 @@ int translate_bonus_script(block_r * block) {
 }
 
 int translate_setfalcon(block_r * block) {
+    int ret = 0;
     node_t * result = NULL;
 #if EXIT_ON_ERROR
     exit_null("block is null", 1, block);
 #else
     if(block == NULL) return SCRIPT_FAILED;
 #endif
-    result = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(result == NULL) return SCRIPT_FAILED;
-    if(result->max == 0) {
-        translate_write(block, "Recall a falcon.", 1);
-    } else {
-        translate_write(block, "Summon a falcon.", 1);
+    result = evaluate_argument(block, block->ptr[0]);
+    ret = (result != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
+    if(ret == SCRIPT_PASSED) {
+        (result->max == 0) ?
+            translate_write(block, "Recall a falcon.", 1):
+            translate_write(block, "Summon a falcon.", 1);
     }
-    node_free(result);
+    if(result != NULL) node_free(result);
+    return ret;
+}
+
+int translate_petloot(block_r * block) {
+    int ret = 0;
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * capacity = NULL;
+#if EXIT_ON_ERROR
+    exit_null("block is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    capacity = evaluate_argument(block, block->ptr[0]);
+    ret = (capacity != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
+    if(ret == SCRIPT_PASSED) {
+        offset += sprintf(buf,"Pet can loot and hold upto %s items.\n"
+            "Use pet performance to retrieve the items.", 
+            status_formula(&capacity->args[capacity->args_cnt], block->eng[0], capacity, 'n', 1));
+        buf[offset] = '\0';
+        translate_write(block, buf, 1);
+    }
+    if(capacity != NULL) node_free(capacity);
+    return ret;
+}
+
+int translate_petrecovery(block_r * block) {
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * delay = NULL;
+#if EXIT_ON_ERROR
+    exit_null("block is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    if(translate_status_end(block) == SCRIPT_FAILED)
+        return SCRIPT_FAILED;
+    /* evaluate the delay expression */
+    delay = evaluate_argument(block, block->ptr[1]);
+    if(delay == NULL) return SCRIPT_FAILED;
+    offset += sprintf(buf, "Pet cures %s every %d seconds.", block->eng[0], delay->min);
+    buf[offset] = '\0';
+    translate_write(block, buf, 1);
     return SCRIPT_PASSED;
+}
+
+/* require refactoring */
+int translate_petskillbonus(block_r * block) {
+    int offset = 0;
+    char buf[BUF_SIZE];
+    char aux[BUF_SIZE];
+    char aux2[BUF_SIZE];
+    node_t * duration = NULL;
+    node_t * delay = NULL;
+#if EXIT_ON_ERROR
+    exit_null("bonus is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    if(translate_bonus(block, 0x01) == SCRIPT_FAILED)
+        return SCRIPT_FAILED;
+    duration = evaluate_argument(block, block->ptr[2]);
+    delay = evaluate_argument(block, block->ptr[3]);
+    if(duration == NULL || delay == NULL) {
+        if(duration != NULL) node_free(duration);
+        if(delay != NULL) node_free(delay);
+        return SCRIPT_FAILED;
+    }
+    offset += sprintf(buf, "Additional pet bonus lasting %s seconds for every %s seconds:\n -> ",
+        formula(aux, block->eng[1], duration),
+        formula(aux2, block->eng[2], delay));
+    if(block->bonus.id == 8)
+        translate_bonus_template(buf + offset, &offset, block->bonus.desc, 
+            formula(aux, block->eng[0], block->result[0]),
+            formula(aux, block->eng[0], block->result[0]));    
+    else if(block->bonus.id == 9)
+        translate_bonus_template(buf + offset, &offset, block->bonus.desc, 
+            formula(aux, block->eng[0], block->result[0]),
+            formula(aux, block->eng[0], block->result[0]),
+            formula(aux, block->eng[0], block->result[0]));    
+    else
+        translate_bonus_template(buf + offset, &offset, block->bonus.desc, 
+            formula(aux, block->eng[0], block->result[0]));
+    node_free(duration);
+    node_free(delay);
+    translate_write(block, buf, 1);
+    return SCRIPT_PASSED;
+}
+
+int translate_petskillattack(block_r * block) {
+    int ret = 0;
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * level = NULL;
+    node_t * rate = NULL;
+    node_t * brate = NULL;
+#if EXIT_ON_ERROR
+    exit_null("bonus is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    if(translate_skill(block, block->ptr[0]) == SCRIPT_FAILED)
+        return SCRIPT_FAILED;
+    level = evaluate_argument(block, block->ptr[1]);
+    rate = evaluate_argument(block, block->ptr[2]);
+    brate = evaluate_argument(block, block->ptr[3]);
+    ret = (level != NULL && rate != NULL && brate != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
+    if(ret == SCRIPT_PASSED) {
+        offset = sprintf(buf, "Add %s (%s on max intimacy) chance of casting %s [Lv. %s].",
+            status_formula(&rate->args[rate->args_cnt], block->eng[2], rate, 'p', 1),
+            status_formula(&brate->args[brate->args_cnt], block->eng[3], brate, 'p', 1),
+            block->eng[0],
+            formula(&level->args[level->args_cnt], block->eng[1], level));
+        translate_write(block, buf, 1);
+    }
+    if(level != NULL) node_free(level);
+    if(rate != NULL) node_free(rate);
+    if(brate != NULL) node_free(brate);
+    return ret;
+}
+
+int translate_petskillattack2(block_r * block) {
+    int ret = 0;
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * damage = NULL;
+    node_t * hit = NULL;
+    node_t * rate = NULL;
+    node_t * brate = NULL;
+#if EXIT_ON_ERROR
+    exit_null("bonus is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    if(translate_skill(block, block->ptr[0]) == SCRIPT_FAILED)
+        return SCRIPT_FAILED;
+    damage = evaluate_argument(block, block->ptr[1]);
+    hit = evaluate_argument(block, block->ptr[2]);
+    rate = evaluate_argument(block, block->ptr[3]);
+    brate = evaluate_argument(block, block->ptr[4]);
+    ret = (damage != NULL && hit != NULL && rate != NULL && brate != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
+    if(ret == SCRIPT_PASSED) {
+        offset = sprintf(buf, "Add %s (%s on max intimacy) chance of casting %s for %s damage x %s hits.",
+            status_formula(&rate->args[rate->args_cnt], block->eng[3], rate, 'p', 1),
+            status_formula(&brate->args[brate->args_cnt], block->eng[4], brate, 'p', 1),
+            block->eng[0],
+            status_formula(&damage->args[damage->args_cnt], block->eng[1], damage, 'n', 1),
+            status_formula(&hit->args[hit->args_cnt], block->eng[2], hit, 'n', 1));
+        translate_write(block, buf, 1);
+    }
+    if(damage != NULL) node_free(damage);
+    if(hit != NULL) node_free(hit);
+    if(rate != NULL) node_free(rate);
+    if(brate != NULL) node_free(brate);
+    return ret;
+}
+
+int translate_petskillsupport(block_r * block) {
+    int ret = 0;
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * level = NULL;
+    node_t * delay = NULL;
+    node_t * hp = NULL;
+    node_t * sp = NULL;
+#if EXIT_ON_ERROR
+    exit_null("bonus is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    if(translate_skill(block, block->ptr[0]) == SCRIPT_FAILED)
+        return SCRIPT_FAILED;
+    level = evaluate_argument(block, block->ptr[1]);
+    delay = evaluate_argument(block, block->ptr[2]);
+    hp = evaluate_argument(block, block->ptr[3]);
+    sp = evaluate_argument(block, block->ptr[4]);
+    ret = (level != NULL && delay != NULL && hp != NULL && sp != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
+    if(ret == SCRIPT_PASSED) {
+        offset = sprintf(buf, "Cast %s [Lv. %s] when pet owner's hp is below %s and sp is below %s for every %s seconds.",
+            block->eng[0],
+            status_formula(&level->args[level->args_cnt], block->eng[1], level, 'n', 1),
+            status_formula(&hp->args[hp->args_cnt], block->eng[3], hp, 'p', 1),
+            status_formula(&sp->args[sp->args_cnt], block->eng[4], sp, 'p', 1),
+            status_formula(&delay->args[delay->args_cnt], block->eng[2], delay, 'n', 1));
+        translate_write(block, buf, 1);
+    }
+    if(level != NULL) node_free(level);
+    if(delay != NULL) node_free(delay);
+    if(hp != NULL) node_free(hp);
+    if(sp != NULL) node_free(sp);
+    return ret;
+}
+
+int translate_petheal(block_r * block) {
+    int ret = 0;
+    int offset = 0;
+    char buf[BUF_SIZE];
+    node_t * level = NULL;
+    node_t * delay = NULL;
+    node_t * hp = NULL;
+    node_t * sp = NULL;
+#if EXIT_ON_ERROR
+    exit_null("bonus is null", 1, block);
+#else
+    if(block == NULL) return SCRIPT_FAILED;
+#endif
+    level = evaluate_argument(block, block->ptr[0]);
+    delay = evaluate_argument(block, block->ptr[1]);
+    hp = evaluate_argument(block, block->ptr[2]);
+    sp = evaluate_argument(block, block->ptr[3]);
+    ret = (level != NULL && delay != NULL && hp != NULL && sp != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
+    if(ret == SCRIPT_PASSED) {
+        offset = sprintf(buf, "Cast Heal [Lv. %s] when pet owner's hp is below %s and sp is below %s for every %s seconds.",
+            status_formula(&level->args[level->args_cnt], block->eng[0], level, 'n', 1),
+            status_formula(&hp->args[hp->args_cnt], block->eng[2], hp, 'p', 1),
+            status_formula(&sp->args[sp->args_cnt], block->eng[3], sp, 'p', 1),
+            status_formula(&delay->args[delay->args_cnt], block->eng[1], delay, 'n', 1));
+        translate_write(block, buf, 1);
+    }
+    if(level != NULL) node_free(level);
+    if(delay != NULL) node_free(delay);
+    if(hp != NULL) node_free(hp);
+    if(sp != NULL) node_free(sp);
+    return ret;
+}
+
+node_t * evaluate_argument(block_r * block, char * expr) {
+    node_t * result = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(result == NULL)
+#if EXIT_ON_ERROR
+        exit_buf("failed to evaluate expression %s in item %d", expr, block->item_id);
+#else
+        return NULL;
+#endif
+    return result;
 }
 
 int translate_write(block_r * block, char * desc, int flag) {
@@ -4006,7 +4328,7 @@ int translate_bonus_desc(node_t ** result, block_r * block, bonus_t * bonus) {
 char * translate_bonus_template(char * buffer, int * offset, char * template, ...) {
     va_list bonus_args;
     va_start(bonus_args, template);
-    (*offset) = vsprintf(buffer, template, bonus_args);
+    (*offset) += vsprintf(buffer, template, bonus_args);
     buffer[(*offset)] = '\0';
     va_end(bonus_args);
     return buffer;

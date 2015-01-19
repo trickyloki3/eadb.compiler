@@ -506,15 +506,16 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 	int status = 0;
 	exit_null("db is null.", 1, db);
 	exit_null("pet is null.", 1, pet);
+	if(pet->pet_script != NULL) free(pet->pet_script);
+	if(pet->loyal_script != NULL) free(pet->loyal_script);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_pet_id_search);
 			sqlite3_bind_int(db->ea_pet_id_search, 1, id);
 			status = sqlite3_step(db->ea_pet_id_search);
 			if(status == SQLITE_ROW) {
-				pet->mob_id = sqlite3_column_int(db->ea_pet_id_search, 0);
-				if(pet->pet_name != NULL) free(pet->pet_name);
-				pet->pet_name = convert_string((const char *) sqlite3_column_text(db->ea_pet_id_search, 1));
+				pet->pet_script = convert_string((const char *) sqlite3_column_text(db->ea_pet_id_search, 0));
+				pet->loyal_script = convert_string((const char *) sqlite3_column_text(db->ea_pet_id_search, 1));
 			}
 			sqlite3_reset(db->ea_pet_id_search);
 			break;
@@ -523,9 +524,8 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 			sqlite3_bind_int(db->ra_pet_id_search, 1, id);
 			status = sqlite3_step(db->ra_pet_id_search);
 			if(status == SQLITE_ROW) {
-				pet->mob_id = sqlite3_column_int(db->ra_pet_id_search, 0);
-				if(pet->pet_name != NULL) free(pet->pet_name);
-				pet->pet_name = convert_string((const char *) sqlite3_column_text(db->ra_pet_id_search, 1));
+				pet->pet_script = convert_string((const char *) sqlite3_column_text(db->ra_pet_id_search, 0));
+				pet->loyal_script = convert_string((const char *) sqlite3_column_text(db->ra_pet_id_search, 1));
 			}
 			sqlite3_reset(db->ra_pet_id_search);
 			break;
@@ -534,9 +534,8 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 			sqlite3_bind_int(db->he_pet_id_search, 1, id);
 			status = sqlite3_step(db->he_pet_id_search);
 			if(status == SQLITE_ROW) {
-				pet->mob_id = sqlite3_column_int(db->he_pet_id_search, 0);
-				if(pet->pet_name != NULL) free(pet->pet_name);
-				pet->pet_name = convert_string((const char *) sqlite3_column_text(db->he_pet_id_search, 1));
+				pet->pet_script = convert_string((const char *) sqlite3_column_text(db->he_pet_id_search, 0));
+				pet->loyal_script = convert_string((const char *) sqlite3_column_text(db->he_pet_id_search, 1));
 			}
 			sqlite3_reset(db->he_pet_id_search);
 			break;
@@ -1133,7 +1132,7 @@ void load_pet(struct lt_db_t * sql, sqlite3_stmt * ins, pet_t * db, int size) {
 		sqlite3_clear_bindings(ins);
 		sqlite3_bind_int(ins, 1, db[i].mob_id);
 		sqlite3_bind_text(ins, 2, db[i].pet_name, strlen(db[i].pet_name), SQLITE_STATIC);
-		sqlite3_bind_text(ins, 3, db[i].pet_name, strlen(db[i].pet_name), SQLITE_STATIC);
+		sqlite3_bind_text(ins, 3, db[i].pet_jname, strlen(db[i].pet_jname), SQLITE_STATIC);
 		sqlite3_bind_int(ins, 4, db[i].lure_id);
 		sqlite3_bind_int(ins, 5, db[i].egg_id);
 		sqlite3_bind_int(ins, 6, db[i].equip_id);
@@ -1144,18 +1143,15 @@ void load_pet(struct lt_db_t * sql, sqlite3_stmt * ins, pet_t * db, int size) {
 		sqlite3_bind_int(ins, 11, db[i].r_full);
 		sqlite3_bind_int(ins, 12, db[i].intimate);
 		sqlite3_bind_int(ins, 13, db[i].die);
-		sqlite3_bind_int(ins, 14, db[i].capture);
-		sqlite3_bind_int(ins, 15, db[i].hungry_delay);
-		sqlite3_bind_int(ins, 16, db[i].food_id);
-		sqlite3_bind_int(ins, 17, db[i].fullness);
-		sqlite3_bind_int(ins, 18, db[i].speed);
-		sqlite3_bind_int(ins, 19, db[i].s_performance);
-		sqlite3_bind_int(ins, 20, db[i].talk_convert);
-		sqlite3_bind_int(ins, 21, db[i].attack_rate);
-		sqlite3_bind_int(ins, 22, db[i].defence_attack_rate);
-		sqlite3_bind_int(ins, 23, db[i].change_target_rate);
-		sqlite3_bind_text(ins, 24, db[i].pet_script, strlen(db[i].pet_script), SQLITE_STATIC);
-		sqlite3_bind_text(ins, 25, db[i].loyal_script, strlen(db[i].loyal_script), SQLITE_STATIC);
+		sqlite3_bind_int(ins, 14, db[i].speed);
+		sqlite3_bind_int(ins, 15, db[i].capture);
+		sqlite3_bind_int(ins, 16, db[i].s_performance);
+		sqlite3_bind_int(ins, 17, db[i].talk_convert);
+		sqlite3_bind_int(ins, 18, db[i].attack_rate);
+		sqlite3_bind_int(ins, 19, db[i].defence_attack_rate);
+		sqlite3_bind_int(ins, 20, db[i].change_target_rate);
+		sqlite3_bind_text(ins, 21, db[i].pet_script, strlen(db[i].pet_script), SQLITE_STATIC);
+		sqlite3_bind_text(ins, 22, db[i].loyal_script, strlen(db[i].loyal_script), SQLITE_STATIC);
 		sqlite3_step(ins);
 		sqlite3_reset(ins);
 	}

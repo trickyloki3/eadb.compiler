@@ -6,8 +6,8 @@
 5,0x00000000,5,bonus,bDex,"Dexterity: %s DEX",1,n,1,0
 6,0x00000000,5,bonus,bLuk,"Luck: %s LUK",1,n,1,0
 7,0x00000000,5,bonus,bAllStats,"All Stats: %s",1,n,1,0
-8,0x00000000,5,bonus,bAgiVit,"Agility: %s AGI\nVitality: %s VIT",1,n,2,0,0
-9,0x00000000,5,bonus,bAgiDexStr,"Strength: %s STR\nAgility: %s AGI\nDexterity: %s DEX",1,n,3,0,0,0
+8,0x00000000,5,bonus,bAgiVit,"Agility: %s AGI Vitality: %s VIT",1,n,2,0,0
+9,0x00000000,5,bonus,bAgiDexStr,"Strength: %s STR Agility: %s AGI Dexterity: %s DEX",1,n,3,0,0,0
 10,0x00000000,5,bonus,bMaxHP,"Hit Point: %s HP",1,n,1,0
 11,0x00000000,5,bonus,bMaxSP,"Spell Power: %s SP",1,n,1,0
 12,0x00000000,5,bonus,bAtk,"Attack: %s ATK",1,n,1,0

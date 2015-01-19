@@ -8,6 +8,7 @@
 9  ,              sc_bleeding,  1,                                                                                                             "Inflict bleed",                  "bleed",  0,  0,  0,  0,  0,  0,  0,  0,  0
 9  ,              sc_blooding,  1,                                                                                                             "Inflict bleed",                  "bleed",  0,  0,  0,  0,  0,  0,  0,  0,  0
 10 ,               sc_dpoison,  1,                                                                                                            "Inflict poison",                 "poison",  0,  0,  0,  0,  0,  0,  0,  0,  0
+21 ,                sc_endure,  1,                                                                                         "Enable the effect of Endure Skill",                       "",  0,  0,  0,  0,  0,  0,  0,  0,  0
 30 ,              sc_blessing,  1,                                                                                                     "Cast Blessing [Lv.%s]",                       "",  1,  m,  0,  0,  0,  2,  0,  0,  0
 32 ,           sc_increaseagi,  1,                                                                                             "Cast Increase Agility [Lv.%s]",                       "",  1,  m,  0,  0,  0,  2,  0,  0,  0
 32 ,               sc_inc_agi,  1,                                                                                             "Cast Increase Agility [Lv.%s]",                       "",  1,  m,  0,  0,  0,  2,  0,  0,  0

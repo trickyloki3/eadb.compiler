@@ -18,7 +18,7 @@
 
 	/* BUF_SIZE is the standard static buffer size */
 	#define BUF_SIZE 4096
-
+ 	#define EXIT_SAFE 1
 	/* standard program abortion function */
 	#define exit_abt(X)	exit_throw_error((X), __FILE__, __func__, __LINE__)
 	#define exit_null(Y, X, ...) if(exit_check_null((X), __VA_ARGS__)) exit_abt(Y);
