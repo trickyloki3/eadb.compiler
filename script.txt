@@ -1,2 +1,3 @@
-.@refine = getrefine();
-bonus bAtk, .@refine;
+bonus bBaseAtk,10*getequiprefinerycnt( (getequipid(EQI_HAND_R) == 13092) ? EQI_HAND_R : EQI_HAND_L );
+set .@var, getequipid(EQI_HAND_R);
+bonus bBaseAtk,10*getequiprefinerycnt( (.@var == 13092) ? EQI_HAND_R : EQI_HAND_L );

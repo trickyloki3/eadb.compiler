@@ -71,6 +71,7 @@ int script_lexical(token_r * token, char * buffer) {
 
     /* lexical data */
     int i = 0;
+    int prev_eq_id = 0;
     char * script_buf = NULL;   /* script's buffer */
     char ** script_ptr = NULL;  /* script's string */
     int script_buf_cnt = 0;     /* script's buffer index */
@@ -123,6 +124,7 @@ int script_lexical(token_r * token, char * buffer) {
             script_buf[script_buf_cnt++] = '\0';
             /* =.= lexer skips one character after reading variable or number */
             i--;
+            prev_eq_id = 1;
             continue;
         }
 
@@ -133,7 +135,10 @@ int script_lexical(token_r * token, char * buffer) {
         /* abort the lexical analysis when \0 encounter */
         if(script[i] == '\0') break;
 
-        if(script[i] == '=') {
+        if( prev_eq_id && /* last token must be identifier */
+            (i+1 < script_len && script[i+1] != '=') &&
+            (i-1 > 0 && script[i-1] != '=') &&
+            script[i] == '=') {
             /* convert = into a set block */
             script_ptr[script_ptr_cnt] = &script_buf[script_buf_cnt];
             script_buf_cnt += sprintf(script_ptr[script_ptr_cnt], "set");
@@ -155,11 +160,14 @@ int script_lexical(token_r * token, char * buffer) {
             script_buf[script_buf_cnt++] = script[i];
             script_buf[script_buf_cnt++] = '\0';
         }
+        prev_eq_id = 0;
     }
-    printf("Lexical: ");
+
+    /*printf("Lexical: ");
     for(i = 0; i < script_ptr_cnt - 1; i++)
         printf("%s ", script_ptr[i]);
-    printf("%s\n", script_ptr[i]);
+    printf("%s\n", script_ptr[i]);*/
+
     /* set the total number of tokens */
     token->script_cnt = script_ptr_cnt;
     return SCRIPT_PASSED;
@@ -457,7 +465,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
             arg[arg_cnt++] = script_ptr[i][j];
 
         /* don't add space after athena symbol prefixes */
-        if(!ATHENA_SCRIPT_SYMBOL(script_ptr[i][0]))
+        if(!ATHENA_SCRIPT_SYMBOL(script_ptr[i][0]) && script_ptr[i][0] != '=')
             arg[arg_cnt++] = ' ';
     }
 

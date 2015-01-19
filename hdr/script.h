@@ -20,7 +20,7 @@
     #include "table.h"
 
     /* general */
-    #define EXIT_ON_ERROR 0
+    #define EXIT_ON_ERROR 1
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
