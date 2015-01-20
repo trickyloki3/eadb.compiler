@@ -475,10 +475,12 @@
 		int rate;
 	} ra_item_package_t;
 
-	typedef struct {
-		char * item_id_list;
+	typedef struct ra_item_combo_t {
+		int item_id;                      /* use by api */
+		char * item_id_list;	
 		char * script;
-		char * description;
+		char * combo;
+		struct ra_item_combo_t * next;    /* use by api */
 	} ra_item_combo_t;
 
 	load_cb_t * ea_item_load();

@@ -259,7 +259,7 @@ void array_io(array_w array, FILE * file_stm) {
    int size = array.size;
    for(i = 0; i < size - 1; i++)
       fprintf(file_stm,"%d%c", list[i], array.delimit);
-   fprintf(file_stm,"%d,", list[i]);
+   fprintf(file_stm,"%d\n", list[i]);
 }
 
 void array_unload(array_w array) {

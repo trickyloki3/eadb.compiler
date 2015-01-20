@@ -63,6 +63,7 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	sqlite3_prepare_v2(db, ea_item_group_search_sql, strlen(ea_item_group_search_sql) + 1, &ic_db->ea_item_group_search, NULL);
 	sqlite3_prepare_v2(db, ra_item_group_search_sql, strlen(ra_item_group_search_sql) + 1, &ic_db->ra_item_group_search, NULL);
 	sqlite3_prepare_v2(db, ra_const_search_id_sql, strlen(ra_const_search_id_sql) + 1, &ic_db->ra_const_id_search, NULL);
+	sqlite3_prepare_v2(db, ra_item_combo_search_sql, strlen(ra_item_combo_search_sql) + 1, &ic_db->ra_item_combo_search, NULL);
 	assert(ic_db->ea_item_iterate != NULL);
 	assert(ic_db->ra_item_iterate != NULL);
 	assert(ic_db->he_item_iterate != NULL);
@@ -100,6 +101,7 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	assert(ic_db->ea_item_group_search != NULL);
 	assert(ic_db->ra_item_group_search != NULL);
 	assert(ic_db->ra_const_id_search != NULL);
+	assert(ic_db->ra_item_combo_search != NULL);
 	/* return api container */
 	ic_db->db = db;
 	return ic_db;
@@ -808,6 +810,40 @@ int status_id_search(struct ic_db_t * db, status_t * status, int id, char * name
 	return (code == SQLITE_ROW) ? 0 : -1;
 }
 
+int ra_item_combo_search_id(struct ic_db_t * db, ra_item_combo_t ** combo, int id) {
+	int code = 0;
+	ra_item_combo_t * temp = NULL;
+	ra_item_combo_t * iter = NULL;
+	ra_item_combo_t * root = NULL;
+	exit_null("db is null.", 1, db);
+	exit_null("combo is null.", 1, combo);
+	sqlite3_clear_bindings(db->ra_item_combo_search);
+	sqlite3_bind_int(db->ra_item_combo_search, 1, id);
+	code = sqlite3_step(db->ra_item_combo_search);
+	while(code == SQLITE_ROW) {
+		temp = calloc(1, sizeof(ra_item_combo_t));
+		temp->script = convert_string((const char *) sqlite3_column_text(db->ra_item_combo_search, 0));
+		temp->combo = convert_string((const char *) sqlite3_column_text(db->ra_item_combo_search, 1));
+		(root == NULL)?
+			(*combo = root = iter = temp) :
+			(iter = iter->next = temp);
+		code = sqlite3_step(db->ra_item_combo_search);
+	}
+	sqlite3_reset(db->ra_item_combo_search);
+	return (combo != NULL) ? 0: -1;
+}
+
+void free_combo(ra_item_combo_t * combo) {
+	ra_item_combo_t * temp = NULL;
+	while(combo != NULL) {
+		temp = combo;
+		combo = combo->next;
+		free(temp->script);
+		free(temp->combo);
+		free(temp);
+	}
+}
+
 void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ea_item_iterate);
 	sqlite3_finalize(db->ra_item_iterate);
@@ -846,6 +882,7 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->he_prod_lv_search);
 	sqlite3_finalize(db->ea_item_group_search);
 	sqlite3_finalize(db->ra_item_group_search);
+	sqlite3_finalize(db->ra_item_combo_search);
 	sqlite3_close(db->db);
 	free(db);
 }
@@ -1018,6 +1055,13 @@ struct lt_db_t * init_db(const char * filename, int flag) {
 	assert(lt_db->ea_item_group_insert != NULL);
 	assert(lt_db->ra_item_group_insert != NULL);
 
+	/* item combo */
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, ra_itm_combo_des, NULL, NULL, NULL);
+		sqlite3_exec(db, ra_itm_combo_tbl, NULL, NULL, NULL);
+	}
+	sqlite3_prepare_v2(db, ra_itm_combo_ins, strlen(ra_itm_combo_ins) + 1, &lt_db->ra_item_combo_insert, NULL);
+	assert(lt_db->ra_item_combo_insert != NULL);
 	lt_db->db = db;
 	return lt_db;
 }
@@ -1050,6 +1094,7 @@ void deit_db(struct lt_db_t * db) {
 	sqlite3_finalize(db->he_const_insert);
 	sqlite3_finalize(db->ea_item_group_insert);
 	sqlite3_finalize(db->ra_item_group_insert);
+	sqlite3_finalize(db->ra_item_combo_insert);
 	sqlite3_close(db->db);
 	free(db);
 }
@@ -1601,6 +1646,55 @@ void load_ra_item_package(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_pack
 		if(item_info.script != NULL) {
 			free(item_info.script);
 			item_info.script = NULL;
+		}
+	}
+	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	deit_ic_db(athena);
+}
+
+void load_ra_item_combo(struct lt_db_t * sql, ra_item_combo_t * db, int size) {
+	int i = 0;
+	int j = 0;
+	int offset = 0;
+	char buffer[BUF_SIZE];
+	struct ic_db_t * athena = init_ic_db("athena.db");
+	ic_item_t item_info;
+	array_w item_id_list;
+	int * item_id_array = NULL;
+	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0; i < size; i++) {
+		offset = 0;
+		/* convert the item group string into an array of integers */
+		memset(&item_id_list, 0, sizeof(array_w));
+		convert_integer_list(db[i].item_id_list, ":", &item_id_list);
+		item_id_array = item_id_list.array;
+
+		/* add the item id and script in the array of integers */
+		if(item_id_array != NULL) {
+			/* build a buffer of all item names */
+			memset(&item_info, 0, sizeof(ic_item_t));
+			for(j = 0; j < item_id_list.size; j++) {
+				if(!item_name_id_search(athena, &item_info, item_id_array[j], RATHENA)) {
+					offset += (offset == 0)?
+						sprintf(buffer + offset, "[%s", item_info.name):
+						sprintf(buffer + offset, ", %s", item_info.name);
+					buffer[offset] = '\0';
+				}
+			}
+			offset += sprintf(buffer + offset, " Combo]");
+			if(item_info.name != NULL) free(item_info.name);
+			if(item_info.script != NULL) free(item_info.script);
+
+			for(j = 0; j < item_id_list.size; j++) {
+				sqlite3_clear_bindings(sql->ra_item_combo_insert);
+				sqlite3_bind_int(sql->ra_item_combo_insert, 1, item_id_array[j]);
+				sqlite3_bind_text(sql->ra_item_combo_insert, 2, db[i].script, strlen(db[i].script), SQLITE_STATIC);
+				sqlite3_bind_text(sql->ra_item_combo_insert, 3, buffer, offset, SQLITE_STATIC);
+				sqlite3_step(sql->ra_item_combo_insert);
+				sqlite3_reset(sql->ra_item_combo_insert);
+			}
+			/* free the list of integers */
+			free(item_id_list.array);
 		}
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);

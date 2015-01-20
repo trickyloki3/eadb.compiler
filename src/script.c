@@ -950,6 +950,31 @@ int script_generate(block_r * block, int block_cnt, char * buffer, int * offset)
     return SCRIPT_PASSED;
 }
 
+int script_generate_combo(int item_id, char * buffer, int * offset) {
+    char * item_desc = NULL;
+    ra_item_combo_t * item_combo_list = NULL;
+    ra_item_combo_t * item_combo_iter = NULL;
+    /* search the item id for combos */
+    if(!ra_item_combo_search_id(global_db, &item_combo_list, item_id)) {
+        item_combo_iter = item_combo_list;
+        while(item_combo_iter != NULL) {
+            *offset += sprintf(buffer + *offset, "%s\n", item_combo_iter->combo);
+            /* compile each script write to buffer */
+            item_desc = script_compile(item_combo_iter->script, -1);
+            if(item_desc != NULL) {
+                *offset += sprintf(buffer + *offset, "%s", item_desc);
+                free(item_desc);
+            }
+            item_combo_iter = item_combo_iter->next;
+        }
+        buffer[*offset] = '\0';
+        /* free the list of item combo */
+        if(item_combo_list != NULL)
+            free_combo(item_combo_list);
+    }
+    return SCRIPT_PASSED;
+}
+
 char * script_compile_raw(char * script, int item_id, FILE * dbg) {
     token_r token_list;
     block_r * block_list = NULL;
@@ -975,6 +1000,7 @@ char * script_compile_raw(char * script, int item_id, FILE * dbg) {
                 if(script_translate(block_list, block_cnt) == SCRIPT_PASSED) {
                     if(script_bonus(block_list, block_cnt) == SCRIPT_PASSED) {
                         if(script_generate(block_list, block_cnt, buffer, &offset) == SCRIPT_PASSED) {
+                            script_generate_combo(item_id, buffer, &offset);
                             if(dbg != NULL) block_debug_dump_all(block_list, block_cnt, dbg);
                         } else {
                             fprintf(stderr,"%s;%d; generator failed; invalid blocks in %s "
@@ -2545,6 +2571,7 @@ int translate_petrecovery(block_r * block) {
     offset += sprintf(buf, "Pet cures %s every %d seconds.", block->eng[0], delay->min);
     buf[offset] = '\0';
     translate_write(block, buf, 1);
+    node_free(delay);
     return SCRIPT_PASSED;
 }
 

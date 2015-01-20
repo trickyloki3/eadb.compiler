@@ -33,7 +33,6 @@
     /* explicit defined over hardcoded constants */
     #define BONUS_ID_MAX 5  /* bonus block id are 0 to 4; great for checking if block is a bonus block or not */
     #define BLOCK_NULLIFIED -1 /* indicates that the block is deleted; used by block->type->id */
-
     /* athena syntax groups */
     #define ATHENA_SCRIPT_SYMBOL(X)           ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
     #define ATHENA_SCRIPT_OPERATOR(X)         ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || (X) == '>' || (X) == '<' || (X) == '-' || (X) == '+' || (X) == '/' || (X) == '*' || (X) == '!')
@@ -221,6 +220,7 @@
     int script_translate(block_r *, int);
     int script_bonus(block_r *, int);
     int script_generate(block_r *, int, char *, int *);
+    int script_generate_combo(int, char *, int *);
     char * script_compile_raw(char *, int, FILE *);     /* high level functions compiles from lexical to generate */
     #define script_compile(X, Y) script_compile_raw(X, Y, NULL)
     
