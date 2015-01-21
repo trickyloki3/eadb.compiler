@@ -250,6 +250,7 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
             /* retrieve all the arguments of the block */
             switch(block[block_size].type->id) {
                 case 26: /* parse if blocks */
+                case 62: /* parse for blocks */
                     /* parse the condition ( <condition> ) */
                     if(script_ptr[i+1][0] != '(') return SCRIPT_FAILED;
                     ret_value = script_parse(token, &i, block_init, '\0', ')', 0x01);
@@ -315,7 +316,8 @@ int script_analysis(token_r * token, block_r * block, int * block_cnt, int item_
                strcmp(block_init->type->keyword,"autobonus") == 0 ||
                strcmp(block_init->type->keyword,"autobonus2") == 0 ||
                strcmp(block_init->type->keyword,"autobonus3") == 0 ||
-               strcmp(block_init->type->keyword,"bonus_script") == 0) {
+               strcmp(block_init->type->keyword,"bonus_script") == 0 ||
+               strcmp(block_init->type->keyword,"for") == 0) {
                 /* lexical analysis the nested script */
                 new_token = calloc(1, sizeof(token_r));
                 /* set the index to the script for the block
@@ -616,10 +618,10 @@ int script_translate(block_r * block, int size) {
                         /* add the else if condition onto the stack */
                         if(block[i].ptr_cnt > 1)
                             evaluate_expression(&block[i], block[i].ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-                        break;                                                                                      /* else */
+                        break;                                                                                                  /* else */
             case 28: evaluate_expression(&block[i], block[i].ptr[1], 1, 
                      EVALUATE_FLAG_KEEP_LOGIC_TREE|EVALUATE_FLAG_WRITE_FORMULA|
-                     EVALUATE_FLAG_KEEP_TEMP_TREE|EVALUATE_FLAG_EXPR_BOOL); break;      /* set */
+                     EVALUATE_FLAG_KEEP_TEMP_TREE|EVALUATE_FLAG_EXPR_BOOL); break;                                              /* set */
             case 30: ret_value = translate_write(&block[i], "Send a message through the announcement system.", 1); break;       /* announce */
             case 31: ret_value = translate_misc(&block[i], "callfunc"); break;                                                  /* callfunc */
             case 33: ret_value = translate_misc(&block[i], "warp"); break;                                                      /* warp */
@@ -651,7 +653,10 @@ int script_translate(block_r * block, int size) {
             case 59: ret_value = translate_petskillattack2(&block[i]); break;                                                   /* petskillattack2 */
             case 60: ret_value = translate_petskillsupport(&block[i]); break;                                                   /* petskillsupport */
             case 61: ret_value = translate_petheal(&block[i]); break;                                                           /* petheal */
-            default: break;
+            case 62: /* this will take some serious work =.= */
+                
+                break;
+            default: return SCRIPT_FAILED;
         }
 
         /* any failed translation will result in entire block failing to translate */
