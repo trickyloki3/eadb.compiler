@@ -13,8 +13,8 @@
  	/* general item container */
 	typedef struct {
 		int id;
-		char * name;
-		char * script;
+		char name[BUF_SIZE];
+		char script[BUF_SIZE];
 	} ic_item_t;
 
 	typedef struct {
@@ -150,6 +150,11 @@
 		char * pet_script;
 		char * loyal_script;
 	} pet_t;
+	
+	typedef struct {
+		char pet_script[BUF_SIZE];
+		char loyal_script[BUF_SIZE];
+	} ic_pet_t;
 
 	typedef struct {
 		int id;
@@ -179,6 +184,11 @@
 		int amotion;
 		int dmotion;
 	} merc_t;
+
+	typedef struct {
+		int id;
+		char name[MERC_NAME_SIZE];
+	} ic_merc_t;
 
 	typedef struct is_produce_t {
 		int item_id;
@@ -214,8 +224,8 @@
 	typedef struct {
 		int id;
 		int max;
-		char * name;
-		char * desc;
+		char name[SKILL_NAME];
+		char desc[SKILL_FORMAT];
 	} ic_skill_t;
 
 	typedef struct {
@@ -261,7 +271,7 @@
 
 	typedef struct {
 		int id;
-		char * iro;
+		char iro[MOB_NAME_SIZE];
 	} ic_mob_t;
 
 	typedef struct {
@@ -386,15 +396,16 @@
 	} mob_t;
 
 	typedef struct {
-		/* for loading */
 		int bk_id;
 		char * bk_kywd;
 		int bk_flag;
-		/* for using */
-		int id;
-		char * keyword;
-		int flag;
 	} block_t;
+
+	typedef struct block_db_t {
+		int id;
+		char name[BUF_SIZE];
+		int flag;
+	} block_db_t;
 
 	/* type flag */
 	#define TYPE_FUNC 0x00000001
@@ -430,10 +441,18 @@
 		int vcnt;     /* value count */
 		int vmod[4];  /* modifer for value */
 		int voff[4];  /* offset translation stack */
-		/* compiler version */
-		int * vmod_ptr;
-		int * voff_ptr;
 	} status_t;
+
+	typedef struct {
+		int scid;
+		char scstr[STATUS_NAME_SIZE];
+		int type;
+		char scfmt[STATUS_FORMAT_SIZE];
+		char scend[STATUS_NAME_SIZE];
+		int vcnt;
+		int vmod[STATUS_PARAMATER_SIZE];
+		int voff[STATUS_PARAMATER_SIZE];
+	} ic_status_t;
 
 	typedef struct {
 		int id;
@@ -448,11 +467,30 @@
 		int order_cnt;
 	} bonus_t;
 
-   	typedef struct {
+	typedef struct {
+		int id;
+		int flag;
+		int attr;
+		char prefix[BONUS_PREFIX_SIZE];
+		char bonus[BONUS_BONUS_SIZE];
+		char format[BONUS_FORMAT_SIZE];
+		int type[BONUS_PARAMATER_SIZE];
+		int type_cnt;
+		int order[BONUS_PARAMATER_SIZE];
+		int order_cnt;
+	} ic_bonus_t;
+
+   typedef struct {
 		char * name;
 		int value;
 		int type;
 	} const_t;
+
+	typedef struct {
+		char name[CONST_NAME_SIZE];
+		int value;
+		int type;
+	} ic_const_t;
 
 	typedef struct {
 		int group_id;

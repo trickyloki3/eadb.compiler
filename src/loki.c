@@ -2,24 +2,63 @@
 #include <script.h>
 
 int main(int argc, char * argv[]) {
-	int i = 0;
+	int ret = 0;
+	int cnt = 0;
+	FILE * fitem = NULL;
+	FILE * debug = NULL;
+	ic_item_t item;
+	script_t script;
+	char buffer[BUF_SIZE];
+	int offset = 0;
 
-	/* setup for item compilation */
-	global_mode = RATHENA;
-	global_db = init_ic_db("athena.db");
-	FILE * file_itm = fopen("item.txt", "w");
-	if(file_itm == NULL) exit_abt("failed to open item.txt.");
-
-	load_db_t * db1 = load("../radb/item_combo_db.txt", trim_numeric, load_general, ra_item_combo_load);
-	ra_item_combo_t * item_combo_db = (ra_item_combo_t *) db1->db;
-	for(i = 0; i < db1->size; i++) {
-		item_combo_db[i].description = script_compile(item_combo_db[i].script, convert_integer(item_combo_db[i].item_id_list, 10));
-		fprintf(file_itm,"%s#\n%s#\n", item_combo_db[i].item_id_list, item_combo_db[i].description);
-		free(item_combo_db[i].description);
+	/* init resources */
+	memset(&script, 0, sizeof(script_t));
+	memset(&item, 0, sizeof(ic_item_t));
+	fitem = fopen("item.txt", "w");
+	debug = fopen("dump.txt", "w");
+	if(fitem == NULL || debug == NULL) {
+		exit_abt_safe("fail to open item.txt or dump.txt");
+		exit(EXIT_FAILURE);
 	}
+	
+	/* attach database to script */
+	global_mode = script.mode = RATHENA;
+	global_db = script.db = init_ic_db("athena.db");
 
-	db1->dealloc(db1->db, db1->size);
-	deit_ic_db(global_db);
-	fclose(file_itm);
+	/* process all items in database */
+	ret = iter_item_db(script.mode, script.db, &item);
+	if(ret == SQLITE_ROW) {
+		while(ret == SQLITE_ROW) {
+			if(item.script != NULL && strlen(item.script) > 0) {
+				/* compile the item script */
+				fprintf(stderr,"\r%d\r", script.item_id);
+				offset = 0;
+				script.item_id = item.id;
+				if(!script_lexical(&script.token, item.script))
+					if(!script_analysis(&script, &script.token, NULL, NULL))
+						if(!script_translate(&script))
+							if(!script_bonus(&script))
+								if(!script_generate(&script, buffer, &offset))
+									if(!script_generate_combo(script.item_id, buffer, &offset)) {
+										fprintf(fitem,"%d#\n%s#\n", script.item_id, buffer);
+										script_block_dump(&script, debug);
+									}
+				script_block_reset(&script);
+				cnt++;
+			}
+			ret = iter_item_db(script.mode, script.db, &item);
+		}
+	} else if(ret == SQLITE_DONE) {
+		exit_abt_safe("database contains zero item entries");
+	} else {
+		exit_abt_safe("failed to query item database");
+	}
+	fprintf(stderr,"[info]: compiled all %d items", cnt);
+
+	/* deit resources */
+	fclose(debug);
+	fclose(fitem);
+	script_block_finalize(&script);
+	deit_ic_db(script.db);
 	return 0;
 }

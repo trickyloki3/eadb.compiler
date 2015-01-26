@@ -11,16 +11,12 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	int status = 0;
 	sqlite3 * db;
 	struct ic_db_t * ic_db = NULL;
-	char buf[BUF_SIZE];
 
 	/* initialize api container to athena database */
 	ic_db = calloc(1, sizeof(struct ic_db_t));
-	build_buffer(buf, "failed to read %s", filename);
-	exit_null(buf, 1, ic_db);
 
 	/* open connection to sqlite3 database */
 	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE, NULL);
-	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
 
 	/* debug errors */
 	/*sqlite3_trace(db, trace_db, NULL);*/
@@ -107,35 +103,38 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	return ic_db;
 }
 
-int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword) {
-	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("info is null.", 1, info);
-	exit_null("keyword is null.", 1, keyword);
-	if(!isalpha(keyword[0])) return 1;
+int block_keyword_search(struct ic_db_t * db, block_db_t * info, char * keyword) {
+	int ret = 0;
+	/* check null paramaters */
+	if(exit_null_safe(3, db, info, keyword))
+		return CHECK_FAILED;
+
+	/* check identifier (start with alpha) */
+	if(!isalpha(keyword[0])) 
+		return CHECK_FAILED;
 
 	sqlite3_clear_bindings(db->blk_search);
 	sqlite3_bind_text(db->blk_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
-	status = sqlite3_step(db->blk_search);
-	if(status == SQLITE_ROW) {
+	ret = sqlite3_step(db->blk_search);
+	if(ret == SQLITE_ROW) {
 		info->id = sqlite3_column_int(db->blk_search, 0);
-		if(info->keyword != NULL) free(info->keyword);
-		info->keyword = convert_string((const char *) sqlite3_column_text(db->blk_search, 1));
+		strncopy(info->name, BUF_SIZE, sqlite3_column_text(db->blk_search, 1));
 		info->flag = sqlite3_column_int(db->blk_search, 2);
-		/*printf("block_keyword_search; %d;%s;%d\n", info->id, info->keyword, info->flag);*/
 	} else {
 		sqlite3_reset(db->blk_search);
-		return 1;
+		return CHECK_FAILED;
 	}
 	sqlite3_reset(db->blk_search);
-	return 0;
+	return CHECK_PASSED;
 }
 
 int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("info is null.", 1, info);
-	exit_null("keyword is null.", 1, keyword);
+
+	/* check null paramaters */
+	if(exit_null_safe(3, db, info, keyword))
+		return CHECK_FAILED;
+
 	sqlite3_clear_bindings(db->var_search);
 	sqlite3_bind_text(db->var_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
 	status = sqlite3_step(db->var_search);
@@ -154,19 +153,15 @@ int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword) {
 	return (status == SQLITE_ROW) ? 0 : -1;
 }
 
-int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, int mode) {
+int const_keyword_search(struct ic_db_t * db, ic_const_t * info, char * keyword, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("info is null.", 1, info);
-	exit_null("keyword is null.", 1, keyword);
 	switch(mode) {
 		case EATHENA: 
 			sqlite3_clear_bindings(db->ea_const_search);
 			sqlite3_bind_text(db->ea_const_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
 			status = sqlite3_step(db->ea_const_search);
 			if(status == SQLITE_ROW) {
-				if(info->name != NULL) free(info->name);
-				info->name = convert_string((const char *) sqlite3_column_text(db->ea_const_search, 0));
+				strncopy(info->name, CONST_NAME_SIZE, sqlite3_column_text(db->ea_const_search, 0));
 				info->value = sqlite3_column_int(db->ea_const_search, 1);
 				info->type = sqlite3_column_int(db->ea_const_search, 2);
 			}
@@ -177,8 +172,7 @@ int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, in
 			sqlite3_bind_text(db->ra_const_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
 			status = sqlite3_step(db->ra_const_search);
 			if(status == SQLITE_ROW) {
-				if(info->name != NULL) free(info->name);
-				info->name = convert_string((const char *) sqlite3_column_text(db->ra_const_search, 0));
+				strncopy(info->name, CONST_NAME_SIZE, sqlite3_column_text(db->ra_const_search, 0));
 				info->value = sqlite3_column_int(db->ra_const_search, 1);
 				info->type = sqlite3_column_int(db->ra_const_search, 2);
 			}
@@ -189,8 +183,7 @@ int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, in
 			sqlite3_bind_text(db->he_const_search, 1, keyword, strlen(keyword), SQLITE_STATIC);
 			status = sqlite3_step(db->he_const_search);
 			if(status == SQLITE_ROW) {
-				if(info->name != NULL) free(info->name);
-				info->name = convert_string((const char *) sqlite3_column_text(db->he_const_search, 0));
+				strncopy(info->name, CONST_NAME_SIZE, sqlite3_column_text(db->he_const_search, 0));
 				info->value = sqlite3_column_int(db->he_const_search, 1);
 				info->type = sqlite3_column_int(db->he_const_search, 2);
 			}
@@ -202,9 +195,6 @@ int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, in
 
 int ra_const_id_search(struct ic_db_t * db, const_t * info, int id) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("info is null.", 1, info);
-	sqlite3_clear_bindings(db->ra_const_id_search);
 	sqlite3_bind_int(db->ra_const_id_search, 1, id);
 	status = sqlite3_step(db->ra_const_id_search);
 	if(status == SQLITE_ROW) {
@@ -219,9 +209,6 @@ int ra_const_id_search(struct ic_db_t * db, const_t * info, int id) {
 
 int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("info is null.", 1, skill);
-	exit_null("name is null.", 1, name);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_skill_search);
@@ -230,10 +217,8 @@ int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int 
 			if(status == SQLITE_ROW) {
 				skill->id = sqlite3_column_int(db->ea_skill_search, 0);
 				skill->max = sqlite3_column_int(db->ea_skill_search, 1);
-				if(skill->name != NULL) free(skill->name);
-				skill->name = convert_string((const char *) sqlite3_column_text(db->ea_skill_search, 2));
-				if(skill->desc != NULL) free(skill->desc);
-				skill->desc = convert_string((const char *) sqlite3_column_text(db->ea_skill_search, 3));
+				strncopy(skill->name, SKILL_NAME, sqlite3_column_text(db->ea_skill_search, 2));
+				strncopy(skill->desc, SKILL_FORMAT, sqlite3_column_text(db->ea_skill_search, 3));
 			}
 			sqlite3_reset(db->ea_skill_search);
 			break;
@@ -244,10 +229,8 @@ int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int 
 			if(status == SQLITE_ROW) {
 				skill->id = sqlite3_column_int(db->ra_skill_search, 0);
 				skill->max = sqlite3_column_int(db->ra_skill_search, 1);
-				if(skill->name != NULL) free(skill->name);
-				skill->name = convert_string((const char *) sqlite3_column_text(db->ra_skill_search, 2));
-				if(skill->desc != NULL) free(skill->desc);
-				skill->desc = convert_string((const char *) sqlite3_column_text(db->ra_skill_search, 3));
+				strncopy(skill->name, SKILL_NAME, sqlite3_column_text(db->ra_skill_search, 2));
+				strncopy(skill->desc, SKILL_FORMAT, sqlite3_column_text(db->ra_skill_search, 3));
 			}
 			sqlite3_reset(db->ra_skill_search);
 			break;
@@ -258,10 +241,8 @@ int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int 
 			if(status == SQLITE_ROW) {
 				skill->id = sqlite3_column_int(db->he_skill_search, 0);
 				skill->max = sqlite3_column_int(db->he_skill_search, 1);
-				if(skill->name != NULL) free(skill->name);
-				skill->name = convert_string((const char *) sqlite3_column_text(db->he_skill_search, 2));
-				if(skill->desc != NULL) free(skill->desc);
-				skill->desc = convert_string((const char *) sqlite3_column_text(db->he_skill_search, 3));
+				strncopy(skill->name, SKILL_NAME, sqlite3_column_text(db->he_skill_search, 2));
+				strncopy(skill->desc, SKILL_FORMAT, sqlite3_column_text(db->he_skill_search, 3));
 			}
 			sqlite3_reset(db->he_skill_search);
 			break;
@@ -271,8 +252,6 @@ int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int 
 
 int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("info is null.", 1, skill);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_skill_id_search);
@@ -281,10 +260,8 @@ int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mo
 			if(status == SQLITE_ROW) {
 				skill->id = sqlite3_column_int(db->ea_skill_id_search, 0);
 				skill->max = sqlite3_column_int(db->ea_skill_id_search, 1);
-				if(skill->name != NULL) free(skill->name);
-				skill->name = convert_string((const char *) sqlite3_column_text(db->ea_skill_id_search, 2));
-				if(skill->desc != NULL) free(skill->desc);
-				skill->desc = convert_string((const char *) sqlite3_column_text(db->ea_skill_id_search, 3));
+				strncopy(skill->name, SKILL_NAME, sqlite3_column_text(db->ea_skill_id_search, 2));
+				strncopy(skill->desc, SKILL_FORMAT, sqlite3_column_text(db->ea_skill_id_search, 3));
 			}
 			sqlite3_reset(db->ea_skill_id_search);
 			break;
@@ -295,10 +272,8 @@ int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mo
 			if(status == SQLITE_ROW) {
 				skill->id = sqlite3_column_int(db->ra_skill_id_search, 0);
 				skill->max = sqlite3_column_int(db->ra_skill_id_search, 1);
-				if(skill->name != NULL) free(skill->name);
-				skill->name = convert_string((const char *) sqlite3_column_text(db->ra_skill_id_search, 2));
-				if(skill->desc != NULL) free(skill->desc);
-				skill->desc = convert_string((const char *) sqlite3_column_text(db->ra_skill_id_search, 3));
+				strncopy(skill->name, SKILL_NAME, sqlite3_column_text(db->ra_skill_id_search, 2));
+				strncopy(skill->desc, SKILL_FORMAT, sqlite3_column_text(db->ra_skill_id_search, 3));
 			}
 			sqlite3_reset(db->ra_skill_id_search);
 			break;
@@ -309,10 +284,8 @@ int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mo
 			if(status == SQLITE_ROW) {
 				skill->id = sqlite3_column_int(db->he_skill_id_search, 0);
 				skill->max = sqlite3_column_int(db->he_skill_id_search, 1);
-				if(skill->name != NULL) free(skill->name);
-				skill->name = convert_string((const char *) sqlite3_column_text(db->he_skill_id_search, 2));
-				if(skill->desc != NULL) free(skill->desc);
-				skill->desc = convert_string((const char *) sqlite3_column_text(db->he_skill_id_search, 3));
+				strncopy(skill->name, SKILL_NAME, sqlite3_column_text(db->he_skill_id_search, 2));
+				strncopy(skill->desc, SKILL_FORMAT, sqlite3_column_text(db->he_skill_id_search, 3));
 			}
 			sqlite3_reset(db->he_skill_id_search);
 			break;
@@ -322,9 +295,6 @@ int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mo
 
 int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("item is null.", 1, item);
-	exit_null("name is null.", 1, name);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_item_search);
@@ -333,10 +303,8 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 			status = sqlite3_step(db->ea_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ea_item_search, 0);
-				if(item->name != NULL) free(item->name);
-				item->name = convert_string((const char *) sqlite3_column_text(db->ea_item_search, 1));
-				if(item->script != NULL) free(item->script);
-				item->script = convert_string((const char *) sqlite3_column_text(db->ea_item_search, 2));
+				strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->ea_item_search, 1));
+            strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->ea_item_search, 2));
 			}
 			sqlite3_reset(db->ea_item_search);
 			break;
@@ -347,10 +315,8 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 			status = sqlite3_step(db->ra_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ra_item_search, 0);
-				if(item->name != NULL) free(item->name);
-				item->name = convert_string((const char *) sqlite3_column_text(db->ra_item_search, 1));
-				if(item->script != NULL) free(item->script);
-				item->script = convert_string((const char *) sqlite3_column_text(db->ra_item_search, 2));
+				strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->ra_item_search, 1));
+            strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->ra_item_search, 2));
 			}
 			sqlite3_reset(db->ra_item_search);
 			break;
@@ -361,10 +327,8 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 			status = sqlite3_step(db->he_item_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->he_item_search, 0);
-				if(item->name != NULL) free(item->name);
-				item->name = convert_string((const char *) sqlite3_column_text(db->he_item_search, 1));
-				if(item->script != NULL) free(item->script);
-				item->script = convert_string((const char *) sqlite3_column_text(db->he_item_search, 2));
+				strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->he_item_search, 1));
+            strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->he_item_search, 2));
 			}
 			sqlite3_reset(db->he_item_search);
 			break;
@@ -374,8 +338,6 @@ int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mod
 
 int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("item is null.", 1, item);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_item_id_search);
@@ -383,10 +345,8 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 			status = sqlite3_step(db->ea_item_id_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ea_item_id_search, 0);
-				if(item->name != NULL) free(item->name);
-				item->name = convert_string((const char *) sqlite3_column_text(db->ea_item_id_search, 1));
-				if(item->script != NULL) free(item->script);
-				item->script = convert_string((const char *) sqlite3_column_text(db->ea_item_id_search, 2));
+				strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->ea_item_id_search, 1));
+            strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->ea_item_id_search, 2));
 			}
 			sqlite3_reset(db->ea_item_id_search);
 			break;
@@ -396,10 +356,8 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 			status = sqlite3_step(db->ra_item_id_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->ra_item_id_search, 0);
-				if(item->name != NULL) free(item->name);
-				item->name = convert_string((const char *) sqlite3_column_text(db->ra_item_id_search, 1));
-				if(item->script != NULL) free(item->script);
-				item->script = convert_string((const char *) sqlite3_column_text(db->ra_item_id_search, 2));
+				strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->ra_item_id_search, 1));
+            strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->ra_item_id_search, 2));
 			}
 			sqlite3_reset(db->ra_item_id_search);
 			break;
@@ -409,10 +367,8 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 			status = sqlite3_step(db->he_item_id_search);
 			if(status == SQLITE_ROW) {
 				item->id = sqlite3_column_int(db->he_item_id_search, 0);
-				if(item->name != NULL) free(item->name);
-				item->name = convert_string((const char *) sqlite3_column_text(db->he_item_id_search, 1));
-				if(item->script != NULL) free(item->script);
-				item->script = convert_string((const char *) sqlite3_column_text(db->he_item_id_search, 2));
+				strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->he_item_id_search, 1));
+            strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->he_item_id_search, 2));
 			}
 			sqlite3_reset(db->he_item_id_search);
 			break;
@@ -422,8 +378,6 @@ int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode)
 
 int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("mob is null.", 1, mob);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_mob_id_search);
@@ -431,8 +385,7 @@ int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode) {
 			status = sqlite3_step(db->ea_mob_id_search);
 			if(status == SQLITE_ROW) {
 				mob->id = sqlite3_column_int(db->ea_mob_id_search, 0);
-				if(mob->iro != NULL) free(mob->iro);
-				mob->iro = convert_string((const char *) sqlite3_column_text(db->ea_mob_id_search, 1));
+				strncopy(mob->iro, MOB_NAME_SIZE, sqlite3_column_text(db->ea_mob_id_search, 1));
 			}
 			sqlite3_reset(db->ea_mob_id_search);
 			break;
@@ -442,8 +395,7 @@ int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode) {
 			status = sqlite3_step(db->ra_mob_id_search);
 			if(status == SQLITE_ROW) {
 				mob->id = sqlite3_column_int(db->ra_mob_id_search, 0);
-				if(mob->iro != NULL) free(mob->iro);
-				mob->iro = convert_string((const char *) sqlite3_column_text(db->ra_mob_id_search, 1));
+				strncopy(mob->iro, MOB_NAME_SIZE, sqlite3_column_text(db->ra_mob_id_search, 1));
 			}
 			sqlite3_reset(db->ra_mob_id_search);
 			break;
@@ -453,8 +405,7 @@ int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode) {
 			status = sqlite3_step(db->he_mob_id_search);
 			if(status == SQLITE_ROW) {
 				mob->id = sqlite3_column_int(db->he_mob_id_search, 0);
-				if(mob->iro != NULL) free(mob->iro);
-				mob->iro = convert_string((const char *) sqlite3_column_text(db->he_mob_id_search, 1));
+				strncopy(mob->iro, MOB_NAME_SIZE, sqlite3_column_text(db->he_mob_id_search, 1));
 			}
 			sqlite3_reset(db->he_mob_id_search);
 			break;
@@ -462,10 +413,8 @@ int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode) {
 	return (status == SQLITE_ROW) ? 0 : -1;
 }
 
-int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode) {
+int merc_id_search(struct ic_db_t * db, ic_merc_t * merc, int id, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("merc is null.", 1, merc);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_merc_id_search);
@@ -473,8 +422,7 @@ int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode) {
 			status = sqlite3_step(db->ea_merc_id_search);
 			if(status == SQLITE_ROW) {
 				merc->id = sqlite3_column_int(db->ea_merc_id_search, 0);
-				if(merc->name != NULL) free(merc->name);
-				merc->name = convert_string((const char *) sqlite3_column_text(db->ea_merc_id_search, 1));
+				strncopy(merc->name, MERC_NAME_SIZE, sqlite3_column_text(db->ea_merc_id_search, 1));
 			}
 			sqlite3_reset(db->ea_merc_id_search);
 			break;
@@ -484,8 +432,7 @@ int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode) {
 			status = sqlite3_step(db->ra_merc_id_search);
 			if(status == SQLITE_ROW) {
 				merc->id = sqlite3_column_int(db->ra_merc_id_search, 0);
-				if(merc->name != NULL) free(merc->name);
-				merc->name = convert_string((const char *) sqlite3_column_text(db->ra_merc_id_search, 1));
+				strncopy(merc->name, MERC_NAME_SIZE, sqlite3_column_text(db->ra_merc_id_search, 1));
 			}
 			sqlite3_reset(db->ra_merc_id_search);
 			break;
@@ -495,8 +442,7 @@ int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode) {
 			status = sqlite3_step(db->he_merc_id_search);
 			if(status == SQLITE_ROW) {
 				merc->id = sqlite3_column_int(db->he_merc_id_search, 0);
-				if(merc->name != NULL) free(merc->name);
-				merc->name = convert_string((const char *) sqlite3_column_text(db->he_merc_id_search, 1));
+				strncopy(merc->name, MERC_NAME_SIZE, sqlite3_column_text(db->he_merc_id_search, 1));
 			}
 			sqlite3_reset(db->he_merc_id_search);
 			break;
@@ -504,20 +450,16 @@ int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode) {
 	return (status == SQLITE_ROW) ? 0 : -1;
 }
 
-int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
+int pet_id_search(struct ic_db_t * db, ic_pet_t * pet, int id, int mode) {
 	int status = 0;
-	exit_null("db is null.", 1, db);
-	exit_null("pet is null.", 1, pet);
-	if(pet->pet_script != NULL) free(pet->pet_script);
-	if(pet->loyal_script != NULL) free(pet->loyal_script);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_pet_id_search);
 			sqlite3_bind_int(db->ea_pet_id_search, 1, id);
 			status = sqlite3_step(db->ea_pet_id_search);
 			if(status == SQLITE_ROW) {
-				pet->pet_script = convert_string((const char *) sqlite3_column_text(db->ea_pet_id_search, 0));
-				pet->loyal_script = convert_string((const char *) sqlite3_column_text(db->ea_pet_id_search, 1));
+				strncopy(pet->pet_script, BUF_SIZE, sqlite3_column_text(db->ea_pet_id_search, 0));
+				strncopy(pet->loyal_script, BUF_SIZE, sqlite3_column_text(db->ea_pet_id_search, 1));
 			}
 			sqlite3_reset(db->ea_pet_id_search);
 			break;
@@ -526,8 +468,8 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 			sqlite3_bind_int(db->ra_pet_id_search, 1, id);
 			status = sqlite3_step(db->ra_pet_id_search);
 			if(status == SQLITE_ROW) {
-				pet->pet_script = convert_string((const char *) sqlite3_column_text(db->ra_pet_id_search, 0));
-				pet->loyal_script = convert_string((const char *) sqlite3_column_text(db->ra_pet_id_search, 1));
+				strncopy(pet->pet_script, BUF_SIZE, sqlite3_column_text(db->ra_pet_id_search, 0));
+				strncopy(pet->loyal_script, BUF_SIZE, sqlite3_column_text(db->ra_pet_id_search, 1));
 			}
 			sqlite3_reset(db->ra_pet_id_search);
 			break;
@@ -536,8 +478,8 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 			sqlite3_bind_int(db->he_pet_id_search, 1, id);
 			status = sqlite3_step(db->he_pet_id_search);
 			if(status == SQLITE_ROW) {
-				pet->pet_script = convert_string((const char *) sqlite3_column_text(db->he_pet_id_search, 0));
-				pet->loyal_script = convert_string((const char *) sqlite3_column_text(db->he_pet_id_search, 1));
+				strncopy(pet->pet_script, BUF_SIZE, sqlite3_column_text(db->he_pet_id_search, 0));
+				strncopy(pet->loyal_script, BUF_SIZE, sqlite3_column_text(db->he_pet_id_search, 1));
 			}
 			sqlite3_reset(db->he_pet_id_search);
 			break;
@@ -545,35 +487,24 @@ int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode) {
 	return (status == SQLITE_ROW) ? 0 : -1;
 }
 
-int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char * attribute) {
+int bonus_name_search(struct ic_db_t * db, ic_bonus_t * bonus, char * prefix, char * attribute) {
 	int status = 0;
-	array_w array;
-	exit_null("db is null.", 1, db);
-	exit_null("bonus is null.", 1, bonus);
-	exit_null("prefix is null.", 1, prefix);
-	exit_null("attribute is null.", 1, attribute);
+
 	sqlite3_clear_bindings(db->bonus_search);
 	sqlite3_bind_text(db->bonus_search, 1, prefix, strlen(prefix), SQLITE_STATIC);
 	sqlite3_bind_text(db->bonus_search, 2, attribute, strlen(attribute), SQLITE_STATIC);
 	status = sqlite3_step(db->bonus_search);
 	if(status == SQLITE_ROW) {
-		if(bonus->pref != NULL) free(bonus->pref);
-		if(bonus->buff != NULL) free(bonus->buff);
-		if(bonus->desc != NULL) free(bonus->desc);
-		if(bonus->type != NULL) free(bonus->type);
-		if(bonus->order != NULL) free(bonus->order);
 		bonus->id = sqlite3_column_int(db->bonus_search, 0);
 		bonus->flag = sqlite3_column_int(db->bonus_search, 1);
 		bonus->attr = sqlite3_column_int(db->bonus_search, 2);
-		bonus->pref = convert_string((const char *) sqlite3_column_text(db->bonus_search, 3));
-		bonus->buff = convert_string((const char *) sqlite3_column_text(db->bonus_search, 4));
-		bonus->desc = convert_string((const char *) sqlite3_column_text(db->bonus_search, 5));
-		convert_integer_list((char *)sqlite3_column_text(db->bonus_search, 7), ":", &array);
-		bonus->type = array.array;
-		bonus->type_cnt = array.size;
-		convert_integer_list((char *)sqlite3_column_text(db->bonus_search, 9), ":", &array);
-		bonus->order = array.array;
-		bonus->order_cnt = array.size;
+		strncopy(bonus->prefix, BONUS_PREFIX_SIZE, sqlite3_column_text(db->bonus_search, 3));
+		strncopy(bonus->bonus, BONUS_BONUS_SIZE, sqlite3_column_text(db->bonus_search, 4));
+		strncopy(bonus->format, BONUS_FORMAT_SIZE, sqlite3_column_text(db->bonus_search, 5));
+		bonus->type_cnt = sqlite3_column_int(db->bonus_search, 6);
+		convert_integer_list_static((const char *) sqlite3_column_text(db->bonus_search, 7), ":", bonus->type, BONUS_PARAMATER_SIZE);
+		bonus->order_cnt = sqlite3_column_int(db->bonus_search, 8);
+		convert_integer_list_static((const char *) sqlite3_column_text(db->bonus_search, 9), ":", bonus->order, BONUS_PARAMATER_SIZE);
 	}
 	sqlite3_reset(db->bonus_search);
 	return (status == SQLITE_ROW) ? 0 : -1;
@@ -585,8 +516,6 @@ int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int lv, int mode) 
 	ic_produce_t * root = NULL;
 	ic_produce_t * iter = NULL;
 	ic_produce_t * temp = NULL;
-	exit_null("db is null.", 1, db);
-	exit_null("prod is null.", 1, prod);
 	switch(mode) {
 		case EATHENA:
 			sqlite3_clear_bindings(db->ea_prod_lv_search);
@@ -669,7 +598,6 @@ int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
 	int count = 0;		/* allow up to a certain amount of items */
 	ic_item_t item;
 	ea_item_group_t item_group;
-	exit_null("db is null.", 1, db);
 	sqlite3_clear_bindings(db->ea_item_group_search);
 	sqlite3_bind_int(db->ea_item_group_search, 1, id);
 	memset(&item, 0, sizeof(ic_item_t));
@@ -680,14 +608,6 @@ int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
 		item_group.item_id = sqlite3_column_int(db->ea_item_group_search, 1);
 		item_group.rate = sqlite3_column_int(db->ea_item_group_search, 2);
 		/* map the item id to item name */
-		if(item.name != NULL) {
-			free(item.name);
-			item.name = NULL;
-		}
-		if(item.script != NULL) {
-			free(item.script);
-			item.script = NULL;
-		}
 		item_name_id_search(db, &item, item_group.item_id, mode);
 
 		if(item.name != NULL && count < 5) {
@@ -711,8 +631,6 @@ int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
 	}
 
 	sqlite3_reset(db->ea_item_group_search);
-	if(item.name != NULL) free(item.name);
-	if(item.script != NULL) free(item.script);
 	return (status == SQLITE_DONE) ? 0 : -1;	
 }
 
@@ -722,7 +640,6 @@ int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
 	int count = 0;		/* allow up to a certain amount of items */
 	ic_item_t item;
 	ra_item_group_t item_group;
-	exit_null("db is null.", 1, db);
 	sqlite3_clear_bindings(db->ra_item_group_search);
 	sqlite3_bind_int(db->ra_item_group_search, 1, id);
 	memset(&item, 0, sizeof(ic_item_t));
@@ -733,14 +650,6 @@ int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
 		item_group.item_id = sqlite3_column_int(db->ra_item_group_search, 1);
 		item_group.rate = sqlite3_column_int(db->ra_item_group_search, 2);
 		/* map the item id to item name */
-		if(item.name != NULL) {
-			free(item.name);
-			item.name = NULL;
-		}
-		if(item.script != NULL) {
-			free(item.script);
-			item.script = NULL;
-		}
 		item_name_id_search(db, &item, item_group.item_id, mode);
 
 		if(item.name != NULL && count < 5) {
@@ -764,8 +673,6 @@ int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer) {
 	}
 
 	sqlite3_reset(db->ra_item_group_search);
-	if(item.name != NULL) free(item.name);
-	if(item.script != NULL) free(item.script);
 	return (status == SQLITE_DONE) ? 0 : -1;	
 }
 
@@ -780,31 +687,21 @@ void free_prod(ic_produce_t * prod) {
 	}
 }
 
-int status_id_search(struct ic_db_t * db, status_t * status, int id, char * name) {
+int status_id_search(struct ic_db_t * db, ic_status_t * status, int id, char * name) {
 	int code = 0;
-	array_w array;
-	exit_null("db is null.", 1, db);
-	exit_null("status is null.", 1, status);
 	sqlite3_clear_bindings(db->status_search);
 	sqlite3_bind_int(db->status_search, 1, id);
 	sqlite3_bind_text(db->status_search, 2, name, strlen(name), SQLITE_STATIC);
 	code = sqlite3_step(db->status_search);
 	if(code == SQLITE_ROW) {
-		if(status->scstr != NULL) free(status->scstr);
-		if(status->scfmt != NULL) free(status->scfmt);
-		if(status->scend != NULL) free(status->scend);
-		if(status->vmod_ptr != NULL) free(status->vmod_ptr);
-		if(status->voff_ptr != NULL) free(status->voff_ptr);
 		status->scid = sqlite3_column_int(db->status_search, 0);
-		status->scstr = convert_string((const char *) sqlite3_column_text(db->status_search, 1));
+		strncopy(status->scstr, STATUS_NAME_SIZE, sqlite3_column_text(db->status_search, 1));
 		status->type = sqlite3_column_int(db->status_search, 2);
-		status->scfmt = convert_string((const char *) sqlite3_column_text(db->status_search, 3));
-		status->scend = convert_string((const char *) sqlite3_column_text(db->status_search, 4));
+		strncopy(status->scfmt, STATUS_FORMAT_SIZE, sqlite3_column_text(db->status_search, 3));
+		strncopy(status->scend, STATUS_NAME_SIZE, sqlite3_column_text(db->status_search, 4));
 		status->vcnt = sqlite3_column_int(db->status_search, 5);
-		convert_integer_list((char *)sqlite3_column_text(db->status_search, 6), ":", &array);
-		status->vmod_ptr = array.array;
-		convert_integer_list((char *)sqlite3_column_text(db->status_search, 7), ":", &array);
-		status->voff_ptr = array.array;
+		convert_integer_list_static((const char *) sqlite3_column_text(db->status_search, 6), ":", status->vmod, STATUS_PARAMATER_SIZE);
+		convert_integer_list_static((const char *) sqlite3_column_text(db->status_search, 7), ":", status->voff, STATUS_PARAMATER_SIZE);
 	}
 	sqlite3_reset(db->status_search);
 	return (code == SQLITE_ROW) ? 0 : -1;
@@ -815,8 +712,6 @@ int ra_item_combo_search_id(struct ic_db_t * db, ra_item_combo_t ** combo, int i
 	ra_item_combo_t * temp = NULL;
 	ra_item_combo_t * iter = NULL;
 	ra_item_combo_t * root = NULL;
-	exit_null("db is null.", 1, db);
-	exit_null("combo is null.", 1, combo);
 	sqlite3_clear_bindings(db->ra_item_combo_search);
 	sqlite3_bind_int(db->ra_item_combo_search, 1, id);
 	code = sqlite3_step(db->ra_item_combo_search);
@@ -896,7 +791,6 @@ struct lt_db_t * init_db(const char * filename, int flag) {
 
 	/* create the sqlite3 database */
 	status = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
-	if(status != SQLITE_OK) exit_abt(sqlite3_errmsg(db));
 	/*sqlite3_trace(db, trace_db, NULL);*/
 
 	/* item tables */
@@ -1597,13 +1491,14 @@ void load_ea_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ea_item_group_
 void load_ra_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_group_t * db, int size) {
 	int i = 0;	
 	struct ic_db_t * const_db = init_ic_db("athena.db");
-	const_t const_info;
-	memset(&const_info, 0, sizeof(const_t));
+	ic_const_t const_info;
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
-		if(const_keyword_search(const_db, &const_info, db[i].group_name, RATHENA))
-			exit_abt("failed to resolve constant");
+		if(const_keyword_search(const_db, &const_info, db[i].group_name, RATHENA)) {
+			fprintf(stderr,"[warn]: failed to resolve constant %s\n", db[i].group_name);
+			break;
+		}
 		sqlite3_bind_int(ins, 1, const_info.value);
 		sqlite3_bind_int(ins, 2, db[i].item_id);
 		sqlite3_bind_int(ins, 3, db[i].rate);
@@ -1617,36 +1512,27 @@ void load_ra_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_group_
 void load_ra_item_package(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_package_t * db, int size) {
 	int i = 0;
 	struct ic_db_t * athena = init_ic_db("athena.db");
-	char buf[4096];
-	const_t const_info;
+	ic_const_t const_info;
 	ic_item_t item_info;
 	memset(&const_info, 0, sizeof(const_t));
 	memset(&item_info, 0, sizeof(ic_item_t));
 	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0; i < size; i++) {
 		sqlite3_clear_bindings(ins);
-		if(const_keyword_search(athena, &const_info, db[i].group_name, RATHENA))
-			exit_abt("failed to resolve constant");
+		if(const_keyword_search(athena, &const_info, db[i].group_name, RATHENA)) {
+			fprintf(stderr,"[warn]: failed to resolve constant %s\n", db[i].group_name);
+			break;
+		}
 		if(item_name_search(athena, &item_info, db[i].item_name, RATHENA))
-			if(item_name_id_search(athena, &item_info, convert_integer(db[i].item_name, 10), RATHENA))
-				exit_abt(build_buffer(buf,"failed to resolve item name %s.", db[i].item_name));
+			if(item_name_id_search(athena, &item_info, convert_integer(db[i].item_name, 10), RATHENA)) {
+				fprintf(stderr,"[warn]: failed to resolve item %s\n", db[i].item_name);
+				break;
+			}
 		sqlite3_bind_int(ins, 1, const_info.value);
 		sqlite3_bind_int(ins, 2, item_info.id);
 		sqlite3_bind_int(ins, 3, db[i].rate);
 		sqlite3_step(ins);
 		sqlite3_reset(ins);
-		if(const_info.name != NULL) {
-			free(const_info.name);
-			const_info.name = NULL;
-		}
-		if(item_info.name != NULL) {
-			free(item_info.name);
-			item_info.name = NULL;
-		}
-		if(item_info.script != NULL) {
-			free(item_info.script);
-			item_info.script = NULL;
-		}
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	deit_ic_db(athena);
@@ -1682,8 +1568,6 @@ void load_ra_item_combo(struct lt_db_t * sql, ra_item_combo_t * db, int size) {
 				}
 			}
 			offset += sprintf(buffer + offset, " Combo]");
-			if(item_info.name != NULL) free(item_info.name);
-			if(item_info.script != NULL) free(item_info.script);
 
 			for(j = 0; j < item_id_list.size; j++) {
 				sqlite3_clear_bindings(sql->ra_item_combo_insert);

@@ -20,4 +20,5 @@
    char * weapon_tbl(int i);			/* case 'i': return 24;	// Weapon Type */
    char * itemgrp_tbl(int i);
    char * job_tbl(int i);
+   char * block_tbl(int i);
 #endif

@@ -9,7 +9,6 @@
 
 load_cb_t * ea_item_load() {
 	load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-	exit_null("failed to load interface", 1, interface);
 	interface->load_column = ea_load_column;
 	interface->is_row_sentinel = is_row_sentinel;
 	interface->is_row_delimiter = is_row_delimiter;
@@ -22,7 +21,6 @@ load_cb_t * ea_item_load() {
 
 load_cb_t * ra_item_load() {
 	load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-	exit_null("failed to load interface", 1, interface);
 	interface->load_column = ra_load_column;
 	interface->is_row_sentinel = is_row_sentinel;
 	interface->is_row_delimiter = is_row_delimiter;
@@ -35,7 +33,6 @@ load_cb_t * ra_item_load() {
 
 load_cb_t * pet_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = pet_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -48,7 +45,6 @@ load_cb_t * pet_load() {
 
 load_cb_t * merc_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load mercenary interface", 1, interface);
    interface->load_column = merc_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -61,7 +57,6 @@ load_cb_t * merc_load() {
 
 load_cb_t * produce_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = produce_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -74,7 +69,6 @@ load_cb_t * produce_load() {
 
 load_cb_t * ra_produce_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ra_produce_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -87,7 +81,6 @@ load_cb_t * ra_produce_load() {
 
 load_cb_t * skill_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = skill_load_column;
    interface->is_row_sentinel = is_row_sentinel_comment;
    interface->is_row_delimiter = is_row_delimiter_comment;
@@ -100,7 +93,6 @@ load_cb_t * skill_load() {
 
 load_cb_t * ra_skill_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ra_skill_load_column;
    interface->is_row_sentinel = is_row_sentinel_comment;
    interface->is_row_delimiter = is_row_delimiter_comment;
@@ -113,7 +105,6 @@ load_cb_t * ra_skill_load() {
 
 load_cb_t * mob_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = mob_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -126,7 +117,6 @@ load_cb_t * mob_load() {
 
 load_cb_t * ea_mob_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ea_mob_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -139,7 +129,6 @@ load_cb_t * ea_mob_load() {
 
 load_cb_t * block_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = block_load_column;
    interface->is_row_sentinel = is_row_sentinel_semicolon;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -152,7 +141,6 @@ load_cb_t * block_load() {
 
 load_cb_t * var_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = var_load_column;
    interface->is_row_sentinel = is_row_sentinel_semicolon;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -165,7 +153,6 @@ load_cb_t * var_load() {
 
 load_cb_t * status_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = status_load_column;
    interface->is_row_sentinel = is_row_sentinel_semicolon;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -178,7 +165,6 @@ load_cb_t * status_load() {
 
 load_cb_t * bonus_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = bonus_load_column;
    interface->is_row_sentinel = is_row_sentinel_semicolon;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -191,7 +177,6 @@ load_cb_t * bonus_load() {
 
 load_cb_t * const_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = const_load_column;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter_whitespace;
@@ -204,7 +189,6 @@ load_cb_t * const_load() {
 
 load_cb_t * ea_item_group_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ea_item_group_load_column;
    interface->is_row_sentinel = is_row_sentinel_whitespace;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -217,7 +201,6 @@ load_cb_t * ea_item_group_load() {
 
 load_cb_t * ra_item_group_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ra_item_group_load_column;
    interface->is_row_sentinel = is_row_sentinel_whitespace;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -230,7 +213,6 @@ load_cb_t * ra_item_group_load() {
 
 load_cb_t * ra_item_package_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ra_item_package_column;
    interface->is_row_sentinel = is_row_sentinel_whitespace;
    interface->is_row_delimiter = is_row_delimiter_semicolon;
@@ -243,7 +225,6 @@ load_cb_t * ra_item_package_load() {
 
 load_cb_t * ra_item_combo_load() {
    load_cb_t * interface = calloc(1, sizeof(load_cb_t));
-   exit_null("failed to load interface", 1, interface);
    interface->load_column = ra_item_combo_colum;
    interface->is_row_sentinel = is_row_sentinel;
    interface->is_row_delimiter = is_row_delimiter;
@@ -279,7 +260,7 @@ int ea_load_column(void * db, int row, int col, char * val) {
       case 19:  item_row->script = convert_string(val); break;
       case 20:  item_row->onequip = convert_string(val); break;
       case 21:  item_row->onunequip = convert_string(val); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -310,7 +291,7 @@ int ra_load_column(void * db, int row, int col, char * val) {
       case 19:  item_row->script = convert_string(val); break;
       case 20:  item_row->onequip = convert_string(val); break;
       case 21:  item_row->onunequip = convert_string(val); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -340,7 +321,7 @@ int pet_load_column(void * db, int row, int col, char * val) {
       case 19: pet_row->change_target_rate = convert_integer(val,10); break;
       case 20: pet_row->pet_script = convert_string(val); break;
       case 21: pet_row->loyal_script = convert_string(val); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -374,7 +355,7 @@ int merc_load_column(void * db, int row, int col, char * val) {
       case 23: merc_row->adelay = convert_integer(val, 10); break;
       case 24: merc_row->amotion = convert_integer(val, 10); break;
       case 25: merc_row->dmotion = convert_integer(val, 10); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -446,7 +427,7 @@ int skill_load_column(void * db, int row, int col, char * val) {
       case 14: skill_row->blow_count = convert_string(val); break;
       case 15: skill_row->name = convert_string(val); break;
       case 16: skill_row->desc = convert_string(val); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -472,7 +453,7 @@ int ra_skill_load_column(void * db, int row, int col, char * val) {
       case 15: skill_row->inf3 = convert_uinteger(val,16); break;
       case 16: skill_row->name = convert_string(val); break;
       case 17: skill_row->desc = convert_string(val); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -537,7 +518,7 @@ int mob_load_column(void * db, int row, int col, char * val) {
       case 54: mob_row->drop9per = convert_integer(val,10);     break;
       case 55: mob_row->dropcardid = convert_integer(val,10);   break;
       case 56: mob_row->dropcardper = convert_integer(val,10);  break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -603,7 +584,7 @@ int ea_mob_load_column(void * db, int row, int col, char * val) {
       case 55: mob_row->drop9per = convert_integer(val,10);       break;
       case 56: mob_row->dropcardid = convert_integer(val,10);     break;
       case 57: mob_row->dropcardper = convert_integer(val,10);    break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -614,7 +595,7 @@ int block_load_column(void * db, int row, int col, char * val) {
       case 0: block_row->bk_id = convert_integer(val, 10); break;
       case 1: block_row->bk_kywd = convert_string(val); break;
       case 2: block_row->bk_flag = convert_integer(val, 10); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -630,7 +611,7 @@ int var_load_column(void * db, int row, int col, char * val) {
       case 5: var_row->min = convert_integer(val, 10); break;
       case 6: var_row->max = convert_integer(val, 10); break;
       case 7: var_row->str = convert_string(val); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -708,7 +689,7 @@ int const_load_column(void * db, int row, int col, char * val) {
             const_row->value = convert_integer(val, 10);
          break;
       case 2: const_row->type = convert_integer(val, 10); break;
-      default:  exit_abt("invalid column");
+      default:  return 0;
    }
    return 0;
 }
@@ -720,7 +701,7 @@ int ea_item_group_load_column(void * db, int row, int col, char * val) {
       case 0: ea_item_group->group_id = convert_integer(val, 10); break;
       case 1: ea_item_group->item_id = convert_integer(val, 10); break;
       case 2: ea_item_group->rate = convert_integer(val, 10); break;
-      default: exit_abt("invalid column");
+      default: return 0;
    }
    return 0;  
 }
@@ -731,7 +712,7 @@ int ra_item_group_load_column(void * db, int row, int col, char * val) {
       case 0: ra_item_group->group_name = convert_string(val); break;
       case 1: ra_item_group->item_id = convert_integer(val, 10); break;
       case 2: ra_item_group->rate = convert_integer(val, 10); break;
-      default: printf("%d;%s\n", col, val); exit_abt("invalid column");
+      default: printf("%d;%s\n", col, val); return 0;
    }
    return 0;
 }

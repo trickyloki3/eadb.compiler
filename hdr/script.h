@@ -21,6 +21,7 @@
 
     /* general */
     #define EXIT_ON_ERROR 0
+    #define CODE_MAINTENANCE 0
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BLOCK_SIZE 32
@@ -134,12 +135,8 @@
         logic_node_t * cond;
         int cond_cnt;           /* total count of variable and functions; cascaded by operator */
         /* expression translation */
-        int var_id;             /* useful for multplexing different schemes; unused */
         char expr[BUF_SIZE];    /* verbatim translation string */
         int expr_cnt;           /* size of expr */
-        /* function and variable list */
-        dep_t * dep;
-        int complexity;         /* count the number of relational, equality, logical, or conditional operators */
         /* function argument stack */
         char args[BUF_SIZE];    /* function argument stack */
         int args_cnt;           /* function argument stack offset (top of stack) */
@@ -148,44 +145,35 @@
         /* expression precedence and associative */
         struct node * left;
         struct node * right;
-        struct node * parent;   /* allow bridging through parent (L>P^P<R) mini diagram */
         struct node * next;
         struct node * prev;
         struct node * list;     /* arbitrary chain in sequence of creation; this allow freeing everything easier */
     } node_t;
 
     typedef struct block_r {
-        int item_id;                         /* item to which the block belongs */
-        int block_id;                        /* unique block id (index) */
-
-        /* The argument, translation, and formula stacks 
-         * arg is where all strings should be store; ptr 
-         * and eng are simply pointers to the arg buffer */
-        char * arg;                          /* block raw and translation stack */
-        char * ptr[PTR_SIZE];                /* raw arguments */
+        int item_id;                         /* item id defined in item_db.txt */
+        int type;                            /* block id defined in res/block_db.txt */
+        /* ptr loaded by parser & eng translated by translator */
+        char arg[BUF_SIZE];
+        char * ptr[PTR_SIZE];                /* block arguments */
         char * eng[PTR_SIZE];                /* translated arguments */
-        char * exp[PTR_SIZE];                /* expression formula */
-        char * desc;                         /* final description translation */
-        int arg_cnt;                         /* various counters for the above arrays */
+        int arg_cnt;
         int ptr_cnt;
         int eng_cnt;
-        int exp_cnt;
-
-        /* handle conditional and calculational 'dependencies' for
-         * expressions with variable and function or set blocks */
-        block_t * type;                      /* access to translation information in block_db.txt from block_db */
-        int link;                            /* indicate conditional linking for if-else statements (index to block) */
-        struct block_r * depd[BLOCK_SIZE];   /* indicate calculation linking for set blocks */
-        int depd_cnt;                        /* number of dependencies */
-        
-        /* set_* variable allows a block to be inherited as a
-         * node, which can be used when evaluating expressions. */
-        int set_min;
-        int set_max;
-        int set_cond_cnt;
-        dep_t * set_dep;
-        char set_expr[BUF_SIZE];             /* contain the formula for the set block */
-        int set_complexity;                  /* indicate that the set block contains a complex expression */
+        /* linked list chaining blocks */
+        struct block_r * next;               /* block_list_t handle linking */
+        struct block_r * prev;               /* block_list_t handle linking */
+        struct block_r * link;               /* if, else-if, else, for linking */
+        struct block_r * set;                /* point to end of current linked list of set block */
+        /* bonus block keep bonus query and integer results for post analysis */
+        ic_bonus_t bonus;                    /* bonus structure contain entry from item_bonus.txt */
+        node_t * result[BONUS_SIZE];         /* keep until after minimization */
+        /* database references; duplicate information from script_t to prevent 
+         * passing script_t to every translator; read only */
+        struct ic_db_t * db;                /* sqlite3 database handle to athena */
+        int mode;                           /* multiplexer for rathena, eathena, or hercule tables */
+        /* translation information */
+        logic_node_t * logic_tree;           /* calculational and dependency information */
 
         /* flag and offset are use for variable length arguments in functions */
         int flag;                            /* multi-purpose flag for special conditions 
@@ -193,39 +181,71 @@
                                                 0x02 - multivalues must be tagged random 
                                                 0x04 - use verbatim string */
         int offset;                          /* indicate the beginning of special arguments */
-        logic_node_t * logic_tree;           /* calculational and dependency information */
-
-        /* bonus blocks will defer writing the final item description until script_bonus */
-        node_t * result[BONUS_SIZE];         /* keep until after minimization */
-        bonus_t bonus;                       /* ahhhhhhhhhhhhhhhhhhhhhhhhhhhh */
     } block_r;
+
+    /* indexible linked list */
+    typedef struct block_list_t {
+        block_r root;
+        block_r * head;
+        block_r * tail;
+    } block_list_t;
+
+    /* abstract handle to contain everything */
+    typedef struct script_t {
+        int item_id;
+        block_list_t block;     /* linked list of allocated blocks */
+        block_list_t free;      /* linked list of deallocated blocks */
+        token_r token;          /* tokenize script */        
+        struct ic_db_t * db;    /* sqlite3 database handle to athena */
+        int mode;               /* multiplexer for rathena, eathena, or hercule tables */
+    } script_t;
 
     int global_mode;                /* indicates eathena, rathena, or hercules mode */
     struct ic_db_t * global_db;     /* global sqlite3 database reference */
-    char global_err[BUF_SIZE];      /* static buffer to hold the error string */
-    FILE * node_dbg;                /* file to dump evaluate expression */
-    #define exit_buf(X, ...) exit_abt(build_buffer(global_err, (X), __VA_ARGS__))
 
-    /* block structure memory management functions */
-    void block_init(block_r **, int);
-    void block_deinit(block_r *, int);
-    void block_finalize(block_r *, int);
+    /* athena db */
+    int iter_item_db(int, struct ic_db_t *, ic_item_t *);
+
+    /* block linked list operations */
+    int list_forward(block_list_t *);
+    int list_backward(block_list_t *);
+    void list_init_head(block_list_t * list);
+    int list_append_tail(block_list_t * list, block_r * block);
+    int list_append_head(block_list_t * list, block_r * block);
+    int list_add(block_list_t *, block_r *, block_r *);
+    int list_rem(block_list_t *, block_r *);
+    int list_pop_head(block_list_t *, block_r **);
+    int list_pop_tail(block_list_t *, block_r **);
+    int list_check(block_list_t *, block_r *);
+
+    /* block memory management */
+    int script_block_alloc(script_t *, block_r **);
+    int script_block_dealloc(script_t *, block_r **);
+    int script_block_reset(script_t *);
+    int script_block_release(block_r *);
+    int script_block_finalize(script_t *);
+
+    /* block debugging */
+    int script_block_dump(script_t *, FILE *);
 
     /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);
-    int script_analysis(token_r *, block_r *, int *, int, int, int);
+    int script_analysis(script_t *, token_r *, block_r *, block_r **);
     int script_parse(token_r *, int *, block_r *, char, char, int);
-    int script_extend(block_r *, char *);
-    int script_dependencies(block_r *, int);
-    int script_translate(block_r *, int);
-    int script_bonus(block_r *, int);
-    int script_generate(block_r *, int, char *, int *);
+    int script_extend_block(script_t *, char *, block_r *, block_r **);
+    int script_extend_paramater(block_r *, char *);
+    int script_translate(script_t *);
+    int script_bonus(script_t *);
+    int script_generate(script_t *, char *, int *);
     int script_generate_combo(int, char *, int *);
-    char * script_compile_raw(char *, int, FILE *);     /* high level functions compiles from lexical to generate */
+    char * script_compile_raw(char *, int, FILE *);
     #define script_compile(X, Y) script_compile_raw(X, Y, NULL)
     
+    /* auxiliary support */
+    int split_paramater_list(token_r *, int *, char *);
+
     /* script translation functions */
-    int translate_bonus(block_r *, int);
+    int translate_bonus(block_r *, char *);
     int translate_const(block_r *, char *, int);
     int translate_skill(block_r *, char *);
     int translate_tbl(block_r *, char *, int);
@@ -262,10 +282,6 @@
     int translate_write(block_r *, char *, int);
     int translate_overwrite(block_r *, char *, int);
 
-    /* debug compiler by dumping the block list */
-    void block_debug_dump_all(block_r *, int, FILE *);
-    void block_debug_dump_set_link(struct block_r **, int, int, int, FILE *);
-
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);
@@ -282,7 +298,7 @@
 
     /* support translation */
     void argument_write(node_t *, char *);
-    int translate_bonus_desc(node_t **, block_r *, bonus_t *);
+    int translate_bonus_desc(node_t **, block_r *, ic_bonus_t *);
     char * translate_bonus_template(char *, int *, char *, ...);
     void translate_bonus_integer(block_r *, node_t *, int *);
     void translate_bonus_integer2(block_r *, node_t *, int *, char *, char *, char *);

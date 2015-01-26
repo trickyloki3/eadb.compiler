@@ -12,22 +12,13 @@ char * trim(const char * file_name, int32_t * file_line, DB_TRIM file_trim) {
    char * trim_name = NULL;
    FILE * file_stm = NULL;
    FILE * trim_stm = NULL;
-   char buffer[BUF_SIZE];
-
-   /* check for invalid paramaters */
-   exit_null("file_name is null", 1, file_name);
-   exit_null("file_line is null", 1, file_line);
-   exit_null("file_trim is null", 1, file_trim);
 
    /* generate trim file name */
    trim_name = random_string(16);
-   exit_null("failed to generate trim file name", 1, trim_name);
 
    /* open file descriptors for trimming */
    file_stm = fopen(file_name,"r");
    trim_stm = fopen(trim_name,"w");
-   exit_null(build_buffer(buffer,"failed to open %s", file_name), 1, file_stm);
-   exit_null(build_buffer(buffer,"failed to open %s", trim_name), 1, trim_stm);
 
    /* trim database file and store valid entries in trim file */
    *file_line = file_trim(file_stm, trim_stm);
@@ -94,28 +85,24 @@ void * load(const char * file_name, DB_TRIM file_trim, DB_LOAD file_load, load_c
    char * trim_name = NULL;
    FILE * trim_stm = NULL;
    int32_t trim_size = 0;
-   char buffer[BUF_SIZE];
    load_cb_t * db_load = loader();
 
    /* check for invalid paramaters */
-   exit_null("file_name is null", 1, file_name);
-   exit_null("file_trim is null", 1, file_trim);
-   exit_null("file_load is null", 1, file_load);
-   if(db_load->type_size <= 0) exit_abt("db_load->type_size is less than zero");
+   if(db_load->type_size <= 0) {
+      fprintf(stderr,"[fatal]: database type size is zero.\n");
+      if(db_load != NULL) free(db_load);
+      return NULL;
+   }
 
    /* trim the database file and open stream to new trim file */
    trim_name = trim(file_name, &trim_size, file_trim);
-   exit_null(build_buffer(buffer,"failed to database %s", file_name), 1, trim_name);
    trim_stm = fopen(trim_name, "r");
-   exit_null("failed to load the trim database file", 1, trim_stm);   
 
    /* allocate memory for the database */
    db = calloc(trim_size, db_load->type_size);
-   exit_null(build_buffer(buffer,"failed to allocated memory for %s", file_name), 1, db);
 
    /* load the datbase */
    cnt = file_load(trim_stm, db, trim_size, db_load);
-   if(cnt <= 0) exit_abt("failed load any database entries.");
 
    /* clean up trim database resources */
    fclose(trim_stm);
@@ -124,7 +111,6 @@ void * load(const char * file_name, DB_TRIM file_trim, DB_LOAD file_load, load_c
 
    /* return generic database wrapper */
    wrapper = malloc(sizeof(load_db_t));
-   exit_null("failed to allocate memory for database wrapper", 1, wrapper);
    wrapper->db = db;
    wrapper->size = trim_size;
    wrapper->dealloc = db_load->dealloc;

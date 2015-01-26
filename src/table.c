@@ -362,3 +362,73 @@ char * job_tbl(int i) {
 		default: return "Error";
 	};
 }
+
+
+char * block_tbl(int i) {
+	switch(i) {
+		case 0: return "bonus";
+		case 1: return "bonus2";
+		case 2: return "bonus3";
+		case 3: return "bonus4";
+		case 4: return "bonus5";
+		case 5: return "autobonus";
+		case 6: return "autobonus2";
+		case 7: return "autobonus3";
+		case 8: return "heal";
+		case 9: return "percentheal";
+		case 10: return "itemheal";
+		case 11: return "skill";
+		case 12: return "itemskill";
+		case 13: return "unitskilluseid";
+		case 14: return "sc_start";
+		case 15: return "sc_start4";
+		case 16: return "sc_end";
+		case 17: return "getitem";
+		case 18: return "rentitem";
+		case 19: return "delitem";
+		case 20: return "getrandgroupitem";
+		case 21: return "skilleffect";
+		case 22: return "specialeffect2";
+		case 23: return "setfont";
+		case 24: return "buyingstore";
+		case 25: return "searchstores";
+		case 26: return "if";
+		case 27: return "else";
+		case 28: return "set";
+		case 29: return "input";
+		case 30: return "announce";
+		case 31: return "callfunc";
+		case 32: return "end";
+		case 33: return "wrap";
+		case 34: return "pet";
+		case 35: return "bpet";
+		case 36: return "mercenary_create";
+		case 37: return "mercenary_heal";
+		case 38: return "mercenary_sc_start";
+		case 39: return "produce";
+		case 40: return "cooking";
+		case 41: return "makerune";
+		case 42: return "guildgetexp";
+		case 43: return "getexp";
+		case 44: return "monster";
+		case 45: return "homevolution";
+		case 46: return "setoption";
+		case 47: return "setmounting";
+		case 48: return "setfalcon";
+		case 49: return "getgroupitem";
+		case 50: return "resetstatus";
+		case 51: return "bonus_script";
+		case 52: return "playbgm";
+		case 53: return "transform";
+		case 54: return "sc_start2";
+		case 55: return "petloot";
+		case 56: return "petrecovery";
+		case 57: return "petskillbonus";
+		case 58: return "petskillattack";
+		case 59: return "petskillattack2";
+		case 60: return "petskillsupport";
+		case 61: return "petheal";
+		case 62: return "for";
+		default: return "error";
+	}
+}

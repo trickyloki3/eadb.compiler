@@ -8,33 +8,45 @@
  */
 #include "util.h"
 
-void exit_throw_error(const char * error, const char * file_name, const char * function_name, const int line_number) {
-   fprintf(stderr, "%s;%s;%d; %s\n", file_name, function_name, line_number, error);
-   exit(EXIT_FAILURE);
-}
+char err_buf[BUF_SIZE];
 
-char * build_buffer(char * buffer, char * format, ...) {
+char * exit_msg(char * msg, char * format, ...) {
    int offset = 0;
    va_list list;
    va_start(list, format);
-   offset = vsprintf(buffer, format, list);
-   buffer[offset] = '\0';
+   offset = vsprintf(msg, format, list);
+   msg[offset] = '\0';
    va_end(list);
-   return buffer;
+   return msg;
 }
 
-int exit_check_null(int argument_count, ...) {
+int exit_null(const char * file_name, const char * function_name, const int line_number, int argc, ...) {
    int i = 0;
-   void * ptr = NULL;
    va_list list;
-   va_start(list, argument_count);
-   for(i = 0; i < argument_count; i++) {
-      ptr = va_arg(list, void *);
-      if(ptr == NULL)
-         return 1;
+   va_start(list, argc);
+   for(i = 0; i < argc; i++) {
+      if(va_arg(list, void *) == NULL) {
+         fprintf(stderr, 
+            "[warn]: %s;%s;%d; null detected in position %d.\n", 
+            file_name, function_name, line_number, i + 1);
+#if ENABLE_EXIT
+         exit(EXIT_FAILURE);
+#else 
+         return CHECK_FAILED;
+#endif
+      }
    }
    va_end(list);
-   return 0;
+   return CHECK_PASSED;
+}
+
+int exit_func(const char * file_name, const char * function_name, const int line_number, int exitcode, const char * error) {
+   fprintf(stderr, "[warn]: %s;%s;%d; %s.\n", file_name, function_name, line_number, error);
+#if ENABLE_EXIT
+   exit(exitcode);
+#else 
+   return CHECK_FAILED;
+#endif
 }
 
 char * random_string(int length) {
@@ -151,10 +163,13 @@ char * substr_delimit(char * src, char * dest, char delimit) {
    return &src[src_cnt];
 }
 
-char * substr_delimit_list(char * src, char * dest, char * delimit) {
-   int i, j;
-   int src_cnt = strlen(src);
-   int del_cnt = strlen(delimit);
+const char * substr_delimit_list(const char * src, char * dest, const char * delimit) {
+   int i = 0;
+   int j = 0;
+   int src_cnt = 0;
+   int del_cnt = 0;
+   src_cnt = strlen(src);
+   del_cnt = strlen(delimit);
 
    for(i = 0; i < src_cnt; i++) {
       for(j = 0; j < del_cnt; j++)
@@ -207,20 +222,17 @@ void convert_delimit_integer(char * str, char delimit, int argc, ...) {
    va_end(argv);
 }
 
-void convert_integer_list(char * str, char * delimit, array_w * list) {
+int convert_integer_list(char * str, char * delimit, array_w * list) {
    int i, j;
    int * int_list = NULL;
    int str_cnt = strlen(str);
    int del_cnt = strlen(delimit);
    int fld_cnt = 1;
-   char * end_ptr = NULL;
+   const char * end_ptr = NULL;
    char fld[BUF_SIZE];
 
-   /* check the paramater */
-   if(str == NULL || delimit == NULL || list == NULL) {
-      fprintf(stdout,"warn: convert_integer_list detected NULL paramaters.\n");
-      return;
-   }
+   if(exit_null_safe(3, str, delimit, list))
+      return CHECK_FAILED;
 
    /* find the total number of fields */
    for(i = 0; i < str_cnt; i++)
@@ -251,6 +263,43 @@ void convert_integer_list(char * str, char * delimit, array_w * list) {
    list->array = (void *) int_list;
    list->size = fld_cnt;
    list->delimit = delimit[0];
+   return CHECK_PASSED;
+}
+
+int convert_integer_list_static(const char * str, const char * delimit, int * list, int size) {
+   int i, j;
+   int str_cnt = strlen(str);
+   int del_cnt = strlen(delimit);
+   int fld_cnt = 1;
+   const char * end_ptr = NULL;
+   char fld[BUF_SIZE];
+
+   if(exit_null_safe(3, str, delimit, list))
+      return CHECK_FAILED;
+
+   /* find the total number of fields */
+   for(i = 0; i < str_cnt; i++)
+      for(j = 0; j < del_cnt; j++)
+         if(str[i] == delimit[j]) {
+            fld_cnt++;
+            break;
+         }
+
+   /* extract the fields */
+   end_ptr = substr_delimit_list(str, fld, delimit);
+   if(*str == '0' && *(str+1) == 'x')
+      list[0] = convert_integer(fld, 16);
+   else
+      list[0] = convert_integer(fld, 10);
+   for(i = 1; end_ptr != NULL && i < fld_cnt && i < size; i++) {
+      end_ptr = substr_delimit_list(end_ptr + 1, fld, delimit);
+      if(*str == '0' && *(str+1) == 'x')
+         list[i] = convert_integer(fld, 16);
+      else
+         list[i] = convert_integer(fld, 10);
+   }
+
+   return CHECK_PASSED;
 }
 
 void array_io(array_w array, FILE * file_stm) {
@@ -264,4 +313,18 @@ void array_io(array_w array, FILE * file_stm) {
 
 void array_unload(array_w array) {
    if(array.array != NULL) free(array.array);
+}
+
+void strncopy(char * buf, int buf_size, const unsigned char * str) {
+   const char * cstr = (const char *) str;
+   if(str == NULL) return;
+   int len = strlen(cstr);
+   /* account for null character; check length */
+   if(len > buf_size - 1) {
+      exit_func_safe("truncated string from %d to %d\n", len, buf_size - 1);
+      len = buf_size - 1;
+   }
+   /* copy the string into the buffer */
+   strncpy(buf, cstr, len);
+   buf[len] = '\0';
 }

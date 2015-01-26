@@ -22,14 +22,16 @@ int main(int argc, char * argv[]) {
 		global_mode = (ncs_strcmp(argv[1],"rathena") == 0) ? RATHENA : 
 					     (((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
 					     ((ncs_strcmp(argv[1],"hercules") == 0) ? HERCULES : -1)));
-		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES)
-			exit_abt("invalid database type; only 'eathena', 'rathena', or 'hercules' is supported.");
+		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES) {
+			fprintf(stderr,"[error]: invalid database type; only 'eathena', 'rathena', or 'hercules' is supported.");
+			exit(EXIT_FAILURE);
+		}
 
 		/* open the file containing the script */
 		file = fopen(argv[2],"r");
-		if(file == NULL) exit_buf("failed to open file %s\n", argv[2]);
+		if(file == NULL) fprintf(stderr,"failed to open file %s\n", argv[2]);
 	} else {
-		exit_buf("\n\tsyntax '%s [eathena | rathena | hercules] <file path>'\n"
+		fprintf(stderr,"\n\tsyntax '%s [eathena | rathena | hercules] <file path>'\n"
 					"\t -> '%s eathena myscript.txt'\n"
 					"\t -> '%s rathena /home/loki/dev/script.txt'\n"
 					"\t -> '%s hercules /home/loki/dev/file'\n", 
@@ -39,9 +41,10 @@ int main(int argc, char * argv[]) {
 	/* initialize the global database */
 	global_db = init_ic_db("athena.db");
 	file_dbg = fopen("dump.txt", "w");
-	node_dbg = NULL;
-	if(file_dbg == NULL) 
-		exit_abt("failed to open dump.txt.");
+	if(file_dbg == NULL) {
+		fprintf(stderr,"[error]: failed to load debug file.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	/* load the script file into the buffer */
 	while(fgets(fld, buf_size, file) != NULL)
@@ -51,8 +54,10 @@ int main(int argc, char * argv[]) {
 	/* compile the script and display to stdout 
 	 * use output redirection to store in a file */
 	result = script_compile_raw(buf, 0, file_dbg);
-	printf(" -- script --\n%s\n-- item description --\n%s\n", buf, result);
-	free(result);
+	if(result != NULL) {
+		printf(" -- script --\n%s\n-- item description --\n%s\n", buf, result);
+		free(result);
+	}
 	
 	/* clean up everything */
 	deit_ic_db(global_db);

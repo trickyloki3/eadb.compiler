@@ -16,15 +16,32 @@
    #include <ctype.h>
    #include <stdint.h>
 
-	/* BUF_SIZE is the standard static buffer size */
+	/* standard buffer size */
 	#define BUF_SIZE 4096
- 	#define EXIT_SAFE 1
-	/* standard program abortion function */
-	#define exit_abt(X)	exit_throw_error((X), __FILE__, __func__, __LINE__)
-	#define exit_null(Y, X, ...) if(exit_check_null((X), __VA_ARGS__)) exit_abt(Y);
-	void exit_throw_error(const char *, const char *, const char *, const int);
-	int exit_check_null(int, ...);
-	char * build_buffer(char * buffer, char * format, ...);
+ 	#define BONUS_PREFIX_SIZE 8
+ 	#define BONUS_BONUS_SIZE 64
+ 	#define BONUS_FORMAT_SIZE 256
+ 	#define BONUS_PARAMATER_SIZE 5
+ 	#define CONST_NAME_SIZE 128
+ 	#define SKILL_NAME 64
+ 	#define SKILL_FORMAT 256
+ 	#define MOB_NAME_SIZE 64
+ 	#define MERC_NAME_SIZE 64
+ 	#define STATUS_NAME_SIZE 64
+ 	#define STATUS_FORMAT_SIZE 256
+ 	#define STATUS_PARAMATER_SIZE 4
+
+	/* error checking and exiting */
+ 	#define ENABLE_EXIT 0
+ 	#define CHECK_PASSED 0 /* return by exit function for error checking */
+ 	#define CHECK_FAILED 1
+ 	extern char err_buf[BUF_SIZE];
+ 	#define exit_null_safe(X, ...) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)
+ 	#define exit_func_safe(X, ...) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, exit_msg(err_buf, (X), __VA_ARGS__))
+ 	#define exit_abt_safe(X) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, (X))
+ 	char * exit_msg(char * buffer, char * format, ...);
+	int exit_null(const char *, const char *, const int, int, ...);
+	int exit_func(const char *, const char *, const int, int, const char *);
 
 	/* string of ASCII character set used for generating random string */
 	#define ASCII_SET "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -46,10 +63,6 @@
 	 */
 	int convert_integer(const char *, int);
 	int convert_uinteger(const char *, int);
-
-	/* Allocate memory for the string.
-   	 * char * str - The string to be placed into memory. 
-   	 */
 	char * convert_string(const char *);
 
 	/* utility array with sub-delimiting functions */
@@ -63,7 +76,11 @@
 
 	/* special string sub-delimiting */
 	void convert_delimit_integer(char *, char, int, ...);
-	void convert_integer_list(char *, char *, array_w *);
 	char * substr_delimit(char *, char *, char);
-	char * substr_delimit_list(char *, char *, char *);
+	const char * substr_delimit_list(const char *, char *, const char *);
+	int convert_integer_list(char *, char *, array_w *);
+	int convert_integer_list_static(const char *, const char *, int *, int);
+
+	/* copy upto function */
+	void strncopy(char *, int, const unsigned char *);
 #endif

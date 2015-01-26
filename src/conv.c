@@ -20,8 +20,10 @@ int main(int argc, char * argv[]) {
 		else
 			global_mode = 0x7;
 
-		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES && global_mode != 0x7)
-			exit_abt("invalid database type; only 'eathena', 'rathena', 'hercules', or 'all' is supported.");
+		if(global_mode != RATHENA && global_mode != EATHENA && global_mode != HERCULES && global_mode != 0x7) {
+			fprintf(stderr, "invalid database type; only 'eathena', 'rathena', 'hercules', or 'all' is supported.");
+			exit(EXIT_FAILURE);
+		}
 
 		struct lt_db_t * db = init_db("athena.db", INITIALIZE_DB);
 		if(global_mode & EATHENA) {
@@ -194,7 +196,7 @@ int main(int argc, char * argv[]) {
 		free(db4);
 		deit_db(db);
 	} else {
-		exit_buf("syntax '%s [eathena | rathena | hercules | all]'", argv[0]);
+		fprintf(stderr,"syntax '%s [eathena | rathena | hercules | all]'", argv[0]);
 	}
 	exit(EXIT_SUCCESS);
 }

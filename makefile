@@ -1,6 +1,6 @@
 # c compiler and flags
 CCompiler = gcc
-CFlags = -std=c99 -pedantic -Wall -g -O
+CFlags = -std=c99 -pedantic -Wall -g
 
 # db library variables
 HDRDIR = -Ihdr/
@@ -17,23 +17,17 @@ HE_LIBDIR = ../lib/hconfig.a
 # compile all applications or projects
 all: 
 	make lclean
-	make conv
-	make item
-	make itemr
-
-ball:
-	rm -f athena.db
-	./conv rathena
-	make bmin
-
-bmin:
-	rm -f itemr
-	make itemr
-	./itemr rathena script.txt
+	make loki
+	# make conv
+	# make item
+	# make itemr
 
 memchk: item
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
 
+memloki: loki	
+	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./loki
+	
 hitem: src/he_item.c $(OBJ)
 	$(CCompiler) -c -o he_item.o $(CFlags) src/he_item.c $(HDRDIR) $(HE_HDRDIR)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(HE_LIBDIR) $(LIB)

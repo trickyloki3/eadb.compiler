@@ -477,20 +477,20 @@
 	};
 
 	struct ic_db_t * init_ic_db(const char *);
-	int block_keyword_search(struct ic_db_t * db, block_t * info, char * keyword);
+	int block_keyword_search(struct ic_db_t * db, block_db_t * info, char * keyword);
 	int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword);
-	int const_keyword_search(struct ic_db_t * db, const_t * info, char * keyword, int mode);
+	int const_keyword_search(struct ic_db_t * db, ic_const_t * info, char * keyword, int mode);
 	int ra_const_id_search(struct ic_db_t * db, const_t * info, int id);
 	int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int mode);
 	int skill_name_search_id(struct ic_db_t * db, ic_skill_t * skill, int id, int mode);
 	int item_name_search(struct ic_db_t * db, ic_item_t * item, char * name, int mode);
 	int item_name_id_search(struct ic_db_t * db, ic_item_t * item, int id, int mode);
 	int mob_id_search(struct ic_db_t * db, ic_mob_t * mob, int id, int mode);
-	int merc_id_search(struct ic_db_t * db, merc_t * merc, int id, int mode);
-	int pet_id_search(struct ic_db_t * db, pet_t * pet, int id, int mode);
-	int bonus_name_search(struct ic_db_t * db, bonus_t * bonus, char * prefix, char * attribute);
+	int merc_id_search(struct ic_db_t * db, ic_merc_t * merc, int id, int mode);
+	int pet_id_search(struct ic_db_t * db, ic_pet_t * pet, int id, int mode);
+	int bonus_name_search(struct ic_db_t * db, ic_bonus_t * bonus, char * prefix, char * attribute);
 	int prod_lv_search(struct ic_db_t * db, ic_produce_t ** prod, int id, int mode);
-	int status_id_search(struct ic_db_t * db, status_t * status, int id, char * name);
+	int status_id_search(struct ic_db_t * db, ic_status_t * status, int id, char * name);
 	int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
 	int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
 	int ra_item_combo_search_id(struct ic_db_t * db, ra_item_combo_t ** combo, int id);
