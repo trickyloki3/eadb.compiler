@@ -34,7 +34,7 @@
  	#define VAR_NAME 32
 
 	/* error checking and exiting */
- 	#define ENABLE_EXIT 0
+ 	#define ENABLE_EXIT 1
  	#define CHECK_PASSED 0 /* return by exit function for error checking */
  	#define CHECK_FAILED 1
  	extern char err_buf[BUF_SIZE];

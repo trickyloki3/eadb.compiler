@@ -220,6 +220,7 @@
     /* auxiliary support */
     int script_block_dump(script_t *, FILE *);
     int split_paramater_list(token_r *, int *, char *);
+    int split_paramater(char **, int, int, int *);
 
     /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);

@@ -349,25 +349,28 @@ int script_block_dump(script_t * script, FILE * stm) {
 }
 
 int split_paramater_list(token_r * token, int * position, char * paramater) {
+    /* perform lexical on paramater */
+    return (script_lexical(token, paramater) || split_paramater(
+            token->script_ptr, 1, token->script_cnt - 1, position)) ?
+            SCRIPT_FAILED : SCRIPT_PASSED;
+}
+
+int split_paramater(char ** expr, int start, int end, int * pos) {
     int i = 0;
     int sub_level = 0;
-
-    /* perform lexical on paramater */
-    if(script_lexical(token, paramater))
-        return SCRIPT_FAILED;
-
-    /* chop off the parenthesis on both open by +- index */
-    for(i = 1; i < token->script_cnt - 1; i++) {
-        switch(token->script_ptr[i][0]) {
+    for(i = start; i < end; i++) {
+        switch(expr[i][0]) {
             case '(': sub_level++; break;
             case ')': sub_level--; break;
             default: break;
         }
         /* found the top level comma position */
-        if(!sub_level && token->script_ptr[i][0] == ',') break;
+        if(!sub_level && expr[i][0] == ',') {
+            *pos = i;
+            return SCRIPT_PASSED;
+        }
     }
-    *position = i;
-    return SCRIPT_PASSED;
+    return SCRIPT_FAILED;
 }
 
 int script_lexical(token_r * token, char * script) {
@@ -2930,13 +2933,13 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             op_cnt++;
         /* catch everything else */
         } else {
-            exit_func_safe("invalid token '%s' in item %s.\n", expr[i], block->item_id);
+            exit_func_safe("invalid token '%s' in item %s", expr[i], block->item_id);
             goto failed_expression;
         }
 
         /* check operands are connected by opreator */
         if(op_cnt > 1) {
-            exit_func_safe("operand '%s' without operator in item %d.\n", expr[i], block->item_id);
+            exit_func_safe("operand '%s' without operator in item %d", expr[i], block->item_id);
             goto failed_expression;
         }
 
@@ -2953,7 +2956,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             iter_node->list = NULL;
             temp_node = NULL;
         } else {
-            exit_func_safe("failed to generate node in item %s.\n", block->item_id);
+            exit_func_safe("failed to generate node in item %s", block->item_id);
             goto failed_expression;
         }
     }
@@ -2965,7 +2968,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
     /* check that at least one node was added */
     if(root_node == iter_node) {
-        exit_func_safe("detect zero node in expression in item %d.\n", block->item_id);
+        exit_func_safe("detect zero node in expression in item %d", block->item_id);
         goto failed_expression;
     }
 
@@ -3010,22 +3013,19 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     /* the actual result is in root_node->next so we need 
      * to copy any value we want to return using the root node */
     if(ret == SCRIPT_PASSED) {
-        /* setup the subexpression or expression node */
-        strncpy(root_node->expr, root_node->next->expr, strlen(root_node->next->expr));
+        /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
+        root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
+            NODE_TYPE_SUB : root_node->next->type;        
         root_node->min = root_node->next->min;
         root_node->max = root_node->next->max;
         root_node->range = copyrange(root_node->next->range);
-        root_node->cond_cnt = root_node->next->cond_cnt;
-        
-        /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
-        root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
-            NODE_TYPE_SUB : root_node->next->type;
-
         /* copy the logical tree if it exist */
         if(root_node->cond == NULL && root_node->next->cond != NULL) 
             root_node->cond = copy_any_tree(root_node->next->cond);
+        root_node->cond_cnt = root_node->next->cond_cnt;
+        strncpy(root_node->expr, root_node->next->expr, strlen(root_node->next->expr));
     } else {
-        exit_func_safe("failed to evaluate node tree in item %d.\n", block->item_id);
+        exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed_expression;
     }
 
@@ -3042,7 +3042,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     } while(iter_node != root_node);
     return root_node;
 
-    /* script has failed */
+    /* script has failed; clean up everything */
     failed_expression:
         iter_node = root_node;
         while(iter_node != NULL) {
@@ -3059,10 +3059,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     int i = 0;
     int index = 0;
 
-    /* parsing variables */
-    int subexpr_level = 0;
-    /*char buffer[BUF_SIZE];*/
-
     /* operand variables */
     node_t * resultOne = NULL;
     node_t * resultTwo = NULL;
@@ -3073,110 +3069,94 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     ic_item_t item;
     ic_const_t const_info;
     ea_item_group_t ea_item_group;
-    memset(&skill, 0, sizeof(ic_skill_t));
     memset(&item, 0, sizeof(ic_item_t));
     memset(&ea_item_group, 0, sizeof(ea_item_group_t));
 
     if(ncs_strcmp(func,"getskilllv") == 0) {
         /* search by skill id or skill constant for max level */
-        if(skill_name_search(block->db, &skill, expr[start], block->mode) && isdigit(expr[start][0]))
-            if(skill_name_search_id(block->db, &skill, convert_integer(expr[start], 10), block->mode))
-#if EXIT_ON_ERROR
-                exit_abt(build_buffer(global_err, "failed to search for skill %s in %d", expr[start], block->item_id));
-#else
+        memset(&skill, 0, sizeof(ic_skill_t));
+        if(skill_name_search(block->db, &skill, expr[start], block->mode))
+            if(isdigit(expr[start][0]) && skill_name_search_id(block->db, 
+            &skill, convert_integer(expr[start], 10), block->mode)) {
+                exit_func_safe("failed to search for skill %s in %d", expr[start], block->item_id);
                 goto failed_function;
-#endif
-
+            }
         /* write the skill name */
         node->expr_cnt = sprintf(node->expr,"%s Level", skill.desc);
         node->expr[node->expr_cnt] = '\0';
-
         /* skill level minimum is 0 (not learnt) or maximum level */
         *min = 0;
         *max = skill.max;
     } else if(ncs_strcmp(func,"pow") == 0) {
-        /* figure out the top level comma position */
-        for(i = start; i < end; i++) {
-            switch(expr[i][0]) {
-                case '(': subexpr_level++; break;
-                case ')': subexpr_level--; break;
-                default: break;
-            }
-            /* found the top level comma position */
-            if(!subexpr_level && expr[i][0] == ',') break;
-        }
-
-        /* maths; evaluate operand one and two, pow them both.*/
+        split_paramater(expr, start, end, &i);
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        if(resultOne == NULL || resultTwo == NULL) goto failed_function;
-        *min = (int) pow(resultOne->min, resultTwo->min);
-        *max = (int) pow(resultOne->max, resultTwo->max);
-
-        node->expr_cnt = sprintf(node->expr,"(%s)^%s",resultOne->expr, resultTwo->expr);
-        node->expr[node->expr_cnt] = '\0';
+        if(resultOne == NULL || resultTwo == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
+            if(resultOne != NULL) node_free(resultOne);
+            if(resultTwo != NULL) node_free(resultTwo);
+            return SCRIPT_FAILED;
+        } else {
+            *min = (int) pow(resultOne->min, resultTwo->min);
+            *max = (int) pow(resultOne->max, resultTwo->max);
+            node->expr_cnt = sprintf(node->expr,"(%s)^%s", resultOne->expr, resultTwo->expr);
+            node->expr[node->expr_cnt] = '\0';
+        }
     } else if(ncs_strcmp(func,"min") == 0) {
-        /* figure out the top level comma position */
-        for(i = start; i < end; i++) {
-            switch(expr[i][0]) {
-                case '(': subexpr_level++; break;
-                case ')': subexpr_level--; break;
-                default: break;
-            }
-            /* found the top level comma position */
-            if(!subexpr_level && expr[i][0] == ',') break;
-        }
-
-        /* maths; evaluate operand one and two, pow them both.*/
+        split_paramater(expr, start, end, &i);
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        if(resultOne == NULL || resultTwo == NULL) goto failed_function;
-        *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
-        *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
-        node->expr_cnt = sprintf(node->expr,"Minimum value of (%s) and (%s)",resultOne->expr, resultTwo->expr);
-        node->expr[node->expr_cnt] = '\0';
+        if(resultOne == NULL || resultTwo == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
+            if(resultOne != NULL) node_free(resultOne);
+            if(resultTwo != NULL) node_free(resultTwo);
+            return SCRIPT_FAILED;
+        } else {
+            *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+            *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
+            node->expr_cnt = sprintf(node->expr,"Minimum value of (%s) and (%s)",resultOne->expr, resultTwo->expr);
+            node->expr[node->expr_cnt] = '\0';
+        }
     } else if(ncs_strcmp(func,"max") == 0) {
-        /* figure out the top level comma position */
-        for(i = start; i < end; i++) {
-            switch(expr[i][0]) {
-                case '(': subexpr_level++; break;
-                case ')': subexpr_level--; break;
-                default: break;
-            }
-            /* found the top level comma position */
-            if(!subexpr_level && expr[i][0] == ',') break;
-        }
-
-        /* maths; evaluate operand one and two, pow them both.*/
+        split_paramater(expr, start, end, &i);
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        if(resultOne == NULL || resultTwo == NULL) goto failed_function;
-        *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
-        *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
-        node->expr_cnt = sprintf(node->expr,"Maximum value of (%s) and (%s)",resultOne->expr, resultTwo->expr);
-        node->expr[node->expr_cnt] = '\0';
-    } else if(ncs_strcmp(func,"rand") == 0) {
-        /* figure out the top level comma position */
-        for(i = start; i < end; i++) {
-            switch(expr[i][0]) {
-                case '(': subexpr_level++; break;
-                case ')': subexpr_level--; break;
-                default: break;
-            }
-            /* found the top level comma position */
-            if(!subexpr_level && expr[i][0] == ',') break;
+        if(resultOne == NULL || resultTwo == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
+            if(resultOne != NULL) node_free(resultOne);
+            if(resultTwo != NULL) node_free(resultTwo);
+            return SCRIPT_FAILED;
+        } else {
+            *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+            *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
+            node->expr_cnt = sprintf(node->expr,"Maximum value of (%s) and (%s)",resultOne->expr, resultTwo->expr);
+            node->expr[node->expr_cnt] = '\0';
         }
-
-        /* maths; evaluate operand one and two, pow them both.*/
-        resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        if(resultOne == NULL) goto failed_function;
+    } else if(ncs_strcmp(func,"rand") == 0) {
+        /* rand may have one or two argument */
+        if(split_paramater(expr, start, end, &i)) {
+            i = end; /* q.q obscure arcane */
+            resultOne = evaluate_expression_recursive(block, expr, start, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
+        } else {
+            resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
+        }
+            
+        if(resultOne == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
+            return SCRIPT_FAILED;
+        }
         if(i + 1 < end) {
             resultTwo = evaluate_expression_recursive(block, expr, i + 1, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-            if(resultTwo == NULL) goto failed_function;
-            *min = (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
-            *max = (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
-            node->expr_cnt = sprintf(node->expr,"random %s ~ %s",resultOne->expr, resultTwo->expr);
-            node->expr[node->expr_cnt] = '\0';
+            if(resultTwo == NULL) {
+                node_free(resultOne);
+                exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
+                return SCRIPT_FAILED;
+            } else {
+                *min = (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+                *max = (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
+                node->expr_cnt = sprintf(node->expr,"random %s ~ %s",resultOne->expr, resultTwo->expr);
+                node->expr[node->expr_cnt] = '\0';
+            }
         } else {
             *min = resultOne->min;
             *max = resultOne->max;
@@ -3185,41 +3165,30 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
     /* callfunc calls global functions; just enumerate .. */
     } else if(ncs_strcmp(func,"callfunc") == 0) {
+        block->flag = 0x01 | 0x02;
         if(ncs_strcmp(expr[start], "F_Rand") == 0) {
-            /* indicate multiset */
-            block->flag = 0x01 | 0x02;
             block->offset = block->ptr_cnt;
-
-            /* load the extended series onto the special buffer */
-            for(i = 0; i < end + 1; i++) /* +1 include ) for parsing below */
-                token.script_ptr[i] = expr[i];
-            token.script_cnt = end + 1;
-
-            /* parse the callfunc paramaters */
-            if(script_parse(&token, &start, block, ',',')',4) == SCRIPT_FAILED)
-                goto failed_function;
-            block->ptr_cnt--;
-
-            *min = 0;
-            *max = 0;
         } else if(ncs_strcmp(expr[start], "F_RandMes") == 0) {
-            /* indicate multiset */
-            block->flag = 0x01 | 0x02;
             block->offset = block->ptr_cnt + 1;
-
-            /* load the extended series onto the special buffer */
-            for(i = 0; i < end + 1; i++) /* +1 include ) for parsing below */
-                token.script_ptr[i] = expr[i];
-            token.script_cnt = end + 1;
-
-            /* parse the callfunc paramaters */
-            if(script_parse(&token, &start, block, ',',')',4) == SCRIPT_FAILED)
-               goto failed_function; 
-            block->ptr_cnt--;
-
-            *min = 0;
-            *max = 0;
+        } else {
+            exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
         }
+
+        /* load the extended series onto the special buffer */
+        for(i = 0; i < end + 1; i++) /* +1 include ) for parsing below */
+            token.script_ptr[i] = expr[i];
+        token.script_cnt = end + 1;
+
+        /* parse the callfunc paramaters */
+        if(script_parse(&token, &start, block, ',',')',4) == SCRIPT_FAILED) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
+        }
+        block->ptr_cnt--;
+
+        *min = 0;
+        *max = 0;
     } else if(ncs_strcmp(func,"strcharinfo") == 0) {
         /* note; hercules uses a set of constants named PC_*; might need to resolve to integer via const_db. */
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
