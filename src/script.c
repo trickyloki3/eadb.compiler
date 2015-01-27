@@ -351,6 +351,28 @@ int script_block_dump(script_t * script, FILE * stm) {
     return SCRIPT_PASSED;
 }
 
+int split_paramater_list(token_r * token, int * position, char * paramater) {
+    int i = 0;
+    int sub_level = 0;
+
+    /* perform lexical on paramater */
+    if(script_lexical(token, paramater))
+        return SCRIPT_FAILED;
+
+    /* chop off the parenthesis on both open by +- index */
+    for(i = 1; i < token->script_cnt - 1; i++) {
+        switch(token->script_ptr[i][0]) {
+            case '(': sub_level++; break;
+            case ')': sub_level--; break;
+            default: break;
+        }
+        /* found the top level comma position */
+        if(!sub_level && token->script_ptr[i][0] == ',') break;
+    }
+    *position = i;
+    return SCRIPT_PASSED;
+}
+
 int script_lexical(token_r * token, char * script) {
     int i = 0;
     int id = 0;                 /* indicate previous token is an identifer */
@@ -1179,28 +1201,6 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg) {
     script_block_reset(&script);
     script_block_finalize(&script);
     return (offset <= 0) ? NULL : convert_string(buffer);
-}
-
-int split_paramater_list(token_r * token, int * position, char * paramater) {
-    int i = 0;
-    int sub_level = 0;
-
-    /* perform lexical on paramater */
-    if(script_lexical(token, paramater))
-        return SCRIPT_FAILED;
-
-    /* chop off the parenthesis on both open by +- index */
-    for(i = 1; i < token->script_cnt - 1; i++) {
-        switch(token->script_ptr[i][0]) {
-            case '(': sub_level++; break;
-            case ')': sub_level--; break;
-            default: break;
-        }
-        /* found the top level comma position */
-        if(!sub_level && token->script_ptr[i][0] == ',') break;
-    }
-    *position = i;
-    return SCRIPT_PASSED;
 }
 
 int translate_getitem(block_r * block, int handler) {
@@ -2349,7 +2349,7 @@ int translate_bonus_script(block_r * block) {
     if(duration == NULL) return SCRIPT_FAILED;
     if(duration->min != duration->max) {
         node_free(duration);
-        exit_func_safe("unsupported expression; duration dependence; %d item id.", block->item_id);
+        exit_func_safe("unsupported expression; duration dependence; %d item id", block->item_id);
         return SCRIPT_FAILED;
     }
     offset += sprintf(buf + offset,"Unstackable bonus lasting for %d seconds ", duration->min);
@@ -2385,7 +2385,7 @@ int translate_bonus_script(block_r * block) {
             return SCRIPT_FAILED;
         }
         if(flag->min != flag->max) {
-            exit_func_safe("unsupported expression; flag dependence; %d item id.", block->item_id);
+            exit_func_safe("unsupported expression; flag dependence; %d item id", block->item_id);
             node_free(duration);
             node_free(type);
             node_free(flag);
@@ -2644,7 +2644,7 @@ int translate_write(block_r * block, char * desc, int flag) {
     block->arg[block->arg_cnt + length] = '\0';
     /* check that the write was successful */
     if(length <= 0) {
-        exit_func_safe("failed to write translation (%s) on item %d.\n", desc, block->item_id);
+        exit_func_safe("failed to write translation (%s) on item %d", desc, block->item_id);
         return SCRIPT_FAILED;
     }
     /* extend the buffer to the next length */
@@ -2664,7 +2664,7 @@ int translate_overwrite(block_r * block, char * desc, int position) {
     block->arg[block->arg_cnt + length] = '\0';
     /* check that the write was successful */
     if(length <= 0) {
-        exit_func_safe("failed to write translation (%s) on item %d.\n", desc, block->item_id);
+        exit_func_safe("failed to write translation (%s) on item %d", desc, block->item_id);
         return SCRIPT_FAILED;
     }
     /* extend the buffer to the next length */
@@ -2797,10 +2797,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         iter_node->list = NULL;
         /* handle sub-expression by calling evaluate_expression_recursive */
         if(expr[i][0] == '(') {
-            expr_inx_open = 0;
-            expr_inx_close = 0;
-            expr_sub_level = 0;
-
+            /* find the ending parethesis */
+            expr_inx_open = expr_inx_close = expr_sub_level = 0;
             for(expr_inx_open = i; i < end; i++) {
                 if(expr[i][0] == '(') expr_sub_level++;
                 if(expr[i][0] == ')') expr_sub_level--;
@@ -2810,12 +2808,10 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                 }
             }
 
-            if(!expr_inx_close || expr_sub_level)
-#if EXIT_ON_ERROR
-                exit_buf("failed interpreting item %d; unmatch parentheses.\n", block->item_id);
-#else
+            if(!expr_inx_close || expr_sub_level) {
+                exit_func_safe("unmatch parenthesis in item %d", block->item_id);
                 goto failed_expression;
-#endif
+            }
             /* ? operator require setting the EVALUATE_FLAG_EXPR_BOOL */            
             if(i + 1 < end && expr[i+1][0] == '?')
                 temp_node = evaluate_expression_recursive(block, expr, expr_inx_open + 1, expr_inx_close, logic_tree, flag | EVALUATE_FLAG_EXPR_BOOL);

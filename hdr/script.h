@@ -217,8 +217,9 @@
     int script_block_release(block_r *);
     int script_block_finalize(script_t *);
 
-    /* block debugging */
+    /* auxiliary support */
     int script_block_dump(script_t *, FILE *);
+    int split_paramater_list(token_r *, int *, char *);
 
     /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);
@@ -232,23 +233,8 @@
     int script_generate_combo(int, char *, int *);
     char * script_compile_raw(char *, int, FILE *);
     #define script_compile(X, Y) script_compile_raw(X, Y, NULL)
-    
-    /* auxiliary support */
-    int split_paramater_list(token_r *, int *, char *);
 
-    /* script translation functions */
-    int translate_bonus(block_r *, char *);
-    int translate_const(block_r *, char *, int);
-    int translate_skill(block_r *, char *);
-    int translate_tbl(block_r *, char *, int);
-    int translate_splash(block_r *, char *);
-    int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
-    int translate_time(block_r *, char *);
-    int translate_id(block_r *, char *, int);
-    int translate_item(block_r *, char *);
-    int translate_autobonus(block_r *, int);
-    int translate_heal(block_r *, int);
-    int translate_skill_block(block_r *, int);
+    /* script translation functions */  
     int translate_getitem(block_r *, int);
     int translate_rentitem(block_r *, int);
     int translate_delitem(block_r *, int);
@@ -257,11 +243,23 @@
     int translate_hire_merc(block_r *, int);
     int translate_pet_egg(block_r *, int);
     int translate_getexp(block_r *, int);
-    int translate_misc(block_r *, char *);
     int translate_transform(block_r *);
+    int translate_skill_block(block_r *, int);
+    int translate_heal(block_r *, int);
+    int translate_bonus(block_r *, char *);
+    int translate_const(block_r *, char *, int);
+    int translate_skill(block_r *, char *);
+    int translate_tbl(block_r *, char *, int);
+    int translate_splash(block_r *, char *);
+    int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
+    int translate_time(block_r *, char *);
+    int translate_id(block_r *, char *, int);
+    int translate_item(block_r *, char *);    
+    int translate_autobonus(block_r *, int);
+    int translate_misc(block_r *, char *);
     int translate_produce(block_r *, int);
-    int translate_status_end(block_r *);
     int translate_status(block_r *, int);
+    int translate_status_end(block_r *);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
     int translate_petloot(block_r *);
