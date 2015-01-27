@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
 	} else {
 		exit_abt_safe("failed to query item database");
 	}
-	fprintf(stderr,"[info]: compiled all %d items", cnt);
+	fprintf(stderr,"[info]: compiled all %d items.\n", cnt);
 
 	/* deit resources */
 	fclose(debug);

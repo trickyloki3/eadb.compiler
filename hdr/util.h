@@ -30,6 +30,8 @@
  	#define STATUS_NAME_SIZE 64
  	#define STATUS_FORMAT_SIZE 256
  	#define STATUS_PARAMATER_SIZE 4
+ 	#define VAR_ID 32
+ 	#define VAR_NAME 32
 
 	/* error checking and exiting */
  	#define ENABLE_EXIT 0

@@ -432,6 +432,17 @@
       char * str;
    } var_t;
 
+   typedef struct {
+      int tag;         /* in-house identification */
+      char id[VAR_ID]; /* identifier string */
+      int type;        /* type of identifer and flags */
+      int vflag;
+      int fflag;
+      int min;         /* help calculations */
+      int max;
+      char str[VAR_NAME];
+   } ic_var_t;
+
 	typedef struct {
 		int scid;     /* status id */
 		char * scstr; /* status string identifer */

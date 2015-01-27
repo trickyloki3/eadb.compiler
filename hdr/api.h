@@ -478,7 +478,7 @@
 
 	struct ic_db_t * init_ic_db(const char *);
 	int block_keyword_search(struct ic_db_t * db, block_db_t * info, char * keyword);
-	int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword);
+	int var_keyword_search(struct ic_db_t * db, ic_var_t * info, char * keyword);
 	int const_keyword_search(struct ic_db_t * db, ic_const_t * info, char * keyword, int mode);
 	int ra_const_id_search(struct ic_db_t * db, const_t * info, int id);
 	int skill_name_search(struct ic_db_t * db, ic_skill_t * skill, char * name, int mode);

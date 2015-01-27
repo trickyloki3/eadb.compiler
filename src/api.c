@@ -128,7 +128,7 @@ int block_keyword_search(struct ic_db_t * db, block_db_t * info, char * keyword)
 	return CHECK_PASSED;
 }
 
-int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword) {
+int var_keyword_search(struct ic_db_t * db, ic_var_t * info, char * keyword) {
 	int status = 0;
 
 	/* check null paramaters */
@@ -140,14 +140,13 @@ int var_keyword_search(struct ic_db_t * db, var_t * info, char * keyword) {
 	status = sqlite3_step(db->var_search);
 	if(status == SQLITE_ROW) {
 		info->tag = sqlite3_column_int(db->var_search, 0);
-		if(info->id != NULL) free(info->id);
-		info->id = convert_string((const char *) sqlite3_column_text(db->var_search, 1));
+		strncopy(info->id, VAR_ID, sqlite3_column_text(db->var_search, 1));
 		info->type = sqlite3_column_int(db->var_search, 2);
 		info->vflag = sqlite3_column_int(db->var_search, 3);
 		info->fflag = sqlite3_column_int(db->var_search, 4);
 		info->min = sqlite3_column_int(db->var_search, 5);
 		info->max = sqlite3_column_int(db->var_search, 6);
-		info->str = convert_string((const char *) sqlite3_column_text(db->var_search, 7));
+		strncopy(info->str, VAR_NAME, sqlite3_column_text(db->var_search, 7));
 	}
 	sqlite3_reset(db->var_search);
 	return (status == SQLITE_ROW) ? 0 : -1;
