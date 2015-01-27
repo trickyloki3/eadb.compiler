@@ -109,13 +109,6 @@
     #define BONUS_FLAG_ST_4         0x08000000  /* stack 4th argument */
     #define BONUS_FLAG_ST_5         0x10000000  /* stack 5th argument */
 
-    typedef struct dep {
-        char buf[BUF_SIZE];
-        int cnt;
-        int buf_ptr[PTR_SIZE];
-        int buf_ptr_cnt;
-    } dep_t;
-
     typedef struct {
         char script[BUF_SIZE];
         char * script_ptr[PTR_SIZE];
@@ -174,7 +167,6 @@
         int mode;                           /* multiplexer for rathena, eathena, or hercule tables */
         /* translation information */
         logic_node_t * logic_tree;           /* calculational and dependency information */
-
         /* flag and offset are use for variable length arguments in functions */
         int flag;                            /* multi-purpose flag for special conditions 
                                                 0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)

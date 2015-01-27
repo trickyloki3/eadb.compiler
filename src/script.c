@@ -1550,7 +1550,7 @@ int translate_skill_block(block_r * block, int handler) {
 
 int translate_heal(block_r * block, int handler) {
     char buf[BUF_SIZE];
-    char aux[BUF_SIZE];
+    /*char aux[BUF_SIZE];*/
     int offset = 1;
     node_t * hp = NULL;
     node_t * sp = NULL;
@@ -1570,13 +1570,15 @@ int translate_heal(block_r * block, int handler) {
         offset += sprintf(buf,"%s %sHP by %s%s.",
             (CHECK_NEGATIVE(block->eng[0])?"Drain":"Recover"), 
             (handler == 37)?"Mercenary ":"",
-            formula(aux, block->eng[0], hp),
+            /*formula(aux, block->eng[0], hp),*/
+            block->eng[0],
             (handler == 9)?"%":"");
     if(!CHECK_ZERO(block->eng[1])) 
         offset += sprintf(buf + offset - 1,"%s%s SP by %s%s.",
             (!CHECK_ZERO(block->eng[0])?" ":""),
             (CHECK_NEGATIVE(block->eng[1])?"Drain":"Recover"), 
-            formula(aux, block->eng[1], sp),
+            /*formula(aux, block->eng[1], sp),*/
+            block->eng[1],
             (handler == 9)?"%":"");
     buf[offset] = '\0';
     translate_write(block, buf, 1);
@@ -1654,7 +1656,7 @@ int translate_bonus(block_r * block, char * bonus) {
 int translate_const(block_r * block, char * expr, int flag) {
     int tbl_index = 0;
     char * tbl_str = NULL;
-    char buffer[BUF_SIZE];
+    /*char buffer[BUF_SIZE];*/
     ic_const_t const_info;
     /* check null paramater */
     if(exit_null_safe(2, block, expr))
@@ -1682,7 +1684,7 @@ int translate_const(block_r * block, char * expr, int flag) {
     if(flag & 0x10) 
         tbl_str = class_tbl(tbl_index);
     if(flag & 0x20) {
-        if(block->mode == EATHENA) {
+        /*if(block->mode == EATHENA) {
             if(ea_item_group_search(block->db, tbl_index, block->mode, buffer))
                 return SCRIPT_FAILED;
             tbl_str = buffer;
@@ -1692,7 +1694,8 @@ int translate_const(block_r * block, char * expr, int flag) {
             tbl_str = buffer;
         } else {
             tbl_str = itemgrp_tbl(tbl_index);
-        }
+        }*/
+        tbl_str = "a box"; /* lol */
     }
  
     /* indicate unresolve item group; there are many I am too lazy to add */
@@ -1778,7 +1781,7 @@ int translate_trigger(block_r * block, char * expr, int type) {
         return SCRIPT_FAILED;
 
     /* evalute the trigger to bit-mask value */
-    result = evaluate_expression(block, expr, 0, EVALUATE_FLAG_KEEP_NODE);
+    result = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(result == NULL) {
         exit_func_safe("failed to evaluate '%s' for item %d\n", expr, block->item_id);
         return SCRIPT_FAILED;
@@ -2206,31 +2209,31 @@ int translate_status(block_r * block, int handler) {
                 case 'n': 
                         result[i] = evaluate_expression(block, block->ptr[2+i], 1, 
                         EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  
-                        if(result[i] == NULL) return SCRIPT_FAILED;
+                        if(result[i] == NULL) goto status_failed;
                         break; /* Integer Value */
                 case 'm': 
                         result[i] = evaluate_expression(block, block->ptr[2+i], 1, 
                         EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);  
-                        if(result[i] == NULL) return SCRIPT_FAILED;
+                        if(result[i] == NULL) goto status_failed;
                         break; /* Integer Value */
                 case 'p': 
                         result[i] = evaluate_expression(block, block->ptr[2+i], 1, 
                         EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
-                        if(result[i] == NULL) return SCRIPT_FAILED;
+                        if(result[i] == NULL) goto status_failed;
                         break; /* Integer Percentage */
                 case 'e': 
                         if(translate_const(block, block->ptr[2+i], 0x02) == SCRIPT_FAILED)
-                            return SCRIPT_FAILED;
+                            goto status_failed;
                         break; /* Effect */
                 case 'u': 
                         ret_value = block->eng_cnt;
                         evaluate_expression(block, block->ptr[2+i], -1, EVALUATE_FLAG_WRITE_FORMULA); 
                         if(ret_value + 1 != block->eng_cnt)
-                            return SCRIPT_FAILED;
+                            goto status_failed;
                         break; /* Integer Value */
                 default: 
                     exit_func_safe("invalid bonus type %d in item %d", status.vmod[i], block->item_id);
-                    return SCRIPT_FAILED;
+                    goto status_failed;
             }
         }
 
@@ -2298,6 +2301,11 @@ int translate_status(block_r * block, int handler) {
         if(result[i] != NULL) node_free(result[i]);
     translate_write(block, buf, 1);
     return SCRIPT_PASSED;
+
+    status_failed:
+        for(i = 0; i < BONUS_SIZE; i++)
+            if(result[i] != NULL) node_free(result[i]);
+        return SCRIPT_FAILED;
 }
 
 int translate_status_end(block_r * block) {
@@ -2664,101 +2672,83 @@ int translate_overwrite(block_r * block, char * desc, int position) {
     return SCRIPT_PASSED;   
 }
 
-int dep_write(dep_t * dep, char * vf) {
-    int i = 0;
-    int len = 0;
-
-#if EXIT_ON_ERROR
-    exit_null("dep is null", 1, dep);
-    exit_null("vf is null", 1, vf);
-#else
-    if(dep == NULL || vf == NULL) 
-        return SCRIPT_FAILED;
-#endif
-    for(i = 0; i < dep->buf_ptr_cnt; i++)
-        if(ncs_strcmp(&dep->buf[dep->buf_ptr[i]], vf) == 0)
-            return SCRIPT_FAILED;
-
-    dep->buf_ptr[dep->buf_ptr_cnt] = dep->cnt;
-    len = sprintf(&dep->buf[dep->cnt],"%s", vf);
-    if(len <= 0)
-#if EXIT_ON_ERROR
-        exit_abt(build_buffer(global_err, "failed to write variable or function node (%s).\n", vf));
-#else
-        return SCRIPT_FAILED;
-#endif
-    dep->cnt += len + 1;
-    dep->buf_ptr_cnt++;
-    return SCRIPT_PASSED;   
-}
-
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
     int length = 0;
-    node_t * root_node;
+    node_t * root_node = NULL;
     token_r expr_token;
     logic_node_t * temp = NULL;
 
-    /* lexical analysis on expression and return failed if failed */
-    if(script_lexical(&expr_token, expr)) return NULL;
-    if(expr_token.script_cnt <= 0) return NULL;
+    /* check null paramaters */
+    if(exit_null_safe(2, block, expr))
+        return NULL;
 
-    /* evaluate the expression */
-    root_node = evaluate_expression_recursive(block, expr_token.script_ptr, 0, expr_token.script_cnt, block->logic_tree, flag);
-    if(root_node == NULL) {
-        exit_func_safe("failed to evaluate %s in item %d", expr, block->item_id);
+    /* check division by zero */
+    if(modifier == 0) {
+        exit_func_safe("modifier is zero will cause division by zero in item %d", block->item_id);
         return NULL;
     }
 
-    /* write the result into argument translation */
-    if(modifier != 0) {
-        block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
-        if(root_node->min == root_node->max) {
-            if((root_node->min / modifier) == 0 && root_node->min > 0)
-                length = sprintf(&block->arg[block->arg_cnt],"%.2f",((double)(root_node->min) / modifier));
-            else
-                length = sprintf(&block->arg[block->arg_cnt],"%d",(root_node->min) / modifier);
-        } else {
-            if(((root_node->min / modifier) == 0 && root_node->min > 0) || 
-               ((root_node->max / modifier) == 0 && root_node->max > 0))
-                length = sprintf(&block->arg[block->arg_cnt],"%.2f ~ %.2f",
-                    ((double)(root_node->min) / modifier), ((double)(root_node->max) / modifier));
-            else
-                length = sprintf(&block->arg[block->arg_cnt],"%d ~ %d",(root_node->min) / modifier, (root_node->max) / modifier);
-        }
-        if(length <= 0) return NULL;
+    /* tokenize the expression */
+    if(script_lexical(&expr_token, expr)) {
+        exit_func_safe("failed to lex '%s' in item %d", expr, block->item_id);
+        return NULL;
+    }
+    if(expr_token.script_cnt <= 0) {
+        exit_func_safe("empty token list '%s' in item %d", expr, block->item_id);
+        return NULL;
+    }
 
-        /* write the modifier in to the expression */
-        if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0) {
-            root_node->expr_cnt = sprintf(root_node->expr,"%s / %d", root_node->expr, modifier);
-            root_node->expr[root_node->expr_cnt] = '\0';
-        }
+    /* evaluate the expression */
+    root_node = evaluate_expression_recursive(block, expr_token.script_ptr, 
+                0, expr_token.script_cnt, block->logic_tree, flag);
+    if(root_node == NULL) {
+        exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
+        return NULL;
+    }
 
-        /* extend the buffer to the next length */
-        block->arg_cnt += length + 1;
-        block->eng_cnt++;
+    /* write the integer values on the stack */
+    block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
+    if(root_node->min == root_node->max) {
+        /* single value with adjusting up to 2 decimal places */
+        length = ((root_node->min / modifier) == 0 && root_node->min > 0) ?
+            sprintf(&block->arg[block->arg_cnt],"%.2f",((double)(root_node->min) / modifier)):
+            sprintf(&block->arg[block->arg_cnt],"%d",(root_node->min) / modifier);
+    } else {
+        /* multiple value with adjusting up to 2 decimal places */
+        length = (((root_node->min / modifier) == 0 && root_node->min > 0) || ((root_node->max / modifier) == 0 && root_node->max > 0)) ?
+            sprintf(&block->arg[block->arg_cnt],"%.2f ~ %.2f", ((double)(root_node->min) / modifier), ((double)(root_node->max) / modifier)):
+            sprintf(&block->arg[block->arg_cnt],"%d ~ %d",(root_node->min) / modifier, (root_node->max) / modifier);
+    }
+
+    /* advance the translation stack */
+    block->arg_cnt += length + 1;
+    block->eng_cnt++;
+
+    /* write the modifier in the formula expression */
+    if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0) {
+        root_node->expr_cnt = sprintf(root_node->expr,"%s / %d", root_node->expr, modifier);
+        root_node->expr[root_node->expr_cnt] = '\0';
     }
 
     /* write the formula into the block and only write formula if dependencies exist */
-    if(flag & EVALUATE_FLAG_WRITE_FORMULA && root_node->cond_cnt > 0) {
+    if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0)
         formula_write(block, root_node->expr);
-        /*printf("[%d] %s\n", root_node->cond_cnt, root_node->expr);*/
-    }
 
-    /* keep a copy of the logic tree and free if not */
-    if(flag & EVALUATE_FLAG_KEEP_LOGIC_TREE)
+    /* keep logic tree in node */
+    if(EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
         if(root_node->cond != NULL) {
             if(block->logic_tree == NULL) {
                 block->logic_tree = copy_deep_any_tree(root_node->cond);
             } else {
-                /* add the new tree to the stack */
+                /* new logic trees are stack onto of one another */
                 temp = block->logic_tree;
                 block->logic_tree = copy_deep_any_tree(root_node->cond);
                 block->logic_tree->stack = temp;
             }
         }
 
-    /* free the root node */
-    if(!(flag & EVALUATE_FLAG_KEEP_NODE)) {
+    /* keep root node */
+    if(!(EVALUATE_FLAG_KEEP_NODE & flag)) {
         node_free(root_node);
         root_node = NULL;
     }
@@ -3834,23 +3824,14 @@ char * formula(char * buf, char * eng, node_t * result) {
 
 int formula_write(block_r * block, char * formula) {
     int len = 0;
-#if EXIT_ON_ERROR
-    exit_null("block is null", 1, block);
-    exit_null("formula is null", 1, formula);
-#else
-    if(block == NULL || formula == NULL)
+    if(exit_null_safe(2, block, formula))
         return SCRIPT_FAILED;
-#endif
-    /*block->exp[block->exp_cnt] = &block->arg[block->arg_cnt];*/
     len = sprintf(&block->arg[block->arg_cnt],"%s", formula);
-    if(len <= 0)
-#if EXIT_ON_ERROR
-        exit_abt(build_buffer(global_err, "failed to write formula (%s) on item %d.\n", formula, block->item_id));
-#else
+    if(len <= 0) {
+        exit_func_safe("failed to write formula (%s) on item %d.\n", formula, block->item_id);
         return SCRIPT_FAILED;
-#endif
+    }
     block->arg_cnt += len + 1;
-    /*block->exp_cnt++;*/
     return SCRIPT_PASSED;
 }
 
@@ -3894,17 +3875,9 @@ void node_dmp(node_t * node, FILE * stm) {
             case NODE_TYPE_SUB: fprintf(stm,"     Type: Subexpression %s; %d:%d\n", node->expr, node->min, node->max); break;
             default: fprintf(stm,"     Type: %d\n", node->op); break;
         }
-        /*fprintf(stm,"  Minimum: %d\n", node->min);
-        fprintf(stm,"  Maximum: %d\n", node->max);*/
         fprintf(stm,"  Arg_Cnt: %d\n", node->args_cnt);
         fprintf(stm,"  Arg_Ptr: %d\n", node->args_ptr_cnt);
-        /*fprintf(stm,"   Parent: %p\n", (void *) node->parent);
-        fprintf(stm,"     Left: %p\n", (void *) node->left);
-        fprintf(stm,"    Right: %p\n", (void *) node->right);      
-        fprintf(stm,"     Next: %p\n", (void *) node->next);
-        fprintf(stm,"     Prev: %p\n", (void *) node->prev);*/
         fprintf(stm," Cond Cnt: %d\n", node->cond_cnt);
-        /*fprintf(stm," Expr Len: %d\n", node->expr_cnt);*/
         fprintf(stm,"     Expr: %s\n", node->expr);
         dmprange(node->range, stm, "range; ");
         dmpnamerange(node->cond, stdout, 0);

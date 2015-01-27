@@ -18,9 +18,9 @@ HE_LIBDIR = ../lib/hconfig.a
 all: 
 	make lclean
 	make loki
-	# make conv
-	# make item
-	# make itemr
+	make conv
+	make item
+	make itemr
 
 memchk: item
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
@@ -56,6 +56,7 @@ lclean:
 	rm -f item
 	rm -f itemr
 	rm -f hitem
+	rm -f loki
 	rm -f he_item.o
 	rm -f dump.txt
 	rm -f item.txt
