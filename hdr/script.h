@@ -273,6 +273,12 @@
     int translate_write(block_r *, char *, int);
     int translate_overwrite(block_r *, char *, int);
 
+    /* writing the formula expressions */
+    char * formula(char *, char *, node_t *);
+    int formula_write(block_r *, char *);
+    char * status_formula(char *, char *, node_t *, int, int);
+    void argument_write(node_t * node, char * desc);
+
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);
@@ -281,14 +287,10 @@
     int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
     void node_inherit_cond(node_t *);
     void node_expr_append(node_t *, node_t *, node_t *);
-    char * formula(char *, char *, node_t *);
-    int formula_write(block_r *, char *);
-    char * status_formula(char *, char *, node_t *, int, int);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
 
     /* support translation */
-    void argument_write(node_t *, char *);
     int translate_bonus_desc(node_t **, block_r *, ic_bonus_t *);
     char * translate_bonus_template(char *, int *, char *, ...);
     void translate_bonus_integer(block_r *, node_t *, int *);

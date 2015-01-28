@@ -791,7 +791,7 @@ int script_translate(script_t * script) {
             case 2: ret = translate_bonus(iter, "bonus3"); break;                                                   /* bonus3 */
             case 3: ret = translate_bonus(iter, "bonus4"); break;                                                   /* bonus4 */
             case 4: ret = translate_bonus(iter, "bonus5"); break;                                                   /* bonus5 */
-                        case 5: ret = translate_autobonus(iter, 0x01); break;                                                   /* autobonus */
+            case 5: ret = translate_autobonus(iter, 0x01); break;                                                   /* autobonus */
             case 6: ret = translate_autobonus(iter, 0x02); break;                                                   /* autobonus2 */
             case 7: ret = translate_autobonus(iter, 0x04); break;                                                   /* autobonus3 */
             case 8: ret = translate_heal(iter, iter->type); break;                                                  /* heal */
@@ -2663,6 +2663,56 @@ int translate_overwrite(block_r * block, char * desc, int position) {
     return SCRIPT_PASSED;   
 }
 
+char * formula(char * buf, char * eng, node_t * result) {
+    int len = 0;
+    if(buf == NULL || eng == NULL || result == NULL)
+        return eng;
+    if(result != NULL && result->cond_cnt > 0) {
+        len = (result->expr[0] == '(' && result->expr[strlen(result->expr) - 1] == ')') ?
+            sprintf(buf, "%s %s", eng, result->expr):
+            sprintf(buf, "%s (%s)", eng, result->expr);
+        buf[len] = '\0';
+        return buf;
+    }
+    return eng;
+}
+
+int formula_write(block_r * block, char * formula) {
+    int len = 0;
+    if(exit_null_safe(2, block, formula))
+        return SCRIPT_FAILED;
+    len = sprintf(&block->arg[block->arg_cnt],"%s", formula);
+    if(len <= 0) {
+        exit_func_safe("failed to write formula (%s) on item %d.\n", formula, block->item_id);
+        return SCRIPT_FAILED;
+    }
+    block->arg_cnt += len + 1;
+    return SCRIPT_PASSED;
+}
+
+char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
+    int offset = 0;
+    if(aux == NULL || eng == NULL || blank < 0)
+        return "";
+    if(result == NULL) 
+        return eng;
+    switch(type) {
+        case 'n': check_node_range(result, aux); break;
+        case 'p': check_node_range_precentage(result, aux); break;
+        default: offset = sprintf(aux, "%s", eng); aux[offset] = '\0'; break;
+    }
+    return formula(aux, aux, result);
+}
+
+void argument_write(node_t * node, char * desc) {
+    int offset = node->args_cnt;                       /* current offset on stack */
+    if(exit_null_safe(2, node, desc)) return;
+    node->args_ptr[node->args_ptr_cnt++] = offset;     /* record current offset on stack */
+    offset += sprintf(node->args + offset, "%s", desc);/* write new string onto stack */
+    node->args[offset] = '\0';                         /* null terminate new string */
+    node->args_cnt = offset + 1;                       /* set new offset on stack */
+}
+
 node_t * evaluate_argument(block_r * block, char * expr) {
     node_t * result = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(result == NULL) {
@@ -3069,7 +3119,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     ic_item_t item;
     ic_const_t const_info;
     ea_item_group_t ea_item_group;
-    memset(&item, 0, sizeof(ic_item_t));
     memset(&ea_item_group, 0, sizeof(ea_item_group_t));
 
     if(ncs_strcmp(func,"getskilllv") == 0) {
@@ -3079,7 +3128,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             if(isdigit(expr[start][0]) && skill_name_search_id(block->db, 
             &skill, convert_integer(expr[start], 10), block->mode)) {
                 exit_func_safe("failed to search for skill %s in %d", expr[start], block->item_id);
-                goto failed_function;
+                return SCRIPT_FAILED;
             }
         /* write the skill name */
         node->expr_cnt = sprintf(node->expr,"%s Level", skill.desc);
@@ -3140,7 +3189,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         } else {
             resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         }
-            
         if(resultOne == NULL) {
             exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
             return SCRIPT_FAILED;
@@ -3166,6 +3214,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     /* callfunc calls global functions; just enumerate .. */
     } else if(ncs_strcmp(func,"callfunc") == 0) {
         block->flag = 0x01 | 0x02;
+        /* the paramaters begin at a certain offset */
         if(ncs_strcmp(expr[start], "F_Rand") == 0) {
             block->offset = block->ptr_cnt;
         } else if(ncs_strcmp(expr[start], "F_RandMes") == 0) {
@@ -3187,22 +3236,17 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         block->ptr_cnt--;
 
-        *min = 0;
-        *max = 0;
+        *min = *max = 0;
     } else if(ncs_strcmp(func,"strcharinfo") == 0) {
         /* note; hercules uses a set of constants named PC_*; might need to resolve to integer via const_db. */
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(resultOne == NULL) goto failed_function;
-
+        if(resultOne == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
+        }
         if(resultOne->min != resultOne->max) {
-            fprintf(stderr,"[warn]: evaluate_function; strcharinfo must "
-                "evaluate to constant integer on item id %d\n", block->item_id);
-            dmprange(resultOne->range, stderr, "warning: evaluate_function; ");
-#if EXIT_ON_ERROR
-            exit(EXIT_FAILURE);
-#else
-            goto failed_function;
-#endif
+            exit_func_safe("%s must be a constant expression in item %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
             case 0: argument_write(node, "Character"); break;
@@ -3210,51 +3254,37 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             case 2: argument_write(node, "Guild"); break;
             case 3: argument_write(node, "Map"); break;
             default: 
-                fprintf(stderr, "[warn]: evaluate_function; strcharinfo; "
-                    "invalid constant %d on item id %d\n", block->item_id, resultOne->min);
-#if EXIT_ON_ERROR
-                exit(EXIT_FAILURE);
-#else
-                goto failed_function;
-#endif
+                exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
+                return SCRIPT_FAILED;
         }
     } else if(ncs_strcmp(func,"countitem") == 0) {
-        /* note; countitem also accept item names, but this is not common; might need to resolve to via item_db or use as is */
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(resultOne == NULL) goto failed_function;
-
-        if(resultOne->min != resultOne->max) {
-            fprintf(stderr,"[warn]: evaluate_function; countitem must "
-                "evaluate to constant integer on item id %d", block->item_id);
-            dmprange(resultOne->range, stderr, "[warn]: evaluate_function; ");
-#if EXIT_ON_ERROR
-            exit(EXIT_FAILURE);
-#else
-            goto failed_function;
-#endif
+        if(resultOne == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
         }
-
-        if(item_name_id_search(block->db, &item, resultOne->min, block->mode))
-#if EXIT_ON_ERROR
-            exit_abt(build_buffer(global_err, "failed to search for item %d in %d", resultOne->min, block->item_id));
-#else
-            goto failed_function;
-#endif
+        if(resultOne->min != resultOne->max) {
+            exit_func_safe("%s must be a constant expression in item %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
+        }
+        memset(&item, 0, sizeof(ic_item_t));
+        if(item_name_id_search(block->db, &item, resultOne->min, block->mode)) {
+            exit_func_safe("failed to search for item %d in %d", resultOne->min, block->item_id);
+            return SCRIPT_FAILED;
+        }
+        /* write the item name on the argument stack */
         argument_write(node, item.name);
         *min = 0;
         *max = 2147483647;
     } else if(ncs_strcmp(func,"gettime") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(resultOne == NULL) goto failed_function;
-
+        if(resultOne == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
+        }
         if(resultOne->min != resultOne->max) {
-            fprintf(stderr,"[warn]: evaluate_function; gettime must evaluate to constant integer on item id %d\n", block->item_id);
-            dmprange(resultOne->range, stderr, "warning: evaluate_function; ");
-#if EXIT_ON_ERROR
-            exit(EXIT_FAILURE);
-#else
-            goto failed_function;
-#endif
+            exit_func_safe("%s must be a constant expression in item %d\n", expr, block->item_id);
+            return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
             case 1: argument_write(node, "Seconds"); node->id = "gettime_second"; break;
@@ -3266,14 +3296,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             case 7: argument_write(node, "Year"); node->id = "gettime_year"; break;
             case 8: argument_write(node, "Day of Year"); node->id = "gettime_dayyear"; break;
             default: 
-                fprintf(stderr, "[warn]: evaluate_function; gettime; invalid "
-                    "constant %d on item id %d\n", resultOne->min, block->item_id);
-#if EXIT_ON_ERROR
-                exit(EXIT_FAILURE);
-#else
-                goto failed_function;
-#endif
-                break;
+                exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
+                return SCRIPT_FAILED;
         }
         *min = 0;
         *max = 2147483647;
@@ -3281,41 +3305,42 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         for(i = start; i < end; i++)
             if(expr[i][0] == ',')
                 index = i;
-
         resultOne = evaluate_expression_recursive(block, expr, start, index, block->logic_tree, 0);
         resultTwo = evaluate_expression_recursive(block, expr, index + 1, index + 2, block->logic_tree, 0);
-        if(resultOne == NULL || resultTwo == NULL) goto failed_function;
+        if(resultOne == NULL || resultTwo == NULL) {
+            if(resultOne != NULL) node_free(resultOne);
+            if(resultTwo != NULL) node_free(resultTwo);
+            return SCRIPT_FAILED;
+        }
         argument_write(node, resultOne->cond->args);
         switch(resultTwo->min) {
-            case 0: argument_write(node, "Buy Price");
-            case 1: argument_write(node, "Sell Price");
-            case 2: argument_write(node, "Item Type");
-            case 3: argument_write(node, "Max Drop Chance");
-            case 4: argument_write(node, "Sex");
-            case 5: argument_write(node, "Equip");
-            case 6: argument_write(node, "Weight");
-            case 7: argument_write(node, "Attack");
-            case 8: argument_write(node, "Defense");
-            case 9: argument_write(node, "Range");
-            case 10: argument_write(node, "Slot");
-            case 11: argument_write(node, "Weapon Type");
-            case 12: argument_write(node, "Requirement Level");
-            case 13: argument_write(node, "Weapon Level");
-            case 14: argument_write(node, "View ID");
-            case 15: argument_write(node, "Magical Attack");
-            default: break;
+            case 0: argument_write(node, "Buy Price"); break;
+            case 1: argument_write(node, "Sell Price"); break;
+            case 2: argument_write(node, "Item Type"); break;
+            case 3: argument_write(node, "Max Drop Chance"); break;
+            case 4: argument_write(node, "Sex"); break;
+            case 5: argument_write(node, "Equip"); break;
+            case 6: argument_write(node, "Weight"); break;
+            case 7: argument_write(node, "Attack"); break;
+            case 8: argument_write(node, "Defense"); break;
+            case 9: argument_write(node, "Range"); break;
+            case 10: argument_write(node, "Slot"); break;
+            case 11: argument_write(node, "Weapon Type"); break;
+            case 12: argument_write(node, "Requirement Level"); break;
+            case 13: argument_write(node, "Weapon Level"); break;
+            case 14: argument_write(node, "View ID"); break;
+            case 15: argument_write(node, "Magical Attack"); break;
+            default: 
+                exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
+                return SCRIPT_FAILED;
         }
-
         *min = 0;
         *max = 2147483647;
     } else if(ncs_strcmp(func,"getequipid") == 0) {
-        /* note; getequipid also accept integers; might need to resolve to via item_db or use as is */
-        if(const_keyword_search(block->db, &const_info, expr[start], block->mode))
-#if EXIT_ON_ERROR
-            exit_abt(build_buffer(global_err, "failed to search for const %s in %d", expr[start], block->item_id));
-#else
-            goto failed_function;
-#endif
+        if(const_keyword_search(block->db, &const_info, expr[start], block->mode)) {
+            exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
+            return SCRIPT_FAILED;
+        }
         switch(const_info.value) {
             case 1: argument_write(node, "Upper Headgear"); break;
             case 2: argument_write(node, "Armor"); break;
@@ -3343,12 +3368,11 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     } else if(ncs_strcmp(func,"isequipped") == 0) {
         for(i = start; i < end; i++) {
             if(expr[i][0] != ',') {
-                if(item_name_id_search(block->db, &item, convert_integer(expr[i], 10), block->mode))
-#if EXIT_ON_ERROR
-                    exit_abt(build_buffer(global_err, "failed to search for item %s in %d", expr[i], block->item_id));
-#else
-                    goto failed_function;
-#endif
+                memset(&item, 0, sizeof(ic_item_t));
+                if(item_name_id_search(block->db, &item, convert_integer(expr[i], 10), block->mode)) {
+                    exit_func_safe("failed to search for item %s in %d", expr[i], block->item_id);
+                    return SCRIPT_FAILED;
+                }
                 argument_write(node, item.name);
             }
         }
@@ -3360,12 +3384,10 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         translate_write(block, expr[start], 1);
     } else if(ncs_strcmp(func,"getequiprefinerycnt") == 0) {
         resultOne = evaluate_expression_recursive(block, expr, start, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        if(resultOne == NULL)
-#if EXIT_ON_ERROR
-            exit_buf("failed to evaluate getequiprefinerycnt arguments in item id %d\n", block->item_id);
-#else
-            goto failed_function;
-#endif
+        if(resultOne == NULL) {
+            exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
+            return SCRIPT_FAILED;
+        }
         switch(resultOne->min) {
             case 1: argument_write(node, "Upper Headgear"); break;
             case 2: argument_write(node, "Armor"); break;
@@ -3389,21 +3411,13 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             case 20: argument_write(node, "Shadow Right Accessory"); break;
         }
     } else {
-#if EXIT_ON_ERROR
-        exit_buf("failed to search function handler for %s in item %d", func, block->item_id);
-#else
-        goto failed_function;
-#endif
+        exit_func_safe("failed to search function handler for '%s' in item %d", func, block->item_id);
+        return SCRIPT_FAILED;
     }
 
     if(resultOne != NULL) node_free(resultOne);
     if(resultTwo != NULL) node_free(resultTwo);
     return SCRIPT_PASSED;
-
-    failed_function:
-        if(resultOne != NULL) node_free(resultOne);
-        if(resultTwo != NULL) node_free(resultTwo);
-        return SCRIPT_FAILED;
 }
 
 int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {
@@ -3416,7 +3430,7 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
     if(node->left == node->right) {
         /* unary operator */
         if(node->left != NULL) 
-            if(evaluate_node(node->left, stm, logic_tree, flag, complexity) == SCRIPT_FAILED)
+            if(evaluate_node(node->left, stm, logic_tree, flag, complexity))
                 return SCRIPT_FAILED;
     } else {
         /* support ?: flip the logic tree for one side */
@@ -3425,21 +3439,21 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 new_tree = inverse_logic_tree(logic_tree);
                 /* use the 'true' logic tree for left; 'false' logic tree for right */
                 if(node->left != NULL) 
-                    if(evaluate_node(node->left, stm, logic_tree, flag, complexity) == SCRIPT_FAILED)
+                    if(evaluate_node(node->left, stm, logic_tree, flag, complexity))
                         return SCRIPT_FAILED;
                 if(node->right != NULL) 
-                    if(evaluate_node(node->right, stm, new_tree, flag, complexity) == SCRIPT_FAILED)
+                    if(evaluate_node(node->right, stm, new_tree, flag, complexity))
                         return SCRIPT_FAILED;
                 freenamerange(new_tree);
             } else{
-                if(evaluate_node(node->left, stm, logic_tree, flag, complexity) == SCRIPT_FAILED ||
-                   evaluate_node(node->right, stm, logic_tree, flag, complexity) == SCRIPT_FAILED)
+                if(evaluate_node(node->left, stm, logic_tree, flag, complexity) ||
+                   evaluate_node(node->right, stm, logic_tree, flag, complexity))
                     return SCRIPT_FAILED;
             }
         /* normal pre-order traversal */
         } else {
             if(node->left != NULL) 
-                if(evaluate_node(node->left, stm, logic_tree, flag, complexity) == SCRIPT_FAILED)
+                if(evaluate_node(node->left, stm, logic_tree, flag, complexity))
                     return SCRIPT_FAILED;
             /* support ?: add logic tree on stack */
             if(node->type == NODE_TYPE_OPERATOR && node->op == '?') {
@@ -3451,16 +3465,16 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                     if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
                         node->cond = copy_any_tree(new_tree);
                     if(node->right != NULL) 
-                        if(evaluate_node(node->right, stm, new_tree, flag, complexity) == SCRIPT_FAILED)
+                        if(evaluate_node(node->right, stm, new_tree, flag, complexity))
                             return SCRIPT_FAILED;
                 } else {
                     if(node->right != NULL) 
-                        if(evaluate_node(node->right, stm, logic_tree, flag, complexity) == SCRIPT_FAILED)
+                        if(evaluate_node(node->right, stm, logic_tree, flag, complexity))
                             return SCRIPT_FAILED;
                 }
             } else {
                 if(node->right != NULL) 
-                    if(evaluate_node(node->right, stm, logic_tree, flag, complexity) == SCRIPT_FAILED)
+                    if(evaluate_node(node->right, stm, logic_tree, flag, complexity))
                         return SCRIPT_FAILED;
             }
         }
@@ -3469,7 +3483,7 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
     /* handle variable and function nodes; generate condition node */
     if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
         if(node->id == NULL) {
-            fprintf(stderr,"evalute_node; null id for variable or function.\n");
+            exit_abt_safe("invalid node id");
             return SCRIPT_FAILED;
         }
         /* check logic tree for dependency */
@@ -3505,12 +3519,12 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
     /* handle unary operator nodes */
     if(node->type & NODE_TYPE_UNARY) {
         if(node->left == NULL) {
-            fprintf(stderr,"evaluate_node; single node is null.\n");
+            exit_abt_safe("invalid unary operator operand");
             return SCRIPT_FAILED;
         }
 
         if(node->left->range == NULL) {
-            fprintf(stderr,"evaluate_node; single node operand has null range.\n");
+            exit_abt_safe("invalid unary operator operand without range");
             return SCRIPT_FAILED;
         }
 
@@ -3525,6 +3539,8 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
         /* extract the local min and max from the range */
         node->min = minrange(node->range);
         node->max = maxrange(node->range);
+
+        /* running count of all the variable, function, and set block */
         node->cond_cnt += node->left->cond_cnt;
     }
 
@@ -3544,10 +3560,13 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
 
         /* calculate range for operator node */
         switch(node->op) {
-            case '*': node->range = calcrange(node->op, node->left->range, node->right->range); node_inherit_cond(node); break;
-            case '/': node->range = calcrange(node->op, node->left->range, node->right->range); node_inherit_cond(node); break;
-            case '+': node->range = calcrange(node->op, node->left->range, node->right->range); node_inherit_cond(node); break;
-            case '-': node->range = calcrange(node->op, node->left->range, node->right->range); node_inherit_cond(node); break;
+            case '*': 
+            case '/': 
+            case '+': 
+            case '-': 
+                node->range = calcrange(node->op, node->left->range, node->right->range); 
+                node_inherit_cond(node); 
+                break;
             case '<' + '=': 
             case '<': 
             case '>' + '=': 
@@ -3556,17 +3575,13 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
             case '=' + '=': 
                 /* typically, scripts use boolean expressions like 100 + 600 * (getrefine() > 5), which can be interpreted
                  * wrong for non-boolean expression, which should result in either 0 or 1 rather than range. */
-                if(flag & EVALUATE_FLAG_EXPR_BOOL)
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                else
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
+                node->range = (flag & EVALUATE_FLAG_EXPR_BOOL)?
+                    calcrange(node->op, node->left->range, node->right->range):
+                    mkrange(INIT_OPERATOR, 0, 1, 0);
                 node_inherit_cond(node);
                 (*complexity)++;
                 break;
             case '&': 
-                node->range = calcrange(node->op, node->left->range, node->right->range); 
-                node_inherit_cond(node);
-                break;
             case '|': 
                 node->range = calcrange(node->op, node->left->range, node->right->range); 
                 node_inherit_cond(node); 
@@ -3613,10 +3628,12 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
     }
 
     /* write expression and print node */
-    if(flag & EVALUATE_FLAG_WRITE_FORMULA)
+    if(EVALUATE_FLAG_WRITE_FORMULA & flag)
         (node->type == NODE_TYPE_OPERATOR)?
             node_expr_append(node->left, node->right, node):
             node_expr_append(NULL, NULL, node);
+
+    /* useful for debugging the nodes */
     node_dmp(node, stm);
     return SCRIPT_PASSED;
 }
@@ -3641,11 +3658,10 @@ void node_inherit_cond(node_t * node) {
 void node_expr_append(node_t * left, node_t * right, node_t * dest) {
     char temp[BUF_SIZE];
     ic_var_t var_info;
-
     if(dest == NULL) return;
 
-    /* dest is a leave node */
     if(left == NULL && right == NULL) {
+        /* dest is a leave node */
         switch(dest->type) {
             case NODE_TYPE_UNARY:
                 sprintf(dest->expr,"%c %s", dest->op, dest->left->expr);
@@ -3691,29 +3707,20 @@ void node_expr_append(node_t * left, node_t * right, node_t * dest) {
                 break;
             case NODE_TYPE_CONSTANT:   
                 sprintf(dest->expr,"%s", dest->id);
-                /*printf("Constant: %s %d\n", dest->id, dest->var_id);*/
                 break;
             case NODE_TYPE_SUB:
                 dest->expr_cnt = sprintf(temp,"(%s)", dest->expr);
                 temp[dest->expr_cnt] = '\0';
                 sprintf(dest->expr,"%s", temp);
-                /*printf("Subexpression: %s\n", dest->expr);*/
                 break;
-            default: 
-#if EXIT_ON_ERROR
-                exit_buf("invalid node type %d", dest->type);
-#else
-                break;
-#endif
+            default: exit_func_safe("invalid node type %d", dest->type); break;
         }
-    /* dest is a operand node */
     } else if(left != NULL && right != NULL) {
+        /* dest is a operand node */
         switch(dest->type) {
             case NODE_TYPE_OPERATOR:
                 switch(dest->op) {
-                    case '?': 
-                        sprintf(dest->expr,"%s %c %s", left->expr, dest->op, right->expr);
-                        break;
+                    case '?': sprintf(dest->expr,"%s %c %s", left->expr, dest->op, right->expr); break;
                     case '>': sprintf(dest->expr,"%s > %s", left->expr, right->expr); break;
                     case '<': sprintf(dest->expr,"%s < %s", left->expr, right->expr); break;
                     case '!' + '=': sprintf(dest->expr,"%s != %s", left->expr, right->expr); break;
@@ -3725,60 +3732,9 @@ void node_expr_append(node_t * left, node_t * right, node_t * dest) {
                     default: sprintf(dest->expr,"%s %c %s", left->expr, dest->op, right->expr); break;
                 }
                 break;
-            default: 
-#if EXIT_ON_ERROR
-                exit_buf("invalid node type %d", dest->type);
-#else
-                break;
-#endif
+            default: exit_func_safe("invalid node type %d", dest->type); break;
         }
     }
-}
-
-char * formula(char * buf, char * eng, node_t * result) {
-    int len = 0;
-
-    if(buf == NULL || eng == NULL || result == NULL)
-        return eng;
-
-    if(result != NULL && result->cond_cnt > 0) {
-        if(result->expr[0] == '(' && result->expr[strlen(result->expr) - 1] == ')')
-            len = sprintf(buf, "%s %s", eng, result->expr);
-        else
-            len = sprintf(buf, "%s (%s)", eng, result->expr);
-        buf[len] = '\0';
-        return buf;
-    }
-    return eng;
-}
-
-int formula_write(block_r * block, char * formula) {
-    int len = 0;
-    if(exit_null_safe(2, block, formula))
-        return SCRIPT_FAILED;
-    len = sprintf(&block->arg[block->arg_cnt],"%s", formula);
-    if(len <= 0) {
-        exit_func_safe("failed to write formula (%s) on item %d.\n", formula, block->item_id);
-        return SCRIPT_FAILED;
-    }
-    block->arg_cnt += len + 1;
-    return SCRIPT_PASSED;
-}
-
-char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
-    int offset = 0;
-
-    if(aux == NULL || eng == NULL)
-        return "";
-
-    if(blank < 0) return "";
-    if(result == NULL) return eng;
-    switch(type) {
-        case 'n': check_node_range(result, aux); break;
-        case 'p': check_node_range_precentage(result, aux); break;
-        default: offset = sprintf(aux, "%s", eng); aux[offset] = '\0'; break;
-    }
-    return formula(aux, aux, result);
 }
 
 void node_dmp(node_t * node, FILE * stm) {
@@ -3822,31 +3778,22 @@ void node_free(node_t * node) {
     }
 }
 
-/* write into function argument */
-void argument_write(node_t * node, char * desc) {
-   int offset = node->args_cnt;                       /* current offset on stack */
-   node->args_ptr[node->args_ptr_cnt++] = offset;     /* record current offset on stack */
-   offset += sprintf(node->args + offset, "%s", desc);/* write new string onto stack */
-   node->args[offset] = '\0';                         /* null terminate new string */
-   node->args_cnt = offset + 1;                       /* set new offset on stack */
-}
-
 int translate_bonus_desc(node_t ** result, block_r * block, ic_bonus_t * bonus) {
     int i = 0;
     int arg_cnt = bonus->type_cnt;
-    int offset = 0;            /* current buffer offset */
-    char buffer[BUF_SIZE];  /* buffer for handling modifier and qualifiers */
+    int offset = 0;                 /* current buffer offset */
+    char buffer[BUF_SIZE];          /* buffer for handling modifier and qualifiers */
     int order[BONUS_SIZE];
     char aux[BONUS_SIZE][BUF_SIZE]; /* FORMULA Q.Q */
 
     /* item bonus integrity check */
     if(bonus->type_cnt != bonus->order_cnt || bonus->type_cnt > BONUS_SIZE) {
-        exit_func_safe("warning[%d]: bonus(%s %s) argument and order "
-            "count mismatch.\n", block->item_id, bonus->prefix, bonus->bonus);
+        exit_func_safe("argument and order count mismatch in item %d\n", block->item_id);
         return SCRIPT_FAILED;
     }
 
-    /* order contains stack pointer constants that indicate the string on the stack to write to template */
+    /* order contains stack pointer constants that indicate 
+     * the string on the stack to write to template */
     for(i = 0; i < bonus->type_cnt; i++)
         order[i] = bonus->order[i];
 
@@ -4144,10 +4091,9 @@ int check_node_affinity(node_t * node) {
 int script_linkage_count(block_r * block, int start) {
     int nest = 0;
     block_r * iter = block->link;
-    
+    /* calculate the nesting */
     while(iter != NULL) {
-        if(iter->type != 27)
-            nest++;
+        if(iter->type != 27) nest++;
         iter = iter->link;
     }
     return nest;
@@ -4218,29 +4164,21 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
     ic_skill_t skill;
     ic_item_t item;
 
-#if EXIT_ON_ERROR
-    exit_null("tree is null", 1, tree);
-    exit_null("buf is null", 1, buf);
-    exit_null("offset is null", 1, offset);
-#else
-    if(tree == NULL || buf == NULL || offset == NULL)
+    if(exit_null_safe(3, tree, buf, offset))
         return SCRIPT_FAILED;
-#endif
 
-    memset(&var, 0, sizeof(ic_var_t));
-    memset(&skill, 0, sizeof(ic_skill_t));
-    memset(&item, 0, sizeof(ic_item_t));
     /* extract the value bounds */
     val_min = minrange(tree->range);
     val_max = maxrange(tree->range);
 
-    /* if the buffer is not initially empty then add an 'and' in the buffer */
+    /* conditions are and chained */
     if(*offset > 0) {
         *offset += sprintf(buf + *offset," and ");
         buf[*offset] = '\0';
     }
 
-    /* resolve the condition by using variable and function database */
+    /* search the var_db.txt for entries */
+    memset(&var, 0, sizeof(ic_var_t));
     if(!var_keyword_search(global_db, &var, tree->name)) {
         var_id = var.tag;
         switch(var_id) {
@@ -4319,12 +4257,11 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
             case 9: /* getequipid */
                 /* getequipid must be == or != with an item id value, otherwise error */
                 if(val_min == val_max) {
-                    if(item_name_id_search(global_db, &item, val_min, global_mode))
-#if EXIT_ON_ERROR
-                        exit_abt(build_buffer(global_err, "failed to search item id %d", val_min));
-#else
+                    memset(&item, 0, sizeof(ic_item_t));
+                    if(item_name_id_search(global_db, &item, val_min, global_mode)) {
+                        exit_func_safe("failed to search item id %d", val_min);
                         return SCRIPT_FAILED;
-#endif
+                    }
                     *offset += sprintf(buf + *offset,"%s equips %s", &tree->args[tree->args_ptr[0]], item.name); 
                     buf[*offset] = '\0'; 
                 }
@@ -4368,41 +4305,31 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
                 buf[*offset] = '\0';
                 break;
             default: 
-#if EXIT_ON_ERROR
-                exit_buf("invalid logic node;%d;%s", var.tag, tree->name); 
-#else
+                exit_func_safe("invalid logic node '%d' %s", var.tag, tree->name); 
                 return SCRIPT_FAILED;
-#endif
-                break;
         }
         return SCRIPT_PASSED;
     }
 
-    /* resolve the condition by using skill database */
+    /* search the skill database for the skill name */
     len = strlen(tree->name);
     for(i = 0; i < len; i++)
         if(!isdigit(tree->name[i]))
             break;
+    memset(&skill, 0, sizeof(ic_skill_t));
     skill_id = (len == i) ? convert_integer(tree->name, 10) : 0;
-
     ret = (len == i) ? 
         skill_name_search_id(global_db, &skill, skill_id, global_mode):
         skill_name_search(global_db, &skill, tree->name, global_mode);
-
     if(!ret) {
-        if(val_min != val_max)
-            *offset = sprintf(buf + *offset,"%s Lv.%d ~ Lv.%d", skill.desc, val_min, val_max);
-        else
-            *offset = sprintf(buf + *offset,"%s Lv.%d", skill.desc, val_max);
+        *offset = (val_min != val_max)?
+            sprintf(buf + *offset,"%s Lv.%d ~ Lv.%d", skill.desc, val_min, val_max):
+            sprintf(buf + *offset,"%s Lv.%d", skill.desc, val_max);
         buf[*offset] = '\0';
         return SCRIPT_PASSED;
     } else {
-#if EXIT_ON_ERROR
-        exit_abt(build_buffer(global_err, "failed to search skill %s", tree->name));
+        exit_func_safe("failed to search skill %s", tree->name);
         return SCRIPT_FAILED;
-#else
-        return SCRIPT_FAILED;
-#endif
     }
 }
 
@@ -4410,15 +4337,10 @@ int script_generate_class_generic(char * buf, int * offset, range_t * range, cha
     int i = 0;
     range_t * itrrange = NULL;
     range_t * negrange = NULL;
-#if EXIT_ON_ERROR
-    exit_null("buf is null", 1, buf);
-    exit_null("offset is null", 1, offset);
-    exit_null("range is null", 1, range);
-    exit_null("template is null", 1, template);
-#else
-    if(buf == NULL || offset == NULL || range == NULL || template == NULL)
+
+    if(exit_null_safe(4, buf, offset, range, template))
         return SCRIPT_FAILED;
-#endif
+
     /* assume list of not equal class, because otherwise 
      * 'true' class have separate class node */
     negrange = notrange(range);
@@ -4439,14 +4361,8 @@ int script_generate_class_generic(char * buf, int * offset, range_t * range, cha
 }
 
 int script_generate_cond_generic(char * buf, int * offset, int val_min, int val_max, char * template) {
-#if EXIT_ON_ERROR
-    exit_null("buf is null", 1, buf);
-    exit_null("offset is null", 1, offset);
-    exit_null("template is null", 1, template);
-#else
-    if(buf == NULL || offset == NULL || template == NULL)
+    if(exit_null_safe(3, buf, offset, template))
         return SCRIPT_FAILED;
-#endif
     *offset += (val_min != val_max) ?
         sprintf(buf + *offset, "%s %d ~ %d", template, val_min, val_max) :
         sprintf(buf + *offset, "%s %d", template, val_min);
