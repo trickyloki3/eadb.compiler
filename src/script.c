@@ -284,6 +284,10 @@ int script_block_release(block_r * block) {
     block->bonus.type_cnt = 0;
     block->bonus.order_cnt = 0;
 
+    /* free the set node */
+    if(block->type == 28)
+        node_free(block->set_node);
+
     /* reset stack */
     block->item_id = 0;
     block->type = 0;
@@ -856,9 +860,10 @@ int script_translate(script_t * script) {
                         if(iter->ptr_cnt > 1)
                             evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
                         break;                                                                                      /* else */
-            case 28: evaluate_expression(iter, iter->ptr[1], 1, 
-                     EVALUATE_FLAG_KEEP_LOGIC_TREE|EVALUATE_FLAG_WRITE_FORMULA|
-                     EVALUATE_FLAG_KEEP_TEMP_TREE|EVALUATE_FLAG_EXPR_BOOL); break;                                  /* set */
+            case 28: iter->set_node = evaluate_expression(iter, iter->ptr[1], 1, 
+                     EVALUATE_FLAG_KEEP_NODE| EVALUATE_FLAG_KEEP_LOGIC_TREE|
+                     EVALUATE_FLAG_WRITE_FORMULA|EVALUATE_FLAG_KEEP_TEMP_TREE|
+                     EVALUATE_FLAG_EXPR_BOOL); break;                                                               /* set */
             case 62: break;
             default: return SCRIPT_FAILED;
         }
@@ -2270,7 +2275,7 @@ int translate_status(block_r * block, int handler) {
         /* write the duration */
         off += sprintf(buf + off, " for %s",block->eng[1]);
         if(block->ptr_cnt == 5) {
-            rate = evaluate_expression(block, block->ptr[3], 100, EVALUATE_FLAG_DEBUG_DUMP|EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); /* rate */
+            rate = evaluate_expression(block, block->ptr[3], 100, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA); /* rate */
             if(rate == NULL) return SCRIPT_FAILED;
             if(rate->min != 0 && rate->max != 0)
                 off += sprintf(buf + off," with %s%% chance",block->eng[block->eng_cnt - 1]);
@@ -2816,6 +2821,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     int expr_inx_close = 0;
     int expr_sub_level = 0;
     int op_cnt = 0;
+    block_r * set_iter = NULL;
     ic_const_t const_info;
     ic_var_t var_info;
 
@@ -2979,6 +2985,24 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                 /* create set block node */
                 temp_node->type = NODE_TYPE_LOCAL; /* assume string literal unless resolved in for loop */
                 temp_node->min = temp_node->max = 0;
+                /* search for the set block in the link list */
+                set_iter = block->set;
+                while(set_iter != NULL) {
+                    if(ncs_strcmp(set_iter->ptr[0], expr[i]) == 0) {
+                        /* inherit from the set block */
+                        temp_node->min = set_iter->set_node->min;
+                        temp_node->max = set_iter->set_node->max;
+                        if(set_iter->set_node->range != NULL)
+                            temp_node->range = copyrange(set_iter->set_node->range);
+                        if(set_iter->set_node->cond != NULL)
+                            temp_node->cond = copy_deep_any_tree(set_iter->set_node->cond);
+                        temp_node->cond_cnt = set_iter->set_node->cond_cnt;
+                        memcpy(temp_node->expr, set_iter->set_node->expr, set_iter->set_node->expr_cnt);
+                        temp_node->expr_cnt = set_iter->set_node->expr_cnt;
+                        break;
+                    }
+                    set_iter = set_iter->set;
+                }
             }
             op_cnt++;
         /* catch everything else */

@@ -59,7 +59,9 @@
     #define BF_SKILL 256
     #define BF_NORMAL 512
 
-    /* node types */
+    /* evaluate expression flag and node types */
+    #define PRED_LEVEL_MAX 11
+    #define PRED_LEVEL_PER 5
     #define NODE_TYPE_OPERATOR    0x01
     #define NODE_TYPE_OPERAND     0x02
     #define NODE_TYPE_UNARY       0x80  /* unary operator */
@@ -67,24 +69,14 @@
     #define NODE_TYPE_VARIABLE    0x08  /* var.txt variable */
     #define NODE_TYPE_LOCAL       0x10  /* set block variable */
     #define NODE_TYPE_CONSTANT    0x20  /* const.txt */
-    #define NODE_TYPE_SUB         0x40  /* subexpression node */
-    /* operator precedence array sizes */
-    #define PRED_LEVEL_MAX        11
-    #define PRED_LEVEL_PER        5
-    /* flags for keeping node or logic */
-    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01
-    #define EVALUATE_FLAG_KEEP_NODE        0x02
-    /* flag for evaluating relational operators to either 0 or 1
-     * ignore expression simplification for conditional expression */
-    #define EVALUATE_FLAG_EXPR_BOOL        0x04
-    /* write the formula for expression */
-    #define EVALUATE_FLAG_WRITE_FORMULA    0x08
+    #define NODE_TYPE_SUB         0x40  /* subexpression node */  
+    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01 /* keep the logic tree */
+    #define EVALUATE_FLAG_KEEP_NODE        0x02 /* keep the root node */
+    #define EVALUATE_FLAG_WRITE_FORMULA    0x08 /* write the formula for expression */
     #define EVALUATE_FLAG_LIST_FORMULA     0x10
-    /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20
-    /* dump information when evaluating expression */
-    #define EVALUATE_FLAG_DEBUG_DUMP       0x40
-
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20 /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_EXPR_BOOL        0x04 /* flag for evaluating relational operators to either 0 or 1
+                                                 * ignore expression simplification for conditional expression */
     /* bonus flags for block minimization */
     #define BONUS_FLAG_STACK        0x00010000  /* default: no stack */
     #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
@@ -115,8 +107,6 @@
         int script_cnt;
     } token_r;
 
-    /* I've gotten really lazy with proper state mangagement; 
-     * I hope the comments are good enough explanation. */
     typedef struct node {
         int type;               /* see node types macros */
         int op;                 /* operator (NODE_TYPE_OPERATOR) */
@@ -158,6 +148,8 @@
         struct block_r * prev;               /* block_list_t handle linking */
         struct block_r * link;               /* if, else-if, else, for linking */
         struct block_r * set;                /* point to end of current linked list of set block */
+        /* set block node for dependency */
+        node_t * set_node;
         /* bonus block keep bonus query and integer results for post analysis */
         ic_bonus_t bonus;                    /* bonus structure contain entry from item_bonus.txt */
         node_t * result[BONUS_SIZE];         /* keep until after minimization */
