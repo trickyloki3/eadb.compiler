@@ -1,6 +1,1 @@
-for (set .@i,14616; .@i <= 14621; set .@i,.@i+1) getitem .@i,1;
-for (.@i = 14616; .@i <= 14621; set .@i,.@i+1) getitem .@i,1;
-for (set .@i,14616; .@i <= 14621; .@i = .@i+1) { 
-	bonus bAtk,.@i;
-	getitem .@i,1; 
-}
+set .@i,((BaseLevel/10)>12)?12:(BaseLevel/10); if(.@i>2) bonus bBaseAtk,((.@i-2)*5);

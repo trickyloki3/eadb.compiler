@@ -285,8 +285,10 @@ int script_block_release(block_r * block) {
     block->bonus.order_cnt = 0;
 
     /* free the set node */
-    if(block->type == 28)
+    if(block->type == 28) {
         node_free(block->set_node);
+        block->set_node = NULL;
+    }
 
     /* reset stack */
     block->item_id = 0;
@@ -296,6 +298,8 @@ int script_block_release(block_r * block) {
     block->eng_cnt = 0;
     block->link = NULL;
     block->set = NULL;
+    block->flag = 0;
+    block->offset = 0;
     return SCRIPT_PASSED;
 }
 
@@ -314,7 +318,7 @@ int script_block_finalize(script_t * script) {
 int script_block_dump(script_t * script, FILE * stm) {
     int i = 0;
     int off = 0;
-    char buf[BUF_SIZE * 2];
+    char buf[BUF_SIZE];
     block_r * iter = NULL;
 
     /* check null paramaters */
@@ -326,7 +330,7 @@ int script_block_dump(script_t * script, FILE * stm) {
     if(iter == script->block.head) return SCRIPT_FAILED;
     do {
         /* add the block id to the buffer */
-        off += sprintf(&buf[off], 
+        off = sprintf(&buf[off], 
             " --- %d ---\n"
             " Block Addr: %p\n"
             " Block Link: %p\n"
@@ -344,11 +348,11 @@ int script_block_dump(script_t * script, FILE * stm) {
         for(i = 0; i < iter->eng_cnt; i++)
             off += sprintf(&buf[off], " Block Translation[%d]: %s\n", i, iter->eng[i]);
         buf[off] = '\0';
+        fprintf(stm, "%s", buf);
+        dmpnamerange(iter->logic_tree, stm, 0);
+        fprintf(stm, "\n");
         iter = iter->next;
     } while(iter != script->block.head);
-
-    /* print the buffer list */
-    fprintf(stm, "%s\n", buf);
     return SCRIPT_PASSED;
 }
 
@@ -597,7 +601,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                 case 7:     /* autobonus3 */
                 case 51:    /* bonus_script */
                     /* parse the blocks before extending */
-                    if(script_parse(token_list, &i, block, ',', ';', 0x00) == SCRIPT_FAILED)
+                    if(script_parse(token_list, &i, block, ',', ';', 0x00))
                         return SCRIPT_FAILED;
 
                     /* extend the block list by using subscript */
@@ -609,8 +613,9 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     /* add new set block as the tail */
                     if(var != NULL) *var = block;
                     set = block;
+                    break;
                 default: /* parse all blocks */
-                    if(script_parse(token_list, &i, block, ',', ';', 0x00) == SCRIPT_FAILED)
+                    if(script_parse(token_list, &i, block, ',', ';', 0x00))
                         return SCRIPT_FAILED;
                     break;
             }
@@ -738,7 +743,10 @@ int script_extend_block(script_t * script, char * subscript, block_r * parent, b
     }
 
     /* indirect-recurisve analysis on subscript */
-    script_analysis(script, &token, parent, var);
+    if(script_analysis(script, &token, parent, var)) {
+        exit_func_safe("failed to parse %s\n", subscript);
+        return SCRIPT_FAILED;
+    }
     return SCRIPT_PASSED;
 }
 
@@ -1196,6 +1204,7 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg) {
     script.db = global_db;
     script.item_id = item_id;
     list_init_head(&script.block);
+    /* compilation process per script */
     if(!script_lexical(&script.token, subscript))
         if(!script_analysis(&script, &script.token, NULL, NULL))
             if(!script_translate(&script))
@@ -1974,16 +1983,16 @@ int translate_autobonus(block_r * block, int flag) {
         if(block->ptr_cnt > 3) 
             if(translate_trigger(block, block->ptr[3], 1) == SCRIPT_FAILED)
                 return SCRIPT_FAILED;
-        offset = sprintf(buf,"Add %s chance to armor break for %s when attacked.%s",
-            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[4] != NULL)?block->eng[4]:"");
+        offset = sprintf(buf,"Add %s chance to autobonus for %s when attacked.%s",
+            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
     }
  
     if(flag & 0x04) {
         if(block->ptr_cnt > 3) 
             if(translate_skill(block, block->ptr[3]) == SCRIPT_FAILED)
                 return SCRIPT_FAILED;
-        offset = sprintf(buf,"Add %s chance to limit break for %s when using skill %s.",
-            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[4] != NULL)?block->eng[4]:"");
+        offset = sprintf(buf,"Add %s chance to autobonus for %s when using skill %s.",
+            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
     }
     buf[offset] = '\0';
     translate_write(block, buf, 1);
@@ -2732,6 +2741,9 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     node_t * root_node = NULL;
     token_r expr_token;
     logic_node_t * temp = NULL;
+
+    if(block->item_id == 1398)
+        printf("%s\n", expr);
 
     /* check null paramaters */
     if(exit_null_safe(2, block, expr))
