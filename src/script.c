@@ -287,7 +287,7 @@ int script_block_release(block_r * block) {
     /* free the set node */
     if(block->type == 28) {
         node_free(block->set_node);
-        block->set_node = NULL;
+        /*block->set_node = NULL;*/
     }
 
     /* reset stack */
@@ -352,6 +352,7 @@ int script_block_dump(script_t * script, FILE * stm) {
         dmpnamerange(iter->logic_tree, stm, 0);
         fprintf(stm, "\n");
         iter = iter->next;
+        off = 0;
     } while(iter != script->block.head);
     return SCRIPT_PASSED;
 }
@@ -613,7 +614,6 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     /* add new set block as the tail */
                     if(var != NULL) *var = block;
                     set = block;
-                    break;
                 default: /* parse all blocks */
                     if(script_parse(token_list, &i, block, ',', ';', 0x00))
                         return SCRIPT_FAILED;
@@ -855,23 +855,25 @@ int script_translate(script_t * script) {
             case 61: ret = translate_petheal(iter); break;                                                          /* petheal */
             /* non-simple structures */
             case 26: evaluate_expression(iter, iter->ptr[0], 1,
-                     EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL); break;                               /* if */
+                     EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL); 
+                     break;                                                                                         /* if */
             case 27: /* invert the linked logic tree; only the top needs to be inverted */
-                        if(iter->logic_tree != NULL) {
-                            logic_tree = iter->logic_tree;
-                            iter->logic_tree = inverse_logic_tree(iter->logic_tree);
-                            iter->logic_tree->stack = logic_tree->stack;
-                            freenamerange(logic_tree);
-                        }
+                    if(iter->logic_tree != NULL) {
+                        logic_tree = iter->logic_tree;
+                        iter->logic_tree = inverse_logic_tree(iter->logic_tree);
+                        iter->logic_tree->stack = logic_tree->stack;
+                        freenamerange(logic_tree);
+                    }
 
-                        /* add the else if condition onto the stack */
-                        if(iter->ptr_cnt > 1)
-                            evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-                        break;                                                                                      /* else */
+                    /* add the else if condition onto the stack */
+                    if(iter->ptr_cnt > 1)
+                        evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
+                    break;                                                                                          /* else */
             case 28: iter->set_node = evaluate_expression(iter, iter->ptr[1], 1, 
                      EVALUATE_FLAG_KEEP_NODE| EVALUATE_FLAG_KEEP_LOGIC_TREE|
                      EVALUATE_FLAG_WRITE_FORMULA|EVALUATE_FLAG_KEEP_TEMP_TREE|
-                     EVALUATE_FLAG_EXPR_BOOL); break;                                                               /* set */
+                     EVALUATE_FLAG_EXPR_BOOL); 
+                     break;                                                                                         /* set */
             case 62: break;
             default: return SCRIPT_FAILED;
         }
@@ -2741,9 +2743,6 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     node_t * root_node = NULL;
     token_r expr_token;
     logic_node_t * temp = NULL;
-
-    if(block->item_id == 1398)
-        printf("%s\n", expr);
 
     /* check null paramaters */
     if(exit_null_safe(2, block, expr))
