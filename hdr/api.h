@@ -323,6 +323,11 @@
 	#define ra_itm_combo_ins "INSERT INTO ra_item_combo VALUES(?, ?, ?);"
 	#define ra_itm_combo_des "DROP TABLE IF NOT EXISTS ra_item_combo;"
 
+	#define option_tbl "CREATE TABLE IF NOT EXISTS ra_option(" \
+							 "opt TEXT, name TEXT, PRIMARY KEY(opt));"
+	#define option_ins "INSERT INTO ra_option VALUES(?, ?);"
+	#define option_des "DROP TABLE IF NOT EXISTS ra_option;"
+
 	struct lt_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * he_item_insert;
@@ -362,6 +367,8 @@
 		sqlite3_stmt * ra_item_group_insert;
 		/* item combo */
 		sqlite3_stmt * ra_item_combo_insert;
+		/* script options */
+		sqlite3_stmt * ra_option_insert;
 	};
 
 	#define INITIALIZE_DB 0x1
@@ -386,6 +393,7 @@
 	void load_ra_item_group(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_group_t * db, int size);
 	void load_ra_item_package(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_package_t * db, int size);
 	void load_ra_item_combo(struct lt_db_t * sql, ra_item_combo_t * db, int size);
+	void load_option(struct lt_db_t * sql, option_t * db, int size);
 	void deit_db(struct lt_db_t *);
 	void trace_db(void *, const char *);
 	char * array_to_string(char *, int *);
@@ -433,6 +441,7 @@
 	#define ea_item_group_search_sql "SELECT * FROM ea_item_group WHERE group_id = ?;"
 	#define ra_item_group_search_sql "SELECT * FROM ra_item_group WHERE group_id = ?;"
 	#define ra_item_combo_search_sql "SELECT script, combo_group FROM ra_item_combo WHERE id = ?;"
+	#define ra_option_search_sql "SELECT * FROM ra_option WHERE opt = ?;"
 
 	struct ic_db_t {
 		sqlite3 * db;
@@ -474,6 +483,7 @@
 		sqlite3_stmt * ea_item_group_search;
 		sqlite3_stmt * ra_item_group_search;
 		sqlite3_stmt * ra_item_combo_search;
+		sqlite3_stmt * ra_option_search;
 	};
 
 	struct ic_db_t * init_ic_db(const char *);
@@ -494,6 +504,7 @@
 	int ea_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
 	int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
 	int ra_item_combo_search_id(struct ic_db_t * db, ra_item_combo_t ** combo, int id);
+	int ra_option_search_str(struct ic_db_t * db, option_t * option, char * val);
 	void free_prod(ic_produce_t * prod);
 	void free_combo(ra_item_combo_t *);
 	void deit_ic_db(struct ic_db_t *);

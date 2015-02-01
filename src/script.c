@@ -287,7 +287,7 @@ int script_block_release(block_r * block) {
     /* free the set node */
     if(block->type == 28) {
         node_free(block->set_node);
-        /*block->set_node = NULL;*/
+        block->set_node = NULL;
     }
 
     /* reset stack */
@@ -347,9 +347,21 @@ int script_block_dump(script_t * script, FILE * stm) {
             off += sprintf(&buf[off], " Block Paramater[%d]: %s\n", i, iter->ptr[i]);
         for(i = 0; i < iter->eng_cnt; i++)
             off += sprintf(&buf[off], " Block Translation[%d]: %s\n", i, iter->eng[i]);
+        if(iter->type == 28) /* print set block expr */
+            off += sprintf(&buf[off], " Set Formula[%d]: %s\n", iter->set_node->expr_cnt, iter->set_node->expr);
         buf[off] = '\0';
         fprintf(stm, "%s", buf);
-        dmpnamerange(iter->logic_tree, stm, 0);
+        /* dump the logic trees */
+        if(iter->logic_tree != NULL) {
+            fprintf(stm," Block Logic Tree: ");
+            dmpnamerange(iter->logic_tree, stm, 0);
+        }
+        for(i = 0; i < BONUS_SIZE; i++) {
+            if(iter->result[i] != NULL) {
+                fprintf(stm," Paramater %d Logic Tree: ", i);
+                dmpnamerange(iter->result[i]->cond, stm, 0);
+            }
+        }
         fprintf(stm, "\n");
         iter = iter->next;
         off = 0;
@@ -400,7 +412,7 @@ int script_lexical(token_r * token, char * script) {
     /* check script length */
     len = strlen(script);
     if(len >= BUF_SIZE) {
-        exit_func_safe("script %s exceed buffer size of %d.\n", script, BUF_SIZE);
+        exit_func_safe("script %s exceed buffer size of %d", script, BUF_SIZE);
         return SCRIPT_FAILED;
     }
 
@@ -471,7 +483,7 @@ int script_lexical(token_r * token, char * script) {
 
     /* check that the script was tokenize */
     if(ptr_cnt <= 0) {
-        exit_func_safe("script %s failed to tokenize with %d tokens.\n", script, ptr_cnt);
+        exit_func_safe("script %s failed to tokenize with %d tokens", script, ptr_cnt);
         return SCRIPT_FAILED;
     }
 
@@ -1213,7 +1225,8 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg) {
                 if(!script_bonus(&script))
                     if(!script_generate(&script, buffer, &offset))
                         if(!script_generate_combo(script.item_id, buffer, &offset))
-                            ;
+                            if(dbg != NULL)
+                                script_block_dump(&script, dbg);
     script_block_reset(&script);
     script_block_finalize(&script);
     return (offset <= 0) ? NULL : convert_string(buffer);
@@ -1607,7 +1620,7 @@ int translate_bonus(block_r * block, char * bonus) {
     int i = 0;
     int j = 0;
     int ret = 0;
-
+    static int flag = EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA|EVALUATE_FLAG_KEEP_LOGIC_TREE;
     /* check null paramater */
     if(exit_null_safe(2, block, bonus))
         return SCRIPT_FAILED;
@@ -1627,31 +1640,31 @@ int translate_bonus(block_r * block, char * bonus) {
     */
     for(i = 0, j = 1; i < block->bonus.type_cnt; i++, j++) {
         switch(block->bonus.type[i]) {
-            case 'n': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);         break; /* Integer Value */
-            case 'p': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);         break; /* Integer Percentage */
-            case 'r': ret = translate_const(block, block->ptr[j], 0x01);                                                                            break; /* Race */
-            case 'l': ret = translate_const(block, block->ptr[j], 0x02);                                                                            break; /* Element */
-            case 'w': ret = translate_splash(block, block->ptr[j]);                                                                                 break; /* Splash */
-            case 'z': block->eng_cnt++;                                                                                                             break; /* Meaningless */
-            case 'e': ret = translate_const(block, block->ptr[j], 0x04);                                                                            break; /* Effect */
-            case 'q': block->result[i] = evaluate_expression(block, block->ptr[j], 100, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);       break; /* Integer Percentage / 100 */
-            case 'k': ret = translate_skill(block, block->ptr[j]);                                                                                  break; /* Skill */
-            case 's': ret = translate_const(block, block->ptr[j], 0x08);                                                                            break; /* Size */
-            case 'c': ret = translate_id(block, block->ptr[j], 0x01);                                                                               break; /* Monster Class & Job ID * Monster ID */
-            case 'o': block->result[i] = evaluate_expression(block, block->ptr[j], 10, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);        break; /* Integer Percentage / 10 */
-            case 'm': ret = translate_item(block, block->ptr[j]);                                                                                   break; /* Item ID */
-            case 'x': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);         break; /* Level */
-            case 'g': ret = translate_tbl(block, block->ptr[j], 0x01);                                                                              break; /* Regen */
-            case 'a': block->result[i] = evaluate_expression(block, block->ptr[j], 1000, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);      break; /* Millisecond */
-            case 'h': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);         break; /* SP Gain Bool */
-            case 'v': ret = translate_tbl(block, block->ptr[j], 0x04);                                                                              break; /* Cast Self, Enemy */
-            case 't': ret = translate_trigger(block, block->ptr[j], 1);                                                                             break; /* Trigger */
-            case 'y': ret = translate_item(block, block->ptr[j]);                                                                                   break; /* Item Group */
-            case 'd': ret = translate_trigger(block, block->ptr[j], 2);                                                                             break; /* Triger ATF */
-            case 'f': block->result[i] = evaluate_expression(block, block->ptr[j], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);         break; /* Cell */
-            case 'b': ret = translate_tbl(block, block->ptr[j], 0x08);                                                                              break; /* Flag Bitfield */
-            case 'i': ret = translate_tbl(block, block->ptr[j], 0x10);                                                                              break; /* Weapon Type */
-            case 'j': ret = translate_const(block, block->ptr[j], 0x10);                                                                            break; /* Class Group */
+            case 'n': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Integer Value */
+            case 'p': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Integer Percentage */
+            case 'r': ret = translate_const(block, block->ptr[j], 0x01);                        break; /* Race */
+            case 'l': ret = translate_const(block, block->ptr[j], 0x02);                        break; /* Element */
+            case 'w': ret = translate_splash(block, block->ptr[j]);                             break; /* Splash */
+            case 'z': block->eng_cnt++;                                                         break; /* Meaningless */
+            case 'e': ret = translate_const(block, block->ptr[j], 0x04);                        break; /* Effect */
+            case 'q': block->result[i] = evaluate_expression(block, block->ptr[j], 100, flag);  break; /* Integer Percentage / 100 */
+            case 'k': ret = translate_skill(block, block->ptr[j]);                              break; /* Skill */
+            case 's': ret = translate_const(block, block->ptr[j], 0x08);                        break; /* Size */
+            case 'c': ret = translate_id(block, block->ptr[j], 0x01);                           break; /* Monster Class & Job ID * Monster ID */
+            case 'o': block->result[i] = evaluate_expression(block, block->ptr[j], 10, flag);   break; /* Integer Percentage / 10 */
+            case 'm': ret = translate_item(block, block->ptr[j]);                               break; /* Item ID */
+            case 'x': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Level */
+            case 'g': ret = translate_tbl(block, block->ptr[j], 0x01);                          break; /* Regen */
+            case 'a': block->result[i] = evaluate_expression(block, block->ptr[j], 1000, flag); break; /* Millisecond */
+            case 'h': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* SP Gain Bool */
+            case 'v': ret = translate_tbl(block, block->ptr[j], 0x04);                          break; /* Cast Self, Enemy */
+            case 't': ret = translate_trigger(block, block->ptr[j], 1);                         break; /* Trigger */
+            case 'y': ret = translate_item(block, block->ptr[j]);                               break; /* Item Group */
+            case 'd': ret = translate_trigger(block, block->ptr[j], 2);                         break; /* Triger ATF */
+            case 'f': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Cell */
+            case 'b': ret = translate_tbl(block, block->ptr[j], 0x08);                          break; /* Flag Bitfield */
+            case 'i': ret = translate_tbl(block, block->ptr[j], 0x10);                          break; /* Weapon Type */
+            case 'j': ret = translate_const(block, block->ptr[j], 0x10);                        break; /* Class Group */
             default: break;
         }
 
@@ -2699,7 +2712,7 @@ int formula_write(block_r * block, char * formula) {
         return SCRIPT_FAILED;
     len = sprintf(&block->arg[block->arg_cnt],"%s", formula);
     if(len <= 0) {
-        exit_func_safe("failed to write formula (%s) on item %d.\n", formula, block->item_id);
+        exit_func_safe("failed to write formula (%s) on item %d", formula, block->item_id);
         return SCRIPT_FAILED;
     }
     block->arg_cnt += len + 1;
@@ -2935,12 +2948,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
                 /* handle function call */
                 if(var_info.type & TYPE_FUNC) {
-                    /* to-do use new-style argument */
-                    if(ncs_strcmp(expr[i],"readparam") == 0 ||
-                        ncs_strcmp(expr[i],"getskilllv") == 0 ||
-                        ncs_strcmp(expr[i],"checkoption") == 0)
-                        temp_node->id = expr[i+2];
-
                     /* find the ending parenthesis */
                     expr_inx_open = expr_inx_close = expr_sub_level = 0;
                     for(expr_inx_open = i; i < end; i++) {
@@ -3109,6 +3116,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             root_node->cond = copy_any_tree(root_node->next->cond);
         root_node->cond_cnt = root_node->next->cond_cnt;
         strncpy(root_node->expr, root_node->next->expr, strlen(root_node->next->expr));
+        root_node->expr_cnt = root_node->next->expr_cnt;
     } else {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed_expression;
@@ -3153,8 +3161,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     ic_skill_t skill;
     ic_item_t item;
     ic_const_t const_info;
-    ea_item_group_t ea_item_group;
-    memset(&ea_item_group, 0, sizeof(ea_item_group_t));
+    /*ea_item_group_t ea_item_group;*/
+    option_t option;
 
     if(ncs_strcmp(func,"getskilllv") == 0) {
         /* search by skill id or skill constant for max level */
@@ -3166,6 +3174,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 return SCRIPT_FAILED;
             }
         /* write the skill name */
+        argument_write(node, skill.desc);
         node->expr_cnt = sprintf(node->expr,"%s Level", skill.desc);
         node->expr[node->expr_cnt] = '\0';
         /* skill level minimum is 0 (not learnt) or maximum level */
@@ -3322,14 +3331,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
-            case 1: argument_write(node, "Seconds"); node->id = "gettime_second"; break;
-            case 2: argument_write(node, "Minutes"); node->id = "gettime_minute"; break;
-            case 3: argument_write(node, "Hours"); node->id = "gettime_hour"; break;
-            case 4: argument_write(node, "Weeks"); node->id = "gettime_week"; break;
-            case 5: argument_write(node, "Day"); node->id = "gettime_day"; break;
-            case 6: argument_write(node, "Month"); node->id = "gettime_month"; break;
-            case 7: argument_write(node, "Year"); node->id = "gettime_year"; break;
-            case 8: argument_write(node, "Day of Year"); node->id = "gettime_dayyear"; break;
+            case 1: argument_write(node, "Seconds"); break;
+            case 2: argument_write(node, "Minutes"); break;
+            case 3: argument_write(node, "Hours"); break;
+            case 4: argument_write(node, "Weeks"); break;
+            case 5: argument_write(node, "Day"); break;
+            case 6: argument_write(node, "Month"); break;
+            case 7: argument_write(node, "Year"); break;
+            case 8: argument_write(node, "Day of Year"); break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
@@ -3412,7 +3421,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             }
         }
     } else if(ncs_strcmp(func,"groupranditem") == 0) {
-        /*if(const_keyword_search(block->db, &const_info, expr[start], block->mode))
+        /*memset(&ea_item_group, 0, sizeof(ea_item_group_t));
+        if(const_keyword_search(block->db, &const_info, expr[start], block->mode))
             exit_abt(build_buffer(global_err, "failed to search for const %s in %d", expr[start], block->item_id));
         ea_item_group_search(block->db, &ea_item_group, const_info.value, block->mode, buffer);
         block->flag |= 0x04;*/
@@ -3445,6 +3455,48 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             case 19: argument_write(node, "Shadow Left Accessory"); break;
             case 20: argument_write(node, "Shadow Right Accessory"); break;
         }
+    } else if(ncs_strcmp(func,"readparam") == 0) {
+        if(const_keyword_search(block->db, &const_info, expr[start], block->mode)) {
+            exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
+            return SCRIPT_FAILED;
+        }
+        /* values correspond to the const.txt for rAthena */
+        switch(const_info.value) {
+            case 6: argument_write(node, "Maximum HP"); break;
+            case 8: argument_write(node, "Maximum SP"); break;
+            case 13: argument_write(node, "Strength"); break;
+            case 14: argument_write(node, "Agility"); break;
+            case 15: argument_write(node, "Vitality"); break;
+            case 16: argument_write(node, "Intelligence"); break;
+            case 17: argument_write(node, "Dexterity"); break;
+            case 18: argument_write(node, "Luck"); break;
+            case 41: argument_write(node, "Base Attack"); break;
+            case 42: argument_write(node, "Weapon Attack"); break;
+            case 45: argument_write(node, "Base Defense"); break;
+            case 46: argument_write(node, "Armor Defense"); break;
+            case 47: argument_write(node, "Base Magical Defense"); break;
+            case 48: argument_write(node, "Armor Magical Defense"); break;
+            case 49: argument_write(node, "Hit"); break;
+            case 50: argument_write(node, "Base Flee"); break;
+            case 51: argument_write(node, "Armor Flee"); break;
+            case 52: argument_write(node, "Critical Rate"); break;
+            case 53: argument_write(node, "Attack Speed"); break;
+            case 59: argument_write(node, "Fame"); break;
+            case 60: argument_write(node, "Unbreakable"); break;
+            default: 
+                exit_func_safe("invalid constant value for %s -> %d in item "
+                    "%d\n", const_info.name, const_info.value, block->item_id);
+                return SCRIPT_FAILED;
+        }
+    } else if(ncs_strcmp(func,"checkoption") == 0) {
+        /* constants are not defined in const.txt, but specified 
+         * in the script command. See option_db.txt for mappings.*/
+        memset(&option, 0, sizeof(option_t));
+        if(ra_option_search_str(block->db, &option, expr[start])) {
+            exit_func_safe("failed to search for option '%s' in %d", expr[start], block->item_id);
+            return SCRIPT_FAILED;
+        }
+        argument_write(node, option.name);
     } else {
         exit_func_safe("failed to search function handler for '%s' in item %d", func, block->item_id);
         return SCRIPT_FAILED;
@@ -3689,64 +3741,21 @@ void node_inherit_cond(node_t * node) {
     }
 }
 
-/* generate human readable string of the expression, writable solution. */
 void node_expr_append(node_t * left, node_t * right, node_t * dest) {
-    char temp[BUF_SIZE];
-    ic_var_t var_info;
-    if(dest == NULL) return;
+    if(exit_null_safe(1, dest)) return;
 
+    /* constructs the formula by resolving variables to names */
     if(left == NULL && right == NULL) {
         /* dest is a leave node */
         switch(dest->type) {
             case NODE_TYPE_UNARY:
-                sprintf(dest->expr,"%c %s", dest->op, dest->left->expr);
-                break;
             case NODE_TYPE_OPERAND:
-                sprintf(dest->expr,"%d", dest->max);   
-                break;
             case NODE_TYPE_FUNCTION:
-                if(dest->expr_cnt <= 0) {
-                    memset(&var_info, 0, sizeof(ic_var_t));
-                    if(var_keyword_search(global_db, &var_info, dest->id)) {
-                        printf("warning: failed to resolve function name %s\n", dest->id);
-                        sprintf(dest->expr,"%s", dest->id);
-                    } else {
-                        /* getequiprefinery requires the equipment location to be display */
-                        if(var_info.tag == 2) {
-                            sprintf(dest->expr,"%s's %s", &dest->args[dest->args_ptr[0]], var_info.str);
-                        } else {
-                            sprintf(dest->expr,"%s", var_info.str);
-                        }
-                    }
-                }
-                break;
-            case NODE_TYPE_VARIABLE:   
-                memset(&var_info, 0, sizeof(ic_var_t));
-                if(var_keyword_search(global_db, &var_info, dest->id)) {
-                    printf("warning: failed to resolve variable name %s\n", dest->id);
-                    sprintf(dest->expr,"%s", dest->id);
-                } else {
-                    sprintf(dest->expr,"%s", var_info.str);
-                }
-                break;
+            case NODE_TYPE_VARIABLE:
             case NODE_TYPE_LOCAL:
-                if(dest->expr_cnt > 0) {
-                    sprintf(dest->expr,"%s", dest->expr);
-                } else {
-                    /* some set block don't have function or variable */
-                    if(dest->min == dest->max)
-                        sprintf(dest->expr,"%d", dest->max);
-                    else
-                        sprintf(dest->expr,"%d~%d", dest->min, dest->max);
-                }
-                break;
-            case NODE_TYPE_CONSTANT:   
-                sprintf(dest->expr,"%s", dest->id);
-                break;
+            case NODE_TYPE_CONSTANT:
             case NODE_TYPE_SUB:
-                dest->expr_cnt = sprintf(temp,"(%s)", dest->expr);
-                temp[dest->expr_cnt] = '\0';
-                sprintf(dest->expr,"%s", temp);
+                sprintf(dest->expr,"filler");
                 break;
             default: exit_func_safe("invalid node type %d", dest->type); break;
         }
@@ -4187,185 +4196,7 @@ int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset) {
 }
 
 int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
-    int i = 0;
-    int len = 0;
-    int ret = 0;
-    int skill_id = 0;
-    int val_min = 0;
-    int val_max = 0;
-    int var_id = 0;
-    char * val_str = NULL;
-    ic_var_t var;
-    ic_skill_t skill;
-    ic_item_t item;
-
-    if(exit_null_safe(3, tree, buf, offset))
-        return SCRIPT_FAILED;
-
-    /* extract the value bounds */
-    val_min = minrange(tree->range);
-    val_max = maxrange(tree->range);
-
-    /* conditions are and chained */
-    if(*offset > 0) {
-        *offset += sprintf(buf + *offset," and ");
-        buf[*offset] = '\0';
-    }
-
-    /* search the var_db.txt for entries */
-    memset(&var, 0, sizeof(ic_var_t));
-    if(!var_keyword_search(global_db, &var, tree->name)) {
-        var_id = var.tag;
-        switch(var_id) {
-            /* simple dependencies */
-            case 1: script_generate_cond_generic(buf, offset, val_min, val_max, "Refine Rate"); break; /* getrefine */
-            case 5: script_generate_cond_generic(buf, offset, val_min, val_max, "Random Roll"); break; /* rand */
-            case 17: script_generate_cond_generic(buf, offset, val_min, val_max, "Job Level"); break; /* job level */
-            case 18: script_generate_cond_generic(buf, offset, val_min, val_max, "Base Level"); break; /* base level */            
-            case 23: script_generate_cond_generic(buf, offset, val_min, val_max, "HP"); break; /* HP */
-            case 24: script_generate_cond_generic(buf, offset, val_min, val_max, "Zeny"); break; /* Zeny */
-            case 28: *offset += sprintf(buf + *offset,"Marriage Partner Online"); buf[*offset] = '\0'; break; /* getpartnerid */
-            case 32: *offset += sprintf(buf + *offset,"Rented Falcon"); buf[*offset] = '\0'; break; /* checkfalcon */
-            case 33: *offset += sprintf(buf + *offset,"Rented Madogear"); buf[*offset] = '\0'; break; /* checkmadogear */
-            case 34: *offset += sprintf(buf + *offset,"Rebirthed"); buf[*offset] = '\0'; break; /* upper */
-            case 35: script_generate_cond_generic(buf, offset, val_min, val_max, "Strength"); break; /* strength */
-            case 36: script_generate_cond_generic(buf, offset, val_min, val_max, "Agility"); break; /* agility */
-            case 37: script_generate_cond_generic(buf, offset, val_min, val_max, "Vitality"); break; /* vitality */
-            case 38: script_generate_cond_generic(buf, offset, val_min, val_max, "Luck"); break; /* luck */
-            case 39: script_generate_cond_generic(buf, offset, val_min, val_max, "Dexterity"); break; /* dexterity */
-            case 40: script_generate_cond_generic(buf, offset, val_min, val_max, "Intelligence"); break; /* intelligence */
-            case 41: *offset += sprintf(buf + *offset,"Non-riding Wug"); buf[*offset] = '\0'; break; /* option_wug */
-            case 42: *offset += sprintf(buf + *offset,"Riding Wug"); buf[*offset] = '\0'; break; /* option_wugrider */
-            case 43: *offset += sprintf(buf + *offset,"Falcon Skill"); buf[*offset] = '\0'; break; /* HT_FALCON */
-            /* complex dependencies */
-            case 20: /* baseclass */
-                if(val_min == val_max) {
-                    *offset += sprintf(buf + *offset,"Base Class is %s", job_tbl(val_min)); buf[*offset] = '\0'; break; /* baseclass */
-                } else {
-                    script_generate_class_generic(buf, offset, tree->range, "Base Class is not ");
-                }
-                break;
-            case 21: /* basejob */
-                if(val_min == val_max) {
-                    *offset += sprintf(buf + *offset,"Base Job is %s", job_tbl(val_min)); buf[*offset] = '\0'; break; /* baseclass */
-                } else {
-                    script_generate_class_generic(buf, offset, tree->range, "Base Job is not ");
-                }
-                break;
-            case 22: /* class */
-                if(val_min == val_max) {
-                    *offset += sprintf(buf + *offset,"Current Class is %s", job_tbl(val_min)); buf[*offset] = '\0'; break; /* class */
-                } else {
-                    script_generate_class_generic(buf, offset, tree->range, "Class is not ");
-                }
-                break;
-            case 29: /* strcharinfo */
-                if(tree->args_str == NULL) {
-                    fprintf(stderr,"warning: strcharinfo does not have comparsion value; strcharinfo() == ? (missing).\n");
-                    return SCRIPT_FAILED;
-                }
-                if(ncs_strcmp(tree->args_str, "job3_arch02") == 0)
-                    val_str = "Archbishop Job Change Map";
-                else if(ncs_strcmp(tree->args_str, "job3_rang02") == 0)
-                    val_str = "Ranger Job Change Map";
-                else if(ncs_strcmp(tree->args_str, "job3_war02") == 0)
-                    val_str = "Warlock Job Change Map";
-                else if(ncs_strcmp(tree->args_str, "job3_rune02") == 0)
-                    val_str = "Rune Knight Job Change Map";
-                *offset += sprintf(buf + *offset,"%s is %s", &tree->args[tree->args_ptr[0]], val_str); buf[*offset] = '\0'; 
-                buf[*offset] = '\0';
-                break;
-            case 44: /* gettime month */
-            case 45: /* gettime day */
-                if(val_min == val_max) {
-                    *offset += sprintf(buf + *offset,"%d %s", val_min, &tree->args[tree->args_ptr[0]]); buf[*offset] = '\0'; 
-                    buf[*offset] = '\0';
-                } else {
-                    *offset += sprintf(buf + *offset,"%d~%d %s", val_min, val_max, &tree->args[tree->args_ptr[0]]); buf[*offset] = '\0';  
-                    buf[*offset] = '\0';
-                }
-                break;
-            case 30: /* countitem */
-                *offset += sprintf(buf + *offset,"Inventory has %d~%d %s", val_min, val_max, &tree->args[tree->args_ptr[0]]); 
-                buf[*offset] = '\0';  
-                break;
-            case 9: /* getequipid */
-                /* getequipid must be == or != with an item id value, otherwise error */
-                if(val_min == val_max) {
-                    memset(&item, 0, sizeof(ic_item_t));
-                    if(item_name_id_search(global_db, &item, val_min, global_mode)) {
-                        exit_func_safe("failed to search item id %d", val_min);
-                        return SCRIPT_FAILED;
-                    }
-                    *offset += sprintf(buf + *offset,"%s equips %s", &tree->args[tree->args_ptr[0]], item.name); 
-                    buf[*offset] = '\0'; 
-                }
-                break;
-            case 13: /* isequipped */
-                *offset += sprintf(buf + *offset,"Equipped with ");
-                for(i = 0; i < tree->args_ptr_cnt; i++)
-                    *offset += sprintf(buf + *offset,"%s, ", &tree->args[tree->args_ptr[i]]);
-                buf[*offset - 2] = '\0'; 
-                break;
-            case 8: /* getiteminfo */
-                if(ncs_strcmp(&tree->args[tree->args_ptr[1]], "Weapon Type") == 0) {
-                    *offset += sprintf(buf + *offset,"%s's %s is %s", 
-                        &tree->args[tree->args_ptr[0]], 
-                        &tree->args[tree->args_ptr[1]],
-                        weapon_tbl(val_min)); 
-                    buf[*offset] = '\0';
-                } else {
-                    *offset += sprintf(buf + *offset,"%s's %s is %d", 
-                        &tree->args[tree->args_ptr[0]], 
-                        &tree->args[tree->args_ptr[1]],
-                        val_min); 
-                    buf[*offset] = '\0';
-                }
-                break;
-            case 48: /* checkmount */
-                switch(val_min) {
-                    case 0: *offset += sprintf(buf + *offset,"Not Mounted"); buf[*offset] = '\0'; break;
-                    case 1: *offset += sprintf(buf + *offset,"Peco Mounted"); buf[*offset] = '\0'; break;
-                    case 2: *offset += sprintf(buf + *offset,"Wug Mounted"); buf[*offset] = '\0'; break;
-                    case 3: *offset += sprintf(buf + *offset,"Mado Mounted"); buf[*offset] = '\0'; break;
-                    case 4: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
-                    case 5: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
-                    case 6: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
-                    case 7: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
-                    case 8: *offset += sprintf(buf + *offset,"Dragon Mounted"); buf[*offset] = '\0'; break;
-                }
-                break;
-            case 2:
-                *offset += sprintf(buf + *offset,"%s's Refine Rate", &tree->args[tree->args_ptr[0]]); 
-                buf[*offset] = '\0';
-                break;
-            default: 
-                exit_func_safe("invalid logic node '%d' %s", var.tag, tree->name); 
-                return SCRIPT_FAILED;
-        }
-        return SCRIPT_PASSED;
-    }
-
-    /* search the skill database for the skill name */
-    len = strlen(tree->name);
-    for(i = 0; i < len; i++)
-        if(!isdigit(tree->name[i]))
-            break;
-    memset(&skill, 0, sizeof(ic_skill_t));
-    skill_id = (len == i) ? convert_integer(tree->name, 10) : 0;
-    ret = (len == i) ? 
-        skill_name_search_id(global_db, &skill, skill_id, global_mode):
-        skill_name_search(global_db, &skill, tree->name, global_mode);
-    if(!ret) {
-        *offset = (val_min != val_max)?
-            sprintf(buf + *offset,"%s Lv.%d ~ Lv.%d", skill.desc, val_min, val_max):
-            sprintf(buf + *offset,"%s Lv.%d", skill.desc, val_max);
-        buf[*offset] = '\0';
-        return SCRIPT_PASSED;
-    } else {
-        exit_func_safe("failed to search skill %s", tree->name);
-        return SCRIPT_FAILED;
-    }
+    return SCRIPT_PASSED;
 }
 
 int script_generate_class_generic(char * buf, int * offset, range_t * range, char * template) {

@@ -1,1 +1,1 @@
-set .@i,((BaseLevel/10)>12)?12:(BaseLevel/10); if(.@i>2) bonus bBaseAtk,((.@i-2)*5);
+bonus bAtk, readparam(bStr);

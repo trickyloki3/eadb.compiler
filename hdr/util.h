@@ -32,6 +32,8 @@
  	#define STATUS_PARAMATER_SIZE 4
  	#define VAR_ID 32
  	#define VAR_NAME 32
+ 	#define OPTION_SIZE 32
+ 	#define OPTION_NAME_SIZE 64
 
 	/* error checking and exiting */
  	#define ENABLE_EXIT 1

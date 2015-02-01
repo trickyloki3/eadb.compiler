@@ -13,48 +13,40 @@
 //    * Maximum Value   - variable values
 //    * Pretty String   - dependency string
 //==================================================================================
-1  ,                getrefine,0x00000001,0x00000000,0x00000001,         0,        15,"Refine Level";
-2  ,      getequiprefinerycnt,0x00000001,0x00000000,0x00000002,         0,        15,"Refine Level";
-3  ,                readparam,0x00000001,0x00000000,0x00000001,         1,       150,"Paramater";
-4  ,               getskilllv,0x00000001,0x00000000,0x00000002,         0,2147483647,"Skill";
-5  ,                     rand,0x00000001,0x00000000,0x00000002,         0,2147483647,"Random";
-6  ,                      pow,0x00000001,0x00000000,0x00000002,         0,         0,"Pow";
-26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
-27 ,         getrandgroupitem,0x00000001,0x00000000,0x00000002,         0,         0,"Group Item";
+
+// script engine variables
 17 ,                 joblevel,0x00000002,0x00000001,0x00000000,         1,        70,"Job Level";
 18 ,                baselevel,0x00000002,0x00000001,0x00000000,         1,       175,"Base Level";
 19 ,                    maxhp,0x00000002,0x00000001,0x00000000,         1,   1000000,"Max HP";
-23 ,                       hp,0x00000002,0x00000001,0x00000000,         1,   1000000,"HP";
-24 ,                     zeny,0x00000002,0x00000001,0x00000000,         0,2147483647,"Zeny";
-// interpreted; during translation phase
 20 ,                baseclass,0x00000002,0x00000001,0x00000000,         0,2147483647,"Base Class";
 21 ,                  basejob,0x00000002,0x00000001,0x00000000,         0,2147483647,"Base Job";
 22 ,                    class,0x00000002,0x00000001,0x00000000,         0,2147483647,"Class";
-28 ,             getpartnerid,0x00000001,0x00000000,0x00000001,         0,         1,"Partner Online";
-31 ,              checkoption,0x00000001,0x00000000,0x00000001,         0,2147483647,"Companion";
-32 ,              checkfalcon,0x00000001,0x00000000,0x00000001,         0,         1,"Falcom";
-33 ,            checkmadogear,0x00000001,0x00000000,0x00000001,         0,         1,"Mado Gear";
+23 ,                       hp,0x00000002,0x00000001,0x00000000,         1,   1000000,"HP";
+24 ,                     zeny,0x00000002,0x00000001,0x00000000,         0,2147483647,"Zeny";
 34 ,                    upper,0x00000002,0x00000001,0x00000000,         0,2147483647,"Rebirth";
-// complext interpreted
-29 ,              strcharinfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"String Type";
-30 ,                countitem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Count";
-10 ,                  gettime,0x00000001,0x00000000,0x00000002,         0,2147483647,"Time";
+
+// static function
+1  ,                getrefine,0x00000001,0x00000000,0x00000001,         0,        15,"Refine Level";
+28 ,             getpartnerid,0x00000001,0x00000000,0x00000001,         0,         1,"Partner Online";
+32 ,              checkfalcon,0x00000001,0x00000000,0x00000001,         0,         1,"Falcon Companion";
+33 ,            checkmadogear,0x00000001,0x00000000,0x00000001,         0,         1,"Mado Gear";
+48  ,			       checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"Mount";
+
+// require condition processing
+2  ,      getequiprefinerycnt,0x00000001,0x00000000,0x00000002,         0,        15,"Refine Level";
+3  ,                readparam,0x00000001,0x00000000,0x00000002,         1,       150,"Paramater";
+4  ,               getskilllv,0x00000001,0x00000000,0x00000002,         0,2147483647,"Skill";
+5  ,                     rand,0x00000001,0x00000000,0x00000002,         0,2147483647,"Random";
+6  ,                      pow,0x00000001,0x00000000,0x00000002,         0,         0,"Pow";
 8  ,              getiteminfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Info";
 9  ,               getequipid,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
+10 ,                  gettime,0x00000001,0x00000000,0x00000002,         0,2147483647,"Time";
 13 ,               isequipped,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
-// constants
-35  ,                	 bStr,0x00000001,0x00000000,0x00000001,         1,       150,"STR";
-36  ,                	 bAgi,0x00000001,0x00000000,0x00000001,         1,       150,"AGI";
-37  ,                	 bVit,0x00000001,0x00000000,0x00000001,         1,       150,"VIT";
-38  ,                	 bLuk,0x00000001,0x00000000,0x00000001,         1,       150,"LUK";
-39  ,                	 bDex,0x00000001,0x00000000,0x00000001,         1,       150,"DEX";
-40  ,                	 bInt,0x00000001,0x00000000,0x00000001,         1,       150,"INT";
-41  ,              Option_Wug,0x00000001,0x00000000,0x00000001,         0,         1,"Wug";
-42  ,         Option_Wugrider,0x00000001,0x00000000,0x00000001,         0,         1,"Wug";
-43  ,               HT_FALCON,0x00000001,0x00000000,0x00000001,         0,         1,"Falcon";
-44  ,           gettime_month,0x00000001,0x00000000,0x00000001,         0,        25,"Month";
-45  ,             gettime_day,0x00000001,0x00000000,0x00000001,         0,       365,"Day";
+26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
+27 ,         getrandgroupitem,0x00000001,0x00000000,0x00000002,         0,         0,"Group Item";
+29 ,              strcharinfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"String Type";
+30 ,                countitem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Count";
+31 ,              checkoption,0x00000001,0x00000000,0x00000002,         0,2147483647,"Companion";
 46	 ,					        max,0x00000001,0x00000000,0x00000002,         0,         0,"Max";
 47  ,					        min,0x00000001,0x00000000,0x00000002,         0,         0,"Min";
-48  ,			       checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"Mount";
 49	 ,			    groupranditem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Group";

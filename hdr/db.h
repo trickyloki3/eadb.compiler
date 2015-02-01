@@ -532,6 +532,11 @@
 		struct ra_item_combo_t * next;    /* use by api */
 	} ra_item_combo_t;
 
+	typedef struct option_t {
+		char option[OPTION_SIZE];
+		char name[OPTION_NAME_SIZE];
+	} option_t;
+
 	load_cb_t * ea_item_load();
 	load_cb_t * ra_item_load();
 	load_cb_t * pet_load();
@@ -551,6 +556,7 @@
 	load_cb_t * ra_item_group_load();
 	load_cb_t * ra_item_package_load();
 	load_cb_t * ra_item_combo_load();
+	load_cb_t * option_load();
 	int ea_load_column(void *, int, int, char *);
 	int ra_load_column(void *, int, int, char *);
 	int pet_load_column(void *, int, int, char *);
@@ -570,6 +576,7 @@
 	int ra_item_group_load_column(void *, int, int, char *);
 	int ra_item_package_column(void *, int, int, char *);
 	int ra_item_combo_colum(void *, int, int, char *);
+	int option_column(void *, int, int, char *);
 	int is_row_sentinel(char);
 	int is_row_sentinel_comment(char);
 	int is_row_sentinel_semicolon(char);

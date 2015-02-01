@@ -20,20 +20,15 @@
     #include "table.h"
 
     /* general */
-    #define EXIT_ON_ERROR 0
-    #define CODE_MAINTENANCE 0
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
-    #define BLOCK_SIZE 32
     #define BONUS_SIZE 5
-    #define BLOCK_COUNT 55  /* total number of unique blocks */
-    #define BONUS_COUNT 209 /* total number of unique bonuses */
     /* script return status */
     #define SCRIPT_PASSED 0
     #define SCRIPT_FAILED 1
     /* explicit defined over hardcoded constants */
-    #define BONUS_ID_MAX 5  /* bonus block id are 0 to 4; great for checking if block is a bonus block or not */
-    #define BLOCK_NULLIFIED -1 /* indicates that the block is deleted; used by block->type->id */
+    #define BONUS_ID_MAX 5      /* bonus block id are 0 to 4; great for checking if block is a bonus block or not */
+    #define BLOCK_NULLIFIED -1  /* indicates that the block is deleted; used by block->type->id */
     /* athena syntax groups */
     #define ATHENA_SCRIPT_SYMBOL(X)           ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
     #define ATHENA_SCRIPT_OPERATOR(X)         ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || (X) == '>' || (X) == '<' || (X) == '-' || (X) == '+' || (X) == '/' || (X) == '*' || (X) == '!')
@@ -120,10 +115,12 @@
         /* expression translation */
         char expr[BUF_SIZE];    /* verbatim translation string */
         int expr_cnt;           /* size of expr */
+        int expr_ptr[PTR_SIZE];
+        int expr_ptr_cnt;
         /* function argument stack */
         char args[BUF_SIZE];    /* function argument stack */
         int args_cnt;           /* function argument stack offset (top of stack) */
-        int args_ptr[PTR_SIZE]; /* support up to 256 strings in stack */
+        int args_ptr[PTR_SIZE];
         int args_ptr_cnt;
         /* expression precedence and associative */
         struct node * left;

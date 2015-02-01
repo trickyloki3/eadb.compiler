@@ -60,6 +60,8 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	sqlite3_prepare_v2(db, ra_item_group_search_sql, strlen(ra_item_group_search_sql) + 1, &ic_db->ra_item_group_search, NULL);
 	sqlite3_prepare_v2(db, ra_const_search_id_sql, strlen(ra_const_search_id_sql) + 1, &ic_db->ra_const_id_search, NULL);
 	sqlite3_prepare_v2(db, ra_item_combo_search_sql, strlen(ra_item_combo_search_sql) + 1, &ic_db->ra_item_combo_search, NULL);
+	sqlite3_prepare_v2(db, ra_option_search_sql, strlen(ra_option_search_sql) + 1, &ic_db->ra_option_search, NULL);
+	/*fprintf(stderr,"%s\n", sqlite3_errmsg(db));*/
 	assert(ic_db->ea_item_iterate != NULL);
 	assert(ic_db->ra_item_iterate != NULL);
 	assert(ic_db->he_item_iterate != NULL);
@@ -98,6 +100,7 @@ struct ic_db_t * init_ic_db(const char * filename) {
 	assert(ic_db->ra_item_group_search != NULL);
 	assert(ic_db->ra_const_id_search != NULL);
 	assert(ic_db->ra_item_combo_search != NULL);
+	assert(ic_db->ra_option_search != NULL);
 	/* return api container */
 	ic_db->db = db;
 	return ic_db;
@@ -738,7 +741,21 @@ void free_combo(ra_item_combo_t * combo) {
 	}
 }
 
+int ra_option_search_str(struct ic_db_t * db, option_t * option, char * val) {
+	int code = 0;
+	sqlite3_clear_bindings(db->ra_option_search);
+	sqlite3_bind_text(db->ra_option_search, 1, val, strlen(val), SQLITE_STATIC);
+	code = sqlite3_step(db->ra_option_search);
+	if(code == SQLITE_ROW) {
+		strncopy(option->option, OPTION_SIZE, sqlite3_column_text(db->ra_option_search, 0));
+		strncopy(option->name, OPTION_NAME_SIZE, sqlite3_column_text(db->ra_option_search, 1));
+	}
+	sqlite3_reset(db->ra_option_search);
+	return (code == SQLITE_ROW) ? 0 : -1;
+}
+
 void deit_ic_db(struct ic_db_t * db) {
+	/* cache compiled sqlite3 statment must be free here */
 	sqlite3_finalize(db->ea_item_iterate);
 	sqlite3_finalize(db->ra_item_iterate);
 	sqlite3_finalize(db->he_item_iterate);
@@ -777,6 +794,7 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ea_item_group_search);
 	sqlite3_finalize(db->ra_item_group_search);
 	sqlite3_finalize(db->ra_item_combo_search);
+	sqlite3_finalize(db->ra_option_search);
 	sqlite3_close(db->db);
 	free(db);
 }
@@ -784,7 +802,7 @@ void deit_ic_db(struct ic_db_t * db) {
 
 struct lt_db_t * init_db(const char * filename, int flag) {
 	int status = 0;
-	sqlite3 * db;
+	sqlite3 * db = NULL;
 	
 	struct lt_db_t * lt_db = calloc(1, sizeof(struct lt_db_t));	
 
@@ -955,6 +973,15 @@ struct lt_db_t * init_db(const char * filename, int flag) {
 	}
 	sqlite3_prepare_v2(db, ra_itm_combo_ins, strlen(ra_itm_combo_ins) + 1, &lt_db->ra_item_combo_insert, NULL);
 	assert(lt_db->ra_item_combo_insert != NULL);
+
+	/* option */
+	if(flag & INITIALIZE_DB) {
+		sqlite3_exec(db, option_des, NULL, NULL, NULL);
+		sqlite3_exec(db, option_tbl, NULL, NULL, NULL);
+	}
+	sqlite3_prepare_v2(db, option_ins, strlen(option_ins) + 1, &lt_db->ra_option_insert, NULL);
+	assert(lt_db->ra_option_insert != NULL);
+
 	lt_db->db = db;
 	return lt_db;
 }
@@ -988,6 +1015,7 @@ void deit_db(struct lt_db_t * db) {
 	sqlite3_finalize(db->ea_item_group_insert);
 	sqlite3_finalize(db->ra_item_group_insert);
 	sqlite3_finalize(db->ra_item_combo_insert);
+	sqlite3_finalize(db->ra_option_insert);
 	sqlite3_close(db->db);
 	free(db);
 }
@@ -1582,6 +1610,19 @@ void load_ra_item_combo(struct lt_db_t * sql, ra_item_combo_t * db, int size) {
 	}
 	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	deit_ic_db(athena);
+}
+
+void load_option(struct lt_db_t * sql, option_t * db, int size) {
+	int i = 0;	
+	sqlite3_exec(sql->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0; i < size; i++) {
+		sqlite3_clear_bindings(sql->ra_option_insert);
+		sqlite3_bind_text(sql->ra_option_insert, 1, db[i].option, strlen(db[i].option), SQLITE_STATIC);
+		sqlite3_bind_text(sql->ra_option_insert, 2, db[i].name, strlen(db[i].name), SQLITE_STATIC);
+		sqlite3_step(sql->ra_option_insert);
+		sqlite3_reset(sql->ra_option_insert);
+	}
+	sqlite3_exec(sql->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 }
 
 char * array_to_string(char * buffer, int * array) {

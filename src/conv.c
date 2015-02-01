@@ -104,6 +104,8 @@ int main(int argc, char * argv[]) {
 			load_db_t * db38 = load("../radb/item_group/item_misc.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db39 = load("../radb/item_group/item_package.txt", trim_alpha, load_general, ra_item_package_load);
 			load_db_t * db40 = load("../radb/item_combo_db.txt", trim_numeric, load_general, ra_item_combo_load);
+			load_db_t * db41 = load("res/option_db.txt", trim_alpha, load_general, option_load);
+			load_option(db, db41->db, db41->size);
 			load_mob(db, db->ra_mob_insert, db6->db, db6->size);
 			ra_load_skill(db, db->ra_skill_insert, db9->db, db9->size);
 			ra_load_prod(db, db->ra_prod_insert, db12->db, db12->size);
@@ -134,6 +136,7 @@ int main(int argc, char * argv[]) {
 			db38->dealloc(db38->db, db38->size);
 			db39->dealloc(db39->db, db39->size);
 			db40->dealloc(db40->db, db40->size);
+			db41->dealloc(db41->db, db41->size);
 			free(db6);
 			free(db9);
 			free(db12);
@@ -149,6 +152,7 @@ int main(int argc, char * argv[]) {
 			free(db38);
 			free(db39);
 			free(db40);
+			free(db41);
 		}
 		if(global_mode & HERCULES) {
 			load_db_t * db7 = load("../hedb/mob_db.txt", trim_numeric, load_general, mob_load);

@@ -235,6 +235,18 @@ load_cb_t * ra_item_combo_load() {
    return interface;  
 }
 
+load_cb_t * option_load() {
+   load_cb_t * interface = calloc(1, sizeof(load_cb_t));
+   interface->load_column = option_column;
+   interface->is_row_sentinel = is_row_sentinel;
+   interface->is_row_delimiter = is_row_delimiter;
+   interface->flag = CHECK_QUOTE;
+   interface->column_count = 2;
+   interface->type_size = sizeof(option_t);
+   interface->dealloc = blank_dealloc;
+   return interface;
+}
+
 int ea_load_column(void * db, int row, int col, char * val) {
    ea_item_t * item_row = &((ea_item_t *) db)[row];
    switch(col) {
@@ -733,6 +745,16 @@ int ra_item_combo_colum(void * db, int row, int col, char * val) {
    switch(col) {
       case 0: ra_item_combo->item_id_list = convert_string(val); break;
       case 1: ra_item_combo->script = convert_string(val); break;
+      default: break;
+   }
+   return 0;
+}
+
+int option_column(void * db, int row, int col, char * val) {
+   option_t * option = &((option_t *) db)[row];
+   switch(col) {
+      case 0: strncopy(option->option, OPTION_SIZE, (const unsigned char *) val); break;
+      case 1: strncopy(option->name, OPTION_NAME_SIZE, (const unsigned char *) val); break;
       default: break;
    }
    return 0;
