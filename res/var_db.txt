@@ -25,14 +25,13 @@
 24 ,                     zeny,0x00000002,0x00000001,0x00000000,         0,2147483647,"Zeny";
 34 ,                    upper,0x00000002,0x00000001,0x00000000,         0,2147483647,"Rebirth";
 
-// static function
+// static function finalize 
 1  ,                getrefine,0x00000001,0x00000000,0x00000001,         0,        15,"Refine Level";
 28 ,             getpartnerid,0x00000001,0x00000000,0x00000001,         0,         1,"Partner Online";
 32 ,              checkfalcon,0x00000001,0x00000000,0x00000001,         0,         1,"Falcon Companion";
-33 ,            checkmadogear,0x00000001,0x00000000,0x00000001,         0,         1,"Mado Gear";
-48  ,			       checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"Mount";
-
-// require condition processing
+33 ,            checkmadogear,0x00000001,0x00000000,0x00000001,         0,         1,"Operating Mado Gear";
+48  ,			       checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"On Mount";
+// evaluate function finalize
 2  ,      getequiprefinerycnt,0x00000001,0x00000000,0x00000002,         0,        15,"Refine Level";
 3  ,                readparam,0x00000001,0x00000000,0x00000002,         1,       150,"Paramater";
 4  ,               getskilllv,0x00000001,0x00000000,0x00000002,         0,2147483647,"Skill";
@@ -40,13 +39,17 @@
 6  ,                      pow,0x00000001,0x00000000,0x00000002,         0,         0,"Pow";
 8  ,              getiteminfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Info";
 9  ,               getequipid,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
-10 ,                  gettime,0x00000001,0x00000000,0x00000002,         0,2147483647,"Time";
-13 ,               isequipped,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
-26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
 27 ,         getrandgroupitem,0x00000001,0x00000000,0x00000002,         0,         0,"Group Item";
-29 ,              strcharinfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"String Type";
-30 ,                countitem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Count";
-31 ,              checkoption,0x00000001,0x00000000,0x00000002,         0,2147483647,"Companion";
 46	 ,					        max,0x00000001,0x00000000,0x00000002,         0,         0,"Max";
 47  ,					        min,0x00000001,0x00000000,0x00000002,         0,         0,"Min";
 49	 ,			    groupranditem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Group";
+
+// require checking value
+10 ,                  gettime,0x00000001,0x00000000,0x00000002,         0,2147483647,"Time";
+31 ,              checkoption,0x00000001,0x00000000,0x00000002,         0,2147483647,"Companion";
+
+// require condition processing
+13 ,               isequipped,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
+26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
+29 ,              strcharinfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"String Type";
+30 ,                countitem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Count";

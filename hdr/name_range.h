@@ -37,16 +37,6 @@
       struct logic_node * left;
       struct logic_node * right;
       struct logic_node * stack;
-      /* in order to support function logic nodes;
-       * function argument translation must also be
-       * supply with comparsion values. */
-      
-      /* function argument stack */
-      char * args_str;        /* equal or not equal to a string literal */
-      char args[BUF_SIZE];    /* function argument stack */
-      int args_cnt;           /* function argument stack offset (top of stack) */
-      int args_ptr[SUB_SIZE]; /* support up to 256 strings in stack */
-      int args_ptr_cnt;
    } logic_node_t;
 
    logic_node_t * make_cond(char *, range_t *, logic_node_t * func);

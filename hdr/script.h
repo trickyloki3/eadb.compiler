@@ -20,6 +20,7 @@
     #include "table.h"
 
     /* general */
+    #define AUG_SIZE 32
     #define BUF_SIZE 4096
     #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
     #define BONUS_SIZE 5
@@ -112,16 +113,13 @@
         range_t * range;        /* min max range */
         logic_node_t * cond;
         int cond_cnt;           /* total count of variable and functions; cascaded by operator */
-        /* expression translation */
-        char expr[BUF_SIZE];    /* verbatim translation string */
-        int expr_cnt;           /* size of expr */
-        int expr_ptr[PTR_SIZE];
-        int expr_ptr_cnt;
+        /* single stack */
+        char stack[BUF_SIZE];   /* stack to hold all strings */
+        int stack_cnt;          /* size of stack */
+        char * formula;         /* each node contains a (translated) subset of the entire expression */
         /* function argument stack */
-        char args[BUF_SIZE];    /* function argument stack */
-        int args_cnt;           /* function argument stack offset (top of stack) */
-        int args_ptr[PTR_SIZE];
-        int args_ptr_cnt;
+        char * aug_ptr[AUG_SIZE];
+        int aug_ptr_cnt;
         /* expression precedence and associative */
         struct node * left;
         struct node * right;
@@ -266,8 +264,10 @@
     char * formula(char *, char *, node_t *);
     int formula_write(block_r *, char *);
     char * status_formula(char *, char *, node_t *, int, int);
-    void argument_write(node_t * node, char * desc);
-
+    void argument_write(node_t *, char *);
+    void id_write(node_t * node, char * fmt, ...);
+    void expression_write(node_t *, char *, ...);
+    
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);

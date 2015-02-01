@@ -9,7 +9,6 @@
 
 /* generate a new condition node; the leaf node of the logical tree structure */
 logic_node_t * make_cond(char * name, range_t * range, logic_node_t * func) {
-   int i = 0;
    int name_len = 0;
    logic_node_t * new_node = NULL;
    /* check null name and range */
@@ -24,26 +23,14 @@ logic_node_t * make_cond(char * name, range_t * range, logic_node_t * func) {
    new_node->name = calloc(name_len + 1, sizeof(char));
    strncpy(new_node->name, name, name_len);
    new_node->range = copyrange(range);
-   /* copy function argument translation stack */
-   if(func != NULL && func->args_cnt > 0) {
-      for(i = 0; i < func->args_cnt; i++)
-         new_node->args[i] = func->args[i];
-      for(i = 0; i < func->args_ptr_cnt; i++)
-         new_node->args_ptr[i] = func->args_ptr[i];
-      new_node->args_cnt = func->args_cnt;
-      new_node->args_ptr_cnt = func->args_ptr_cnt;
-   }
-   if(func != NULL && func->args_str != NULL) {
-      new_node->args_str = convert_string(func->args_str);
-   }
    return new_node;
 }
 
 /* dump the condition node struct */
 void dmpcond(logic_node_t * cond, FILE * stm) {
    if(stm != NULL)
-      fprintf(stm,"dmpcond; %p (%s/%d: %d ~ %d); %s\n", (void *) cond,
-      cond->name, cond->type, cond->range->min, cond->range->max, cond->args_str);
+      fprintf(stm,"dmpcond; %p (%s/%d: %d ~ %d)\n", (void *) cond,
+      cond->name, cond->type, cond->range->min, cond->range->max);
 }
 
 /* deallocating the condition node */
@@ -307,8 +294,6 @@ void dmpnamerange(logic_node_t * root, FILE * stm, int level) {
       case LOGIC_NODE_OR:     fprintf(stm,"%p<-%p:OR\n", (void *) root->parent, (void *) root); break;
       default: break;
    }
-   if(root->args_str != NULL)
-      fprintf(stm,"%s\n", root->args_str);
    if(root->left != NULL) dmpnamerange(root->left, stm, level + 1);
    if(root->right != NULL) dmpnamerange(root->right, stm, level + 1);
 }
@@ -327,7 +312,6 @@ void freenamerange(logic_node_t * root) {
    if(root == NULL) return;
    if(root->left != NULL) freenamerange(root->left);
    if(root->right != NULL) freenamerange(root->right);
-   if(root->args_str != NULL) free(root->args_str);
    /* cond and logical nodes are free separately */
    if(root->type == LOGIC_NODE_COND)
       free_cond(root);
