@@ -8,17 +8,16 @@
 #include "name_range.h"
 
 /* generate a new condition node; the leaf node of the logical tree structure */
-logic_node_t * make_cond(char * name, range_t * range, logic_node_t * func) {
+logic_node_t * make_cond(int var, char * name, range_t * range, logic_node_t * func) {
    int name_len = 0;
    logic_node_t * new_node = NULL;
    /* check null name and range */
-   if(name == NULL || range == NULL) {
-      fprintf(stderr,"make_cond; null paramaters.\n");
-      exit(EXIT_FAILURE);
-   }
+   if(exit_null_safe(2, name, range))
+      return NULL;
    /* make the condition node */
    name_len = strlen(name);
    new_node = calloc(1, sizeof(logic_node_t));
+   new_node->var = var;
    new_node->type = LOGIC_NODE_COND;
    new_node->name = calloc(name_len + 1, sizeof(char));
    strncpy(new_node->name, name, name_len);
@@ -29,8 +28,9 @@ logic_node_t * make_cond(char * name, range_t * range, logic_node_t * func) {
 /* dump the condition node struct */
 void dmpcond(logic_node_t * cond, FILE * stm) {
    if(stm != NULL)
-      fprintf(stm,"dmpcond; %p (%s/%d: %d ~ %d)\n", (void *) cond,
-      cond->name, cond->type, cond->range->min, cond->range->max);
+      fprintf(stm,"dmpcond; %p; var %d; (%s/%d: %d ~ %d)\n", 
+      (void *) cond, cond->var, cond->name, cond->type, 
+      cond->range->min, cond->range->max);
 }
 
 /* deallocating the condition node */
@@ -48,14 +48,12 @@ logic_node_t * new_cond(int logic_node_type, logic_node_t * left, logic_node_t *
 
    /* validate paramaters since all handlers go through this function */
    if(INVALID_NODE_TYPE(logic_node_type)) {
-      fprintf(stderr,"new_cond; invalid logic node type; %d.", logic_node_type);
-      exit(EXIT_FAILURE);
+      exit_func_safe("invalid node type %d", logic_node_type);
+      return NULL;
    }
 
-   if(INVALID_NODE(left, right)) {
-      fprintf(stderr,"new_cond; null paramaters.");
-      exit(EXIT_FAILURE);  
-   }
+   if(exit_null_safe(2, left, right))
+      return NULL;
 
    if(COND_COND_CASE(left, right)) {
       root = base_cond_cond(logic_node_type, left, right);
@@ -83,8 +81,8 @@ logic_node_t * new_cond(int logic_node_type, logic_node_t * left, logic_node_t *
    return root;
 
    new_cond_err:
-      fprintf(stderr,"new_cond; invalid left and right type; %d and %d.", left->type, right->type);
-      exit(EXIT_FAILURE);
+      exit_func_safe("invalid node type in either left %d or right node %d", left->type, right->type);
+      return NULL;
 }
 
 /* handle the cond-cond base case */
@@ -92,15 +90,15 @@ logic_node_t * base_cond_cond(int logic_node_type, logic_node_t * left, logic_no
    range_t * temp = NULL;
    logic_node_t * new_node = NULL;
    /* attempt to merge condition nodes on AND */
-   if(logic_node_type == LOGIC_NODE_AND && ncs_strcmp(left->name, right->name) == 0) {
+   if(logic_node_type == LOGIC_NODE_AND && ncs_strcmp(left->name, right->name) == 0 && left->var == right->var) {
       temp = andrange(left->range, right->range);
-      new_node = make_cond(left->name, temp, NULL);
+      new_node = make_cond(left->var, left->name, temp, NULL);
       freerange(temp);
    } else {
       new_node = calloc(1, sizeof(logic_node_t));
       new_node->type = logic_node_type;
-      new_node->left = make_cond(left->name, left->range, left);
-      new_node->right = make_cond(right->name, right->range, right);
+      new_node->left = make_cond(left->var, left->name, left->range, left);
+      new_node->right = make_cond(right->var, right->name, right->range, right);
       new_node->left->parent = new_node;
       new_node->right->parent = new_node;
    }
@@ -113,7 +111,7 @@ logic_node_t * AND_cond_and(logic_node_t * cond, logic_node_t * and) {
    logic_node_t * result = NULL;
    logic_node_t * new_node = NULL;
    /* search for matching cond identifier in the AND subtree; merge if founded */
-   search_identifier(and, cond->name, &result);
+   search_identifier(and, cond->var, cond->name, &result);
    if(result != NULL) {
       temp = result->range;
       result->range = andrange(cond->range, result->range);
@@ -123,7 +121,7 @@ logic_node_t * AND_cond_and(logic_node_t * cond, logic_node_t * and) {
    } else {
       new_node = calloc(1, sizeof(logic_node_t));
       new_node->type = LOGIC_NODE_AND;
-      new_node->left = make_cond(cond->name, cond->range, cond);
+      new_node->left = make_cond(cond->var, cond->name, cond->range, cond);
       new_node->right = copy_and_tree(and);
       new_node->left->parent = new_node;
       new_node->right->parent = new_node;
@@ -201,7 +199,7 @@ logic_node_t * AND_or_and(logic_node_t * or, logic_node_t * and) {
 logic_node_t * OR_cond_and(logic_node_t * cond, logic_node_t * and) {
    logic_node_t * new_node = calloc(1, sizeof(logic_node_t));
    new_node->type = LOGIC_NODE_OR;
-   new_node->left = make_cond(cond->name, cond->range, cond);
+   new_node->left = make_cond(cond->var, cond->name, cond->range, cond);
    new_node->right = copy_and_tree(and);
    new_node->left->parent = new_node;
    new_node->right->parent = new_node;
@@ -212,7 +210,7 @@ logic_node_t * OR_cond_and(logic_node_t * cond, logic_node_t * and) {
 logic_node_t * OR_cond_or(logic_node_t * cond, logic_node_t * or) {
    logic_node_t * new_node = calloc(1, sizeof(logic_node_t));
    new_node->type = LOGIC_NODE_OR;
-   new_node->left = make_cond(cond->name, cond->range, cond);
+   new_node->left = make_cond(cond->var, cond->name, cond->range, cond);
    new_node->right = copy_or_tree(or);
    new_node->left->parent = new_node;
    new_node->right->parent = new_node;
@@ -272,13 +270,13 @@ logic_node_t * OR_or_or(logic_node_t * or_1, logic_node_t * or_2) {
 }
 
 /* search subtree for matching id; pre-order traversal */
-void search_identifier(logic_node_t * node, char * name, logic_node_t ** result) {
+void search_identifier(logic_node_t * node, int var, char * name, logic_node_t ** result) {
    if(node->type == LOGIC_NODE_COND)
-      if(ncs_strcmp(node->name, name) == 0)
+      if(ncs_strcmp(node->name, name) == 0 && node->var == var)
          *result = node;
    /* continue searching if result not found */
-   if(node->left != NULL && *result == NULL) search_identifier(node->left, name, result);
-   if(node->right != NULL && *result == NULL) search_identifier(node->right, name, result);
+   if(node->left != NULL && *result == NULL) search_identifier(node->left, var, name, result);
+   if(node->right != NULL && *result == NULL) search_identifier(node->right, var, name, result);
 }
 
 /* display the logical tree */
@@ -287,7 +285,7 @@ void dmpnamerange(logic_node_t * root, FILE * stm, int level) {
    if(root == NULL) return;
    for(i = 0; i < level; i++) fprintf(stm,"\t");
    switch(root->type) {
-      case LOGIC_NODE_COND:   fprintf(stm,"%p<-%p:COND:%s;", (void *) root->parent, (void *) root, root->name); 
+      case LOGIC_NODE_COND:   fprintf(stm,"%p<-%p:COND:%s;VAR:%d;", (void *) root->parent, (void *) root, root->name, root->var); 
                               dmprange(root->range, stm, "cond "); 
                               break;
       case LOGIC_NODE_AND:    fprintf(stm,"%p<-%p:AND\n", (void *) root->parent, (void *) root); break;
@@ -336,13 +334,13 @@ logic_node_t * copy_and_tree(logic_node_t * root) {
       new_root = calloc(1, sizeof(logic_node_t));
       new_root->type = LOGIC_NODE_AND;
       if(root->left->type == LOGIC_NODE_COND)
-         new_root->left = make_cond(root->left->name, root->left->range, root->left);
+         new_root->left = make_cond(root->left->var, root->left->name, root->left->range, root->left);
       else if(root->left->type == LOGIC_NODE_AND)
          new_root->left = copy_and_tree(root->left);
       new_root->left->parent = new_root;
 
       if(root->right->type == LOGIC_NODE_COND)
-         new_root->right = make_cond(root->right->name, root->right->range, root->right);
+         new_root->right = make_cond(root->right->var, root->right->name, root->right->range, root->right);
       else if(root->right->type == LOGIC_NODE_AND)
          new_root->right = copy_and_tree(root->right);
       new_root->right->parent = new_root;
@@ -358,7 +356,7 @@ logic_node_t * copy_or_tree(logic_node_t * root) {
       new_root->type = LOGIC_NODE_OR;
       /* copy the left node */
       if(root->left->type == LOGIC_NODE_COND)
-         new_root->left = make_cond(root->left->name, root->left->range, root->left);
+         new_root->left = make_cond(root->left->var, root->left->name, root->left->range, root->left);
       else if(root->left->type == LOGIC_NODE_AND)
          new_root->left = copy_and_tree(root->left);
       else if(root->left->type == LOGIC_NODE_OR)
@@ -367,7 +365,7 @@ logic_node_t * copy_or_tree(logic_node_t * root) {
 
       /* copy the right node */
       if(root->right->type == LOGIC_NODE_COND)
-         new_root->right = make_cond(root->right->name, root->right->range, root->right);
+         new_root->right = make_cond(root->right->var, root->right->name, root->right->range, root->right);
       else if(root->right->type == LOGIC_NODE_AND)
          new_root->right = copy_and_tree(root->right);
       else if(root->right->type == LOGIC_NODE_OR)
@@ -379,7 +377,7 @@ logic_node_t * copy_or_tree(logic_node_t * root) {
 
 logic_node_t * copy_any_tree(logic_node_t * root) {
    if(root->type == LOGIC_NODE_COND)
-      return make_cond(root->name, root->range, root);
+      return make_cond(root->var, root->name, root->range, root);
    else if(root->type == LOGIC_NODE_AND)
       return copy_and_tree(root);
    else if(root->type == LOGIC_NODE_OR)
@@ -454,7 +452,7 @@ logic_node_t * inverse_logic_tree(logic_node_t * root) {
          left = inverse_logic_tree(root->left);
       else if(root->left->type == LOGIC_NODE_COND) {
          temp_range = notrange(root->left->range);
-         left = make_cond(root->left->name, temp_range, root->left);
+         left = make_cond(root->left->var, root->left->name, temp_range, root->left);
          freerange(temp_range); /* make_cond makes a copy of supplied range */
       }
 
@@ -462,7 +460,7 @@ logic_node_t * inverse_logic_tree(logic_node_t * root) {
          right = inverse_logic_tree(root->right);
       else if(root->right->type == LOGIC_NODE_COND) {
          temp_range = notrange(root->right->range);
-         right = make_cond(root->right->name, temp_range, root->right);
+         right = make_cond(root->right->var, root->right->name, temp_range, root->right);
          freerange(temp_range); /* make_cond makes a copy of supplied range */
       }
 
@@ -471,7 +469,7 @@ logic_node_t * inverse_logic_tree(logic_node_t * root) {
       freenamerange(right);
    } else {
       temp_range = notrange(root->range);
-      new_root = make_cond(root->name, temp_range, root);
+      new_root = make_cond(root->var, root->name, temp_range, root);
       freerange(temp_range); /* make_cond makes a copy of supplied range */
    }
 

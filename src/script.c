@@ -3612,7 +3612,7 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                     freerange(temp);
                 }
             }
-        node->cond = make_cond(node->id, node->range, NULL);
+        node->cond = make_cond(node->var, node->id, node->range, NULL);
     }
 
     /* handle unary operator nodes */
@@ -3633,7 +3633,7 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
         }
 
         if(node->left->cond != NULL)
-            node->cond = make_cond(node->left->cond->name, node->range, node->left->cond);
+            node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
 
         /* extract the local min and max from the range */
         node->min = minrange(node->range);
@@ -3751,9 +3751,9 @@ void node_inherit_cond(node_t * node) {
     /* only inherit if only ONE condition exist; if condition 
      * exist on either end, then the condition can't be interpreted. */
     if(node->left->cond != NULL && node->right->cond == NULL) {
-        node->cond = make_cond(node->left->cond->name, node->range, node->left->cond);
+        node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
     } else if(node->left->cond == NULL && node->right->cond != NULL) {
-        node->cond = make_cond(node->right->cond->name, node->range, node->right->cond);
+        node->cond = make_cond(node->right->cond->var, node->right->cond->name, node->range, node->right->cond);
     }
 }
 
@@ -4220,6 +4220,7 @@ int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset) {
 }
 
 int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
+    /*dmpcond(tree, stderr);*/
     return SCRIPT_PASSED;
 }
 

@@ -27,9 +27,9 @@
    #define AND_AND_CASE(X,Y)     ((X)->type == LOGIC_NODE_AND && (Y)->type == LOGIC_NODE_AND)
    #define OR_OR_CASE(X,Y)       ((X)->type == LOGIC_NODE_OR && (Y)->type == LOGIC_NODE_OR)
    #define INVALID_NODE_TYPE(X)  (X < LOGIC_NODE_COND || X > LOGIC_NODE_OR)
-   #define INVALID_NODE(X, Y)    ((X) == NULL || (Y) == NULL)
 
    typedef struct logic_node {
+      int var;
       int type;            /* or, and, or cond */
       char * name;         /* unique name */
       range_t * range;     /* range of values */
@@ -39,7 +39,7 @@
       struct logic_node * stack;
    } logic_node_t;
 
-   logic_node_t * make_cond(char *, range_t *, logic_node_t * func);
+   logic_node_t * make_cond(int, char *, range_t *, logic_node_t * func);
    void dmpcond(logic_node_t *, FILE *);
    void free_cond(logic_node_t *);
    logic_node_t * new_cond(int, logic_node_t *, logic_node_t *);
@@ -55,7 +55,7 @@
    logic_node_t * OR_and_or(logic_node_t *, logic_node_t *);
    logic_node_t * OR_and_and(logic_node_t *, logic_node_t *);
    logic_node_t * OR_or_or(logic_node_t *, logic_node_t *);
-   void search_identifier(logic_node_t *, char *, logic_node_t **);
+   void search_identifier(logic_node_t *, int, char *, logic_node_t **);
    void dmpnamerange(logic_node_t *, FILE *, int);
    void deepdmpnamerange(logic_node_t *, FILE *, char *);
    void freenamerange(logic_node_t *);
