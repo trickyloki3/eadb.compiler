@@ -2974,6 +2974,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             memset(&var_info, 0, sizeof(ic_var_t));
             if(!var_keyword_search(block->db, &var_info, expr[i])) {
                 temp_node->cond_cnt = 1;
+                temp_node->var = var_info.tag;
                 id_write(temp_node, "%s", var_info.str);
                 /* handle function call */
                 if(var_info.type & TYPE_FUNC) {
@@ -3220,6 +3221,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             *min = (int) pow(resultOne->min, resultTwo->min);
             *max = (int) pow(resultOne->max, resultTwo->max);
             expression_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);
+            id_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);
         }
     } else if(ncs_strcmp(func,"min") == 0) {
         split_paramater(expr, start, end, &i);
@@ -3234,6 +3236,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
             *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
             expression_write(node, "Minimum(%s,%s)", resultOne->formula, resultTwo->formula);
+            id_write(node, "Minimum(%s,%s)", resultOne->formula, resultTwo->formula);
         }
     } else if(ncs_strcmp(func,"max") == 0) {
         split_paramater(expr, start, end, &i);
@@ -3248,6 +3251,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
             *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
             expression_write(node, "Maximum(%s,%s)", resultOne->formula, resultTwo->formula);
+            id_write(node, "Maximum(%s,%s)", resultOne->formula, resultTwo->formula);
         }
     } else if(ncs_strcmp(func,"rand") == 0) {
         /* rand may have one or two argument */
@@ -3270,17 +3274,18 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             } else {
                 *min = (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
                 *max = (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
-                expression_write(node, "%s", "Random");
             }
         } else {
             *min = resultOne->min;
             *max = resultOne->max;
-            expression_write(node, "%s", "Random");
         }
+        expression_write(node, "%s", "Random");
+        id_write(node, "%s", "Random");
     /* callfunc calls global functions; just enumerate .. */
     } else if(ncs_strcmp(func,"callfunc") == 0) {
         block->flag = 0x01 | 0x02;
         /* the paramaters begin at a certain offset */
+        id_write(node, "%s", expr[start]);
         if(ncs_strcmp(expr[start], "F_Rand") == 0) {
             block->offset = block->ptr_cnt;
         } else if(ncs_strcmp(expr[start], "F_RandMes") == 0) {
@@ -3301,7 +3306,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         block->ptr_cnt--;
-
         *min = *max = 0;
     } else if(ncs_strcmp(func,"strcharinfo") == 0) {
         /* note; hercules uses a set of constants named PC_*; might need to resolve to integer via const_db. */
@@ -3323,6 +3327,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
         }
+        id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"countitem") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
         if(resultOne == NULL) {
@@ -3340,8 +3345,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         /* write the item name on the argument stack */
         argument_write(node, item.name);
-        *min = 0;
-        *max = 2147483647;
     } else if(ncs_strcmp(func,"gettime") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
         if(resultOne == NULL) {
@@ -3674,13 +3677,21 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 node->range = (flag & EVALUATE_FLAG_EXPR_BOOL)?
                     calcrange(node->op, node->left->range, node->right->range):
                     mkrange(INIT_OPERATOR, 0, 1, 0);
+                /* variable and functions generate logic trees that are inherited by up until the root node */
                 node_inherit_cond(node);
+                /* variable and function change condition meaning per value it is comparing against,
+                 * which require the binary operator connecting that value to ship the range over. */
+                /*logic_inherit_range(node); */
                 (*complexity)++;
                 break;
             case '&': 
             case '|': 
                 node->range = calcrange(node->op, node->left->range, node->right->range); 
-                node_inherit_cond(node); 
+                /* variable and functions generate logic trees that are inherited by up until the root node */
+                node_inherit_cond(node);
+                /* variable and function change condition meaning per value it is comparing against,
+                 * which require the binary operator connecting that value to ship the range over. */
+                /*logic_inherit_range(node);*/
                 break;
             case '&' + '&': 
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
@@ -3743,6 +3754,16 @@ void node_inherit_cond(node_t * node) {
         node->cond = make_cond(node->left->cond->name, node->range, node->left->cond);
     } else if(node->left->cond == NULL && node->right->cond != NULL) {
         node->cond = make_cond(node->right->cond->name, node->range, node->right->cond);
+    }
+}
+
+void logic_inherit_range(node_t * node) {
+    if(exit_null_safe(1, node)) return;
+    if(node->left != NULL && node->left->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+        node->left->cond->range = andrange(node->left->cond->range, node->range);
+    }
+    if(node->right != NULL && node->right->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+        node->right->cond->range = andrange(node->right->cond->range, node->range);
     }
 }
 

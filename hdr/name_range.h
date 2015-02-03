@@ -30,9 +30,9 @@
    #define INVALID_NODE(X, Y)    ((X) == NULL || (Y) == NULL)
 
    typedef struct logic_node {
-      int type;
-      char * name;
-      range_t * range;
+      int type;            /* or, and, or cond */
+      char * name;         /* unique name */
+      range_t * range;     /* range of values */
       struct logic_node * parent;
       struct logic_node * left;
       struct logic_node * right;
