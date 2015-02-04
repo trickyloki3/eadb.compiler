@@ -15,6 +15,8 @@ int main(int argc, char * argv[]) {
 	char fld[buf_size];
 	char buf[buf_size];
 	char * result = NULL;
+	int global_mode = 0;
+	struct ic_db_t * global_db = NULL;
 	memset(buf, 0, sizeof(buf_size));
 
 	if(argc >= 3) {
@@ -53,7 +55,7 @@ int main(int argc, char * argv[]) {
 
 	/* compile the script and display to stdout 
 	 * use output redirection to store in a file */
-	result = script_compile_raw(buf, 0, file_dbg);
+	result = script_compile_raw(buf, 0, file_dbg, global_db, global_mode);
 	if(result != NULL) {
 		printf(" -- script --\n%s\n-- item description --\n%s\n", buf, result);
 		free(result);

@@ -175,9 +175,6 @@
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
     } script_t;
 
-    int global_mode;                /* indicates eathena, rathena, or hercules mode */
-    struct ic_db_t * global_db;     /* global sqlite3 database reference */
-
     /* athena db */
     int iter_item_db(int, struct ic_db_t *, ic_item_t *);
 
@@ -214,9 +211,9 @@
     int script_translate(script_t *);
     int script_bonus(script_t *);
     int script_generate(script_t *, char *, int *);
-    int script_generate_combo(int, char *, int *);
-    char * script_compile_raw(char *, int, FILE *);
-    #define script_compile(X, Y) script_compile_raw(X, Y, NULL)
+    int script_generate_combo(int, char *, int *, struct ic_db_t *, int);
+    char * script_compile_raw(char *, int, FILE *, struct ic_db_t *, int);
+    #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
     /* script translation functions */  
     int translate_getitem(block_r *, int);
@@ -292,9 +289,10 @@
     int script_linkage_count(block_r *, int);
 
     /* support generation */
-    int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
-    int script_generate_and_chain(logic_node_t *, char *, int *);
-    int script_generate_cond_node(logic_node_t *, char *, int *);
+    int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *, block_r *);
+    int script_generate_and_chain(logic_node_t *, char *, int *, block_r *);
+    int script_generate_cond_node(logic_node_t *, char *, int *, block_r *);
+    int condition_write_item(char *, int *, range_t *, block_r *);
     int condition_write_class(char *, int *, range_t *, char *);
     int condition_write_range(char *, int *, range_t *, char *);
     int condition_write_format(char *, int *, char * fmt, ...);

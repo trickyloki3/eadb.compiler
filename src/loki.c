@@ -22,8 +22,8 @@ int main(int argc, char * argv[]) {
 	}
 	
 	/* attach database to script */
-	global_mode = script.mode = RATHENA;
-	global_db = script.db = init_ic_db("athena.db");
+	script.mode = RATHENA;
+	script.db = init_ic_db("athena.db");
 
 	/* process all items in database */
 	ret = iter_item_db(script.mode, script.db, &item);
@@ -39,7 +39,7 @@ int main(int argc, char * argv[]) {
 						if(!script_translate(&script))
 							if(!script_bonus(&script))
 								if(!script_generate(&script, buffer, &offset))
-									if(!script_generate_combo(script.item_id, buffer, &offset)) {
+									if(!script_generate_combo(script.item_id, buffer, &offset, script.db, script.mode)) {
 										fprintf(fitem,"%d#\n%s#\n", script.item_id, buffer);
 										script_block_dump(&script, debug);
 									}

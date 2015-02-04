@@ -12,6 +12,7 @@
 #include "script.h"
 
 int main(int argc, char * argv[]) {
+	int global_mode = 0;
 	if(argc >= 2) {
 		if(ncs_strcmp("all",argv[1]) != 0)
 			global_mode = (ncs_strcmp(argv[1],"rathena") == 0) ? RATHENA : 

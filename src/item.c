@@ -11,6 +11,8 @@
 int load_by_mode(int mode, struct ic_db_t * db, ic_item_t * item);
 
 int main(int argc, char * argv[]) {
+	int global_mode = 0;
+	struct ic_db_t * global_db = NULL;
 	if(argc >= 2) {
 		global_mode = (ncs_strcmp(argv[1],"rathena") == 0) ? RATHENA : 
 					  	(((ncs_strcmp(argv[1],"eathena") == 0) ? EATHENA : 
@@ -55,7 +57,7 @@ int main(int argc, char * argv[]) {
 
 	while(sqlite_status == SQLITE_ROW) {
 		if(item.script != NULL && strlen(item.script) > 0) {
-			item_desc = script_compile_raw(item.script, item.id, file_dgb);
+			item_desc = script_compile_raw(item.script, item.id, file_dgb, global_db, global_mode);
 			if(item_desc != NULL) {
 				fprintf(file_itm,"%d#\n%s#\n", item.id, (item_desc) ? item_desc : "");
 				free(item_desc);

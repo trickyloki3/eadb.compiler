@@ -1103,7 +1103,7 @@ int script_generate(script_t * script, char * buffer, int * offset) {
             case 26: /* if */
             case 27: /* else */
                 if(iter->logic_tree != NULL)
-                    if(script_generate_cond(iter->logic_tree, stdout, buf, buffer, offset))
+                    if(script_generate_cond(iter->logic_tree, stdout, buf, buffer, offset, iter))
                         return SCRIPT_FAILED;
                 break;
             case 28: /* set */
@@ -1127,17 +1127,17 @@ int script_generate(script_t * script, char * buffer, int * offset) {
     return SCRIPT_PASSED;
 }
 
-int script_generate_combo(int item_id, char * buffer, int * offset) {
+int script_generate_combo(int item_id, char * buffer, int * offset, struct ic_db_t * db, int mode) {
     char * item_desc = NULL;
     ra_item_combo_t * item_combo_list = NULL;
     ra_item_combo_t * item_combo_iter = NULL;
     /* search the item id for combos */
-    if(!ra_item_combo_search_id(global_db, &item_combo_list, item_id)) {
+    if(!ra_item_combo_search_id(db, &item_combo_list, item_id)) {
         item_combo_iter = item_combo_list;
         while(item_combo_iter != NULL) {
             *offset += sprintf(buffer + *offset, "%s\n", item_combo_iter->combo);
             /* compile each script write to buffer */
-            item_desc = script_compile(item_combo_iter->script, -1);
+            item_desc = script_compile(item_combo_iter->script, -1, db, mode);
             if(item_desc != NULL) {
                 *offset += sprintf(buffer + *offset, "%s", item_desc);
                 free(item_desc);
@@ -1152,13 +1152,13 @@ int script_generate_combo(int item_id, char * buffer, int * offset) {
     return SCRIPT_PASSED;
 }
 
-char * script_compile_raw(char * subscript, int item_id, FILE * dbg) {
+char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct ic_db_t * db, int mode) {
     char buffer[BUF_SIZE];
     int offset = 0;
     script_t script;
     memset(&script, 0, sizeof(script_t));
-    script.mode = global_mode;
-    script.db = global_db;
+    script.mode = mode;
+    script.db = db;
     script.item_id = item_id;
     list_init_head(&script.block);
     /* compilation process per script */
@@ -1167,7 +1167,7 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg) {
             if(!script_translate(&script))
                 if(!script_bonus(&script))
                     if(!script_generate(&script, buffer, &offset))
-                        if(!script_generate_combo(script.item_id, buffer, &offset))
+                        if(!script_generate_combo(script.item_id, buffer, &offset, script.db, script.mode))
                             if(dbg != NULL)
                                 script_block_dump(&script, dbg);
     script_block_reset(&script);
@@ -1405,7 +1405,7 @@ int translate_pet_egg(block_r * block, int handler) {
         if(pet.pet_script[i] == ';')
             statement_count++;
     if(statement_count > 0) {
-        pet_script = script_compile(pet.pet_script, block->item_id);
+        pet_script = script_compile(pet.pet_script, block->item_id, block->db, block->mode);
         if(pet_script == NULL) {
             node_free(pet_id);
             exit_func_safe("failed to compile pet script %s in item %d", pet.pet_script, block->item_id);
@@ -1424,7 +1424,7 @@ int translate_pet_egg(block_r * block, int handler) {
             statement_count++;
     if(statement_count > 0) {
         /* compile the loyal script */
-        loyal_script = script_compile(pet.loyal_script, block->item_id);
+        loyal_script = script_compile(pet.loyal_script, block->item_id, block->db, block->mode);
         if(loyal_script == NULL) {
             node_free(pet_id);
             exit_func_safe("failed to compile loyal script %s in item %d", pet.loyal_script, block->item_id);
@@ -2257,7 +2257,7 @@ int translate_status(block_r * block, int handler) {
             exit_func_safe("failed to search item id %d in item %s (sc_itemscript)", block->item_id, block->ptr[2]);
             return SCRIPT_FAILED;
         }
-        item_script = script_compile(item.script, item.id);
+        item_script = script_compile(item.script, item.id, block->db, block->mode);
         if(item_script == NULL) return SCRIPT_FAILED;
         off += sprintf(buf + off, "Status Effect [Duration: %s]\n%s", block->eng[1], item_script);
         buf[off] = '\0';
@@ -4096,7 +4096,7 @@ int script_linkage_count(block_r * block, int start) {
 }
 
 /* primary multiplexer for translating logic tree */
-int script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * buffer, int * offset) {
+int script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * buffer, int * offset, block_r * block) {
     char buf[BUF_SIZE];
     int off = 0;
     buf[0] = '\0';
@@ -4105,20 +4105,20 @@ int script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * 
         /* each OR node means that multiple conditions */
         case LOGIC_NODE_OR: 
             if(tree->left != NULL) 
-                if(script_generate_cond(tree->left, stm, prefix, buffer, offset) == SCRIPT_FAILED)
+                if(script_generate_cond(tree->left, stm, prefix, buffer, offset, block) == SCRIPT_FAILED)
                     return SCRIPT_FAILED;
             if(tree->right != NULL) 
-                if(script_generate_cond(tree->right, stm, prefix, buffer, offset) == SCRIPT_FAILED)
+                if(script_generate_cond(tree->right, stm, prefix, buffer, offset, block) == SCRIPT_FAILED)
                     return SCRIPT_FAILED;
             break;
         /* write each OR's children (non-OR node) as separate condition */
         case LOGIC_NODE_AND: 
-            if(script_generate_and_chain(tree, buf, &off) == SCRIPT_FAILED)
+            if(script_generate_and_chain(tree, buf, &off, block) == SCRIPT_FAILED)
                 return SCRIPT_FAILED;
             *offset += sprintf(buffer + *offset, "%s[%s]\n", prefix, buf);
             break;
         case LOGIC_NODE_COND: 
-            if(script_generate_cond_node(tree, buf, &off) == SCRIPT_FAILED)
+            if(script_generate_cond_node(tree, buf, &off, block) == SCRIPT_FAILED)
                 return SCRIPT_FAILED;
             *offset += sprintf(buffer + *offset, "%s[%s]\n", prefix, buf);
             break;
@@ -4128,26 +4128,26 @@ int script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * 
 }
 
 /* recursively chain all cond nodes into one buffer */
-int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset) {
+int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset, block_r * block) {
     int ret_value = 0;
     if(tree->left != NULL)
         switch(tree->left->type) {
-            case LOGIC_NODE_AND: ret_value = script_generate_and_chain(tree->left, buf, offset); break;
-            case LOGIC_NODE_COND: ret_value = script_generate_cond_node(tree->left, buf, offset); break;
+            case LOGIC_NODE_AND: ret_value = script_generate_and_chain(tree->left, buf, offset, block); break;
+            case LOGIC_NODE_COND: ret_value = script_generate_cond_node(tree->left, buf, offset, block); break;
             default: break;
         }
     if(ret_value == SCRIPT_FAILED) return SCRIPT_FAILED;
 
     if(tree->right != NULL)
         switch(tree->right->type) {
-            case LOGIC_NODE_AND: ret_value = script_generate_and_chain(tree->right, buf, offset); break;
-            case LOGIC_NODE_COND: ret_value = script_generate_cond_node(tree->right, buf, offset); break;
+            case LOGIC_NODE_AND: ret_value = script_generate_and_chain(tree->right, buf, offset, block); break;
+            case LOGIC_NODE_COND: ret_value = script_generate_cond_node(tree->right, buf, offset, block); break;
             default: break;
         }
     return ret_value;
 }
 
-int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
+int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, block_r * block) {
     /* add 'and' when chaining condition */
     if(*offset > 0) condition_write_format(buf, offset, " and ");
     switch(tree->var) {
@@ -4183,14 +4183,42 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
         case 21:    /* base job */
         case 22:    /* class */
             condition_write_class(buf, offset, tree->range, tree->name); break;
+        case 9:     /* getequipid */
+            condition_write_item(buf, offset, tree->range, block); 
+            condition_write_format(buf, offset,"Equipped");
+            break;
         case 8: /* getiteminfo; require paramater data */
-        case 9: /* getequipid; require item name search on range; block propogate down */
         case 29: /* strcharinfo; require converting map name constant to number and reconverting to map name string */
             break;
             dmpnamerange(tree, stderr, 0);
             fprintf(stderr,"%s\n", buf);
         default: break;
     }
+    return SCRIPT_PASSED;
+}
+
+int condition_write_item(char * buf, int * offset, range_t * range, block_r * block) {
+    int i = 0;
+    ic_item_t item;
+    range_t * itr = range;
+    /* iterate the range of item id */
+    while(itr != NULL) {
+        for(i = itr->min; i <= itr->max; i++) {
+            /* search for item name from item id */
+            memset(&item, 0, sizeof(ic_item_t));
+            if(item_name_id_search(block->db, &item, i, block->mode)) {
+                exit_func_safe("failed to search for item %d in %d", i, block->item_id);
+                return SCRIPT_FAILED;
+            }
+            /* add the item name to the list of items */
+            *offset += sprintf(buf + *offset,"%s, ", item.name); 
+            buf[*offset] = '\0';
+        }
+        itr = itr->next;
+    }
+    /* discard last comma */
+    buf[(*offset) - 2] = ' ';
+    (*offset) -= 1;
     return SCRIPT_PASSED;
 }
 
