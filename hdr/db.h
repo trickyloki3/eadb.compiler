@@ -15,21 +15,6 @@
 		int id;
 		char name[BUF_SIZE];
 		char script[BUF_SIZE];
-		/* added for getiteminfo */
-		int buy;
-		int sell;
-		int type;
-		int gender;
-		int loc;
-		int weight;
-		int atk;
-		int def;
-		int range;
-		int slots;
-		int elv;
-		int wlv;
-		int view;
-		int matk;
 	} ic_item_t;
 
 	typedef struct {

@@ -74,7 +74,6 @@
     #define EVALUATE_FLAG_EXPR_BOOL        0x04 /* flag for evaluating relational operators to either 0 or 1
                                                  * ignore expression simplification for conditional expression */
     /* bonus flags for block minimization */
-    #define BONUS_FLAG_STACK        0x00010000  /* default: no stack */
     #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
     #define BONUS_FLAG_MINIS        0x00040000  /* minimize by expanding list */
     #define BONUS_FLAG_MINIZ        0x00080000  /* minimize by checking arguments */
@@ -303,10 +302,7 @@
     int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
     int script_generate_and_chain(logic_node_t *, char *, int *);
     int script_generate_cond_node(logic_node_t *, char *, int *);
-
     int condition_write_class(char *, int *, range_t *, char *);
     int condition_write_range(char *, int *, range_t *, char *);
     int condition_write_format(char *, int *, char * fmt, ...);
-    /* support minimization */
-    int minimize_stack(node_t * left, node_t * right);
 #endif

@@ -922,6 +922,14 @@ int script_bonus(script_t * script) {
     char buffer[BONUS_SIZE][BUF_SIZE];  /* aggregate buffer holding strings */
     char aux[BUF_SIZE];     /* =.= */   /* formatting buffer */
 
+    /* used for aggregating bonus fields by loop */
+    static const int agg_cnt = 5;
+    static const int agg_flag[5] = {
+        BONUS_FLAG_AG_1, BONUS_FLAG_AG_2, 
+        BONUS_FLAG_AG_3, BONUS_FLAG_AG_4, 
+        BONUS_FLAG_AG_5
+    };
+
     iter = script->block.head->next;
     if(iter == script->block.head) return SCRIPT_FAILED;
     for(; iter != script->block.head; iter = iter->next) {
@@ -931,41 +939,28 @@ int script_bonus(script_t * script) {
         cur_blk_type = cur_blk->type;
         cur_blk_flag = cur_blk->bonus.flag;
 
-        /* check block is a bonus block and 
-         * not nullified and can be minimized */
-        if(cur_blk_type > BONUS_ID_MAX ||
-           cur_blk_type == BLOCK_NULLIFIED ||
-           !(cur_blk_flag & 0x000C0000))
+        /* check block is a bonus block and not nullified and can be minimized */
+        if(cur_blk_type > BONUS_ID_MAX || cur_blk_type == BLOCK_NULLIFIED || !(cur_blk_flag & 0x000C0000))
             continue;
 
         iter_sub = iter->next;
         for(; iter_sub != script->block.head; iter_sub = iter_sub->next) {
             cmp_blk = iter_sub;
-            /* bonus must be in same enclosing 
-             * block and bonus id must match. */
-            if( cur_blk->bonus.id != cmp_blk->bonus.id || 
-                cur_blk->link != cmp_blk->link) 
+            /* bonus must be in same enclosing block and bonus id must match. */
+            if( cur_blk->bonus.id != cmp_blk->bonus.id || cur_blk->link != cmp_blk->link) 
                 continue;
 
             /* MINIZ - indicates that arguments must be checked 
-             * MINIS - indicates that only one single argument
-             *         for the bonus and also an aggregate. */
+             * MINIS - indicates that only one single argument for the bonus and also an aggregate. */
             if(cur_blk_flag & BONUS_FLAG_MINIZ) {
-                /* check all specified arguments in item_bonus.txt 
-                 * all arguments are process from left to right in
-                 * translate_bonus, therefore indexing the same
-                 * block->eng[i] yields the same argument order. 
+                /* check all specified arguments in item_bonus.txt all arguments are process from left to right in
+                 * translate_bonus, therefore indexing the same block->eng[i] yields the same argument order. 
                  * bonus block supports only up to 5 arguments. */
-                if( (cur_blk_flag & BONUS_FLAG_EQ_1 &&
-                    ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_2 &&
-                    ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_3 &&
-                    ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_4 &&
-                    ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_5 &&
-                    ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) != 0)) 
+                if( (cur_blk_flag & BONUS_FLAG_EQ_1 && ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_2 && ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_3 && ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_4 && ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) != 0) ||
+                    (cur_blk_flag & BONUS_FLAG_EQ_5 && ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) != 0)) 
                     continue;
             } else if(cur_blk_flag & BONUS_FLAG_MINIS) {
                 /* single argument for bonus is also an aggregate */
@@ -978,80 +973,28 @@ int script_bonus(script_t * script) {
                 break;
             }
 
-            /* bonus blocks that are exactly the same should throw 
-             * an error when NODUP is set; both NODUP and STACK are 
-             * mutually exclusive. Supports only one aggregate 
-             * variable at the moment. */
+            /* duplicate bonuses are typically errors */
             if(cur_blk_flag & BONUS_FLAG_NODUP) {
-                /* check that the aggregate fields are not the same */
-                if( (cur_blk_flag & BONUS_FLAG_AG_1 &&
-                    ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_2 &&
-                    ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_3 &&
-                    ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_4 &&
-                    ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_5 &&
-                    ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) == 0)) {
+                if( (cur_blk_flag & BONUS_FLAG_AG_1 && ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_2 && ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_3 && ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_4 && ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) == 0) ||
+                    (cur_blk_flag & BONUS_FLAG_AG_5 && ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) == 0)) {
                     /* throw error and nullified duplicate block */
-                    fprintf(stderr,
-                        "[warn]: bonus duplicated on item id %d; in block "
-                        "%d and %d; see dump.txt.\n", 
-                        cur_blk->item_id, i, j);
+                    fprintf(stderr,"[warn]: bonus duplicated on item id %d; in "
+                    "block %d and %d; see dump.txt.\n", cur_blk->item_id, i, j);
                     iter_sub->type = BLOCK_NULLIFIED;
                     continue;
                 }
-            } else if(cur_blk_flag & BONUS_FLAG_STACK) {
-                /* stack only arguments with a result node from translate_bonus,
-                 * i.e. stack only arguments with integer values. 
-                 * Indexing the block->result also uses the same left to right
-                 * ordering, thereforce is safe. */
-                if(cur_blk_flag & BONUS_FLAG_ST_1)
-                    minimize_stack(cur_blk->result[0], cmp_blk->result[0]);
-                if(cur_blk_flag & BONUS_FLAG_ST_2)
-                    minimize_stack(cur_blk->result[1], cmp_blk->result[1]);
-                if(cur_blk_flag & BONUS_FLAG_ST_3)
-                    minimize_stack(cur_blk->result[2], cmp_blk->result[2]);
-                if(cur_blk_flag & BONUS_FLAG_ST_4)
-                    minimize_stack(cur_blk->result[3], cmp_blk->result[3]);
-                if(cur_blk_flag & BONUS_FLAG_ST_5)
-                    minimize_stack(cur_blk->result[4], cmp_blk->result[4]);
             }
 
-            /* aggregating strings and stacking integers
-             * are mutually exclusive; aggregate strings
-             * here */
-            if(!(cur_blk_flag & BONUS_FLAG_STACK)) {
-                if(cur_blk_flag & BONUS_FLAG_AG_1) {
-                    offset[0] += (offset[0] <= 0) ?
-                        sprintf(buffer[0] + offset[0],"%s, %s", cur_blk->eng[0], cmp_blk->eng[0]):
-                        sprintf(buffer[0] + offset[0],", %s", cmp_blk->eng[0]);
-                    total[0]++;
-                }
-                if(cur_blk_flag & BONUS_FLAG_AG_2) {
-                    offset[1] += (offset[1] <= 0) ?
-                        sprintf(buffer[1] + offset[1],"%s, %s", cur_blk->eng[1], cmp_blk->eng[1]):
-                        sprintf(buffer[1] + offset[1],", %s", cmp_blk->eng[1]);
-                    total[1]++;
-                }
-                if(cur_blk_flag & BONUS_FLAG_AG_3) {
-                    offset[2] += (offset[2] <= 0) ?
-                        sprintf(buffer[2] + offset[2],"%s, %s", cur_blk->eng[2], cmp_blk->eng[2]):
-                        sprintf(buffer[2] + offset[2],", %s", cmp_blk->eng[2]);
-                    total[2]++;
-                }
-                if(cur_blk_flag & BONUS_FLAG_AG_4) {
-                    offset[3] += (offset[3] <= 0) ?
-                        sprintf(buffer[3] + offset[3],"%s, %s", cur_blk->eng[3], cmp_blk->eng[3]):
-                        sprintf(buffer[3] + offset[3],", %s", cmp_blk->eng[3]);
-                    total[3]++;
-                }
-                if(cur_blk_flag & BONUS_FLAG_AG_5) {
-                    offset[4] += (offset[4] <= 0) ?
-                        sprintf(buffer[4] + offset[4],"%s, %s", cur_blk->eng[4], cmp_blk->eng[4]):
-                        sprintf(buffer[4] + offset[4],", %s", cmp_blk->eng[4]);
-                    total[4]++;
+            /* aggregate the bonus fields */
+            for(j = 0; j < agg_cnt; j++) {
+                if(cur_blk_flag & agg_flag[j]) {
+                    offset[j] += (offset[j] <= 0) ?
+                        sprintf(buffer[j] + offset[j],"%s, %s", cur_blk->eng[j], cmp_blk->eng[j]):
+                        sprintf(buffer[j] + offset[j],", %s", cmp_blk->eng[j]);
+                    total[j]++;
                 }
             }
 
@@ -4334,9 +4277,5 @@ int condition_write_format(char * buf, int * offset, char * format, ...) {
     *offset += vsprintf(buf + *offset, format, arg_list);
     buf[*offset] = '\0';
     va_end(arg_list);
-    return SCRIPT_PASSED;
-}
-
-int minimize_stack(node_t * left, node_t * right) {
     return SCRIPT_PASSED;
 }
