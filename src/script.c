@@ -2678,18 +2678,6 @@ char * status_formula(char * aux, char * eng, node_t * result, int type, int bla
     return formula(aux, aux, result);
 }
 
-void argument_write(node_t * node, char * fmt, ...) {
-    if(exit_null_safe(2, node, fmt)) return;
-    va_list aug_list;
-    va_start(aug_list, fmt);
-    int offset = node->stack_cnt;                               /* current offset on stack */
-    node->aug_ptr[node->aug_ptr_cnt++] = &node->stack[offset];  /* record current offset on stack */
-    offset += vsprintf(node->stack + offset, fmt, aug_list);    /* write new string onto stack */
-    node->stack[offset] = '\0';                                 /* null terminate new string */
-    node->stack_cnt = offset + 1;                               /* set new offset on stack */
-    va_end(aug_list);
-}
-
 void id_write(node_t * node, char * fmt, ...) {
     if(exit_null_safe(2, node, fmt)) return;   
     va_list expr_list;
@@ -3152,7 +3140,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 return SCRIPT_FAILED;
             }
         /* write the skill name */
-        argument_write(node, skill.desc);
         expression_write(node, "%s Level", skill.desc);
         id_write(node, "%s Level", skill.desc);
         /* skill level minimum is 0 (not learnt) or maximum level */
@@ -3269,15 +3256,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
-            case 0: argument_write(node, "Character"); break;
-            case 1: argument_write(node, "Party"); break;
-            case 2: argument_write(node, "Guild"); break;
-            case 3: argument_write(node, "Map"); break;
+            case 0: id_write(node, "Character"); break;
+            case 1: id_write(node, "Party"); break;
+            case 2: id_write(node, "Guild"); break;
+            case 3: id_write(node, "Map"); break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
         }
-        id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"countitem") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
         if(resultOne == NULL) {
@@ -3294,7 +3280,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         /* write the item name on the argument stack */
-        argument_write(node, item.name);
         id_write(node, "%s Inventory Count", item.name);
     } else if(ncs_strcmp(func,"gettime") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
@@ -3307,19 +3292,18 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
-            case 1: argument_write(node, "Seconds"); *min = 0; *max = 60; break;
-            case 2: argument_write(node, "Minutes"); *min = 0; *max = 60; break;
-            case 3: argument_write(node, "Hours"); *min = 0; *max = 24; break;
-            case 4: argument_write(node, "Weeks"); *min = 1; *max = 7; break;
-            case 5: argument_write(node, "Day"); *min = 0; *max = 31; break;
-            case 6: argument_write(node, "Month");  *min = 1; *max = 12; break;
-            case 7: argument_write(node, "Year"); *min = 0; *max = 2020; break;
-            case 8: argument_write(node, "Day of Year"); *min = 0; *max = 365; break;
+            case 1: id_write(node, "Seconds"); *min = 0; *max = 60; break;
+            case 2: id_write(node, "Minutes"); *min = 0; *max = 60; break;
+            case 3: id_write(node, "Hours"); *min = 0; *max = 24; break;
+            case 4: id_write(node, "Weeks"); *min = 1; *max = 7; break;
+            case 5: id_write(node, "Day"); *min = 0; *max = 31; break;
+            case 6: id_write(node, "Month");  *min = 1; *max = 12; break;
+            case 7: id_write(node, "Year"); *min = 0; *max = 2020; break;
+            case 8: id_write(node, "Day of Year"); *min = 0; *max = 365; break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
         }
-        id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"getiteminfo") == 0) {
         for(i = start; i < end; i++)
             if(expr[i][0] == ',')
@@ -3345,55 +3329,53 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         
         switch(resultTwo->min) {
-            case 0: argument_write(node, "%s's Buy Price", name); break;
-            case 1: argument_write(node, "%s's Sell Price", name); break;
-            case 2: argument_write(node, "%s's Item Type", name); break;
-            case 3: argument_write(node, "%s's Max Drop Chance", name); break;
-            case 4: argument_write(node, "%s's Gender", name); break;
-            case 5: argument_write(node, "%s's Equip", name); break;
-            case 6: argument_write(node, "%s's Weight", name); break;
-            case 7: argument_write(node, "%s's Attack", name); break;
-            case 8: argument_write(node, "%s's Defense", name); break;
-            case 9: argument_write(node, "%s's Range", name); break;
-            case 10: argument_write(node, "%s's Slot", name); break;
-            case 11: argument_write(node, "%s's Weapon Type", name); break;
-            case 12: argument_write(node, "%s's Requirement Level", name); break;
-            case 13: argument_write(node, "%s's Weapon Level", name); break;
-            case 14: argument_write(node, "%s's View ID", name); break;
-            case 15: argument_write(node, "%s's Magical Attack", name); break;
+            case 0: id_write(node, "%s's Buy Price", name); break;
+            case 1: id_write(node, "%s's Sell Price", name); break;
+            case 2: id_write(node, "%s's Item Type", name); break;
+            case 3: id_write(node, "%s's Max Drop Chance", name); break;
+            case 4: id_write(node, "%s's Gender", name); break;
+            case 5: id_write(node, "%s's Equip", name); break;
+            case 6: id_write(node, "%s's Weight", name); break;
+            case 7: id_write(node, "%s's Attack", name); break;
+            case 8: id_write(node, "%s's Defense", name); break;
+            case 9: id_write(node, "%s's Range", name); break;
+            case 10: id_write(node, "%s's Slot", name); break;
+            case 11: id_write(node, "%s's Weapon Type", name); break;
+            case 12: id_write(node, "%s's Requirement Level", name); break;
+            case 13: id_write(node, "%s's Weapon Level", name); break;
+            case 14: id_write(node, "%s's View ID", name); break;
+            case 15: id_write(node, "%s's Magical Attack", name); break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
         }
-        id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"getequipid") == 0) {
         if(const_keyword_search(block->db, &const_info, expr[start], block->mode)) {
             exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
             return SCRIPT_FAILED;
         }
         switch(const_info.value) {
-            case 1: argument_write(node, "Upper Headgear"); break;
-            case 2: argument_write(node, "Armor"); break;
-            case 3: argument_write(node, "Left Hand"); break;
-            case 4: argument_write(node, "Right Hand"); break;
-            case 5: argument_write(node, "Garment"); break;
-            case 6: argument_write(node, "Shoes"); break;
-            case 7: argument_write(node, "Left Accessory"); break;
-            case 8: argument_write(node, "Right Accessory"); break;
-            case 9: argument_write(node, "Middle Headgear"); break;
-            case 10: argument_write(node, "Lower Headgear"); break;
-            case 11: argument_write(node, "Lower Costume Headgear"); break;
-            case 12: argument_write(node, "Middle Costume Headgear"); break;
-            case 13: argument_write(node, "Upper Costume Headgear"); break;
-            case 14: argument_write(node, "Costume Garment"); break;
-            case 15: argument_write(node, "Shadow Armor"); break;
-            case 16: argument_write(node, "Shadow Weapon"); break;
-            case 17: argument_write(node, "Shadow Shield"); break;
-            case 18: argument_write(node, "Shadow Shoes"); break;
-            case 19: argument_write(node, "Shadow Left Accessory"); break;
-            case 20: argument_write(node, "Shadow Right Accessory"); break;
+            case 1: id_write(node, "Upper Headgear"); break;
+            case 2: id_write(node, "Armor"); break;
+            case 3: id_write(node, "Left Hand"); break;
+            case 4: id_write(node, "Right Hand"); break;
+            case 5: id_write(node, "Garment"); break;
+            case 6: id_write(node, "Shoes"); break;
+            case 7: id_write(node, "Left Accessory"); break;
+            case 8: id_write(node, "Right Accessory"); break;
+            case 9: id_write(node, "Middle Headgear"); break;
+            case 10: id_write(node, "Lower Headgear"); break;
+            case 11: id_write(node, "Lower Costume Headgear"); break;
+            case 12: id_write(node, "Middle Costume Headgear"); break;
+            case 13: id_write(node, "Upper Costume Headgear"); break;
+            case 14: id_write(node, "Costume Garment"); break;
+            case 15: id_write(node, "Shadow Armor"); break;
+            case 16: id_write(node, "Shadow Weapon"); break;
+            case 17: id_write(node, "Shadow Shield"); break;
+            case 18: id_write(node, "Shadow Shoes"); break;
+            case 19: id_write(node, "Shadow Left Accessory"); break;
+            case 20: id_write(node, "Shadow Right Accessory"); break;
         }
-        id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"isequipped") == 0) {
         node->id = &node->stack[node->stack_cnt];
         for(i = start; i < end; i++) {
@@ -3403,7 +3385,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                     exit_func_safe("failed to search for item %s in %d", expr[i], block->item_id);
                     return SCRIPT_FAILED;
                 }
-                argument_write(node, item.name);
                 node->stack_cnt += sprintf(&node->stack[node->stack_cnt],"%s", item.name);
             }
             node->stack[node->stack_cnt] = '\0';
@@ -3422,30 +3403,29 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
-            case 1: argument_write(node, "Upper Headgear"); break;
-            case 2: argument_write(node, "Armor"); break;
-            case 3: argument_write(node, "Left Hand"); break;
-            case 4: argument_write(node, "Right Hand"); break;
-            case 5: argument_write(node, "Garment"); break;
-            case 6: argument_write(node, "Shoes"); break;
-            case 7: argument_write(node, "Left Accessory"); break;
-            case 8: argument_write(node, "Right Accessory"); break;
-            case 9: argument_write(node, "Middle Headgear"); break;
-            case 10: argument_write(node, "Lower Headgear"); break;
-            case 11: argument_write(node, "Lower Costume Headgear"); break;
-            case 12: argument_write(node, "Middle Costume Headgear"); break;
-            case 13: argument_write(node, "Upper Costume Headgear"); break;
-            case 14: argument_write(node, "Costume Garment"); break;
-            case 15: argument_write(node, "Ammo"); break;
-            case 16: argument_write(node, "Shadow Armor"); break;
-            case 17: argument_write(node, "Shadow Weapon"); break;
-            case 18: argument_write(node, "Shadow Shield"); break;
-            case 19: argument_write(node, "Shadow Shoes"); break;
-            case 20: argument_write(node, "Shadow Right Accessory"); break;
-            case 21: argument_write(node, "Shadow left Accessory"); break;
-            default: argument_write(node, expr[start]); break;
+            case 1: id_write(node, "%s's %s", "Upper Headgear", node->id); break;
+            case 2: id_write(node, "%s's %s", "Armor", node->id); break;
+            case 3: id_write(node, "%s's %s", "Left Hand", node->id); break;
+            case 4: id_write(node, "%s's %s", "Right Hand", node->id); break;
+            case 5: id_write(node, "%s's %s", "Garment", node->id); break;
+            case 6: id_write(node, "%s's %s", "Shoes", node->id); break;
+            case 7: id_write(node, "%s's %s", "Left Accessory", node->id); break;
+            case 8: id_write(node, "%s's %s", "Right Accessory", node->id); break;
+            case 9: id_write(node, "%s's %s", "Middle Headgear", node->id); break;
+            case 10: id_write(node, "%s's %s", "Lower Headgear", node->id); break;
+            case 11: id_write(node, "%s's %s", "Lower Costume Headgear", node->id); break;
+            case 12: id_write(node, "%s's %s", "Middle Costume Headgear", node->id); break;
+            case 13: id_write(node, "%s's %s", "Upper Costume Headgear", node->id); break;
+            case 14: id_write(node, "%s's %s", "Costume Garment", node->id); break;
+            case 15: id_write(node, "%s's %s", "Ammo", node->id); break;
+            case 16: id_write(node, "%s's %s", "Shadow Armor", node->id); break;
+            case 17: id_write(node, "%s's %s", "Shadow Weapon", node->id); break;
+            case 18: id_write(node, "%s's %s", "Shadow Shield", node->id); break;
+            case 19: id_write(node, "%s's %s", "Shadow Shoes", node->id); break;
+            case 20: id_write(node, "%s's %s", "Shadow Right Accessory", node->id); break;
+            case 21: id_write(node, "%s's %s", "Shadow left Accessory", node->id); break;
+            default: id_write(node, expr[start]); break;
         }
-        id_write(node, "%s's %s", node->aug_ptr[node->aug_ptr_cnt - 1], node->id);
     } else if(ncs_strcmp(func,"readparam") == 0) {
         if(const_keyword_search(block->db, &const_info, expr[start], block->mode)) {
             exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
@@ -3453,33 +3433,32 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         /* values correspond to the const.txt for rAthena */
         switch(const_info.value) {
-            case 6: argument_write(node, "Maximum HP"); break;
-            case 8: argument_write(node, "Maximum SP"); break;
-            case 13: argument_write(node, "Strength"); break;
-            case 14: argument_write(node, "Agility"); break;
-            case 15: argument_write(node, "Vitality"); break;
-            case 16: argument_write(node, "Intelligence"); break;
-            case 17: argument_write(node, "Dexterity"); break;
-            case 18: argument_write(node, "Luck"); break;
-            case 41: argument_write(node, "Base Attack"); break;
-            case 42: argument_write(node, "Weapon Attack"); break;
-            case 45: argument_write(node, "Base Defense"); break;
-            case 46: argument_write(node, "Armor Defense"); break;
-            case 47: argument_write(node, "Base Magical Defense"); break;
-            case 48: argument_write(node, "Armor Magical Defense"); break;
-            case 49: argument_write(node, "Hit"); break;
-            case 50: argument_write(node, "Base Flee"); break;
-            case 51: argument_write(node, "Armor Flee"); break;
-            case 52: argument_write(node, "Critical Rate"); break;
-            case 53: argument_write(node, "Attack Speed"); break;
-            case 59: argument_write(node, "Fame"); break;
-            case 60: argument_write(node, "Unbreakable"); break;
+            case 6: id_write(node, "Maximum HP"); break;
+            case 8: id_write(node, "Maximum SP"); break;
+            case 13: id_write(node, "Strength"); break;
+            case 14: id_write(node, "Agility"); break;
+            case 15: id_write(node, "Vitality"); break;
+            case 16: id_write(node, "Intelligence"); break;
+            case 17: id_write(node, "Dexterity"); break;
+            case 18: id_write(node, "Luck"); break;
+            case 41: id_write(node, "Base Attack"); break;
+            case 42: id_write(node, "Weapon Attack"); break;
+            case 45: id_write(node, "Base Defense"); break;
+            case 46: id_write(node, "Armor Defense"); break;
+            case 47: id_write(node, "Base Magical Defense"); break;
+            case 48: id_write(node, "Armor Magical Defense"); break;
+            case 49: id_write(node, "Hit"); break;
+            case 50: id_write(node, "Base Flee"); break;
+            case 51: id_write(node, "Armor Flee"); break;
+            case 52: id_write(node, "Critical Rate"); break;
+            case 53: id_write(node, "Attack Speed"); break;
+            case 59: id_write(node, "Fame"); break;
+            case 60: id_write(node, "Unbreakable"); break;
             default: 
                 exit_func_safe("invalid constant value for %s -> %d in item "
                     "%d\n", const_info.name, const_info.value, block->item_id);
                 return SCRIPT_FAILED;
         }
-        id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"checkoption") == 0) {
         /* constants are not defined in const.txt, but specified 
          * in the script command. See option_db.txt for mappings.*/
@@ -3488,7 +3467,6 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             exit_func_safe("failed to search for option '%s' in %d", expr[start], block->item_id);
             return SCRIPT_FAILED;
         }
-        argument_write(node, option.name);
         id_write(node,"%s", option.name);
     } else {
         exit_func_safe("failed to search function handler for '%s' in item %d", func, block->item_id);
@@ -3781,7 +3759,6 @@ void node_dmp(node_t * node, FILE * stm) {
             default: fprintf(stm,"     Type: %d\n", node->op); break;
         }
         fprintf(stm,"Stack_Cnt: %d\n", node->stack_cnt);
-        fprintf(stm,"  Arg_Ptr: %d\n", node->aug_ptr_cnt);
         fprintf(stm," Cond Cnt: %d\n", node->cond_cnt);
         fprintf(stm,"     Expr: %s\n", node->formula);
         dmprange(node->range, stm, "range; ");
