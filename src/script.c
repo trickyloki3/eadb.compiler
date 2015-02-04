@@ -1143,7 +1143,7 @@ int script_generate(script_t * script, char * buffer, int * offset) {
                     for(; iter_sub != script->block.head; iter_sub = iter_sub->next) {
                         /* steal the status effect */
                         if(iter_sub->type == 16) {
-                            if(iter_sub->next == script->block.head) {
+                            if(iter_sub->next != script->block.head) {
                                 *offset += sprintf(buffer + *offset, ", %s", iter_sub->eng[0]);
                             } else {
                                 *offset += sprintf(buffer + *offset, ", and %s", iter_sub->eng[0]);
@@ -2734,13 +2734,16 @@ char * status_formula(char * aux, char * eng, node_t * result, int type, int bla
     return formula(aux, aux, result);
 }
 
-void argument_write(node_t * node, char * desc) {
-    if(exit_null_safe(2, node, desc)) return;   
+void argument_write(node_t * node, char * fmt, ...) {
+    if(exit_null_safe(2, node, fmt)) return;
+    va_list aug_list;
+    va_start(aug_list, fmt);
     int offset = node->stack_cnt;                               /* current offset on stack */
     node->aug_ptr[node->aug_ptr_cnt++] = &node->stack[offset];  /* record current offset on stack */
-    offset += sprintf(node->stack + offset, "%s", desc);        /* write new string onto stack */
+    offset += vsprintf(node->stack + offset, fmt, aug_list);    /* write new string onto stack */
     node->stack[offset] = '\0';                                 /* null terminate new string */
     node->stack_cnt = offset + 1;                               /* set new offset on stack */
+    va_end(aug_list);
 }
 
 void id_write(node_t * node, char * fmt, ...) {
@@ -2839,8 +2842,11 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
         expression_write(root_node, "%s / %d", root_node->formula, modifier);
 
     /* write the formula into the block and only write formula if dependencies exist */
-    if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0)
+    if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
         formula_write(block, root_node->formula);
+        /* manual debug error spotting */
+        /*fprintf(stderr,"%s -> %s\n", expr, root_node->formula);*/
+    }
 
     /* keep logic tree in node */
     if(EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
@@ -3068,7 +3074,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             /* generate range for everything but subexpression and operators */
             if(temp_node->type & 0x3e && temp_node->range == NULL)
                 temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
-
             /* add node to linked list */
             iter_node->next = temp_node;
             iter_node->list = temp_node;
@@ -3345,6 +3350,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         /* write the item name on the argument stack */
         argument_write(node, item.name);
+        id_write(node, "%s Inventory Count", item.name);
     } else if(ncs_strcmp(func,"gettime") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
         if(resultOne == NULL) {
@@ -3356,14 +3362,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         switch(resultOne->min) {
-            case 1: argument_write(node, "Seconds"); break;
-            case 2: argument_write(node, "Minutes"); break;
-            case 3: argument_write(node, "Hours"); break;
-            case 4: argument_write(node, "Weeks"); break;
-            case 5: argument_write(node, "Day"); break;
-            case 6: argument_write(node, "Month"); break;
-            case 7: argument_write(node, "Year"); break;
-            case 8: argument_write(node, "Day of Year"); break;
+            case 1: argument_write(node, "Seconds"); *min = 0; *max = 60; break;
+            case 2: argument_write(node, "Minutes"); *min = 0; *max = 60; break;
+            case 3: argument_write(node, "Hours"); *min = 0; *max = 24; break;
+            case 4: argument_write(node, "Weeks"); *min = 1; *max = 7; break;
+            case 5: argument_write(node, "Day"); *min = 0; *max = 31; break;
+            case 6: argument_write(node, "Month");  *min = 1; *max = 12; break;
+            case 7: argument_write(node, "Year"); *min = 0; *max = 2020; break;
+            case 8: argument_write(node, "Day of Year"); *min = 0; *max = 365; break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
@@ -3380,24 +3386,24 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             if(resultTwo != NULL) node_free(resultTwo);
             return SCRIPT_FAILED;
         }
-        /*argument_write(node, resultOne->cond->args);*/
+        /* todo: query item name from item id rather than depending on getequipid */
         switch(resultTwo->min) {
-            case 0: argument_write(node, "Buy Price"); break;
-            case 1: argument_write(node, "Sell Price"); break;
-            case 2: argument_write(node, "Item Type"); break;
-            case 3: argument_write(node, "Max Drop Chance"); break;
-            case 4: argument_write(node, "Sex"); break;
-            case 5: argument_write(node, "Equip"); break;
-            case 6: argument_write(node, "Weight"); break;
-            case 7: argument_write(node, "Attack"); break;
-            case 8: argument_write(node, "Defense"); break;
-            case 9: argument_write(node, "Range"); break;
-            case 10: argument_write(node, "Slot"); break;
-            case 11: argument_write(node, "Weapon Type"); break;
-            case 12: argument_write(node, "Requirement Level"); break;
-            case 13: argument_write(node, "Weapon Level"); break;
-            case 14: argument_write(node, "View ID"); break;
-            case 15: argument_write(node, "Magical Attack"); break;
+            case 0: argument_write(node, "%s's Buy Price", resultOne->cond->name); break;
+            case 1: argument_write(node, "%s's Sell Price", resultOne->cond->name); break;
+            case 2: argument_write(node, "%s's Item Type", resultOne->cond->name); break;
+            case 3: argument_write(node, "%s's Max Drop Chance", resultOne->cond->name); break;
+            case 4: argument_write(node, "%s's Gender", resultOne->cond->name); break;
+            case 5: argument_write(node, "%s's Equip", resultOne->cond->name); break;
+            case 6: argument_write(node, "%s's Weight", resultOne->cond->name); break;
+            case 7: argument_write(node, "%s's Attack", resultOne->cond->name); break;
+            case 8: argument_write(node, "%s's Defense", resultOne->cond->name); break;
+            case 9: argument_write(node, "%s's Range", resultOne->cond->name); break;
+            case 10: argument_write(node, "%s's Slot", resultOne->cond->name); break;
+            case 11: argument_write(node, "%s's Weapon Type", resultOne->cond->name); break;
+            case 12: argument_write(node, "%s's Requirement Level", resultOne->cond->name); break;
+            case 13: argument_write(node, "%s's Weapon Level", resultOne->cond->name); break;
+            case 14: argument_write(node, "%s's View ID", resultOne->cond->name); break;
+            case 15: argument_write(node, "%s's Magical Attack", resultOne->cond->name); break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
@@ -3470,13 +3476,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             case 12: argument_write(node, "Middle Costume Headgear"); break;
             case 13: argument_write(node, "Upper Costume Headgear"); break;
             case 14: argument_write(node, "Costume Garment"); break;
-            case 15: argument_write(node, "Shadow Armor"); break;
-            case 16: argument_write(node, "Shadow Weapon"); break;
-            case 17: argument_write(node, "Shadow Shield"); break;
-            case 18: argument_write(node, "Shadow Shoes"); break;
-            case 19: argument_write(node, "Shadow Left Accessory"); break;
+            case 15: argument_write(node, "Ammo"); break;
+            case 16: argument_write(node, "Shadow Armor"); break;
+            case 17: argument_write(node, "Shadow Weapon"); break;
+            case 18: argument_write(node, "Shadow Shield"); break;
+            case 19: argument_write(node, "Shadow Shoes"); break;
             case 20: argument_write(node, "Shadow Right Accessory"); break;
-            default: argument_write(node, "Error"); break;
+            case 21: argument_write(node, "Shadow left Accessory"); break;
+            default: argument_write(node, expr[start]); break;
         }
         id_write(node, "%s's %s", node->aug_ptr[node->aug_ptr_cnt - 1], node->id);
     } else if(ncs_strcmp(func,"readparam") == 0) {
@@ -4171,7 +4178,7 @@ int script_linkage_count(block_r * block, int start) {
 int script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * buffer, int * offset) {
     char buf[BUF_SIZE];
     int off = 0;
-    memset(buf, 0, BUF_SIZE);
+    buf[0] = '\0';
 
     switch(tree->type) {
         /* each OR node means that multiple conditions */
@@ -4220,24 +4227,74 @@ int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset) {
 }
 
 int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
-    /*dmpcond(tree, stderr);*/
+    /* add 'and' when chaining condition */
+    if(*offset > 0) condition_write_format(buf, offset, " and ");
+    switch(tree->var) {
+        case 1:     /* refine rate */
+        case 2:     /* refine rate */
+        case 3:     /* paramater */
+        case 4:     /* skill level */
+        case 6:     /* pow */
+        case 10:    /* gettime */
+        case 17:    /* job level */
+        case 18:    /* base level */
+        case 19:    /* max hp */
+        case 23:    /* hp */
+        case 24:    /* zeny */
+        case 27:    /* getrandgroupitem */
+        case 30:    /* countitem */
+        case 46:    /* max */
+        case 47:    /* min */
+        case 49:    /* groupranditem */
+            condition_write_range(buf, offset, tree->range, tree->name); break;
+        case 5:     /* random */
+        case 28:    /* getpartnerid */
+        case 31:    /* checkoption */
+        case 32:    /* checkfalcon */
+        case 33:    /* checkmadogear */
+        case 34:    /* rebirth */
+        case 48:    /* checkmount */
+            condition_write_format(buf, offset, "%s", tree->name); break;
+        case 20:    /* base class */
+        case 21:    /* base job */
+        case 22:    /* class */
+            condition_write_class(buf, offset, tree->range, tree->name); break;
+        case 8: /* getiteminfo; require paramater data */
+        case 9: /* getequipid; require item name search on range */
+        case 13: /* isequipped; require appending item list in evaluate_function */
+        case 26: /* callfunc; require paramater data */
+        case 29: /* strcharinfo; require map list and map name inherit from (==) */
+            break;
+            dmpnamerange(tree, stderr, 0);
+        default: break;
+    }
     return SCRIPT_PASSED;
 }
 
-int script_generate_class_generic(char * buf, int * offset, range_t * range, char * template) {
+int condition_write_class(char * buf, int * offset, range_t * range, char * template) {
     int i = 0;
+    int val_min = 0;
+    int val_max = 0;
     range_t * itrrange = NULL;
     range_t * negrange = NULL;
 
     if(exit_null_safe(4, buf, offset, range, template))
         return SCRIPT_FAILED;
 
-    /* assume list of not equal class, because otherwise 
-     * 'true' class have separate class node */
-    negrange = notrange(range);
-    itrrange = negrange;
-    *offset += sprintf(buf + *offset,"%s",template); 
-    buf[*offset] = '\0';
+    val_min = minrange(range);
+    val_max = maxrange(range);
+
+    /* assume (!=) for mismatch min and max value in range 
+     * because otherwise all class logic node have matching
+     * min and max. */
+    if(val_min != val_max) {
+        negrange = notrange(range);
+        itrrange = negrange;
+    } else {
+        itrrange = range;
+    }
+
+    /* iterate through the range */
     while(itrrange != NULL) {
         for(i = itrrange->min; i <= itrrange->max; i++) {
             *offset += sprintf(buf + *offset,"%s, ", job_tbl(i)); 
@@ -4245,19 +4302,38 @@ int script_generate_class_generic(char * buf, int * offset, range_t * range, cha
         }
         itrrange = itrrange->next;
     }
-    freerange(negrange);
-    buf[(*offset) - 2] = '\0';
-    (*offset) -= 2;
+    /* discard last comma */
+    buf[(*offset) - 2] = ' ';
+    (*offset) -= 1;
+
+    /* append base class, job, or class at the end */
+    *offset += sprintf(buf + *offset,"%s",template); 
+    
+    /* free negate range */
+    if(negrange != NULL) freerange(negrange);
     return SCRIPT_PASSED;
 }
 
-int script_generate_cond_generic(char * buf, int * offset, int val_min, int val_max, char * template) {
+int condition_write_range(char * buf, int * offset, range_t * range, char * template) {
+    int val_min = 0;
+    int val_max = 0;
     if(exit_null_safe(3, buf, offset, template))
         return SCRIPT_FAILED;
+    val_min = minrange(range);
+    val_max = maxrange(range);
     *offset += (val_min != val_max) ?
         sprintf(buf + *offset, "%s %d ~ %d", template, val_min, val_max) :
         sprintf(buf + *offset, "%s %d", template, val_min);
     buf[*offset] = '\0';
+    return SCRIPT_PASSED;
+}
+
+int condition_write_format(char * buf, int * offset, char * format, ...) {
+    va_list arg_list;
+    va_start(arg_list, format);
+    *offset += vsprintf(buf + *offset, format, arg_list);
+    buf[*offset] = '\0';
+    va_end(arg_list);
     return SCRIPT_PASSED;
 }
 

@@ -118,7 +118,7 @@
         char stack[BUF_SIZE];   /* stack to hold all strings */
         int stack_cnt;          /* size of stack */
         char * formula;         /* each node contains a (translated) subset of the entire expression */
-        /* function argument stack */
+        /* function argument stack; might deprecate for id_write(formula */
         char * aug_ptr[AUG_SIZE];
         int aug_ptr_cnt;
         /* expression precedence and associative */
@@ -265,9 +265,10 @@
     char * formula(char *, char *, node_t *);
     int formula_write(block_r *, char *);
     char * status_formula(char *, char *, node_t *, int, int);
-    void argument_write(node_t *, char *);
+    void argument_write(node_t *, char *, ...);
     void id_write(node_t * node, char * fmt, ...);
     void expression_write(node_t *, char *, ...);
+    void augment_write(node_t *, char *, ...);
     
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
@@ -302,9 +303,10 @@
     int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *);
     int script_generate_and_chain(logic_node_t *, char *, int *);
     int script_generate_cond_node(logic_node_t *, char *, int *);
-    int script_generate_class_generic(char *, int *, range_t *, char *);
-    int script_generate_cond_generic(char *, int *, int, int, char *);
 
+    int condition_write_class(char *, int *, range_t *, char *);
+    int condition_write_range(char *, int *, range_t *, char *);
+    int condition_write_format(char *, int *, char * fmt, ...);
     /* support minimization */
     int minimize_stack(node_t * left, node_t * right);
 #endif
