@@ -276,7 +276,6 @@
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
     int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
     void node_inherit_cond(node_t *);
-    void logic_inherit_range(node_t *);
     void node_expr_append(node_t *, node_t *, node_t *);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);

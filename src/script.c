@@ -1754,6 +1754,7 @@ int translate_trigger(block_r * block, char * expr, int type) {
 
     /* evalute the trigger to bit-mask value */
     result = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    block->eng_cnt--;    /* remove value from stack */
     if(result == NULL) {
         exit_func_safe("failed to evaluate '%s' for item %d\n", expr, block->item_id);
         return SCRIPT_FAILED;
@@ -3127,6 +3128,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 int evaluate_function(block_r * block, char ** expr, char * func, int start, int end, int * min, int * max, node_t * node) {
     int i = 0;
     int index = 0;
+    char * name = NULL;
 
     /* operand variables */
     node_t * resultOne = NULL;
@@ -3329,24 +3331,36 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             if(resultTwo != NULL) node_free(resultTwo);
             return SCRIPT_FAILED;
         }
-        /* todo: query item name from item id rather than depending on getequipid */
+        /* support getequipid as item_id argument */
+        if(resultOne->cond != NULL && resultOne->cond->var == 9) {
+            name = resultOne->cond->name;
+        } else {
+            /* search for item name from item id */
+            memset(&item, 0, sizeof(ic_item_t));
+            if(item_name_id_search(block->db, &item, resultOne->min, block->mode)) {
+                exit_func_safe("failed to search for item %d in %d", resultOne->min, block->item_id);
+                return SCRIPT_FAILED;
+            }
+            name = item.name;
+        }
+        
         switch(resultTwo->min) {
-            case 0: argument_write(node, "%s's Buy Price", resultOne->cond->name); break;
-            case 1: argument_write(node, "%s's Sell Price", resultOne->cond->name); break;
-            case 2: argument_write(node, "%s's Item Type", resultOne->cond->name); break;
-            case 3: argument_write(node, "%s's Max Drop Chance", resultOne->cond->name); break;
-            case 4: argument_write(node, "%s's Gender", resultOne->cond->name); break;
-            case 5: argument_write(node, "%s's Equip", resultOne->cond->name); break;
-            case 6: argument_write(node, "%s's Weight", resultOne->cond->name); break;
-            case 7: argument_write(node, "%s's Attack", resultOne->cond->name); break;
-            case 8: argument_write(node, "%s's Defense", resultOne->cond->name); break;
-            case 9: argument_write(node, "%s's Range", resultOne->cond->name); break;
-            case 10: argument_write(node, "%s's Slot", resultOne->cond->name); break;
-            case 11: argument_write(node, "%s's Weapon Type", resultOne->cond->name); break;
-            case 12: argument_write(node, "%s's Requirement Level", resultOne->cond->name); break;
-            case 13: argument_write(node, "%s's Weapon Level", resultOne->cond->name); break;
-            case 14: argument_write(node, "%s's View ID", resultOne->cond->name); break;
-            case 15: argument_write(node, "%s's Magical Attack", resultOne->cond->name); break;
+            case 0: argument_write(node, "%s's Buy Price", name); break;
+            case 1: argument_write(node, "%s's Sell Price", name); break;
+            case 2: argument_write(node, "%s's Item Type", name); break;
+            case 3: argument_write(node, "%s's Max Drop Chance", name); break;
+            case 4: argument_write(node, "%s's Gender", name); break;
+            case 5: argument_write(node, "%s's Equip", name); break;
+            case 6: argument_write(node, "%s's Weight", name); break;
+            case 7: argument_write(node, "%s's Attack", name); break;
+            case 8: argument_write(node, "%s's Defense", name); break;
+            case 9: argument_write(node, "%s's Range", name); break;
+            case 10: argument_write(node, "%s's Slot", name); break;
+            case 11: argument_write(node, "%s's Weapon Type", name); break;
+            case 12: argument_write(node, "%s's Requirement Level", name); break;
+            case 13: argument_write(node, "%s's Weapon Level", name); break;
+            case 14: argument_write(node, "%s's View ID", name); break;
+            case 15: argument_write(node, "%s's Magical Attack", name); break;
             default: 
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
@@ -3381,6 +3395,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         id_write(node, "%s", node->aug_ptr[node->aug_ptr_cnt - 1]);
     } else if(ncs_strcmp(func,"isequipped") == 0) {
+        node->id = &node->stack[node->stack_cnt];
         for(i = start; i < end; i++) {
             if(expr[i][0] != ',') {
                 memset(&item, 0, sizeof(ic_item_t));
@@ -3389,7 +3404,9 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                     return SCRIPT_FAILED;
                 }
                 argument_write(node, item.name);
+                node->stack_cnt += sprintf(&node->stack[node->stack_cnt],"%s", item.name);
             }
+            node->stack[node->stack_cnt] = '\0';
         }
     } else if(ncs_strcmp(func,"groupranditem") == 0) {
         /*memset(&ea_item_group, 0, sizeof(ea_item_group_t));
@@ -3629,9 +3646,6 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                     mkrange(INIT_OPERATOR, 0, 1, 0);
                 /* variable and functions generate logic trees that are inherited by up until the root node */
                 node_inherit_cond(node);
-                /* variable and function change condition meaning per value it is comparing against,
-                 * which require the binary operator connecting that value to ship the range over. */
-                /*logic_inherit_range(node); */
                 (*complexity)++;
                 break;
             case '&': 
@@ -3639,9 +3653,6 @@ int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 node->range = calcrange(node->op, node->left->range, node->right->range); 
                 /* variable and functions generate logic trees that are inherited by up until the root node */
                 node_inherit_cond(node);
-                /* variable and function change condition meaning per value it is comparing against,
-                 * which require the binary operator connecting that value to ship the range over. */
-                /*logic_inherit_range(node);*/
                 break;
             case '&' + '&': 
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
@@ -3704,16 +3715,6 @@ void node_inherit_cond(node_t * node) {
         node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
     } else if(node->left->cond == NULL && node->right->cond != NULL) {
         node->cond = make_cond(node->right->cond->var, node->right->cond->name, node->range, node->right->cond);
-    }
-}
-
-void logic_inherit_range(node_t * node) {
-    if(exit_null_safe(1, node)) return;
-    if(node->left != NULL && node->left->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
-        node->left->cond->range = andrange(node->left->cond->range, node->range);
-    }
-    if(node->right != NULL && node->right->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
-        node->right->cond->range = andrange(node->right->cond->range, node->range);
     }
 }
 
@@ -4184,11 +4185,12 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
         case 19:    /* max hp */
         case 23:    /* hp */
         case 24:    /* zeny */
-        case 27:    /* getrandgroupitem */
+        case 26:    /* callfunc (noncondition) */
+        case 27:    /* getrandgroupitem (noncondition) */
         case 30:    /* countitem */
         case 46:    /* max */
         case 47:    /* min */
-        case 49:    /* groupranditem */
+        case 49:    /* groupranditem (noncondition) */
             condition_write_range(buf, offset, tree->range, tree->name); break;
         case 5:     /* random */
         case 28:    /* getpartnerid */
@@ -4198,17 +4200,18 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset) {
         case 34:    /* rebirth */
         case 48:    /* checkmount */
             condition_write_format(buf, offset, "%s", tree->name); break;
+        case 13:    /* isequipped */
+            condition_write_format(buf, offset, "%s Equipped", tree->name); break;
         case 20:    /* base class */
         case 21:    /* base job */
         case 22:    /* class */
             condition_write_class(buf, offset, tree->range, tree->name); break;
         case 8: /* getiteminfo; require paramater data */
-        case 9: /* getequipid; require item name search on range */
-        case 13: /* isequipped; require appending item list in evaluate_function */
-        case 26: /* callfunc; require paramater data */
-        case 29: /* strcharinfo; require map list and map name inherit from (==) */
+        case 9: /* getequipid; require item name search on range; block propogate down */
+        case 29: /* strcharinfo; require converting map name constant to number and reconverting to map name string */
             break;
             dmpnamerange(tree, stderr, 0);
+            fprintf(stderr,"%s\n", buf);
         default: break;
     }
     return SCRIPT_PASSED;

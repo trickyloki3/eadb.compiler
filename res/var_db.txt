@@ -33,6 +33,7 @@
 5  ,                     rand,0x00000001,0x00000000,0x00000002,         0,2147483647,"Random";
 6  ,                      pow,0x00000001,0x00000000,0x00000002,         0,         0,"Pow";
 10 ,                  gettime,0x00000001,0x00000000,0x00000002,         0,2147483647,"Time";
+13 ,               isequipped,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
 28 ,             getpartnerid,0x00000001,0x00000000,0x00000001,         0,         1,"Partner Online";
 30 ,                countitem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Count";
 31 ,              checkoption,0x00000001,0x00000000,0x00000002,         0,2147483647,"Companion";
@@ -43,12 +44,11 @@
 48  ,			       checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"Riding Mount";
 
 // non-condition functions
+26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
 27 ,         getrandgroupitem,0x00000001,0x00000000,0x00000002,         0,         0,"Group Item";
 49	 ,			    groupranditem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Group";
 
 // complex functions
 8  ,              getiteminfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Info";
 9  ,               getequipid,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
-13 ,               isequipped,0x00000001,0x00000000,0x00000002,         0,2147483647,"Equip ID";
-26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
 29 ,              strcharinfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"String Type";
