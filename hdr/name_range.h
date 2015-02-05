@@ -28,6 +28,12 @@
    #define OR_OR_CASE(X,Y)       ((X)->type == LOGIC_NODE_OR && (Y)->type == LOGIC_NODE_OR)
    #define INVALID_NODE_TYPE(X)  (X < LOGIC_NODE_COND || X > LOGIC_NODE_OR)
 
+   /* var is a 4 byte integer that is separated into
+    * higher 2 byte is function tag (evaluate_function)
+    * lower 2 byte is variable tag (var_db.txt) */
+   #define get_var(X)      ((X)->var & 0xFFFF)
+   #define get_func(X)     ((X)->var >> 16)
+   #define set_func(X, Y)  ((X)->var = ((Y) << 16) + (get_var(X)))
    typedef struct logic_node {
       int var;
       int type;            /* or, and, or cond */

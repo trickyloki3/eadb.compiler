@@ -121,6 +121,52 @@ char * flagtgt_tbl(int i) {
 	};
 }
 
+char * item_type_tbl(int i) {
+	switch(i) {
+		case 0: return "Healing Item";
+		case 2: return "Usable Item";
+		case 3: return "Etc Item";
+		case 4: return "Armor";
+		case 5: return "Weapon";
+		case 6: return "Card";
+		case 7: return "Pet Egg";
+		case 8: return "Pet Equipment";
+		case 10: return "Ammo";
+		case 11: return "Delayed Usable";
+		case 12: return "Shadow Equipment";
+		case 18: return "Delayed Usable";
+		default: return "error";
+	}
+}
+
+/* skip flag checking; select only one */
+char * loc_tbl(int i) {
+	switch(i) {
+		case 256: return "Upper Headgear";
+		case 512: return "Middle Headgear";
+		case 1: return "Lower Headgear";
+		case 16: return "Armor";
+		case 2: return "Weapon";
+		case 32: return "Shield";
+		case 4: return "Garment";
+		case 64: return "Shoes";
+		case 8: return "Right Accessory";
+		case 128: return "Left Accessory";
+		case 1024: return "Costume Upper Headgear";
+		case 2048: return "Costume Middle Headgear";
+		case 4096: return "Costume Lower Headgear";
+		case 8192: return "Costume Garment";
+		case 32768: return "Ammo";
+		case 65536: return "Shadow Armor";
+		case 131072: return "Shadow Weapon";
+		case 262144: return "Shadow Shield";
+		case 524288: return "Shadow Shoes";
+		case 1048576: return "Shadow Right Accessory";
+		case 2097152: return "Shadow Left Accessory";
+		default: return "Error";
+	}
+}
+
 char * weapon_tbl(int i) {
 	switch(i) {
 		case 0: return "Fist";

@@ -23,7 +23,7 @@
 22 ,                    class,0x00000002,0x00000001,0x00000000,         0,      4212,"Class";
 23 ,                       hp,0x00000002,0x00000001,0x00000000,         1,   1000000,"HP";
 24 ,                     zeny,0x00000002,0x00000001,0x00000000,         0,2147483647,"Zeny";
-34 ,                    upper,0x00000002,0x00000001,0x00000000,         0,2147483647,"Rebirth";
+34 ,                    upper,0x00000002,0x00000001,0x00000000,         0,         1,"Rebirth";
 
 // simple functions
 1  ,                getrefine,0x00000001,0x00000000,0x00000001,         0,        15,"Refine Level";
@@ -46,7 +46,7 @@
 // non-condition functions
 26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
 27 ,         getrandgroupitem,0x00000001,0x00000000,0x00000002,         0,         0,"Group Item";
-49	 ,			    groupranditem,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Group";
+49	 ,			    groupranditem,0x00000001,0x00000000,0x00000002,         0,         0,"Item Group";
 
 // complex functions
 8  ,              getiteminfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Info";

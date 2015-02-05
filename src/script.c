@@ -3316,7 +3316,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         /* support getequipid as item_id argument */
-        if(resultOne->cond != NULL && resultOne->cond->var == 9) {
+        if(resultOne->cond != NULL && get_var(resultOne->cond) == 9) {
             name = resultOne->cond->name;
         } else {
             /* search for item name from item id */
@@ -3327,22 +3327,23 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             }
             name = item.name;
         }
-        
+        /* set the function tag */
+        set_func(node, resultTwo->min);
         switch(resultTwo->min) {
             case 0: id_write(node, "%s's Buy Price", name); break;
             case 1: id_write(node, "%s's Sell Price", name); break;
             case 2: id_write(node, "%s's Item Type", name); break;
-            case 3: id_write(node, "%s's Max Drop Chance", name); break;
-            case 4: id_write(node, "%s's Gender", name); break;
-            case 5: id_write(node, "%s's Equip", name); break;
+            case 3: id_write(node, "%s's Max Drop Chance", name); *min = 0; *max = 100; break;
+            case 4: id_write(node, "%s's Gender", name); *min = 0; *max = 2; break;
+            case 5: id_write(node, "%s's Equip Location", name); break;
             case 6: id_write(node, "%s's Weight", name); break;
             case 7: id_write(node, "%s's Attack", name); break;
             case 8: id_write(node, "%s's Defense", name); break;
-            case 9: id_write(node, "%s's Range", name); break;
-            case 10: id_write(node, "%s's Slot", name); break;
+            case 9: id_write(node, "%s's Range", name); *min = 0; *max = 16; break;
+            case 10: id_write(node, "%s's Slot", name); *min = 0; *max = 4; break;
             case 11: id_write(node, "%s's Weapon Type", name); break;
-            case 12: id_write(node, "%s's Requirement Level", name); break;
-            case 13: id_write(node, "%s's Weapon Level", name); break;
+            case 12: id_write(node, "%s's Requirement Level", name); *min = 0; *max = 15; break;
+            case 13: id_write(node, "%s's Weapon Level", name); *min = 0; *max = 4; break;
             case 14: id_write(node, "%s's View ID", name); break;
             case 15: id_write(node, "%s's Magical Attack", name); break;
             default: 
@@ -4150,7 +4151,7 @@ int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset, blo
 int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, block_r * block) {
     /* add 'and' when chaining condition */
     if(*offset > 0) condition_write_format(buf, offset, " and ");
-    switch(tree->var) {
+    switch(get_var(tree)) {
         case 1:     /* refine rate */
         case 2:     /* refine rate */
         case 3:     /* paramater */
@@ -4187,12 +4188,39 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, blo
             condition_write_item(buf, offset, tree->range, block); 
             condition_write_format(buf, offset,"Equipped");
             break;
-        case 8: /* getiteminfo; require paramater data */
+        case 8:     /* getiteminfo */
+            condition_write_getiteminfo(buf, offset, tree); break;
         case 29: /* strcharinfo; require converting map name constant to number and reconverting to map name string */
             break;
-            dmpnamerange(tree, stderr, 0);
-            fprintf(stderr,"%s\n", buf);
+            /*dmpnamerange(tree, stderr, 0);
+            fprintf(stderr,"%s\n", buf);*/
         default: break;
+    }
+    return SCRIPT_PASSED;
+}
+
+int condition_write_getiteminfo(char * buf, int * offset, logic_node_t * tree) {
+    int val_min = minrange(tree->range);
+    switch(get_func(tree)) {
+        case 2: /* item type */
+            condition_write_format(buf, offset,"%s Is A %s", tree->name, item_type_tbl(val_min));
+            break;
+        case 4: /* gender */
+            switch(val_min) {
+                case 0: condition_write_format(buf, offset,"%s Is A Female Only", tree->name); break;
+                case 1: condition_write_format(buf, offset,"%s Is A Male Only", tree->name); break;
+                case 2: condition_write_format(buf, offset,"%s Is A Unisex", tree->name); break;
+                default: return SCRIPT_FAILED;
+            }
+            break;
+        case 5: /* equip location */
+            condition_write_format(buf, offset,"%s Is A %s", tree->name, loc_tbl(val_min));
+            break;
+        case 11: /* weapon type */
+            condition_write_format(buf, offset,"%s Is A %s", tree->name, weapon_tbl(val_min));
+            break;
+        default:
+            condition_write_range(buf, offset, tree->range, tree->name); break;
     }
     return SCRIPT_PASSED;
 }

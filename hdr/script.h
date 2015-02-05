@@ -292,8 +292,9 @@
     int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *, block_r *);
     int script_generate_and_chain(logic_node_t *, char *, int *, block_r *);
     int script_generate_cond_node(logic_node_t *, char *, int *, block_r *);
+    int condition_write_getiteminfo(char *, int *, logic_node_t *);
     int condition_write_item(char *, int *, range_t *, block_r *);
     int condition_write_class(char *, int *, range_t *, char *);
     int condition_write_range(char *, int *, range_t *, char *);
-    int condition_write_format(char *, int *, char * fmt, ...);
+    int condition_write_format(char *, int *, char * fmt, ...);    
 #endif
