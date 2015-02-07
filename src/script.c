@@ -887,6 +887,11 @@ int script_translate(script_t * script) {
                      EVALUATE_FLAG_EXPR_BOOL); 
                      break;                                                                                         /* set */
             case 62: break;
+            case 21: /* skilleffect */
+            case 22: /* specialeffect2 */
+            case 29: /* input */
+            case 32: /* end */
+                break;
             default: return SCRIPT_FAILED;
         }
 
@@ -4208,7 +4213,7 @@ int condition_write_strcharinfo(char * buf, int * offset, logic_node_t * tree, b
     map_t map_info;
     int val_min = minrange(tree->range);
     switch(get_func(tree)) {
-        case 3: 
+        case 3: /* maps */
             if(client_map_id_search(block->db, &map_info, val_min)) {
                 exit_func_safe("failed to search for map id"
                 " %d in item %d", val_min, block->item_id);
