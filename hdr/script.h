@@ -19,45 +19,39 @@
     #include "range.h"
     #include "table.h"
 
-    /* general */
-    #define BUF_SIZE 4096
-    #define PTR_SIZE 4096  /* =.=; turns out this number isn't that bad with large scripts. */
-    #define BONUS_SIZE 5
-    /* script return status */
+    /* return code from (nearly) all functions */
     #define SCRIPT_PASSED 0
     #define SCRIPT_FAILED 1
     #define SCRIPT_SKIP   2
-    /* explicit defined over hardcoded constants */
-    #define BONUS_ID_MAX 5      /* bonus block id are 0 to 4; great for checking if block is a bonus block or not */
-    #define BLOCK_NULLIFIED -1  /* indicates that the block is deleted; used by block->type->id */
-    /* athena syntax groups */
-    #define ATHENA_SCRIPT_SYMBOL(X)           ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
-    #define ATHENA_SCRIPT_OPERATOR(X)         ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || (X) == '>' || (X) == '<' || (X) == '-' || (X) == '+' || (X) == '/' || (X) == '*' || (X) == '!')
-    #define ATHENA_SCRIPT_UNARY(X)            ((X) == '!' || (X) == '-')
-    #define ATHENA_SCRIPT_IDENTIFER(X)        (isalpha(X) || isdigit(X) || (X) == '_')
-    #define CHECK_ZERO(X)                     (strlen(X) == 1 && X[0] == '0')
-    #define CHECK_NEGATIVE(X)                 (strlen(X) > 0 && strstr(X,"-") != NULL)
 
-    /* BF and ATF Trigger Flags */
-    #define ATF_SELF 1
-    #define ATF_TARGET 2
-    #define ATF_SHORT 4
-    #define ATF_LONG 8
-    #define ATF_WEAPON 16
-    #define ATF_MAGIC 32
-    #define ATF_MISC 64
-    #define ATF_SKILL 96
-    #define BF_WEAPON 1
-    #define BF_MAGIC 2
-    #define BF_MISC 4
-    #define BF_SHORT 16
-    #define BF_LONG 64
-    #define BF_SKILL 256
-    #define BF_NORMAL 512
+    /* general constants */
+    #define BUF_SIZE 4096       /* total size of script, stack, and etc */
+    #define PTR_SIZE 4096       /* =.=; total number of possible tokens */
+    #define BONUS_SIZE 5        /* total number of arguments for all bonus */
+    #define BONUS_ID_MAX 5      /* bonus block identifer are from 0 to 4 */
+    #define BLOCK_NULLIFIED -1  /* indicate that block should be ignore */
 
-    /* evaluate expression flag and node types */
+    /* macros to match athena syntax for script lexical  */
+    #define ATHENA_SCRIPT_SYMBOL(X)     ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
+    #define ATHENA_SCRIPT_OPERATOR(X)   ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || \
+                                         (X) == '>' || (X) == '<' || (X) == '-' || (X) == '+' || (X) == '/' || \
+                                         (X) == '*' || (X) == '!')
+    #define ATHENA_SCRIPT_UNARY(X)      ((X) == '!' || (X) == '-')
+    #define ATHENA_SCRIPT_IDENTIFER(X)  (isalpha(X) || isdigit(X) || (X) == '_')
+    #define CHECK_ZERO(X)               (strlen(X) == 1 && X[0] == '0')
+    #define CHECK_NEGATIVE(X)           (strlen(X) > 0 && strstr(X,"-") != NULL)
+
+    /* flags to passed to script_parse */
+    #define FLAG_PARSE_NORMAL       0x00
+    #define FLAG_PARSE_LAST_TOKEN   0x01    /* include the last token into the parsed string */
+    #define FLAG_PARSE_KEEP_COMMA   0x02    /* include all comma into the parsed string */
+    #define FLAG_PARSE_SKIP_LEVEL   0x04    /* bypass () and {} when encountering delimiter and sentinel */
+    #define FLAG_PARSE_ALL_FLAGS    0x07
+    /* total precedence level and total operators within the same level for evaluate_expression_recursive */
     #define PRED_LEVEL_MAX 11
     #define PRED_LEVEL_PER 5
+
+    /* node type determines how the node is process in evaluate_node */
     #define NODE_TYPE_OPERATOR    0x01
     #define NODE_TYPE_OPERAND     0x02
     #define NODE_TYPE_UNARY       0x80  /* unary operator */
@@ -66,6 +60,8 @@
     #define NODE_TYPE_LOCAL       0x10  /* set block variable */
     #define NODE_TYPE_CONSTANT    0x20  /* const.txt */
     #define NODE_TYPE_SUB         0x40  /* subexpression node */  
+
+    /* alternative the normal behavior of all expression evaluation functions */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01 /* keep the logic tree */
     #define EVALUATE_FLAG_KEEP_NODE        0x02 /* keep the root node */
     #define EVALUATE_FLAG_WRITE_FORMULA    0x08 /* write the formula for expression */
@@ -73,28 +69,42 @@
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20 /* keep logic tree for ?: operators; set blocks */
     #define EVALUATE_FLAG_EXPR_BOOL        0x04 /* flag for evaluating relational operators to either 0 or 1
                                                  * ignore expression simplification for conditional expression */
-    /* bonus flags for block minimization */
+
+    /* bonus flags for block minimization for script_bonus */
     #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
     #define BONUS_FLAG_MINIS        0x00040000  /* minimize by expanding list */
     #define BONUS_FLAG_MINIZ        0x00080000  /* minimize by checking arguments */
-    /* check a set of arguments for equality */
+
+    /* check a set of arguments for equality for script_bonus */
     #define BONUS_FLAG_EQ_1         0x00000001  /* check 1st argument are equal */
     #define BONUS_FLAG_EQ_2         0x00000002  /* check 2nd argument are equal */
     #define BONUS_FLAG_EQ_3         0x00000004  /* check 3rd argument are equal */
     #define BONUS_FLAG_EQ_4         0x00000008  /* check 4th argument are equal */
     #define BONUS_FLAG_EQ_5         0x00000010  /* check 5th argument are equal */
-    /* aggregate a set of arguments */
+
+    /* aggregate a set of arguments for script_bonus */
     #define BONUS_FLAG_AG_1         0x00000100  /* aggregate 1st argument */
     #define BONUS_FLAG_AG_2         0x00000200  /* aggregate 2nd argument */
     #define BONUS_FLAG_AG_3         0x00000400  /* aggregate 3rd argument */
     #define BONUS_FLAG_AG_4         0x00000800  /* aggregate 4th argument */
     #define BONUS_FLAG_AG_5         0x00001000  /* aggregate 5th argument */
-    /* stack a set of integer arguments */
-    #define BONUS_FLAG_ST_1         0x01000000  /* stack 1st argument */
-    #define BONUS_FLAG_ST_2         0x02000000  /* stack 2nd argument */
-    #define BONUS_FLAG_ST_3         0x04000000  /* stack 3rd argument */
-    #define BONUS_FLAG_ST_4         0x08000000  /* stack 4th argument */
-    #define BONUS_FLAG_ST_5         0x10000000  /* stack 5th argument */
+
+    /* bf and atf trigger flags for translate_trigger */
+    #define ATF_SELF    1
+    #define ATF_TARGET  2
+    #define ATF_SHORT   4
+    #define ATF_LONG    8
+    #define ATF_WEAPON  16
+    #define ATF_MAGIC   32
+    #define ATF_MISC    64
+    #define ATF_SKILL   96
+    #define BF_WEAPON   1
+    #define BF_MAGIC    2
+    #define BF_MISC     4
+    #define BF_SHORT    16
+    #define BF_LONG     64
+    #define BF_SKILL    256
+    #define BF_NORMAL   512
 
     typedef struct {
         char script[BUF_SIZE];
@@ -156,17 +166,17 @@
                                                 0x01 - expanded the range of possible argument, i.e. callfunc(F_Rand, 1, 2, ..)
                                                 0x02 - multivalues must be tagged random 
                                                 0x04 - use verbatim string */
-        int offset;                          /* indicate the beginning of special arguments */
+        int offset;                          /* indicate the beginning of variable arguments */
     } block_r;
 
-    /* indexible linked list */
+    /* block linked list */
     typedef struct block_list_t {
         block_r root;
         block_r * head;
         block_r * tail;
     } block_list_t;
 
-    /* abstract handle to contain everything */
+    /* abstract handle to contain everything for script processing */
     typedef struct script_t {
         int item_id;
         block_list_t block;     /* linked list of allocated blocks */
@@ -176,7 +186,7 @@
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
     } script_t;
 
-    /* athena db */
+    /* iterate through all the items in athena database */
     int iter_item_db(int, struct ic_db_t *, ic_item_t *);
 
     /* block linked list operations */
@@ -202,6 +212,7 @@
     int script_block_dump(script_t *, FILE *);
     int split_paramater_list(token_r *, int *, char *);
     int split_paramater(char **, int, int, int *);
+    int check_loop_expression(script_t *, char *, char *);
 
     /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);

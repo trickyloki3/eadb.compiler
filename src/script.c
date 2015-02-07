@@ -394,6 +394,23 @@ int split_paramater(char ** expr, int start, int end, int * pos) {
     return SCRIPT_FAILED;
 }
 
+int check_loop_expression(script_t * script, char * expr, char * end) {
+    token_r token;
+    if(script_lexical(&token, expr)) {
+        exit_func_safe("failed to tokenize '%s' for item id %d", expr, script->item_id);
+        return SCRIPT_FAILED;
+    }
+
+    /* check whether ; semicolon exist */
+    if(token.script_cnt <= 0) {
+        exit_func_safe("missing '%s' in for loop for item id %d", end, script->item_id);
+        return SCRIPT_FAILED;
+    }
+
+    /* check whether ; is the first token */
+    return (strcmp(token.script_ptr[0], end) == 0) ? SCRIPT_FAILED : SCRIPT_PASSED;
+}
+
 int script_lexical(token_r * token, char * script) {
     int i = 0;
     int id = 0;                 /* indicate previous token is an identifer */
@@ -494,6 +511,8 @@ int script_lexical(token_r * token, char * script) {
 
 int script_analysis(script_t * script, token_r * token_list, block_r * parent, block_r ** var) {
     int i = 0;
+    int j = 0;
+    int len = 0;
     int ret = 0;
     int block_cnt = 0;
     char ** token = NULL;
@@ -502,6 +521,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     block_r * block = NULL;     /* current block being parsed */
     block_r * link = parent;    /* link blocks to if, else-if, else, and for */
     block_r * set = (var != NULL) ? *var : NULL;
+    char subscript[BUF_SIZE];   /* inject new code */
 
     /* check null paramaters */
     if(exit_null_safe(2, script, token_list))
@@ -527,6 +547,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             /* allocate and initialize a block */
             if(script_block_alloc(script, &block)) 
                 return SCRIPT_FAILED;
+
             block->item_id = script->item_id;
             block->type = block_type.id;
 
@@ -552,17 +573,17 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                 case 26: /* parse if blocks */
                     /* else-if and else will link this block */
                     link = block;
-                case 62: /* parse for blocks */
+
                     /* parse the condition ( <condition> ) */
                     if(token[i+1][0] != '(') return SCRIPT_FAILED;
-                    ret = script_parse(token_list, &i, block, '\0', ')', 0x01);
+                    ret = script_parse(token_list, &i, block, '\0', ')', FLAG_PARSE_LAST_TOKEN);
                     if(ret == SCRIPT_FAILED || token[i][0] != ')') 
                         return SCRIPT_FAILED;
 
                     /* compound or simple statement */
                     if((token[i+1][0] == '{') ?
-                        script_parse(token_list, &i, block, '\0', '}', 0x01):
-                        script_parse(token_list, &i, block, '\0', ';', 0x03)
+                        script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
+                        script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)
                         == SCRIPT_FAILED)
                         return SCRIPT_FAILED;
 
@@ -580,14 +601,14 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
 
                         /* parse the condition ( <condition> ) */
                         if(token[i+1][0] != '(') return SCRIPT_FAILED;
-                        ret = script_parse(token_list, &i, block, '\0', ')', 0x01);
+                        ret = script_parse(token_list, &i, block, '\0', ')', FLAG_PARSE_LAST_TOKEN);
                         if(ret == SCRIPT_FAILED || token[i][0] != ')') 
                             return SCRIPT_FAILED;
 
                         /* compound or simple statement */
                         if((token[i+1][0] == '{') ?
-                            script_parse(token_list, &i, block, '\0', '}', 0x01):
-                            script_parse(token_list, &i, block, '\0', ';', 0x03) 
+                            script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
+                            script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA) 
                             == SCRIPT_FAILED) 
                             return SCRIPT_FAILED;
 
@@ -600,8 +621,8 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     } else {
                         /* compound or simple statement */
                         if((token[i+1][0] == '{') ?
-                            script_parse(token_list, &i, block, '\0', '}', 0x01):
-                            script_parse(token_list, &i, block, '\0', ';', 0x03)
+                            script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
+                            script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)
                             == SCRIPT_FAILED)
                             return SCRIPT_FAILED;
 
@@ -618,12 +639,90 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                 case 7:     /* autobonus3 */
                 case 51:    /* bonus_script */
                     /* parse the blocks before extending */
-                    if(script_parse(token_list, &i, block, ',', ';', 0x00))
+                    if(script_parse(token_list, &i, block, ',', ';', FLAG_PARSE_NORMAL))
                         return SCRIPT_FAILED;
 
                     /* extend the block list by using subscript */
                     if(script_extend_block(script, block->ptr[0], block, &set))
                         return SCRIPT_FAILED;
+                    break;
+                case 62: /* parse for blocks */
+                    /* skip the starting parenthesis */
+                    if(token[i+1][0] != '(') {
+                        exit_func_safe("missing starting parenthesis for 'for' loop in "
+                        "item id %d current token is %s", script->item_id, token[i+1]);
+                        return SCRIPT_FAILED;
+                    } else {
+                        i++;
+                    }
+
+                    /* parse the for-loop initialization */
+                    if(script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_ALL_FLAGS))
+                        return SCRIPT_FAILED;
+                    
+                    /* check whether the initialization is empty */
+                    if(check_loop_expression(script, block->ptr[0], ";")) {
+                        exit_func_safe("missing initialization expression"
+                        " in for-loop for item id %d", script->item_id);
+                        return SCRIPT_FAILED;
+                    }
+
+                    /* create set block */
+                    if(script_extend_block(script, block->ptr[0], parent, &set)) {
+                        exit_func_safe("failed to create set block '%s' "
+                        "in item id %d", block->ptr[0], script->item_id);
+                        return SCRIPT_FAILED;   
+                    }
+
+                    /* parse the for-loop condition */                    
+                    if(script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_ALL_FLAGS))
+                        return SCRIPT_FAILED;
+
+                    /* check whether the initialization is empty */
+                    if(check_loop_expression(script, block->ptr[1], ";")) {
+                        exit_func_safe("missing conditional expression"
+                        " in for-loop for item id %d", script->item_id);
+                        return SCRIPT_FAILED;
+                    }
+
+                    /* parse and ignore the variant */
+                    if(script_parse(token_list, &i, block, '\0', ')', FLAG_PARSE_ALL_FLAGS))
+                        return SCRIPT_FAILED;
+
+                    if(check_loop_expression(script, block->ptr[2], ")")) {
+                        exit_func_safe("missing variant expression"
+                        " in for-loop for item id %d", script->item_id);
+                        return SCRIPT_FAILED;
+                    }
+
+                    /* compound or simple statement */
+                    if((token[i+1][0] == '{') ?
+                        script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
+                        script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)
+                        == SCRIPT_FAILED)
+                        return SCRIPT_FAILED;
+                    /* check that the compound or simple statement is not empty */
+                    if(check_loop_expression(script, block->ptr[3], ";")) {
+                        exit_func_safe("missing block expression"
+                        " in for-loop for item id %d", script->item_id);
+                        return SCRIPT_FAILED;
+                    }
+
+                    /* remove the semicolon in the condition */
+                    len = strlen(block->ptr[1]);
+                    for(j = len; j >= 0; j--)
+                        if(block->ptr[1][j] == ';') {
+                            block->ptr[1][j] = '\0';
+                            break;
+                        }
+
+                    /* create the if block */
+                    sprintf(subscript,"if(%s) %s", block->ptr[1], block->ptr[3]);
+                    if(script_extend_block(script, subscript, parent, &set)) {
+                        exit_func_safe("failed to create if block '%s' "
+                        "in item id %d", subscript, script->item_id);
+                        return SCRIPT_FAILED;   
+                    }
                     break;
                 case 28:
                     /* variables have no enclosing scope within same script */
@@ -631,7 +730,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     if(var != NULL) *var = block;
                     set = block;
                 default: /* parse all blocks */
-                    if(script_parse(token_list, &i, block, ',', ';', 0x00))
+                    if(script_parse(token_list, &i, block, ',', ';', FLAG_PARSE_NORMAL))
                         return SCRIPT_FAILED;
                     break;
             }
@@ -688,7 +787,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
 
         /* parsing top-level script; delimit exit only at top-level 
          * flag 4 allows us to bypass any leveling */
-        if((!bracket_level && !subexpr_level) || flag & 4) {
+        if((!bracket_level && !subexpr_level) || flag & FLAG_PARSE_SKIP_LEVEL) {
             /* delimiter, parse another argument */
             if(script_ptr[i][0] == delimit) {
                 if(arg_cnt > 0 && arg[arg_cnt-1] == ' ') {
@@ -702,7 +801,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
             /* semicolon ends the block */
             } else if(script_ptr[i][0] == end) {
                 /* include last token */
-                if(flag & 0x01) {
+                if(flag & FLAG_PARSE_LAST_TOKEN) {
                     /* write the argument */
                     len = strlen(script_ptr[i]);
                     for(j = 0; j < len; j++) 
@@ -725,7 +824,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
         }
 
         /* skip the comma at top level */
-        if(script_ptr[i][0] == ',' && !bracket_level && !subexpr_level && !(flag & 0x02)) 
+        if(script_ptr[i][0] == ',' && !bracket_level && !subexpr_level && !(flag & FLAG_PARSE_KEEP_COMMA)) 
             continue;
 
         /* write the argument */
@@ -784,7 +883,7 @@ int script_extend_paramater(block_r * block, char * expr) {
 
     /* parse the callfunc paramaters */
     block->ptr_cnt++; /* last pointer still contains a argument */
-    if(script_parse(&token, &offset, block, ',',')',4)) {
+    if(script_parse(&token, &offset, block, ',',')', FLAG_PARSE_SKIP_LEVEL)) {
         exit_func_safe("failed to parsed on '%s' in item %d", expr, block->item_id);
         return SCRIPT_FAILED;
     }
@@ -3006,7 +3105,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             op_cnt++;
         /* catch everything else */
         } else {
-            exit_func_safe("invalid token '%s' in item %s", expr[i], block->item_id);
+            exit_func_safe("invalid token '%s' in item %d", expr[i], block->item_id);
             goto failed_expression;
         }
 
@@ -3252,7 +3351,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         token.script_cnt = end + 1;
 
         /* parse the callfunc paramaters */
-        if(script_parse(&token, &start, block, ',',')',4) == SCRIPT_FAILED) {
+        if(script_parse(&token, &start, block, ',',')',FLAG_PARSE_SKIP_LEVEL) == SCRIPT_FAILED) {
             exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
             return SCRIPT_FAILED;
         }
