@@ -247,6 +247,18 @@ load_cb_t * option_load() {
    return interface;
 }
 
+load_cb_t * map_load() {
+   load_cb_t * interface = calloc(1, sizeof(load_cb_t));
+   interface->load_column = map_column;
+   interface->is_row_sentinel = is_row_sentinel;
+   interface->is_row_delimiter = is_row_delimiter_client;
+   interface->flag = SKIP_NEXT_WS;
+   interface->column_count = 0;
+   interface->type_size = sizeof(map_t);
+   interface->dealloc = blank_dealloc;
+   return interface;
+}
+
 int ea_load_column(void * db, int row, int col, char * val) {
    ea_item_t * item_row = &((ea_item_t *) db)[row];
    switch(col) {
@@ -760,6 +772,22 @@ int option_column(void * db, int row, int col, char * val) {
    return 0;
 }
 
+int map_column(void * db, int row, int col, char * val) {
+   int i = 0;
+   map_t * map = &((map_t *) db)[row];
+   map->id = row;
+   switch(col) {
+      case 0: 
+         /* remove the file extension for the map name */
+         for(i = strlen(val); i >= 0; i--) if(val[i] == '.') { val[i] = '\0'; break; }
+         strncopy(map->map, MAP_SIZE, (const unsigned char *) val); 
+         break;
+      case 1: strncopy(map->name, MAP_SIZE, (const unsigned char *) val); break;
+      default: break;
+   }
+   return 0;
+}
+
 int is_row_sentinel(char buf) { return (buf == '\n' || buf == '\0'); }
 int is_row_delimiter(char buf) { return (buf == ',' || buf == '\n' || buf == '\0'); }
 int is_row_sentinel_whitespace(char buf) { return (buf == '\n' || buf == '\0' || isspace(buf)); }
@@ -768,6 +796,7 @@ int is_row_delimiter_comment(char buf) { return (buf == '\r' || buf == ',' || bu
 int is_row_sentinel_semicolon(char buf) { return (buf == '\n' || buf == '\0' || buf == ';'); }
 int is_row_delimiter_semicolon(char buf) { return (buf == ',' || buf == '\n' || buf == '\0' || buf == ';'); }
 int is_row_delimiter_whitespace(char buf) { return (buf == ',' || buf == '\n' || buf == '\0' || isspace(buf)); }
+int is_row_delimiter_client(char buf) { return (buf == '#'); }
 
 void const_dealloc(void * mem, int cnt) {
    int i = 0;

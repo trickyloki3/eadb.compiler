@@ -18,6 +18,8 @@
 
 	/* standard buffer size */
 	#define BUF_SIZE 4096
+
+ 	/* database buffer size */
  	#define BONUS_PREFIX_SIZE 8
  	#define BONUS_BONUS_SIZE 64
  	#define BONUS_FORMAT_SIZE 256
@@ -34,6 +36,7 @@
  	#define VAR_NAME 32
  	#define OPTION_SIZE 32
  	#define OPTION_NAME_SIZE 64
+ 	#define MAP_SIZE 64
 
 	/* error checking and exiting */
  	#define ENABLE_EXIT 1

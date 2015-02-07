@@ -106,6 +106,7 @@ int main(int argc, char * argv[]) {
 			load_db_t * db39 = load("../radb/item_group/item_package.txt", trim_alpha, load_general, ra_item_package_load);
 			load_db_t * db40 = load("../radb/item_combo_db.txt", trim_numeric, load_general, ra_item_combo_load);
 			load_db_t * db41 = load("res/option_db.txt", trim_alpha, load_general, option_load);
+			load_db_t * db42 = load("../misc/map.txt", trim_general, load_general, map_load);
 			load_option(db, db41->db, db41->size);
 			load_mob(db, db->ra_mob_insert, db6->db, db6->size);
 			ra_load_skill(db, db->ra_skill_insert, db9->db, db9->size);
@@ -122,6 +123,7 @@ int main(int argc, char * argv[]) {
 			load_ra_item_group(db, db->ra_item_group_insert, db38->db, db38->size);
 			load_ra_item_package(db, db->ra_item_group_insert, db39->db, db39->size);
 			load_ra_item_combo(db, db40->db, db40->size);
+			load_client_map(db, db42->db, db42->size);
 			db6->dealloc(db6->db, db6->size);
 			db9->dealloc(db9->db, db9->size);
 			db12->dealloc(db12->db, db12->size);
@@ -138,6 +140,7 @@ int main(int argc, char * argv[]) {
 			db39->dealloc(db39->db, db39->size);
 			db40->dealloc(db40->db, db40->size);
 			db41->dealloc(db41->db, db41->size);
+			db42->dealloc(db42->db, db42->size);
 			free(db6);
 			free(db9);
 			free(db12);
@@ -154,6 +157,7 @@ int main(int argc, char * argv[]) {
 			free(db39);
 			free(db40);
 			free(db41);
+			free(db42);
 		}
 		if(global_mode & HERCULES) {
 			load_db_t * db7 = load("../hedb/mob_db.txt", trim_numeric, load_general, mob_load);

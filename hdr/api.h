@@ -327,6 +327,11 @@
 							 "opt TEXT, name TEXT, PRIMARY KEY(opt));"
 	#define option_ins "INSERT INTO ra_option VALUES(?, ?);"
 	#define option_des "DROP TABLE IF NOT EXISTS ra_option;"
+	
+	#define map_tbl "CREATE TABLE IF NOT EXISTS client_map(" \
+						 "id INTEGER, map TEXT, name TEXT, PRIMARY KEY(id));"
+	#define map_ins "INSERT INTO client_map VALUES(?, ?, ?);"
+	#define map_des "DROP TABLE IF NOT EXISTS client_map;"
 
 	struct lt_db_t {
 		sqlite3 * db;
@@ -369,6 +374,8 @@
 		sqlite3_stmt * ra_item_combo_insert;
 		/* script options */
 		sqlite3_stmt * ra_option_insert;
+		/* client table */
+		sqlite3_stmt * client_map;
 	};
 
 	#define INITIALIZE_DB 0x1
@@ -394,6 +401,7 @@
 	void load_ra_item_package(struct lt_db_t * sql, sqlite3_stmt * ins, ra_item_package_t * db, int size);
 	void load_ra_item_combo(struct lt_db_t * sql, ra_item_combo_t * db, int size);
 	void load_option(struct lt_db_t * sql, option_t * db, int size);
+	void load_client_map(struct lt_db_t * sql, map_t * db, int size);
 	void deit_db(struct lt_db_t *);
 	void trace_db(void *, const char *);
 	char * array_to_string(char *, int *);
@@ -442,7 +450,8 @@
 	#define ra_item_group_search_sql "SELECT * FROM ra_item_group WHERE group_id = ?;"
 	#define ra_item_combo_search_sql "SELECT script, combo_group FROM ra_item_combo WHERE id = ?;"
 	#define ra_option_search_sql "SELECT * FROM ra_option WHERE opt = ?;"
-
+	#define client_map_search_sql "SELECT * FROM client_map WHERE map = ?;"
+	#define client_map_id_search_sql "SELECT * FROM client_map WHERE id = ?;"
 	struct ic_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * ea_item_iterate;
@@ -484,6 +493,8 @@
 		sqlite3_stmt * ra_item_group_search;
 		sqlite3_stmt * ra_item_combo_search;
 		sqlite3_stmt * ra_option_search;
+		sqlite3_stmt * client_map_search;
+		sqlite3_stmt * client_map_id_search;
 	};
 
 	struct ic_db_t * init_ic_db(const char *);
@@ -505,6 +516,8 @@
 	int ra_item_group_search(struct ic_db_t * db, int id, int mode, char * buffer);
 	int ra_item_combo_search_id(struct ic_db_t * db, ra_item_combo_t ** combo, int id);
 	int ra_option_search_str(struct ic_db_t * db, option_t * option, char * val);
+	int client_map_search(struct ic_db_t * db, map_t * map, char * val);
+	int client_map_id_search(struct ic_db_t * db, map_t * map, int id);
 	void free_prod(ic_produce_t * prod);
 	void free_combo(ra_item_combo_t *);
 	void deit_ic_db(struct ic_db_t *);

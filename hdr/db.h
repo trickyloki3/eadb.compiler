@@ -537,6 +537,12 @@
 		char name[OPTION_NAME_SIZE];
 	} option_t;
 
+	typedef struct map_t {
+		int id;
+		char map[MAP_SIZE];
+		char name[MAP_SIZE];
+	} map_t;
+
 	load_cb_t * ea_item_load();
 	load_cb_t * ra_item_load();
 	load_cb_t * pet_load();
@@ -557,6 +563,7 @@
 	load_cb_t * ra_item_package_load();
 	load_cb_t * ra_item_combo_load();
 	load_cb_t * option_load();
+	load_cb_t * map_load();
 	int ea_load_column(void *, int, int, char *);
 	int ra_load_column(void *, int, int, char *);
 	int pet_load_column(void *, int, int, char *);
@@ -577,6 +584,7 @@
 	int ra_item_package_column(void *, int, int, char *);
 	int ra_item_combo_colum(void *, int, int, char *);
 	int option_column(void *, int, int, char *);
+	int map_column(void *, int, int, char *);
 	int is_row_sentinel(char);
 	int is_row_sentinel_comment(char);
 	int is_row_sentinel_semicolon(char);
@@ -585,6 +593,7 @@
 	int is_row_delimiter_comment(char);
 	int is_row_delimiter_semicolon(char);
 	int is_row_delimiter_whitespace(char);
+	int is_row_delimiter_client(char);
 	void const_dealloc(void *, int);
 	void ea_item_dealloc(void *, int);
 	void ra_item_dealloc(void *, int);

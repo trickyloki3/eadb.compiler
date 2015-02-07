@@ -2815,6 +2815,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     block_r * set_iter = NULL;
     ic_const_t const_info;
     ic_var_t var_info;
+    map_t map_info;
 
     /* operator precedence tree */
     static int op_pred[PRED_LEVEL_MAX][PRED_LEVEL_PER] = {
@@ -2966,6 +2967,10 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                 /* create constant node */
                 temp_node->type = NODE_TYPE_CONSTANT;
                 temp_node->min = temp_node->max = const_info.value;
+            /* handle map name */
+            } else if(!client_map_search(block->db, &map_info, expr[i])) {
+                temp_node->type = NODE_TYPE_CONSTANT;
+                temp_node->min = temp_node->max = map_info.id;
             /* handle set'd variable */
             } else {
                 /* create set block node */
@@ -3255,6 +3260,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             exit_func_safe("%s must be a constant expression in item %d\n", expr, block->item_id);
             return SCRIPT_FAILED;
         }
+        /* set the function tag */
+        set_func(node, resultOne->min);
         switch(resultOne->min) {
             case 0: id_write(node, "Character"); break;
             case 1: id_write(node, "Party"); break;
@@ -4190,11 +4197,26 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, blo
             break;
         case 8:     /* getiteminfo */
             condition_write_getiteminfo(buf, offset, tree); break;
-        case 29: /* strcharinfo; require converting map name constant to number and reconverting to map name string */
-            break;
-            /*dmpnamerange(tree, stderr, 0);
-            fprintf(stderr,"%s\n", buf);*/
+        case 29:    /* strcharinfo */
+            condition_write_strcharinfo(buf, offset, tree, block); break;
         default: break;
+    }
+    return SCRIPT_PASSED;
+}
+
+int condition_write_strcharinfo(char * buf, int * offset, logic_node_t * tree, block_r * block) {
+    map_t map_info;
+    int val_min = minrange(tree->range);
+    switch(get_func(tree)) {
+        case 3: 
+            if(client_map_id_search(block->db, &map_info, val_min)) {
+                exit_func_safe("failed to search for map id"
+                " %d in item %d", val_min, block->item_id);
+                return SCRIPT_FAILED;
+            }
+            condition_write_format(buf, offset, "On Map %s", map_info.name);
+            break;
+        default: condition_write_format(buf, offset, "%s", tree->name); break;
     }
     return SCRIPT_PASSED;
 }
