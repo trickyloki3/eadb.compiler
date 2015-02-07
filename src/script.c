@@ -495,6 +495,7 @@ int script_lexical(token_r * token, char * script) {
 int script_analysis(script_t * script, token_r * token_list, block_r * parent, block_r ** var) {
     int i = 0;
     int ret = 0;
+    int block_cnt = 0;
     char ** token = NULL;
     int token_cnt = 0;
     block_db_t block_type;      /* block id in block_db.txt */
@@ -520,6 +521,9 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     for(i = 0; i < token_cnt; i++) {
         if(token[i][0] == '{' || token[i][0] == '}') continue;
         if(!block_keyword_search(script->db, &block_type, token[i])) {
+            /* count the number of blocks parsed */
+            block_cnt++;
+
             /* allocate and initialize a block */
             if(script_block_alloc(script, &block)) 
                 return SCRIPT_FAILED;
@@ -635,7 +639,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             block->ptr_cnt--;
         }
     }
-
+    if(block_cnt == 0) return SCRIPT_SKIP;
     return SCRIPT_PASSED;
 }
 
@@ -755,8 +759,8 @@ int script_extend_block(script_t * script, char * subscript, block_r * parent, b
     }
 
     /* indirect-recurisve analysis on subscript */
-    if(script_analysis(script, &token, parent, var)) {
-        exit_func_safe("failed to parse %s\n", subscript);
+    if(script_analysis(script, &token, parent, var) == SCRIPT_FAILED) {
+        exit_func_safe("failed to parse %s in item %d", subscript, script->item_id);
         return SCRIPT_FAILED;
     }
     return SCRIPT_PASSED;

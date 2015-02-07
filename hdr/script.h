@@ -26,6 +26,7 @@
     /* script return status */
     #define SCRIPT_PASSED 0
     #define SCRIPT_FAILED 1
+    #define SCRIPT_SKIP   2
     /* explicit defined over hardcoded constants */
     #define BONUS_ID_MAX 5      /* bonus block id are 0 to 4; great for checking if block is a bonus block or not */
     #define BLOCK_NULLIFIED -1  /* indicates that the block is deleted; used by block->type->id */

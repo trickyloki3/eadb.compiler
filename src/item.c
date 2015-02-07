@@ -9,6 +9,7 @@
 #include "script.h"
 
 int main(int argc, char * argv[]) {
+	int skip = 0;
 	int ret = 0;
 	int cnt = 0;
 	FILE * fitem = NULL;
@@ -42,19 +43,28 @@ int main(int argc, char * argv[]) {
 				offset = 0;
 				script.item_id = item.id;
 				if(!script_lexical(&script.token, item.script)) {
-					if(!script_analysis(&script, &script.token, NULL, NULL)) {
+					skip = script_analysis(&script, &script.token, NULL, NULL);
+					if(skip == SCRIPT_PASSED) {
 						if(!script_translate(&script)) {
 							if(!script_bonus(&script)) {
 								if(!script_generate(&script, buffer, &offset)) {
 									if(!script_generate_combo(script.item_id, buffer, &offset, script.db, script.mode)) {
 										fprintf(fitem,"%d#\n%s#\n", script.item_id, buffer);
 										script_block_dump(&script, debug);
+									} else {
+										fprintf(stderr,"[warn]: failed to item combo '%s' on item %d\n", item.script, script.item_id);	
 									}
+								} else {
+									fprintf(stderr,"[warn]: failed to generate '%s' on item %d\n", item.script, script.item_id);	
 								}
+							} else {
+								fprintf(stderr,"[warn]: failed to bonus '%s' on item %d\n", item.script, script.item_id);	
 							}
 						} else {
 							fprintf(stderr,"[warn]: failed to translate '%s' on item %d\n", item.script, script.item_id);		
 						}
+					} else if(skip == SCRIPT_SKIP) {
+						/* empty script */
 					} else {
 						fprintf(stderr,"[warn]: failed to parser '%s' on item %d\n", item.script, script.item_id);	
 					}
