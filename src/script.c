@@ -206,6 +206,28 @@ int list_check(block_list_t * list, block_r * block) {
     return SCRIPT_FAILED;
 }
 
+int list_tail(block_list_t * list, block_r ** block) {
+    /* check null paramaters */
+    if(exit_null_safe(2, list, block))
+        return SCRIPT_FAILED;
+    /* check empty list */
+    if(list->tail == list->head)
+        return SCRIPT_FAILED;
+    *block = list->tail;
+    return SCRIPT_PASSED;
+}
+
+int list_head(block_list_t * list, block_r ** block) {
+    /* check null paramaters */
+    if(exit_null_safe(2, list, block))
+        return SCRIPT_FAILED;
+    /* check empty list */
+    if(list->tail == list->head)
+        return SCRIPT_FAILED;
+    *block = list->head->next;
+    return SCRIPT_PASSED;
+}
+
 int script_block_alloc(script_t * script, block_r ** block) {
     /* check null paramaters */
     if(exit_null_safe(2, script, block))
@@ -667,13 +689,6 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                         return SCRIPT_FAILED;
                     }
 
-                    /* create set block */
-                    if(script_extend_block(script, block->ptr[0], parent, &set)) {
-                        exit_func_safe("failed to create set block '%s' "
-                        "in item id %d", block->ptr[0], script->item_id);
-                        return SCRIPT_FAILED;   
-                    }
-
                     /* parse the for-loop condition */                    
                     if(script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_ALL_FLAGS))
                         return SCRIPT_FAILED;
@@ -715,6 +730,13 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                             block->ptr[1][j] = '\0';
                             break;
                         }
+
+                    /* create set block */
+                    if(script_extend_block(script, block->ptr[0], parent, &set)) {
+                        exit_func_safe("failed to create set block '%s' "
+                        "in item id %d", block->ptr[0], script->item_id);
+                        return SCRIPT_FAILED;   
+                    }
 
                     /* create the if block */
                     sprintf(subscript,"if(%s) %s", block->ptr[1], block->ptr[3]);

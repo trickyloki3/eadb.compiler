@@ -200,6 +200,8 @@
     int list_pop_head(block_list_t *, block_r **);
     int list_pop_tail(block_list_t *, block_r **);
     int list_check(block_list_t *, block_r *);
+    int list_tail(block_list_t *, block_r **);
+    int list_head(block_list_t *, block_r **);
 
     /* block memory management */
     int script_block_alloc(script_t *, block_r **);
