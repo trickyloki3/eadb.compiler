@@ -1469,8 +1469,8 @@ int translate_getitem(block_r * block, int handler) {
         }
 
         /* evaluate item_id and item_amount paramater for getitem */
-        item_id = evaluate_expression_recursive(block, token.script_ptr, 1, i, block->logic_tree, 0);
-        item_amount = evaluate_expression_recursive(block, token.script_ptr, i + 1, token.script_cnt - 1, block->logic_tree, 0);
+        item_id = evaluate_expression_recursive(block, token.script_ptr, 1, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
+        item_amount = evaluate_expression_recursive(block, token.script_ptr, i + 1, token.script_cnt - 1, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         if(item_id == NULL || item_amount == NULL) {
             if(item_id != NULL) node_free(item_id);
             if(item_amount != NULL) node_free(item_amount);
@@ -1500,8 +1500,8 @@ int translate_getitem(block_r * block, int handler) {
         translate_write(block, buf, 1);
     } else {
         /* evaulate the expression because callfunc is called for some of the blocks */
-        item_id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-        item_amount = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+        item_id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA);
+        item_amount = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA);
         if(item_id == NULL || item_amount == NULL) {
             if(item_id != NULL) node_free(item_id);
             if(item_amount != NULL) node_free(item_amount);
@@ -1520,26 +1520,37 @@ int translate_getitem(block_r * block, int handler) {
             }
         }
     }
-    node_free(item_id);
-    node_free(item_amount);
 
     /* special note; first condition is special case handling of values on stack */
     if(block->flag & 0x01) {
-        offset += sprintf(buf,(block->flag & 0x02) ? "Randomly Select\n" : "Collect Items & Equipment\n");
+        offset += sprintf(buf,"%s %s Amount\n",
+            (block->flag & 0x02) ? "Randomly Select" : "Collect Items & Equipment",
+            formula(&item_amount->stack[item_amount->stack_cnt], block->eng[1], item_amount));
         for(i = block->offset; i < block->ptr_cnt; i++) {
-            if(translate_item(block, block->ptr[i]))
+            if(translate_item(block, block->ptr[i])) {
+                node_free(item_id);
+                node_free(item_amount);
                 return SCRIPT_FAILED;
+            }
             offset += sprintf(buf + offset,"=> %s\n", block->eng[block->eng_cnt - 1]);
         }
     } else {
-        if(translate_item(block, block->eng[0]))
+        if(translate_item(block, block->eng[0])) {
+            node_free(item_id);
+            node_free(item_amount);
             return SCRIPT_FAILED;
+        }
         offset = (block->eng_cnt < 4) ?
-            sprintf(buf, "Receive %s %s.", block->eng[1], block->eng[2]):
-            sprintf(buf, "Receive %s %s.", block->eng[2], block->eng[3]);
+            sprintf(buf, "Receive %s %s.", status_formula(&item_amount->stack[item_amount->stack_cnt], block->eng[1], item_amount, 'n', 1), block->eng[2]):
+            sprintf(buf, "Receive %s %s.", status_formula(&item_amount->stack[item_amount->stack_cnt], block->eng[2], item_amount, 'n', 1), block->eng[3]);
+
+            
     }
     buf[offset] = '\0';
     translate_write(block, buf, 1);
+
+    node_free(item_id);
+    node_free(item_amount);
     return SCRIPT_PASSED;
 }
 
