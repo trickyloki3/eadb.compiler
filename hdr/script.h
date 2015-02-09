@@ -62,13 +62,15 @@
     #define NODE_TYPE_SUB         0x40  /* subexpression node */  
 
     /* alternative the normal behavior of all expression evaluation functions */
-    #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x01 /* keep the logic tree */
-    #define EVALUATE_FLAG_KEEP_NODE        0x02 /* keep the root node */
-    #define EVALUATE_FLAG_WRITE_FORMULA    0x08 /* write the formula for expression */
-    #define EVALUATE_FLAG_LIST_FORMULA     0x10
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x20 /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_EXPR_BOOL        0x04 /* flag for evaluating relational operators to either 0 or 1
-                                                 * ignore expression simplification for conditional expression */
+    #define EVALUATE_FLAG_KEEP_LOGIC_TREE   0x01 /* keep the logic tree */
+    #define EVALUATE_FLAG_KEEP_NODE         0x02 /* keep the root node */
+    #define EVALUATE_FLAG_EXPR_BOOL         0x04 /* flag for evaluating relational operators to either 0 or 1
+                                                  * ignore expression simplification for conditional expression */
+    #define EVALUATE_FLAG_WRITE_FORMULA     0x08 /* write the formula for expression */
+    #define EVALUATE_FLAG_LIST_FORMULA      0x10
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE    0x20 /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_ITERABLE_SET      0x40
+    #define EVALUATE_FLAG_VARIANT_SET       0x80
 
     /* bonus flags for block minimization for script_bonus */
     #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
@@ -215,6 +217,7 @@
     int split_paramater_list(token_r *, int *, char *);
     int split_paramater(char **, int, int, int *);
     int check_loop_expression(script_t *, char *, char *);
+    int script_write(block_r *, char *, ...);
 
     /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);
@@ -271,7 +274,7 @@
     char * formula(char *, char *, node_t *);
     int formula_write(block_r *, char *);
     char * status_formula(char *, char *, node_t *, int, int);
-    void id_write(node_t * node, char * fmt, ...);
+    void id_write(node_t * node, char *, ...);
     void expression_write(node_t *, char *, ...);
     
     /* expression evaluation */

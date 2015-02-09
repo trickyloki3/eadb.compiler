@@ -436,6 +436,36 @@ void search_tree_name_range(logic_node_t * root, char * name, range_t * range, r
       }
 }
 
+range_t * search_tree_dependency_or(logic_node_t * root, char * name, range_t * range) {
+   range_t * result = NULL;
+   logic_node_t * iter = root;
+   /* search the stack until dependency found 
+    * stack of logic tree is due to the ? operator*/
+   while(iter != NULL) {
+      search_tree_name_range_or(iter, name, range, &result);
+      iter = iter->stack;
+   }
+   return result;
+}
+
+void search_tree_name_range_or(logic_node_t * root, char * name, range_t * range, range_t ** match) {
+   range_t * temp = NULL;
+   if(root->left != NULL) search_tree_name_range_or(root->left, name, range, match);
+   if(root->right != NULL) search_tree_name_range_or(root->right, name, range, match);
+
+   /* OR every matching name */
+   if(root->type == LOGIC_NODE_COND) {
+      if(ncs_strcmp(root->name, name) == 0) {
+         /* free the previous result and build the new result */
+         if(*match != NULL) temp = *match;
+         *match = (*match == NULL)?
+            orrange(root->range, range):
+            orrange(root->range, *match);
+         if(temp != NULL) freerange(temp);
+      }
+   }
+}
+
 logic_node_t * inverse_logic_tree(logic_node_t * root) {
    logic_node_t * new_root = NULL;
    int type = 0;

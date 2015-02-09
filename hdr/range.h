@@ -23,6 +23,8 @@
    /* non-empty */
    #define IS_ZERO_RANGE(X)         ((X)->min == 0 && (X)->max == 0)
    /* min and max of two numbers */
+   #define RANGE_MIN(X, Y)          (((X)->min < (Y)->min)?(X)->min:(Y)->min)
+   #define RANGE_MAX(X, Y)          (((X)->max > (Y)->max)?(X)->max:(Y)->max)
    #define MIN_RANGE(X, Y)          (((X)->id_min < (Y)->id_min)?(X)->id_min:(Y)->id_min)
    #define MAX_RANGE(X, Y)          (((X)->id_max > (Y)->id_max)?(X)->id_max:(Y)->id_max)
    /* is X equal to Y */

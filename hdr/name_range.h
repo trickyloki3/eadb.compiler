@@ -72,6 +72,9 @@
    logic_node_t * copy_deep_any_tree(logic_node_t *);
    range_t * search_tree_dependency(logic_node_t *, char *, range_t *);
    void search_tree_name_range(logic_node_t *, char *, range_t *, range_t **);
+   range_t * search_tree_dependency_or(logic_node_t *, char *, range_t *);
+   void search_tree_name_range_or(logic_node_t *, char *, range_t *, range_t **);
    logic_node_t * inverse_logic_tree(logic_node_t *);
    logic_node_t * deep_inverse_logic_tree(logic_node_t *);
+   logic_node_t * search_tree_stack(logic_node_t *, char * name);
 #endif
