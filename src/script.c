@@ -1455,7 +1455,7 @@ int translate_getitem(block_r * block, int handler) {
     token_r token;
     node_t * item_id = NULL;
     node_t * item_amount = NULL;
-
+    range_t * range = NULL;
     /* check null paramater */
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
@@ -1478,9 +1478,22 @@ int translate_getitem(block_r * block, int handler) {
         }
         
         /* push the result on the translation stack */
-        offset = sprintf(buf, "%d", minrange(item_id->range));
-        buf[offset] = '\0';
-        translate_write(block, buf, 1);
+        if(item_id->range->min == item_id->range->max) {
+            offset = sprintf(buf, "%d", minrange(item_id->range));
+            buf[offset] = '\0';
+            translate_write(block, buf, 1);
+        } else {
+            /* support range of values */
+            block->flag = 0x01;
+            block->offset = block->ptr_cnt;
+            range = item_id->range;
+            /* iterate through the range */
+            while(range != NULL) {
+                for(i = range->min; i <= range->max; i++)
+                    script_write(block, "%d", i);
+                range = range->next;
+            }
+        }
 
         offset = sprintf(buf, "%d", minrange(item_amount->range));
         buf[offset] = '\0';
@@ -1494,13 +1507,25 @@ int translate_getitem(block_r * block, int handler) {
             if(item_amount != NULL) node_free(item_amount);
             return SCRIPT_FAILED;
         }
+        if(item_id->range->min != item_id->range->max) {
+            /* support range of values */
+            block->flag = 0x01;
+            block->offset = block->ptr_cnt;
+            range = item_id->range;
+            /* iterate through the range */
+            while(range != NULL) {
+                for(i = range->min; i <= range->max; i++)
+                    script_write(block, "%d", i);
+                range = range->next;
+            }
+        }
     }
     node_free(item_id);
     node_free(item_amount);
 
     /* special note; first condition is special case handling of values on stack */
     if(block->flag & 0x01) {
-        offset += sprintf(buf,(block->flag & 0x02) ? "Randomly Select\n" : "Collect Items & Equipment");
+        offset += sprintf(buf,(block->flag & 0x02) ? "Randomly Select\n" : "Collect Items & Equipment\n");
         for(i = block->offset; i < block->ptr_cnt; i++) {
             if(translate_item(block, block->ptr[i]))
                 return SCRIPT_FAILED;
@@ -1510,8 +1535,8 @@ int translate_getitem(block_r * block, int handler) {
         if(translate_item(block, block->eng[0]))
             return SCRIPT_FAILED;
         offset = (block->eng_cnt < 4) ?
-            sprintf(buf, "Retrieve %s %s.", block->eng[1], block->eng[2]):
-            sprintf(buf, "Retrieve %s %s.", block->eng[2], block->eng[3]);
+            sprintf(buf, "Receive %s %s.", block->eng[1], block->eng[2]):
+            sprintf(buf, "Receive %s %s.", block->eng[2], block->eng[3]);
     }
     buf[offset] = '\0';
     translate_write(block, buf, 1);
@@ -4455,6 +4480,7 @@ int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset, blo
 }
 
 int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, block_r * block) {
+    int ret = SCRIPT_PASSED;
     /* add 'and' when chaining condition */
     if(*offset > 0) condition_write_format(buf, offset, " and ");
     switch(get_var(tree)) {
@@ -4475,7 +4501,7 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, blo
         case 46:    /* max */
         case 47:    /* min */
         case 49:    /* groupranditem (noncondition) */
-            condition_write_range(buf, offset, tree->range, tree->name); break;
+            ret = condition_write_range(buf, offset, tree->range, tree->name); break;
         case 5:     /* random */
         case 28:    /* getpartnerid */
         case 31:    /* checkoption */
@@ -4483,24 +4509,24 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, blo
         case 33:    /* checkmadogear */
         case 34:    /* rebirth */
         case 48:    /* checkmount */
-            condition_write_format(buf, offset, "%s", tree->name); break;
+            ret = condition_write_format(buf, offset, "%s", tree->name); break;
         case 13:    /* isequipped */
-            condition_write_format(buf, offset, "%s Equipped", tree->name); break;
+            ret = condition_write_format(buf, offset, "%s Equipped", tree->name); break;
         case 20:    /* base class */
         case 21:    /* base job */
         case 22:    /* class */
-            condition_write_class(buf, offset, tree->range, tree->name); break;
+            ret = condition_write_class(buf, offset, tree->range, tree->name); break;
         case 9:     /* getequipid */
-            condition_write_item(buf, offset, tree->range, block); 
-            condition_write_format(buf, offset,"Equipped");
+            ret = condition_write_item(buf, offset, tree->range, block); 
+            ret = condition_write_format(buf, offset,"Equipped");
             break;
         case 8:     /* getiteminfo */
-            condition_write_getiteminfo(buf, offset, tree); break;
+            ret = condition_write_getiteminfo(buf, offset, tree); break;
         case 29:    /* strcharinfo */
-            condition_write_strcharinfo(buf, offset, tree, block); break;
+            ret = condition_write_strcharinfo(buf, offset, tree, block); break;
         default: break;
     }
-    return SCRIPT_PASSED;
+    return ret;
 }
 
 int condition_write_strcharinfo(char * buf, int * offset, logic_node_t * tree, block_r * block) {
