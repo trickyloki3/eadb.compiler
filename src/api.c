@@ -827,6 +827,8 @@ void deit_ic_db(struct ic_db_t * db) {
 	sqlite3_finalize(db->ra_item_group_search);
 	sqlite3_finalize(db->ra_item_combo_search);
 	sqlite3_finalize(db->ra_option_search);
+	sqlite3_finalize(db->client_map_search);
+	sqlite3_finalize(db->client_map_id_search);
 	sqlite3_close(db->db);
 	free(db);
 }

@@ -159,8 +159,8 @@
         node_t * result[BONUS_SIZE];         /* keep until after minimization */
         /* database references; duplicate information from script_t to prevent 
          * passing script_t to every translator; read only */
-        struct ic_db_t * db;                /* sqlite3 database handle to athena */
-        int mode;                           /* multiplexer for rathena, eathena, or hercule tables */
+        struct ic_db_t * db;                 /* sqlite3 database handle to athena */
+        int mode;                            /* multiplexer for rathena, eathena, or hercule tables */
         /* translation information */
         logic_node_t * logic_tree;           /* calculational and dependency information */
         /* flag and offset are use for variable length arguments in functions */
@@ -214,10 +214,10 @@
 
     /* auxiliary support */
     int script_block_dump(script_t *, FILE *);
+    int script_block_write(block_r *, char *, ...);
     int split_paramater_list(token_r *, int *, char *);
     int split_paramater(char **, int, int, int *);
     int check_loop_expression(script_t *, char *, char *);
-    int script_write(block_r *, char *, ...);
 
     /* compilation processes; exported functions, api functions */
     int script_lexical(token_r *, char *);

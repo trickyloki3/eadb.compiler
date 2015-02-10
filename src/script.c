@@ -433,7 +433,7 @@ int check_loop_expression(script_t * script, char * expr, char * end) {
     return (strcmp(token.script_ptr[0], end) == 0) ? SCRIPT_FAILED : SCRIPT_PASSED;
 }
 
-int script_write(block_r * block, char * fmt, ...) {
+int script_block_write(block_r * block, char * fmt, ...) {
     if(exit_null_safe(2, block, fmt)) return SCRIPT_FAILED;
     va_list expr_list;
     va_start(expr_list, fmt);
@@ -789,14 +789,14 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     sprintf(subscript, "(%s) ? (%s) : 0", block->ptr[1], iterable_set_block->ptr[1]);
                     /* write the new subscript */
                     iterable_set_block->ptr_cnt--;
-                    script_write(iterable_set_block, "%s", subscript);
+                    script_block_write(iterable_set_block, "%s", subscript);
                     iterable_set_block->flag |= EVALUATE_FLAG_ITERABLE_SET;
 
                     /* cheap hack to evaluate a 0 (increasing) or 1 (decreasing) */
                     sprintf(subscript, "(%s) < (%s)", direction_set_block->ptr[0], direction_set_block->ptr[1]);
                     /* write the new subscript */
                     direction_set_block->ptr_cnt--;
-                    script_write(direction_set_block, "%s", subscript);
+                    script_block_write(direction_set_block, "%s", subscript);
                     direction_set_block->flag |= EVALUATE_FLAG_VARIANT_SET;
 
                     /* create the if block */
@@ -1490,7 +1490,7 @@ int translate_getitem(block_r * block, int handler) {
             /* iterate through the range */
             while(range != NULL) {
                 for(i = range->min; i <= range->max; i++)
-                    script_write(block, "%d", i);
+                    script_block_write(block, "%d", i);
                 range = range->next;
             }
         }
@@ -1515,7 +1515,7 @@ int translate_getitem(block_r * block, int handler) {
             /* iterate through the range */
             while(range != NULL) {
                 for(i = range->min; i <= range->max; i++)
-                    script_write(block, "%d", i);
+                    script_block_write(block, "%d", i);
                 range = range->next;
             }
         }

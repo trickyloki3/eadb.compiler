@@ -5,6 +5,7 @@
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
  */
+#include "time.h"
 #include "db.h"
 #include "script.h"
 
@@ -12,6 +13,7 @@ int main(int argc, char * argv[]) {
 	int skip = 0;
 	int ret = 0;
 	int cnt = 0;
+	int start_time = time(NULL);
 	FILE * fitem = NULL;
 	FILE * debug = NULL;
 	ic_item_t item;
@@ -81,7 +83,7 @@ int main(int argc, char * argv[]) {
 	} else {
 		exit_abt_safe("failed to query item database");
 	}
-	fprintf(stderr,"[info]: compiled all %d items.\n", cnt);
+	fprintf(stderr,"[info]: compiled all %d items in %d seconds.\n", cnt, time(NULL) - start_time);
 
 	/* deit resources */
 	fclose(debug);
