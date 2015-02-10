@@ -3000,6 +3000,20 @@ void id_write(node_t * node, char * fmt, ...) {
     node->id = temp;
 }
 
+void var_write(node_t * node, char * fmt, ...) {
+    if(exit_null_safe(2, node, fmt)) return;   
+    va_list expr_list;
+    va_start(expr_list, fmt);
+    int offset = node->stack_cnt;                               /* current offset on stack */
+    char * temp = &node->stack[offset];                         /* record current offset on stack */
+    offset += vsprintf(node->stack + offset, fmt, expr_list);   /* write new string onto stack */
+    node->stack[offset] = '\0';                                 /* null terminate new string */
+    va_end(expr_list);
+    node->stack_cnt += offset + 1;
+    node->var_str[node->var_cnt] = temp;
+    node->var_cnt++;
+}
+
 void expression_write(node_t * node, char * fmt, ...) {
     if(exit_null_safe(2, node, fmt)) return;   
     va_list expr_list;
@@ -3086,7 +3100,12 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
         formula_write(block, root_node->formula);
         /* manual debug error spotting */
-        /*fprintf(stderr,"%s -> %s\n", expr, root_node->formula);*/
+        /*if(root_node->cond_cnt > 1 && root_node->cond_cnt < 5) {
+            fprintf(stderr,"%s -> %s\n", expr, root_node->formula);
+            for(int i = 0; i < root_node->var_cnt; i++) {
+                fprintf(stderr,"[%d] [%d] %s\n", i, root_node->var_set[i], root_node->var_str[i]);
+            }
+        }*/
     }
 
     /* keep logic tree in node */
@@ -3405,6 +3424,9 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             root_node->cond = copy_any_tree(root_node->next->cond);
         root_node->cond_cnt = root_node->next->cond_cnt;
         expression_write(root_node, "%s", root_node->next->formula);
+
+        /* write simplify version of formula */
+        node_write_recursive(root_node->next, root_node);
     } else {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed_expression;
@@ -3463,6 +3485,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 return SCRIPT_FAILED;
             }
         /* write the skill name */
+        set_func(node, skill.id);
         expression_write(node, "%s Level", skill.desc);
         id_write(node, "%s Level", skill.desc);
         /* skill level minimum is 0 (not learnt) or maximum level */
@@ -3548,8 +3571,10 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         id_write(node, "%s", expr[start]);
         if(ncs_strcmp(expr[start], "F_Rand") == 0) {
             block->offset = block->ptr_cnt;
+            set_func(node, 1);
         } else if(ncs_strcmp(expr[start], "F_RandMes") == 0) {
             block->offset = block->ptr_cnt + 1;
+            set_func(node, 2);
         } else {
             exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
             return SCRIPT_FAILED;
@@ -3605,6 +3630,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         /* write the item name on the argument stack */
+        set_func(node, resultOne->min);
         id_write(node, "%s Inventory Count", item.name);
     } else if(ncs_strcmp(func,"gettime") == 0) {
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
@@ -3616,6 +3642,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             exit_func_safe("%s must be a constant expression in item %d\n", expr, block->item_id);
             return SCRIPT_FAILED;
         }
+        set_func(node, resultOne->min);
         switch(resultOne->min) {
             case 1: id_write(node, "Seconds"); *min = 0; *max = 60; break;
             case 2: id_write(node, "Minutes"); *min = 0; *max = 60; break;
@@ -3680,6 +3707,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
             return SCRIPT_FAILED;
         }
+        set_func(node, const_info.value);
         switch(const_info.value) {
             case 1: id_write(node, "Upper Headgear"); break;
             case 2: id_write(node, "Armor"); break;
@@ -3712,6 +3740,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                     return SCRIPT_FAILED;
                 }
                 node->stack_cnt += sprintf(&node->stack[node->stack_cnt],"%s", item.name);
+                set_func(node, get_func(node) + item.id);
             }
             node->stack[node->stack_cnt] = '\0';
         }
@@ -3728,6 +3757,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
             return SCRIPT_FAILED;
         }
+        set_func(node, resultOne->min);
         switch(resultOne->min) {
             case 1: id_write(node, "%s's %s", "Upper Headgear", node->id); break;
             case 2: id_write(node, "%s's %s", "Armor", node->id); break;
@@ -3758,6 +3788,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         /* values correspond to the const.txt for rAthena */
+        set_func(node, const_info.value);
         switch(const_info.value) {
             case 6: id_write(node, "Maximum HP"); break;
             case 8: id_write(node, "Maximum SP"); break;
@@ -4036,6 +4067,45 @@ void node_inherit_cond(node_t * node) {
         node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
     } else if(node->left->cond == NULL && node->right->cond != NULL) {
         node->cond = make_cond(node->right->cond->var, node->right->cond->name, node->range, node->right->cond);
+    }
+}
+
+void node_write_recursive(node_t * node, node_t * root) {
+    int i = 0;
+    int j = 0;
+    if(node->left == node->right) {
+        /* unary node */
+        if(node->left != NULL) node_write_recursive(node->left, root);
+    } else {
+        /* binary node */
+        if(node->left != NULL) node_write_recursive(node->left, root);
+        if(node->right != NULL) node_write_recursive(node->right, root);
+    }
+
+    /* write function or variable to simple list */
+    if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+        /* check whether var or func is already included */
+        for(i = 0; i < root->var_cnt; i++)
+            if(root->var_set[i] == node->var)
+                break;
+        /* add var or func to list */
+        if(i == root->var_cnt || root->var_cnt == 0) {
+            root->var_set[root->var_cnt] = node->var;
+            var_write(root, "%s", node->id);
+        }
+    } else if(node->var_cnt > 0) {
+        /* include var stack of any node with var on stack */
+        for(i = 0; i < node->var_cnt; i++) {
+            /* check whether var or func is already included */
+            for(j = 0; j < root->var_cnt; j++)
+                if(root->var_set[j] == node->var_set[i])
+                    break;
+            /* add var or func to list */
+            if(j == root->var_cnt || root->var_cnt == 0) {
+                root->var_set[root->var_cnt] = node->var_set[i];
+                var_write(root, "%s", node->var_str[i]);
+            }
+        }
     }
 }
 

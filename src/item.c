@@ -83,7 +83,7 @@ int main(int argc, char * argv[]) {
 	} else {
 		exit_abt_safe("failed to query item database");
 	}
-	fprintf(stderr,"[info]: compiled all %d items in %d seconds.\n", cnt, time(NULL) - start_time);
+	fprintf(stderr,"[info]: compiled all %d items in %d seconds.\n", cnt, (int) (time(NULL) - start_time));
 
 	/* deit resources */
 	fclose(debug);

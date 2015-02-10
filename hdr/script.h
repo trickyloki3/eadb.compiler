@@ -27,6 +27,7 @@
     /* general constants */
     #define BUF_SIZE 4096       /* total size of script, stack, and etc */
     #define PTR_SIZE 4096       /* =.=; total number of possible tokens */
+    #define ARG_SIZE 64         /* total argument to keep track of */
     #define BONUS_SIZE 5        /* total number of arguments for all bonus */
     #define BONUS_ID_MAX 5      /* bonus block identifer are from 0 to 4 */
     #define BLOCK_NULLIFIED -1  /* indicate that block should be ignore */
@@ -129,6 +130,10 @@
         char stack[BUF_SIZE];   /* stack to hold all strings */
         int stack_cnt;          /* size of stack */
         char * formula;         /* each node contains a (translated) subset of the entire expression */
+        /* simplified formula */
+        char * var_str[ARG_SIZE];
+        int var_set[ARG_SIZE]; /* list of var written to var_str */
+        int var_cnt;
         /* expression precedence and associative */
         struct node * left;
         struct node * right;
@@ -274,7 +279,8 @@
     char * formula(char *, char *, node_t *);
     int formula_write(block_r *, char *);
     char * status_formula(char *, char *, node_t *, int, int);
-    void id_write(node_t * node, char *, ...);
+    void id_write(node_t *, char *, ...);
+    void var_write(node_t *, char *, ...);
     void expression_write(node_t *, char *, ...);
     
     /* expression evaluation */
@@ -284,6 +290,7 @@
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
     int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
     void node_inherit_cond(node_t *);
+    void node_write_recursive(node_t *, node_t *);
     void node_expr_append(node_t *, node_t *, node_t *);
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
