@@ -3093,19 +3093,14 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     }
 
     /* write the modifier in the formula expression */
-    if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0)
-        expression_write(root_node, "%s / %d", root_node->formula, modifier);
+    /*if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0)
+        expression_write(root_node, "%s / %d", root_node->formula, modifier);*/
 
     /* write the formula into the block and only write formula if dependencies exist */
     if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
         formula_write(block, root_node->formula);
         /* manual debug error spotting */
-        /*if(root_node->cond_cnt > 1 && root_node->cond_cnt < 5) {
-            fprintf(stderr,"%s -> %s\n", expr, root_node->formula);
-            for(int i = 0; i < root_node->var_cnt; i++) {
-                fprintf(stderr,"[%d] [%d] %s\n", i, root_node->var_set[i], root_node->var_str[i]);
-            }
-        }*/
+        /*fprintf(stderr,"[%d] %s\n", block->item_id, root_node->formula);*/
     }
 
     /* keep logic tree in node */
@@ -3135,6 +3130,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     int j = 0;
     int len = 0;
     int ret = 0;
+    int off = 0;
     int temp = 0;
     int expr_inx_open = 0;
     int expr_inx_close = 0;
@@ -3310,6 +3306,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                     if(ncs_strcmp(set_iter->ptr[0], expr[i]) == 0) {
                         if(set_iter->set_node != NULL) {
                             /* inherit from the set block */
+                            temp_node->var = (long) set_iter;
                             temp_node->min = set_iter->set_node->min;
                             temp_node->max = set_iter->set_node->max;
                             if(set_iter->set_node->range != NULL)
@@ -3318,6 +3315,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                                 temp_node->cond = copy_deep_any_tree(set_iter->set_node->cond);
                             temp_node->cond_cnt = set_iter->set_node->cond_cnt;
                             expression_write(temp_node, "%s", set_iter->set_node->formula);
+                            node_write_recursive(set_iter->set_node, temp_node);
                             break;
                         }
                     }
@@ -3406,7 +3404,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     }
 
     /* evaluate the infix expression with pre-order traversal */
-    ret = evaluate_node(root_node->next, NULL, logic_tree, flag, &temp);
+    ret = evaluate_node(root_node->next, node_dbg, logic_tree, flag, &temp);
 
     /* the actual result is in root_node->next so we need 
      * to copy any value we want to return using the root node */
@@ -3425,8 +3423,23 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         root_node->cond_cnt = root_node->next->cond_cnt;
         expression_write(root_node, "%s", root_node->next->formula);
 
-        /* write simplify version of formula */
+        /* collect all the arguments on the last stack */
         node_write_recursive(root_node->next, root_node);
+        
+        /* write the formula on last stack */
+        if(root_node->var_cnt > 0) {
+            off = root_node->stack_cnt;
+            root_node->formula = &root_node->stack[off];
+            /*off += sprintf(root_node->stack + off,"based on ");*/
+            for(i = 0; i < root_node->var_cnt; i++) {
+                if(root_node->var_set[i] != 0)
+                    off += (i > 0) ? 
+                        sprintf(root_node->stack + off, ", %s", root_node->var_str[i]):
+                        sprintf(root_node->stack + off, "%s", root_node->var_str[i]);
+            }
+            root_node->stack[off] = '\0';
+            root_node->stack_cnt += off;
+        }
     } else {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed_expression;
@@ -3503,8 +3516,9 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         } else {
             *min = (int) pow(resultOne->min, resultTwo->min);
             *max = (int) pow(resultOne->max, resultTwo->max);
-            expression_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);
+            /*expression_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);*/
             id_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);
+            node->type = NODE_TYPE_CONSTANT;
         }
     } else if(ncs_strcmp(func,"min") == 0) {
         split_paramater(expr, start, end, &i);
@@ -3568,12 +3582,13 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     } else if(ncs_strcmp(func,"callfunc") == 0) {
         block->flag = 0x01 | 0x02;
         /* the paramaters begin at a certain offset */
-        id_write(node, "%s", expr[start]);
         if(ncs_strcmp(expr[start], "F_Rand") == 0) {
             block->offset = block->ptr_cnt;
+            id_write(node, "%s", "Random Item");
             set_func(node, 1);
         } else if(ncs_strcmp(expr[start], "F_RandMes") == 0) {
             block->offset = block->ptr_cnt + 1;
+            id_write(node, "%s", "Random");
             set_func(node, 2);
         } else {
             exit_func_safe("failed to evaluate function '%s' in item id %d\n", expr, block->item_id);
@@ -3830,8 +3845,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         return SCRIPT_FAILED;
     }
 
-    if(resultOne != NULL) node_free(resultOne);
-    if(resultTwo != NULL) node_free(resultTwo);
+    if(resultOne != NULL) {
+        node_write_recursive(resultOne, node);
+        node_free(resultOne);
+    }
+    if(resultTwo != NULL) {
+        node_write_recursive(resultTwo, node);
+        node_free(resultTwo);
+    }
     return SCRIPT_PASSED;
 }
 
@@ -4083,17 +4104,7 @@ void node_write_recursive(node_t * node, node_t * root) {
     }
 
     /* write function or variable to simple list */
-    if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
-        /* check whether var or func is already included */
-        for(i = 0; i < root->var_cnt; i++)
-            if(root->var_set[i] == node->var)
-                break;
-        /* add var or func to list */
-        if(i == root->var_cnt || root->var_cnt == 0) {
-            root->var_set[root->var_cnt] = node->var;
-            var_write(root, "%s", node->id);
-        }
-    } else if(node->var_cnt > 0) {
+    if(node->var_cnt > 0) {
         /* include var stack of any node with var on stack */
         for(i = 0; i < node->var_cnt; i++) {
             /* check whether var or func is already included */
@@ -4105,6 +4116,16 @@ void node_write_recursive(node_t * node, node_t * root) {
                 root->var_set[root->var_cnt] = node->var_set[i];
                 var_write(root, "%s", node->var_str[i]);
             }
+        }
+    } else if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+        /* check whether var or func is already included */
+        for(i = 0; i < root->var_cnt; i++)
+            if(root->var_set[i] == node->var)
+                break;
+        /* add var or func to list */
+        if(i == root->var_cnt || root->var_cnt == 0) {
+            root->var_set[root->var_cnt] = node->var;
+            var_write(root, "%s", node->id);
         }
     }
 }
@@ -4171,11 +4192,16 @@ void node_dmp(node_t * node, FILE * stm) {
             case NODE_TYPE_SUB: fprintf(stm,"     Type: Subexpression %s; %d:%d\n", node->formula, node->min, node->max); break;
             default: fprintf(stm,"     Type: %d\n", node->op); break;
         }
-        fprintf(stm,"Stack_Cnt: %d\n", node->stack_cnt);
-        fprintf(stm," Cond Cnt: %d\n", node->cond_cnt);
-        fprintf(stm,"     Expr: %s\n", node->formula);
+        fprintf(stm,"      var: %d\n", node->var);
+        fprintf(stm,"stack_cnt: %d\n", node->stack_cnt);
+        fprintf(stm," cond_cnt: %d\n", node->cond_cnt);
+        for(int i = 0; i < node->var_cnt; i++)
+            fprintf(stm,"  var_set: [%d] %s\n", node->var_set[i], node->var_str[i]);
+        fprintf(stm,"  var_cnt: %d\n", node->var_cnt);
+        fprintf(stm,"  formula: %s\n", node->formula);
         dmprange(node->range, stm, "range; ");
-        dmpnamerange(node->cond, stdout, 0);
+        dmpnamerange(node->cond, stm, 0);
+        fprintf(stm,"\n");
     }
 }
 

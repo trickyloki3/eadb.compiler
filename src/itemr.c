@@ -43,6 +43,7 @@ int main(int argc, char * argv[]) {
 	/* initialize the global database */
 	global_db = init_ic_db("athena.db");
 	file_dbg = fopen("dump.txt", "w");
+	node_dbg = fopen("node.txt", "w");
 	if(file_dbg == NULL) {
 		fprintf(stderr,"[error]: failed to load debug file.\n");
 		exit(EXIT_FAILURE);
@@ -63,6 +64,7 @@ int main(int argc, char * argv[]) {
 	
 	/* clean up everything */
 	deit_ic_db(global_db);
+	fclose(node_dbg);
 	fclose(file);
-	fclose(file_dbg);
+	fclose(file_dbg);	
 }

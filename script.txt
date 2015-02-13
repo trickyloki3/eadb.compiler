@@ -1,1 +1,2 @@
-bonus2 bAddRace,RC_Player,pow(((getrefine()>14)?14:getrefine())-3,1);
+set .@ref,getrefine(); 
+if(.@ref>=2){ autobonus "{ bonus3 bAutoSpell,14,(.@ref/2),1000; }",(.@ref*2)+100,100,BF_SHORT;

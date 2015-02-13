@@ -193,6 +193,10 @@
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
     } script_t;
 
+
+    /* set this to some file descriptor to dump nodes */
+    FILE * node_dbg;
+
     /* iterate through all the items in athena database */
     int iter_item_db(int, struct ic_db_t *, ic_item_t *);
 
