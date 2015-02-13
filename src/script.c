@@ -4338,6 +4338,8 @@ int translate_bonus_desc(node_t ** result, block_r * block, ic_bonus_t * bonus) 
                 formula(aux[4], block->eng[order[4]], result[bonus->order[4]])); 
             break;
     }
+
+    /*if(bonus->attr == 5) printf("%s\n", buffer);*/
     translate_write(block, buffer, 1);
     return SCRIPT_PASSED;
 }

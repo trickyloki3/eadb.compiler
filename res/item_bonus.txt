@@ -22,22 +22,22 @@
 21,0x00000000,5,bonus,bFlee,"FLEE %s",1,n,1,0
 22,0x00000000,5,bonus,bFlee2,"Perfect Dodge %s",1,n,1,0
 23,0x00000000,5,bonus,bAtkRange,"Attack Range %s.",1,n,1,0
-24,0x00000000,6,bonus,bCritical,"CRIT %s",1,n,1,0
-25,0x00000000,6,bonus,bAspd,"Attack Speed: %s",1,n,1,0
-26,0x00000000,3,bonus,bMaxHPrate,"MaxHP %s",1,p,1,0
-27,0x00000000,3,bonus,bMaxSPrate,"MaxSP %s",1,p,1,0
-28,0x00000000,3,bonus,bAtkRate,"ATk %s",1,p,1,0
-29,0x00000000,3,bonus,bSpeedAddRate,"Movement Speed %s",1,p,1,0
-30,0x00000000,3,bonus,bMatkRate,"MATK %s",1,p,1,0
-31,0x00000000,3,bonus,bDefRate,"DEF %s",1,p,1,0
-32,0x00000000,3,bonus,bDef2Rate,"DEF %s",1,p,1,0
-33,0x00000000,3,bonus,bMdefRate,"MDEF %s",1,p,1,0
-34,0x00000000,3,bonus,bMdef2Rate,"MDEF %s",1,p,1,0
-35,0x00000000,3,bonus,bHitRate,"HIT %s",1,p,1,0
-36,0x00000000,3,bonus,bCriticalRate,"CRIT %s",1,p,1,0
-37,0x00000000,3,bonus,bFleeRate,"FLEE %s",1,p,1,0
-38,0x00000000,3,bonus,bFlee2Rate,"Perfect Dogde %s",1,p,1,0
-39,0x00000000,3,bonus,bAspdRate,"ASPD %s",1,p,1,0
+24,0x00000000,5,bonus,bCritical,"CRIT %s",1,n,1,0
+25,0x00000000,5,bonus,bAspd,"Attack Speed: %s",1,n,1,0
+26,0x00000000,5,bonus,bMaxHPrate,"MaxHP %s",1,p,1,0
+27,0x00000000,5,bonus,bMaxSPrate,"MaxSP %s",1,p,1,0
+28,0x00000000,5,bonus,bAtkRate,"ATK %s",1,p,1,0
+29,0x00000000,5,bonus,bSpeedAddRate,"Movement Speed %s",1,p,1,0
+30,0x00000000,5,bonus,bMatkRate,"MATK %s",1,p,1,0
+31,0x00000000,5,bonus,bDefRate,"DEF %s",1,p,1,0
+32,0x00000000,5,bonus,bDef2Rate,"DEF %s",1,p,1,0
+33,0x00000000,5,bonus,bMdefRate,"MDEF %s",1,p,1,0
+34,0x00000000,5,bonus,bMdef2Rate,"MDEF %s",1,p,1,0
+35,0x00000000,5,bonus,bHitRate,"HIT %s",1,p,1,0
+36,0x00000000,5,bonus,bCriticalRate,"CRIT %s",1,p,1,0
+37,0x00000000,5,bonus,bFleeRate,"FLEE %s",1,p,1,0
+38,0x00000000,5,bonus,bFlee2Rate,"Perfect Dogde %s",1,p,1,0
+39,0x00000000,5,bonus,bAspdRate,"ASPD %s",1,p,1,0
 40,0x00000000,3,bonus,bLongAtkRate,"%s long ranged damage.",1,p,1,0
 41,0x00000000,3,bonus,bCritAtkRate,"%s critical damage.",1,p,1,0
 42,0x00000000,17,bonus,bClassChange,"%s chance of transforming a monster while fighting.",1,q,1,0
