@@ -3100,7 +3100,7 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
         formula_write(block, root_node->formula);
         /* manual debug error spotting */
-        /*fprintf(stderr,"[%d] %s\n", block->item_id, root_node->formula);*/
+        /*fprintf(stderr,"[%d] %s -> %s\n", block->item_id, expr, root_node->formula);*/
     }
 
     /* keep logic tree in node */

@@ -1,43 +1,43 @@
-0,0x00000000,0,bonus,bSpeedRate,"Movement Speed: %s",1,p,1,0
-1,0x00000000,5,bonus,bStr,"Strength: %s STR",1,n,1,0
-2,0x00000000,5,bonus,bAgi,"Agility: %s AGI",1,n,1,0
-3,0x00000000,5,bonus,bVit,"Vitality: %s VIT",1,n,1,0
-4,0x00000000,5,bonus,bInt,"Intelligence: %s INT",1,n,1,0
-5,0x00000000,5,bonus,bDex,"Dexterity: %s DEX",1,n,1,0
-6,0x00000000,5,bonus,bLuk,"Luck: %s LUK",1,n,1,0
-7,0x00000000,5,bonus,bAllStats,"All Stats: %s",1,n,1,0
-8,0x00000000,5,bonus,bAgiVit,"Agility: %s AGI Vitality: %s VIT",1,n,2,0,0
-9,0x00000000,5,bonus,bAgiDexStr,"Strength: %s STR Agility: %s AGI Dexterity: %s DEX",1,n,3,0,0,0
-10,0x00000000,5,bonus,bMaxHP,"Hit Point: %s HP",1,n,1,0
-11,0x00000000,5,bonus,bMaxSP,"Spell Power: %s SP",1,n,1,0
-12,0x00000000,5,bonus,bAtk,"Attack: %s ATK",1,n,1,0
-13,0x00000000,5,bonus,bAtk2,"Attack: %s ATK",1,n,1,0
-14,0x00000000,5,bonus,bBaseAtk,"Base Attack: %s BATK",1,n,1,0
-15,0x00000000,5,bonus,bMatk,"Magical Attack: %s MATK",1,n,1,0
-16,0x00000000,5,bonus,bDef,"Armor Defense: %s DEF",1,n,1,0
-17,0x00000000,5,bonus,bDef2,"Defense: %s DEF",1,n,1,0
-18,0x00000000,5,bonus,bMdef,"Magical Armor Defense: %s MDEF",1,n,1,0
-19,0x00000000,5,bonus,bMdef2,"Magical Defense: %s MDEF",1,n,1,0
-20,0x00000000,5,bonus,bHit,"Hit: %s",1,n,1,0
-21,0x00000000,5,bonus,bFlee,"Flee: %s",1,n,1,0
-22,0x00000000,5,bonus,bFlee2,"Perfect Dodge: %s",1,n,1,0
-23,0x00000000,5,bonus,bAtkRange,"Attack Range: %s.",1,n,1,0
-24,0x00000000,6,bonus,bCritical,"Critical: %s",1,n,1,0
+0,0x00000000,0,bonus,bSpeedRate,"Movement Speed %s",1,p,1,0
+1,0x00000000,5,bonus,bStr,"STR %s",1,n,1,0
+2,0x00000000,5,bonus,bAgi,"AGI %s",1,n,1,0
+3,0x00000000,5,bonus,bVit,"VIT %s",1,n,1,0
+4,0x00000000,5,bonus,bInt,"INT %s",1,n,1,0
+5,0x00000000,5,bonus,bDex,"DEX %s",1,n,1,0
+6,0x00000000,5,bonus,bLuk,"LUK %s",1,n,1,0
+7,0x00000000,5,bonus,bAllStats,"All Stat %s",1,n,1,0
+8,0x00000000,5,bonus,bAgiVit,"AGI %s VIT %s",1,n,2,0,0
+9,0x00000000,5,bonus,bAgiDexStr,"STR %s AGI %s DEX %s",1,n,3,0,0,0
+10,0x00000000,5,bonus,bMaxHP,"MaxHP %s",1,n,1,0
+11,0x00000000,5,bonus,bMaxSP,"MaxSP %s",1,n,1,0
+12,0x00000000,5,bonus,bAtk,"ATK %s",1,n,1,0
+13,0x00000000,5,bonus,bAtk2,"ATK %s",1,n,1,0
+14,0x00000000,5,bonus,bBaseAtk,"ATK %s",1,n,1,0
+15,0x00000000,5,bonus,bMatk,"MATK %s",1,n,1,0
+16,0x00000000,5,bonus,bDef,"DEF %s",1,n,1,0
+17,0x00000000,5,bonus,bDef2,"DEF %s",1,n,1,0
+18,0x00000000,5,bonus,bMdef,"MDEF %s",1,n,1,0
+19,0x00000000,5,bonus,bMdef2,"MDEF %s",1,n,1,0
+20,0x00000000,5,bonus,bHit,"HIT %s",1,n,1,0
+21,0x00000000,5,bonus,bFlee,"FLEE %s",1,n,1,0
+22,0x00000000,5,bonus,bFlee2,"Perfect Dodge %s",1,n,1,0
+23,0x00000000,5,bonus,bAtkRange,"Attack Range %s.",1,n,1,0
+24,0x00000000,6,bonus,bCritical,"CRIT %s",1,n,1,0
 25,0x00000000,6,bonus,bAspd,"Attack Speed: %s",1,n,1,0
-26,0x00000000,3,bonus,bMaxHPrate,"%s maximum HP.",1,p,1,0
-27,0x00000000,3,bonus,bMaxSPrate,"%s maximum SP.",1,p,1,0
-28,0x00000000,3,bonus,bAtkRate,"%s attack.",1,p,1,0
-29,0x00000000,3,bonus,bSpeedAddRate,"%s movement speed.",1,p,1,0
-30,0x00000000,3,bonus,bMatkRate,"%s magical attack.",1,p,1,0
-31,0x00000000,3,bonus,bDefRate,"%s armor defense.",1,p,1,0
-32,0x00000000,3,bonus,bDef2Rate,"%s defense.",1,p,1,0
-33,0x00000000,3,bonus,bMdefRate,"%s magical armor defense.",1,p,1,0
-34,0x00000000,3,bonus,bMdef2Rate,"%s magical defense.",1,p,1,0
-35,0x00000000,3,bonus,bHitRate,"%s hit",1,p,1,0
-36,0x00000000,3,bonus,bCriticalRate,"%s critical chance.",1,p,1,0
-37,0x00000000,3,bonus,bFleeRate,"%s flee",1,p,1,0
-38,0x00000000,3,bonus,bFlee2Rate,"%s perfect dodge.",1,p,1,0
-39,0x00000000,3,bonus,bAspdRate,"%s attack speed.",1,p,1,0
+26,0x00000000,3,bonus,bMaxHPrate,"MaxHP %s",1,p,1,0
+27,0x00000000,3,bonus,bMaxSPrate,"MaxSP %s",1,p,1,0
+28,0x00000000,3,bonus,bAtkRate,"ATk %s",1,p,1,0
+29,0x00000000,3,bonus,bSpeedAddRate,"Movement Speed %s",1,p,1,0
+30,0x00000000,3,bonus,bMatkRate,"MATK %s",1,p,1,0
+31,0x00000000,3,bonus,bDefRate,"DEF %s",1,p,1,0
+32,0x00000000,3,bonus,bDef2Rate,"DEF %s",1,p,1,0
+33,0x00000000,3,bonus,bMdefRate,"MDEF %s",1,p,1,0
+34,0x00000000,3,bonus,bMdef2Rate,"MDEF %s",1,p,1,0
+35,0x00000000,3,bonus,bHitRate,"HIT %s",1,p,1,0
+36,0x00000000,3,bonus,bCriticalRate,"CRIT %s",1,p,1,0
+37,0x00000000,3,bonus,bFleeRate,"FLEE %s",1,p,1,0
+38,0x00000000,3,bonus,bFlee2Rate,"Perfect Dogde %s",1,p,1,0
+39,0x00000000,3,bonus,bAspdRate,"ASPD %s",1,p,1,0
 40,0x00000000,3,bonus,bLongAtkRate,"%s long ranged damage.",1,p,1,0
 41,0x00000000,3,bonus,bCritAtkRate,"%s critical damage.",1,p,1,0
 42,0x00000000,17,bonus,bClassChange,"%s chance of transforming a monster while fighting.",1,q,1,0
@@ -122,8 +122,8 @@
 121,0x00000000,28,bonus3,bAddMonsterDropItemGroup,"%s chance of dropping an item in %s from each %s monster defeated.",3,y,r,q,3,2,0,1
 122,0x000A0106,28,bonus3,bAddClassDropItem,"%s chance of dropping %s from %s enemy.",3,m,j,q,3,2,0,1
 123,0x00000000,0,bonus,bAddMonsterDropChainItem,"Able to get item of chain type %s",1,n,1,0
-124,0x00060100,0,bonus,bDefEle,"Endow armor with %s element.",1,l,1,0
-125,0x00060100,0,bonus,bAtkEle,"Endow weapon with %s element.",1,l,1,0
+124,0x00060100,0,bonus,bDefEle,"Grant armor with %s property.",1,l,1,0
+125,0x00060100,0,bonus,bAtkEle,"Grant weapon with %s property.",1,l,1,0
 126,0x000A0102,14,bonus2,bAtkEle,"%s %s physical damage.",2,l,p,2,1,0
 127,0x000A0102,14,bonus2,bMagicAtkEle,"%s %s magical damage.",2,l,p,2,1,0
 128,0x000A0102,14,bonus2,bMagicAddEle,"%s magical damage on %s enemy.",2,l,p,2,1,0
