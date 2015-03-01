@@ -7,7 +7,7 @@ HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
 LIB = -lsqlite3 -ldl -lpthread -lm
-_OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o db_eathena.o
+_OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o db_eathena.o db_rathena.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
 # hercule item database require libconfig

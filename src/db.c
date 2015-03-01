@@ -734,9 +734,9 @@ int ea_item_group_load_column(void * db, int row, int col, char * val) {
 int ra_item_group_load_column(void * db, int row, int col, char * val) {
    ra_item_group_t * ra_item_group = &((ra_item_group_t *) db)[row];
    switch(col) {
-      case 0: ra_item_group->group_name = convert_string(val); break;
-      case 1: ra_item_group->item_id = convert_integer(val, 10); break;
-      case 2: ra_item_group->rate = convert_integer(val, 10); break;
+      case 0: ra_item_group->group_name = convert_string(val);    break;
+      case 1: ra_item_group->item_id = convert_integer(val, 10);  break;
+      case 2: ra_item_group->rate = convert_integer(val, 10);     break;
       default: printf("%d;%s\n", col, val); return 0;
    }
    return 0;
@@ -745,9 +745,9 @@ int ra_item_group_load_column(void * db, int row, int col, char * val) {
 int ra_item_package_column(void * db, int row, int col, char * val) {
    ra_item_package_t * ra_item_package = &((ra_item_package_t *) db)[row];
    switch(col) {
-      case 0: ra_item_package->group_name = convert_string(val); break;
-      case 1: ra_item_package->item_name = convert_string(val); break;
-      case 2: ra_item_package->rate = convert_integer(val, 10); break;
+      case 0: ra_item_package->group_name = convert_string(val);  break;
+      case 1: ra_item_package->item_name = convert_string(val);   break;
+      case 2: ra_item_package->rate = convert_integer(val, 10);   break;
       default: break;
    }
    return 0;
@@ -756,8 +756,8 @@ int ra_item_package_column(void * db, int row, int col, char * val) {
 int ra_item_combo_colum(void * db, int row, int col, char * val) {
    ra_item_combo_t * ra_item_combo = &((ra_item_combo_t *) db)[row];
    switch(col) {
-      case 0: ra_item_combo->item_id_list = convert_string(val); break;
-      case 1: ra_item_combo->script = convert_string(val); break;
+      case 0: ra_item_combo->item_id_list = convert_string(val);  break;
+      case 1: ra_item_combo->script = convert_string(val);        break;
       default: break;
    }
    return 0;

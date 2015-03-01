@@ -141,26 +141,25 @@ int skill_ea_load(void * db, int row, int col, char * val) {
 
 int produce_ea_load(void * db, int row, int col, char * val) {
 	/* non-reentrant produce loading function */
-   static int material_cnt = 0;
-   static int alternate = 0;
-   produce_ea * record = &((produce_ea *) db)[row];
-   switch(col) {
-      case 0: 
-		material_cnt = 0;
-		alternate = 0;
-		record->item_id = convert_integer(val,10);							break;
-      case 1: record->item_lv = convert_integer(val,10); 					break;
-      case 2: record->skill_id = convert_integer(val,10); 					break;
-      case 3: record->skill_lv = convert_integer(val,10); 					break;
-      default: 
-		(!alternate) ?
-			(record->item_id_req[material_cnt] = convert_integer(val,10)):
-			(record->item_amount_req[material_cnt++] = convert_integer(val,10));
-		alternate = !alternate;
-		record->ingredient_count = material_cnt;
-		break;
-   }
-   return 0;
+	static int material_cnt = 0;
+	static int alternate = 0;
+	produce_ea * record = &((produce_ea *) db)[row];
+	switch(col) {
+		case 0: 
+			material_cnt = 0;
+			alternate = 0;
+			record->item_id = convert_integer(val,10);							break;
+		case 1: record->item_lv = convert_integer(val,10); 						break;
+		case 2: record->skill_id = convert_integer(val,10); 					break;
+		case 3: record->skill_lv = convert_integer(val,10); 					break;
+		default: 
+			(!alternate) ?
+				(record->item_id_req[material_cnt] = convert_integer(val,10)):
+				(record->item_amount_req[material_cnt++] = convert_integer(val,10));
+			alternate = !alternate;
+			record->ingredient_count = material_cnt;							break;
+	}
+	return 0;
 }
 
 int mercenary_ea_load(void * db, int row, int col, char * val) {

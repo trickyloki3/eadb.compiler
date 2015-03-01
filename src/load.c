@@ -9,11 +9,11 @@
 #include "load.h"
 
 int sentinel_newline(char c) {
-      return (c == '\r' || c == '\n' || c == '\0');
+   return (c == '\r' || c == '\n' || c == '\0');
 }
 
 int sentinel_whitespace(char c) {
-      return (c == '\r' || c == '\n' || c == '\0' || isspace(c));
+   return (c == '\r' || c == '\n' || c == '\0' || isspace(c));
 }
 
 int delimit_cvs(char c) {

@@ -1,36 +1,37 @@
 /*
- *   file: db_eathena.h
- *   date: 02/28/2015
+ *   file: db_rathena.h
+ *   date: 03/01/2015
  *   auth: trickyloki3
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
  */
-#ifndef DB_EATHENA_H
-#define DB_EATHENA_H
- 	#include "load.h"
+#ifndef DB_RATHENA_H
+#define DB_RATHENA_H
+	#include "load.h"
  	#include "util.h"
 	#include "setting.h"
 
-	/* eathena database type definitions 
+ 	/* rathena database type definitions 
 	 * -----------------------------------------
 	 * type name 	- 	type reference
 	 * -----------------------------------------
-	 * item_ea 			- 	eathena item database
-	 * mob_ea 			- 	eathena mob database 
-	 * skill_ea 		- 	eathena skill database 
-	 * produce_ea		- 	eathena produce database
-	 * mercenary_ea 	-	eathena mecenary database
-	 * pet_ea			-	eathena pet database
-	 * item_group_ea 	-	eathena item group database
+	 * item_ra 			- 	rathena item database
+	 * mob_ra 			- 	rathena mob database 
+	 * skill_ra 		- 	rathena skill database 
+	 * produce_ra		- 	rathena produce database
+	 * mercenary_ra 	-	rathena mecenary database
+	 * pet_ra			-	rathena pet database
+	 * item_group_ra 	-	rathena item group database
 	 */
 
 	/* database record counts */
-	#define ITEM_EA_FIELD_COUNT 			22
-	#define MOB_EA_FIELD_COUNT 				58
-	#define SKILL_EA_FIELD_COUNT 			17
-	#define MERCENARY_EA_FIELD_COUNT 		26
-	#define PET_EA_FIELD_COUNT				22
-	#define ITEM_GROUP_EA_FIELD_COUNT 		3
+	#define ITEM_RA_FIELD_COUNT 			22
+	#define MOB_RA_FIELD_COUNT				57
+	#define SKILL_RA_FIELD_COUNT			18
+	#define MERCENARY_RA_FIELD_COUNT 		26
+	#define PET_RA_FIELD_COUNT				22
+	#define ITEM_GROUP_RA_FIELD_COUNT 		3
+	#define ITEM_COMBO_FIELD_COUNT			2
 
 	typedef struct {
 		int id;
@@ -41,6 +42,7 @@
 		int sell;
 		int weight;
 		int atk;
+		int matk;
 		int def;
 		int range;
 		int slots;
@@ -55,7 +57,7 @@
 		char script[MAX_SCRIPT_SIZE];
 		char onequip[MAX_SCRIPT_SIZE];
 		char onunequip[MAX_SCRIPT_SIZE];
-	} item_ea;
+	} item_ra;
 
 	typedef struct {
 		int id;
@@ -89,7 +91,6 @@
 		int amotion;
 		int dmotion;
 		int mexp;
-		int expper;
 		int mvp1id;
 		int mvp1per;
 		int mvp2id;
@@ -116,7 +117,7 @@
 		int drop9per;
 		int dropcardid;
 		int dropcardper;
-	} mob_ea;
+	} mob_ra;
 
 	typedef struct {
 		int id;
@@ -134,11 +135,13 @@
 		varlist maxcount;
 		char type[MAX_NAME_SIZE];				/* 'none', 'weapon', 'magic', 'misc' */
 		varlist blow_count;
+		int inf3;
 		char name[MAX_NAME_SIZE];
 		char desc[MAX_NAME_SIZE];
-	} skill_ea;
+	} skill_ra;
 
-	typedef struct  {
+	typedef struct produce_ra {
+		int id;
 		int item_id;
 		int item_lv;
 		int skill_id;
@@ -146,7 +149,8 @@
 		int item_id_req[MAX_INGREDIENT];
 		int item_amount_req[MAX_INGREDIENT];
 		int ingredient_count;
-	} produce_ea;
+		struct produce_ra * next;
+	} produce_ra;
 
 	typedef struct {
 		int id;
@@ -175,7 +179,7 @@
 		int adelay;
 		int amotion;
 		int dmotion;
-	} mercenary_ea;
+	} mercenary_ra;
 
 	typedef struct {
 		int mob_id;
@@ -200,31 +204,54 @@
 		int change_target_rate;
 		char pet_script[MAX_SCRIPT_SIZE];
 		char loyal_script[MAX_SCRIPT_SIZE];
-	} pet_ea;
+	} pet_ra;
 
 	typedef struct {
 		int group_id;
 		int item_id;
 		int rate;
-	} item_group_ea;
+	} item_group_ra;
 
 	typedef struct {
 		char name[MAX_NAME_SIZE];
 		int value;
 		int type;
-	} const_ea;
+	} const_ra;
 
-	/* eathena native database loading */
-	extern native_config_t load_ea_native[EATHENA_DB_COUNT];
-	int item_ea_load(void * db, int row, int col, char * val);
-	int mob_ea_load(void * db, int row, int col, char * val);
-	int skill_ea_load(void * db, int row, int col, char * val);
-	int produce_ea_load(void * db, int row, int col, char * val);
-	int mercenary_ea_load(void * db, int row, int col, char * val);
-	int pet_ea_load(void * db, int row, int col, char * val);
-	int item_group_ea_load(void * db, int row, int col, char * val);
-	int const_ea_load(void * db, int row, int col, char * val);
+	typedef struct {
+		int group_id;
+		int item_id;
+		char group_name[MAX_NAME_SIZE];
+		char item_name[MAX_NAME_SIZE];
+		int rate;
+		int amount;
+		int random;
+		int announced;
+		int duration;
+		int guid;
+		int bound;
+		int named;
+	} package_ra;
 
-	/* eathena auxiliary */
-	int load_eathena_database(const char * eathena_path);
+	typedef struct combo_ra {
+		varlist item_id;
+		char script[MAX_SCRIPT_SIZE];
+		struct combo_ra * next;
+	} combo_ra;
+
+	/* rathena native database loading */
+	extern native_config_t load_ra_native[RATHENA_DB_COUNT];
+	int item_ra_load(void * db, int row, int col, char * val);
+	int mob_ra_load(void * db, int row, int col, char * val);
+	int skill_ra_load(void * db, int row, int col, char * val);
+	int produce_ra_load(void * db, int row, int col, char * val);
+	int mercenary_ra_load(void * db, int row, int col, char * val); 
+	int pet_ra_load(void * db, int row, int col, char * val);
+	int item_group_ra_load(void * db, int row, int col, char * val);
+	int const_ra_load(void * db, int row, int col, char * val);
+	int package_ra_load(void * db, int row, int col, char * val);
+	int combo_ra_load(void * db, int row, int col, char * val);
+
+	/* rathena auxiliary */
+	int load_rathena_database(const char * eathena_path);
 #endif

@@ -8,10 +8,11 @@
 
 #ifndef SETTING_H
 #define SETTING_H
- 	#define EATHENA_DB_COUNT		8			/* number of native eathena databases loaded */
+ 	#define EATHENA_DB_COUNT		8			/* number of native eathena database loaders */
+ 	#define RATHENA_DB_COUNT		10 			/* number of native rathena database loaders */
 
 	#define MAX_SCRIPT_SIZE 		4096		/* maximum length of script in bytes */
- 	#define MAX_NAME_SIZE 			64			/* maximum length of names in bytes */
+ 	#define MAX_NAME_SIZE 			128			/* maximum length of names in bytes */
  	#define MAX_VARARG_SIZE 		128			/* maximum length of fields in bytes */
  	#define MAX_VARARG_COUNT 		32			/* maximum number of vararg fields */
  	#define MAX_INGREDIENT			16			/* maximum pair of item id and amount */

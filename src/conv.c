@@ -34,6 +34,7 @@ int main(int argc, char * argv[]) {
 				load_db_t * db14 = load("../eadb/mercenary_db.txt", trim_numeric, load_general, merc_load);
 				load_db_t * db17 = load("../eadb/pet_db.txt", trim_numeric, load_general, pet_load);
 				load_db_t * db20 = load("../eadb/item_db.txt", trim_numeric, load_general, ea_item_load);
+
 				load_db_t * db22 = load("../eadb/const.txt", trim_general, load_general, const_load);
 				load_db_t * db25 = load("../eadb/item_group/item_bluebox.txt", trim_numeric, load_general, ea_item_group_load);
 				load_db_t * db26 = load("../eadb/item_group/item_cardalbum.txt", trim_numeric, load_general, ea_item_group_load);
@@ -105,6 +106,7 @@ int main(int argc, char * argv[]) {
 			load_db_t * db38 = load("../radb/item_group/item_misc.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db39 = load("../radb/item_group/item_package.txt", trim_alpha, load_general, ra_item_package_load);
 			load_db_t * db40 = load("../radb/item_combo_db.txt", trim_numeric, load_general, ra_item_combo_load);
+
 			load_db_t * db41 = load("res/option_db.txt", trim_alpha, load_general, option_load);
 			load_db_t * db42 = load("../misc/map.txt", trim_general, load_general, map_load);
 			load_option(db, db41->db, db41->size);
