@@ -90,4 +90,5 @@
 
 	/* copy upto function */
 	void strncopy(char *, int, const unsigned char *);
+	int strnload(char * buf, int size, char * val);
 #endif

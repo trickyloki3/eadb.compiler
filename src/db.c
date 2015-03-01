@@ -385,6 +385,7 @@ int merc_load_column(void * db, int row, int col, char * val) {
 }
 
 int produce_load_column(void * db, int row, int col, char * val) {
+   /* non-reentrant produce loading function */
    static int material_cnt = 0;
    static int alternate = 0;
    produce_t * produce_row = &((produce_t *) db)[row];

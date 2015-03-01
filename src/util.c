@@ -328,3 +328,27 @@ void strncopy(char * buf, int buf_size, const unsigned char * str) {
    strncpy(buf, cstr, len);
    buf[len] = '\0';
 }
+
+/* specialize version of strncopy for native database loaders */
+int strnload(char * buf, int size, char * str) {
+   int len = 0;
+
+   /* check for null paramaters */
+   if(exit_null_safe(2, buf, str)) return CHECK_FAILED;
+
+   /* check for empty buffers */
+   len = strlen(str);
+   if(len <= 0 || size <= 0)
+      return exit_func_safe("invalid buffer size(%d) or string size(%d).\n", size, len);
+   
+   /* check destination is as large as source */
+   if(len > size - 1) {
+      exit_func_safe("truncated string from %d to %d.\n", len, size - 1);
+      len = size - 1;
+   }
+
+   /* copy the string into the buffer */
+   strncpy(buf, str, len);
+   buf[len] = '\0';
+   return CHECK_PASSED;
+}
