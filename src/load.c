@@ -13,7 +13,15 @@ int sentinel_newline(char c) {
 }
 
 int sentinel_whitespace(char c) {
-   return (c == '\r' || c == '\n' || c == '\0' || isspace(c));
+   return (sentinel_newline(c) || isspace(c));
+}
+
+int sentinel_comment(char c) {
+   return (sentinel_newline(c) || c == '/');
+}
+
+int sentinel_semicolon(char c) {
+   return (sentinel_newline(c) || c == ';');
 }
 
 int delimit_cvs(char c) {
@@ -22,6 +30,18 @@ int delimit_cvs(char c) {
 
 int delimit_cvs_whitespace(char c) {
    return (c == ',' || sentinel_whitespace(c));
+}
+
+int delimit_cvs_comment(char c) {
+   return (c == ',' || sentinel_comment(c));
+}
+
+int delimit_cvs_pound(char c) {
+   return (c == '#');
+}
+
+int delimit_cvs_semicolon(char c) {
+   return (c == ',' || sentinel_semicolon(c));
 }
 
 char * trim(const char * file_name, int * file_line, DB_TRIM file_trim) {
@@ -195,7 +215,9 @@ int load_general(FILE * stm, void * mem, int trim_size, load_cb_t * loader) {
             offset_fld = 0;
             index_col++;
 
-            if(loader->flag & SKIP_NEXT_WS) while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0') offset_buf++;
+            if(loader->flag & SKIP_NEXT_WS) 
+               while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0') 
+                  offset_buf++;
          } else {
             if(!(isspace(buf[offset_buf]) && offset_fld <= 0) && buf[offset_buf] != '\"') {
                fld[offset_fld] = buf[offset_buf];
@@ -222,6 +244,7 @@ int load_general(FILE * stm, void * mem, int trim_size, load_cb_t * loader) {
 }
 
 int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t * config) {
+   int i = 0;
    char buf[BUF_SIZE];
    char fld[BUF_SIZE];
    int offset_buf = 0;
@@ -258,12 +281,23 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
          /* write buffers or write column field */
          if(!bracket && !quote && config->delimit(buf[offset_buf])) {
             fld[offset_fld] = '\0';
+            /* strip the whitespace from the end */
+            if(offset_fld > 0)
+               for(i = offset_fld - 1; i >= 0; i--)
+                  if(isspace(fld[i]))
+                     offset_fld--;
+                  else 
+                     break;
+
             /* write the column field */
             config->load(mem, index_row, index_col, fld);
             offset_fld = 0;
             index_col++;
 
-            if(config->flag & SKIP_NEXT_WS) while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0') offset_buf++;
+            /* skip all beginning whitespace for the next field */
+            if(config->flag & SKIP_NEXT_WS)
+               while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0') 
+                  offset_buf++;
          } else {
             if(!(isspace(buf[offset_buf]) && offset_fld <= 0) && buf[offset_buf] != '\"') {
                fld[offset_fld] = buf[offset_buf];
@@ -281,7 +315,7 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
       if(quote) 
          exit_func_safe("missing closing quote[%d]; %s\n", quote, buf);
       if(config->flag & CHECK_FIELD_COUNT && config->field_count != index_col) 
-         exit_func_safe("missing fields; expected %d fields but got %d fields.\n[warn]: %s", config->field_count, index_col, buf);
+         exit_func_safe("missing fields; expected %d fields but got %d fields.\n[warn]: %s\n[warn]: %s", config->field_count, index_col, buf, &buf[offset_buf]);
 
       index_row++;
    }

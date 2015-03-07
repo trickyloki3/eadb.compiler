@@ -22,6 +22,9 @@
 	 * mercenary_ra 	-	rathena mecenary database
 	 * pet_ra			-	rathena pet database
 	 * item_group_ra 	-	rathena item group database
+	 * const_ra 		- 	rathena constant database
+	 * package_ra 		- 	rathena package database
+	 * combo_ra 		- 	rathena combo database
 	 */
 
 	/* database record counts */

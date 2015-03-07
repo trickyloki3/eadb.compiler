@@ -7,7 +7,7 @@ HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
 LIB = -lsqlite3 -ldl -lpthread -lm
-_OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o db_eathena.o db_rathena.o
+_OBJ = db.o util.o load.o api.o script.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
 # hercule item database require libconfig
@@ -42,10 +42,10 @@ conv: src/conv.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
 loki: src/loki.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
-	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR)
+	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR)
 
 # linux clean
 .PHONY: clean

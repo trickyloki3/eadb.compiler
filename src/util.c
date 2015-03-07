@@ -338,12 +338,14 @@ int strnload(char * buf, int size, char * str) {
 
    /* check for empty buffers */
    len = strlen(str);
-   if(len <= 0 || size <= 0)
-      return exit_func_safe("invalid buffer size(%d) or string size(%d).\n", size, len);
+   if(size <= 0)
+      return exit_func_safe("invalid buffer size(%d) or string size(%d)", size, len);
+   else if(len <= 0)
+      str = "";
    
    /* check destination is as large as source */
    if(len > size - 1) {
-      exit_func_safe("truncated string from %d to %d.\n", len, size - 1);
+      exit_func_safe("truncated string from %d to %d", len, size - 1);
       len = size - 1;
    }
 

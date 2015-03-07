@@ -9,13 +9,14 @@
 #include <stdlib.h>
 #include "api.h"
 #include "db.h"
+#include "util.h"
 #include "libconfig.h"
-void he_item_db_insert(struct lt_db_t *, he_item_t *);
+ 
 void load_he_item(const char *, struct lt_db_t *);
 
 int main(int argc, char * argv[]) {
 	struct lt_db_t * db = init_db("athena.db", INITIALIZE_SKIP);
-	load_he_item("../hedb/item_db.conf", db);
+	load_he_item("/root/Desktop/git/Hercules/db/re/item_db.conf", db);
 	deit_db(db);
 	exit(EXIT_SUCCESS);
 }
@@ -44,7 +45,7 @@ void load_he_item(const char * filename, struct lt_db_t * db) {
 			config_error_line(cfg),
 			config_error_text(cfg));
 		error[offset] = '\0';
-		exit_abt(error);
+		exit_abt_safe(error);
 	}
 
 	/* retrieve data */
@@ -115,62 +116,58 @@ void load_he_item(const char * filename, struct lt_db_t * db) {
 			if(item.script == NULL) item.script = "";
 			if(item.onequipscript == NULL) item.onequipscript = "";
 			if(item.onunequipscript == NULL) item.onunequipscript = "";
-			he_item_db_insert(db, &item);
+			
+			sqlite3_clear_bindings(db->he_item_insert);
+			sqlite3_bind_int(db->he_item_insert, 1, item.id);
+			sqlite3_bind_text(db->he_item_insert, 2, item.aegis, strlen(item.aegis), SQLITE_STATIC);
+			sqlite3_bind_text(db->he_item_insert, 3, item.name, strlen(item.name), SQLITE_STATIC);
+			sqlite3_bind_int(db->he_item_insert, 4, item.type);
+			sqlite3_bind_int(db->he_item_insert, 5, item.buy);
+			sqlite3_bind_int(db->he_item_insert, 6, item.sell);
+			sqlite3_bind_int(db->he_item_insert, 7, item.weight);
+			sqlite3_bind_int(db->he_item_insert, 8, item.atk);
+			sqlite3_bind_int(db->he_item_insert, 9, item.matk);
+			sqlite3_bind_int(db->he_item_insert, 10, item.def);
+			sqlite3_bind_int(db->he_item_insert, 11, item.range);
+			sqlite3_bind_int(db->he_item_insert, 12, item.slots);
+			sqlite3_bind_int(db->he_item_insert, 13, item.job);
+			sqlite3_bind_int(db->he_item_insert, 14, item.upper);
+			sqlite3_bind_int(db->he_item_insert, 15, item.gender);
+			sqlite3_bind_int(db->he_item_insert, 16, item.loc);
+			sqlite3_bind_int(db->he_item_insert, 17, item.weaponlv);
+			sqlite3_bind_int(db->he_item_insert, 18, item.equiplv[EQUIP_MIN]);
+			sqlite3_bind_int(db->he_item_insert, 19, item.equiplv[EQUIP_MAX]);
+			sqlite3_bind_int(db->he_item_insert, 20, item.refine);
+			sqlite3_bind_int(db->he_item_insert, 21, item.view);
+			sqlite3_bind_int(db->he_item_insert, 22, item.bindonequip);
+			sqlite3_bind_int(db->he_item_insert, 23, item.buyingstore);
+			sqlite3_bind_int(db->he_item_insert, 24, item.delay);
+			sqlite3_bind_int(db->he_item_insert, 25, item.trade[TRADE_OVERRIDE]);
+			sqlite3_bind_int(db->he_item_insert, 26, item.trade[TRADE_NODROP]);
+			sqlite3_bind_int(db->he_item_insert, 27, item.trade[TRADE_NOTRADE]);
+			sqlite3_bind_int(db->he_item_insert, 28, item.trade[TRADE_PARTNEROVERRIDE]);
+			sqlite3_bind_int(db->he_item_insert, 29, item.trade[TRADE_NOSELLTONPC]);
+			sqlite3_bind_int(db->he_item_insert, 30, item.trade[TRADE_NOCART]);
+			sqlite3_bind_int(db->he_item_insert, 31, item.trade[TRADE_NOSTORAGE]);
+			sqlite3_bind_int(db->he_item_insert, 32, item.trade[TRADE_NOGSTORAGE]);
+			sqlite3_bind_int(db->he_item_insert, 33, item.trade[TRADE_NOMAIL]);
+			sqlite3_bind_int(db->he_item_insert, 34, item.trade[TRADE_NOAUCTION]);
+			sqlite3_bind_int(db->he_item_insert, 35, item.nouse[NOUSE_OVERRIDE]);
+			sqlite3_bind_int(db->he_item_insert, 36, item.nouse[NOUSE_SITTING]);
+			sqlite3_bind_int(db->he_item_insert, 37, item.stack[STACK_AMOUNT]);
+			sqlite3_bind_int(db->he_item_insert, 38, item.stack[STACK_TYPE]);
+			sqlite3_bind_int(db->he_item_insert, 39, item.sprite);
+			sqlite3_bind_text(db->he_item_insert, 40, item.script, strlen(item.script), SQLITE_STATIC);
+			sqlite3_bind_text(db->he_item_insert, 41, item.onequipscript, strlen(item.onequipscript), SQLITE_STATIC);
+			sqlite3_bind_text(db->he_item_insert, 42, item.onunequipscript, strlen(item.onunequipscript), SQLITE_STATIC);
+			status = sqlite3_step(db->he_item_insert);
+			if(status != SQLITE_DONE) exit_abt_safe("fatal error inserting item record.");
+			sqlite3_reset(db->he_item_insert);
 		}
 		sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	} else {
-		/*exit_abt("item configuration file root setting.");*/
+		exit_abt_safe("failed to find item configuration file root setting.");
 	}
 	config_destroy(cfg);
 	free(cfg);
-}
-
-void he_item_db_insert(struct lt_db_t * db, he_item_t * item) {
-	int status = 0;
-	sqlite3_clear_bindings(db->he_item_insert);
-	sqlite3_bind_int(db->he_item_insert, 1, item->id);
-	sqlite3_bind_text(db->he_item_insert, 2, item->aegis, strlen(item->aegis), SQLITE_STATIC);
-	sqlite3_bind_text(db->he_item_insert, 3, item->name, strlen(item->name), SQLITE_STATIC);
-	sqlite3_bind_int(db->he_item_insert, 4, item->type);
-	sqlite3_bind_int(db->he_item_insert, 5, item->buy);
-	sqlite3_bind_int(db->he_item_insert, 6, item->sell);
-	sqlite3_bind_int(db->he_item_insert, 7, item->weight);
-	sqlite3_bind_int(db->he_item_insert, 8, item->atk);
-	sqlite3_bind_int(db->he_item_insert, 9, item->matk);
-	sqlite3_bind_int(db->he_item_insert, 10, item->def);
-	sqlite3_bind_int(db->he_item_insert, 11, item->range);
-	sqlite3_bind_int(db->he_item_insert, 12, item->slots);
-	sqlite3_bind_int(db->he_item_insert, 13, item->job);
-	sqlite3_bind_int(db->he_item_insert, 14, item->upper);
-	sqlite3_bind_int(db->he_item_insert, 15, item->gender);
-	sqlite3_bind_int(db->he_item_insert, 16, item->loc);
-	sqlite3_bind_int(db->he_item_insert, 17, item->weaponlv);
-	sqlite3_bind_int(db->he_item_insert, 18, item->equiplv[EQUIP_MIN]);
-	sqlite3_bind_int(db->he_item_insert, 19, item->equiplv[EQUIP_MAX]);
-	sqlite3_bind_int(db->he_item_insert, 20, item->refine);
-	sqlite3_bind_int(db->he_item_insert, 21, item->view);
-	sqlite3_bind_int(db->he_item_insert, 22, item->bindonequip);
-	sqlite3_bind_int(db->he_item_insert, 23, item->buyingstore);
-	sqlite3_bind_int(db->he_item_insert, 24, item->delay);
-	sqlite3_bind_int(db->he_item_insert, 25, item->trade[TRADE_OVERRIDE]);
-	sqlite3_bind_int(db->he_item_insert, 26, item->trade[TRADE_NODROP]);
-	sqlite3_bind_int(db->he_item_insert, 27, item->trade[TRADE_NOTRADE]);
-	sqlite3_bind_int(db->he_item_insert, 28, item->trade[TRADE_PARTNEROVERRIDE]);
-	sqlite3_bind_int(db->he_item_insert, 29, item->trade[TRADE_NOSELLTONPC]);
-	sqlite3_bind_int(db->he_item_insert, 30, item->trade[TRADE_NOCART]);
-	sqlite3_bind_int(db->he_item_insert, 31, item->trade[TRADE_NOSTORAGE]);
-	sqlite3_bind_int(db->he_item_insert, 32, item->trade[TRADE_NOGSTORAGE]);
-	sqlite3_bind_int(db->he_item_insert, 33, item->trade[TRADE_NOMAIL]);
-	sqlite3_bind_int(db->he_item_insert, 34, item->trade[TRADE_NOAUCTION]);
-	sqlite3_bind_int(db->he_item_insert, 35, item->nouse[NOUSE_OVERRIDE]);
-	sqlite3_bind_int(db->he_item_insert, 36, item->nouse[NOUSE_SITTING]);
-	sqlite3_bind_int(db->he_item_insert, 37, item->stack[STACK_AMOUNT]);
-	sqlite3_bind_int(db->he_item_insert, 38, item->stack[STACK_TYPE]);
-	sqlite3_bind_int(db->he_item_insert, 39, item->sprite);
-	sqlite3_bind_text(db->he_item_insert, 40, item->script, strlen(item->script), SQLITE_STATIC);
-	sqlite3_bind_text(db->he_item_insert, 41, item->onequipscript, strlen(item->onequipscript), SQLITE_STATIC);
-	sqlite3_bind_text(db->he_item_insert, 42, item->onunequipscript, strlen(item->onunequipscript), SQLITE_STATIC);
-	status = sqlite3_step(db->he_item_insert);
-	/*if(status != SQLITE_DONE) exit_abt("fatal error inserting item.");*/
-	sqlite3_reset(db->he_item_insert);
 }

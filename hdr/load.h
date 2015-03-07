@@ -31,8 +31,13 @@
     /* check sentinel and check delimit functions */
     int sentinel_newline(char c);
     int sentinel_whitespace(char c);
+    int sentinel_comment(char c);
+    int sentinel_semicolon(char c);
     int delimit_cvs(char c);
     int delimit_cvs_whitespace(char c);
+    int delimit_cvs_comment(char c);
+    int delimit_cvs_pound(char c);
+    int delimit_cvs_semicolon(char c);
 
     typedef struct {
         void * db;

@@ -326,4 +326,6 @@ int load_eathena_database(const char * eathena_path) {
 		exit(EXIT_FAILURE);
 	}
 	free(const_db.db);
+
+	return 0;
 }

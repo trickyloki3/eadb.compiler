@@ -9,15 +9,13 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 	#include <stdio.h>
-   #include <stdlib.h>
-   #include <stdarg.h>
-   #include <string.h>
-   #include <errno.h>
-   #include <ctype.h>
-   #include <stdint.h>
-
-	/* standard buffer size */
-	#define BUF_SIZE 4096
+    #include <stdlib.h>
+    #include <stdarg.h>
+    #include <string.h>
+    #include <errno.h>
+    #include <ctype.h>
+    #include <stdint.h>
+ 	#include "setting.h"
 
  	/* database buffer size */
  	#define BONUS_PREFIX_SIZE 8

@@ -1,47 +1,74 @@
 /*
- *   file: db_eathena.h
- *   date: 02/28/2015
+ *   file: db_hercules.h
+ *   date: 03/01/2015
  *   auth: trickyloki3
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
  */
-#ifndef DB_EATHENA_H
-#define DB_EATHENA_H
+#ifndef DB_HERCULES_H
+#define DB_HERCULES_H
  	#include "load.h"
  	#include "util.h"
-	#include "setting.h"
+ 	#include "setting.h"
+ 	#include "libconfig.h"
 
-	/* eathena database type definitions 
+ 	/* hercules database type definitions 
 	 * -----------------------------------------
 	 * type name 	- 	type reference
 	 * -----------------------------------------
-	 * item_ea 			- 	eathena item database
-	 * mob_ea 			- 	eathena mob database 
-	 * skill_ea 		- 	eathena skill database 
-	 * produce_ea		- 	eathena produce database
-	 * mercenary_ea 	-	eathena mecenary database
-	 * pet_ea			-	eathena pet database
-	 * item_group_ea 	-	eathena item group database
-	 * const_ea 		- 	eathena const database
+	 * item_he 			- 	hercules item database
+	 * mob_he 			- 	hercules mob database 
+	 * skill_he 		- 	hercules skill database 
+	 * produce_he		- 	hercules produce database
+	 * mercenary_he 	-	hercules mecenary database
+	 * pet_he			-	hercules pet database
+	 * const_he 		- 	hercules constant database
 	 */
 
-	/* database record counts */
-	#define ITEM_EA_FIELD_COUNT 			22
-	#define MOB_EA_FIELD_COUNT 				58
-	#define SKILL_EA_FIELD_COUNT 			17
-	#define MERCENARY_EA_FIELD_COUNT 		26
-	#define PET_EA_FIELD_COUNT				22
-	#define ITEM_GROUP_EA_FIELD_COUNT 		3
+ 	/* database record counts */
+ 	#define MOB_HE_FIELD_COUNT				57
+	#define SKILL_HE_FIELD_COUNT 			17
+	#define MERCENARY_HE_FIELD_COUNT		26
+	#define PET_HE_FIELD_COUNT				22
+
+	/* constant to index equip array */
+	#define EQUIP_MIN					0
+	#define EQUIP_MAX					1
+	#define EQUIP_TOTAL					2
+
+	/* constant to index trade array */
+	#define TRADE_OVERRIDE 				0
+	#define TRADE_NODROP				1
+	#define TRADE_NOTRADE				2
+	#define TRADE_PARTNEROVERRIDE		3
+	#define TRADE_NOSELLTONPC			4
+	#define TRADE_NOCART				5
+	#define TRADE_NOSTORAGE 			6
+	#define TRADE_NOGSTORAGE			7
+	#define TRADE_NOMAIL				8
+	#define TRADE_NOAUCTION				9
+	#define TRADE_TOTAL					10
+
+	/* constant to index nouse array */
+	#define NOUSE_OVERRIDE				0
+	#define NOUSE_SITTING				1
+	#define NOUSE_TOTAL					2
+
+	/* constant to index stack array */
+	#define STACK_AMOUNT				0
+	#define STACK_TYPE					1
+	#define STACK_TOTAL					2
 
 	typedef struct {
 		int id;
-		char aegis[MAX_NAME_SIZE];
-		char eathena[MAX_NAME_SIZE];
+		const char * aegis;
+		const char * name;
 		int type;
 		int buy;
 		int sell;
 		int weight;
 		int atk;
+		int matk;
 		int def;
 		int range;
 		int slots;
@@ -49,14 +76,21 @@
 		int upper;
 		int gender;
 		int loc;
-		int wlv;
-		int elv;
-		int refineable;
+		int weaponlv;
+		int equiplv[EQUIP_TOTAL];
+		int refine;
 		int view;
-		char script[MAX_SCRIPT_SIZE];
-		char onequip[MAX_SCRIPT_SIZE];
-		char onunequip[MAX_SCRIPT_SIZE];
-	} item_ea;
+		int bindonequip;
+		int buyingstore;
+		int delay;
+		int trade[TRADE_TOTAL];
+		int nouse[NOUSE_TOTAL];
+		int stack[STACK_TOTAL];
+		int sprite;
+		const char * script;
+		const char * onequipscript;
+		const char * onunequipscript;
+	} item_he;
 
 	typedef struct {
 		int id;
@@ -90,7 +124,6 @@
 		int amotion;
 		int dmotion;
 		int mexp;
-		int expper;
 		int mvp1id;
 		int mvp1per;
 		int mvp2id;
@@ -117,7 +150,7 @@
 		int drop9per;
 		int dropcardid;
 		int dropcardper;
-	} mob_ea;
+	} mob_he;
 
 	typedef struct {
 		int id;
@@ -137,7 +170,7 @@
 		varlist blow_count;
 		char name[MAX_NAME_SIZE];
 		char desc[MAX_NAME_SIZE];
-	} skill_ea;
+	} skill_he;
 
 	typedef struct  {
 		int item_id;
@@ -147,7 +180,7 @@
 		int item_id_req[MAX_INGREDIENT];
 		int item_amount_req[MAX_INGREDIENT];
 		int ingredient_count;
-	} produce_ea;
+	} produce_he;
 
 	typedef struct {
 		int id;
@@ -176,7 +209,7 @@
 		int adelay;
 		int amotion;
 		int dmotion;
-	} mercenary_ea;
+	} mercenary_he;
 
 	typedef struct {
 		int mob_id;
@@ -201,31 +234,26 @@
 		int change_target_rate;
 		char pet_script[MAX_SCRIPT_SIZE];
 		char loyal_script[MAX_SCRIPT_SIZE];
-	} pet_ea;
-
-	typedef struct {
-		int group_id;
-		int item_id;
-		int rate;
-	} item_group_ea;
+	} pet_he;
 
 	typedef struct {
 		char name[MAX_NAME_SIZE];
 		int value;
 		int type;
-	} const_ea;
+	} const_he;
 
-	/* eathena native database loading */
-	extern native_config_t load_ea_native[EATHENA_DB_COUNT];
-	int item_ea_load(void * db, int row, int col, char * val);
-	int mob_ea_load(void * db, int row, int col, char * val);
-	int skill_ea_load(void * db, int row, int col, char * val);
-	int produce_ea_load(void * db, int row, int col, char * val);
-	int mercenary_ea_load(void * db, int row, int col, char * val);
-	int pet_ea_load(void * db, int row, int col, char * val);
-	int item_group_ea_load(void * db, int row, int col, char * val);
-	int const_ea_load(void * db, int row, int col, char * val);
+	/* hercules shares the same database format as eathena and rathena
+	 * but who knows what they'll change completely, better keep separate */
+	int load_he_item(const char * file_name, native_t * native);
 
-	/* eathena auxiliary */
-	int load_eathena_database(const char * eathena_path);
+	/* hercules native database loading */
+	extern native_config_t load_he_native[HERCULES_DB_COUNT];
+	int mob_he_load(void * db, int row, int col, char * val);
+	int skill_he_load(void * db, int row, int col, char * val);
+	int produce_he_load(void * db, int row, int col, char * val);
+	int mercenary_he_load(void * db, int row, int col, char * val);
+	int pet_he_load(void * db, int row, int col, char * val);
+	int const_he_load(void * db, int row, int col, char * val);
+
+	int load_hercules_database(const char * hercules_path);
 #endif

@@ -28,14 +28,12 @@ int main(int argc, char * argv[]) {
 
 		struct lt_db_t * db = init_db("athena.db", INITIALIZE_DB);
 		if(global_mode & EATHENA) {
+				load_db_t * db20 = load("../eadb/item_db.txt", trim_numeric, load_general, ea_item_load);
 				load_db_t * db5 = load("../eadb/mob_db.txt", trim_numeric, load_general, ea_mob_load);
 				load_db_t * db8 = load("../eadb/skill_db.txt", trim_numeric, load_general, skill_load);
 				load_db_t * db11 = load("../eadb/produce_db.txt", trim_numeric, load_general, produce_load);
 				load_db_t * db14 = load("../eadb/mercenary_db.txt", trim_numeric, load_general, merc_load);
 				load_db_t * db17 = load("../eadb/pet_db.txt", trim_numeric, load_general, pet_load);
-				load_db_t * db20 = load("../eadb/item_db.txt", trim_numeric, load_general, ea_item_load);
-
-				load_db_t * db22 = load("../eadb/const.txt", trim_general, load_general, const_load);
 				load_db_t * db25 = load("../eadb/item_group/item_bluebox.txt", trim_numeric, load_general, ea_item_group_load);
 				load_db_t * db26 = load("../eadb/item_group/item_cardalbum.txt", trim_numeric, load_general, ea_item_group_load);
 				load_db_t * db27 = load("../eadb/item_group/item_cookie_bag.txt", trim_numeric, load_general, ea_item_group_load);
@@ -44,6 +42,7 @@ int main(int argc, char * argv[]) {
 				load_db_t * db30 = load("../eadb/item_group/item_misc.txt", trim_numeric, load_general, ea_item_group_load);
 				load_db_t * db31 = load("../eadb/item_group/item_scroll.txt", trim_numeric, load_general, ea_item_group_load);
 				load_db_t * db32 = load("../eadb/item_group/item_violetbox.txt", trim_numeric, load_general, ea_item_group_load);
+				load_db_t * db22 = load("../eadb/const.txt", trim_general, load_general, const_load);
 				ea_load_mob(db, db->ea_mob_insert, db5->db, db5->size);
 				load_skill(db, db->ea_skill_insert, db8->db, db8->size);
 				load_prod(db, db->ea_prod_insert, db11->db, db11->size);
@@ -91,22 +90,21 @@ int main(int argc, char * argv[]) {
 				free(db32);
 		}
 		if(global_mode & RATHENA) {
+			load_db_t * db21 = load("../radb/item_db.txt", trim_numeric, load_general, ra_item_load);
 			load_db_t * db6 = load("../radb/mob_db.txt", trim_numeric, load_general, mob_load);
 			load_db_t * db9 = load("../radb/skill_db.txt", trim_numeric, load_general, ra_skill_load);
 			load_db_t * db12 = load("../radb/produce_db.txt", trim_numeric, load_general, ra_produce_load);
 			load_db_t * db15 = load("../radb/mercenary_db.txt", trim_numeric, load_general, merc_load);
 			load_db_t * db18 = load("../radb/pet_db.txt", trim_numeric, load_general, pet_load);
-			load_db_t * db21 = load("../radb/item_db.txt", trim_numeric, load_general, ra_item_load);
-			load_db_t * db23 = load("../radb/const.txt", trim_general, load_general, const_load);
 			load_db_t * db33 = load("../radb/item_group/item_bluebox.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db34 = load("../radb/item_group/item_cardalbum.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db35 = load("../radb/item_group/item_findingore.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db36 = load("../radb/item_group/item_giftbox.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db37 = load("../radb/item_group/item_violetbox.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db38 = load("../radb/item_group/item_misc.txt", trim_alpha, load_general, ra_item_group_load);
+			load_db_t * db23 = load("../radb/const.txt", trim_general, load_general, const_load);
 			load_db_t * db39 = load("../radb/item_group/item_package.txt", trim_alpha, load_general, ra_item_package_load);
 			load_db_t * db40 = load("../radb/item_combo_db.txt", trim_numeric, load_general, ra_item_combo_load);
-
 			load_db_t * db41 = load("res/option_db.txt", trim_alpha, load_general, option_load);
 			load_db_t * db42 = load("../misc/map.txt", trim_general, load_general, map_load);
 			load_option(db, db41->db, db41->size);
