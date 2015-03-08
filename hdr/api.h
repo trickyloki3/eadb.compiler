@@ -12,16 +12,16 @@
 	#include "sqlite3.h"
 	#include <assert.h>
  	
-	#define ea_item_tbl "CREATE TABLE IF NOT EXISTS ea_item(" \
-						"id INTEGER PRIMARY KEY, aegis TEXT, eathena TEXT," \
-						"type INTEGER, buy INTEGER, sell INTEGER, weight INTEGER, " \
-						"atk INTEGER, def INTEGER, range INTEGER, slots INTEGER, " \
-						"job INTEGER, upper INTEGER, gender INTEGER, loc INTEGER, " \
-						"wlv INTEGER, elv INTEGER, refineable INTEGER, view INTEGER, " \
+	#define ea_item_tbl "CREATE TABLE IF NOT EXISTS ea_item(" 							\
+						"id INTEGER PRIMARY KEY, aegis TEXT, eathena TEXT," 			\
+						"type INTEGER, buy INTEGER, sell INTEGER, weight INTEGER, " 	\
+						"atk INTEGER, def INTEGER, range INTEGER, slots INTEGER, " 		\
+						"job INTEGER, upper INTEGER, gender INTEGER, loc INTEGER, " 	\
+						"wlv INTEGER, elv INTEGER, refineable INTEGER, view INTEGER, " 	\
 						"script TEXT, onequip TEXT, onunequip TEXT);"
 	#define ea_item_des "DROP TABLE IF EXISTS ea_item;"
-	#define ea_item_ins "INSERT INTO ea_item VALUES(" \
-						"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," \
+	#define ea_item_ins "INSERT INTO ea_item VALUES(" 		\
+						"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 	\
 						"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
 
 	#define ra_item_tbl "CREATE TABLE IF NOT EXISTS ra_item(" \
@@ -96,7 +96,7 @@
 						"$BuyingStore, $Delay, $override, $nodrop, $notrade, $partneroverride, " \
 						"$noselltonpc, $nocart, $nostorage, $nogstorage, $nomail, $noauction, " \
 						"$ltoverride, $sitting, $StackAmount, $StackType, $Sprite, $Script, " \
-						"$OnEquipScript, $OnUnequipScript);" 
+						"$OnEquipScript, $OnUnequipScript);"
 
 	#define ea_pet_tbl 	"CREATE TABLE IF NOT EXISTS ea_pet(" \
 						"mob_id INTEGER PRIMARY KEY, pet_name TEXT, pet_jname TEXT, " \
@@ -318,8 +318,8 @@
 	#define ra_item_group_ins "INSERT INTO ra_item_group VALUES(?, ?, ?);"
 	#define ra_item_group_des "DROP TABLE IF NOT EXISTS ra_item_group;"
 
-	#define ra_itm_combo_tbl "CREATE TABLE IF NOT EXISTS ra_item_combo(" \
-									 "id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"
+	#define ra_itm_combo_tbl 	"CREATE TABLE IF NOT EXISTS ra_item_combo(" \
+								"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"
 	#define ra_itm_combo_ins "INSERT INTO ra_item_combo VALUES(?, ?, ?);"
 	#define ra_itm_combo_des "DROP TABLE IF NOT EXISTS ra_item_combo;"
 
@@ -404,9 +404,6 @@
 	void load_client_map(struct lt_db_t * sql, map_t * db, int size);
 	void deit_db(struct lt_db_t *);
 	void trace_db(void *, const char *);
-	char * array_to_string(char *, int *);
-	char * array_to_string_cnt(char *, int *, int);
-	int array_field_cnt(char *);
 
 	#define EATHENA 0x1
 	#define RATHENA 0x2

@@ -11,6 +11,7 @@
  	#include "util.h"
  	#include "setting.h"
  	#include "libconfig.h"
+ 	#include "sqlite3.h"
 
  	/* hercules database type definitions 
 	 * -----------------------------------------
@@ -61,8 +62,8 @@
 
 	typedef struct {
 		int id;
-		const char * aegis;
-		const char * name;
+		char aegis[MAX_NAME_SIZE];
+		char name[MAX_NAME_SIZE];
 		int type;
 		int buy;
 		int sell;
@@ -87,9 +88,9 @@
 		int nouse[NOUSE_TOTAL];
 		int stack[STACK_TOTAL];
 		int sprite;
-		const char * script;
-		const char * onequipscript;
-		const char * onunequipscript;
+		char script[MAX_SCRIPT_SIZE];
+		char onequipscript[MAX_SCRIPT_SIZE];
+		char onunequipscript[MAX_SCRIPT_SIZE];
 	} item_he;
 
 	typedef struct {
@@ -255,5 +256,129 @@
 	int pet_he_load(void * db, int row, int col, char * val);
 	int const_he_load(void * db, int row, int col, char * val);
 
+	/* hercules auxiliary */
 	int load_hercules_database(const char * hercules_path);
+
+	/* hercules sqlite3 database interface */
+	#define hercules_database_sql 	"DROP TABLE IF EXISTS item_he;"																\
+									"DROP TABLE IF EXISTS mob_he;"																\
+									"DROP TABLE IF EXISTS skill_he;"															\
+									"DROP TABLE IF EXISTS produce_he;"															\
+									"DROP TABLE IF EXISTS mercenary_he;"														\
+									"DROP TABLE IF EXISTS pet_he;"																\
+									"DROP TABLE IF EXISTS const_he;"															\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS item_he(" 														\
+									"Id INTEGER PRIMARY KEY, AegisName TEXT, Name TEXT, Type INTEGER, "							\
+									"Buy INTEGER, Sell INTEGER, Weight INTEGER, Atk INTEGER, Matk INTEGER, " 					\
+									"Def INTEGER, Range INTEGER, Slots INTEGER, Job INTEGER, Upper INTEGER, " 					\
+									"Gender INTEGER, Loc INTEGER, WeaponLv INTEGER, EquipLvMin INTEGER, " 						\
+									"EquipLvMax INTEGER, Refine INTEGER, View INTEGER, BindOnEquip INTEGER, " 					\
+									"BuyingStore INTEGER, Delay INTEGER, override INTEGER, nodrop INTEGER, " 					\
+									"notrade INTEGER, partneroverride INTEGER, noselltonpc INTEGER, " 							\
+									"nocart INTEGER, nostorage INTEGER, nogstorage INTEGER, nomail INTEGER, " 					\
+									"noauction INTEGER, ltoverride INTEGER, sitting INTEGER, StackAmount INTEGER, " 			\
+									"StackType INTEGER, Sprite Integer, Script TEXT, OnEquipScript TEXT, " 						\
+									"OnUnequipScript TEXT);" 																	\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS mob_he(" 														\
+									"id INTEGER PRIMARY KEY, sprite TEXT, kro TEXT, iro TEXT, " 								\
+									"lv INTEGER, hp INTEGER, sp INTEGER, exp INTEGER, jexp INTEGER, " 							\
+									"range INTEGER, atk1 INTEGER, atk2 INTEGER, def INTEGER, mdef INTEGER, " 					\
+									"str INTEGER, agi INTEGER, vit INTEGER, intr INTEGER, dex INTEGER, " 						\
+									"luk INTEGER, range2 INTEGER, range3 INTEGER, scale INTEGER, race INTEGER, " 				\
+									"element INTEGER, mode INTEGER, speed INTEGER, adelay INTEGER, amotion INTEGER, " 			\
+									"dmotion INTEGER, mexp INTEGER, mvp1id INTEGER, mvp1per INTEGER, " 							\
+									"mvp2id INTEGER, mvp2per INTEGER, mvp3id INTEGER, mvp3per INTEGER, drop1id INTEGER, " 		\
+									"drop1per INTEGER, drop2id INTEGER, drop2per INTEGER, drop3id INTEGER, drop3per INTEGER, " 	\
+									"drop4id INTEGER, drop4per INTEGER, drop5id INTEGER, drop5per INTEGER, drop6id INTEGER, " 	\
+									"drop6per INTEGER, drop7id INTEGER, drop7per INTEGER, drop8id INTEGER, drop8per INTEGER, " 	\
+									"drop9id INTEGER, drop9per INTEGER, dropcardid INTEGER, dropcardper INTEGER); "				\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS skill_he(" 														\
+									"id INTEGER PRIMARY KEY, range TEXT, hit INTEGER, inf INTEGER, " 							\
+									"element TEXT, nk INTEGER, splash TEXT, max INTEGER, hit_amount INTEGER, " 					\
+									"cast_cancel TEXT, cast_def_reduce_rate INTEGER, inf2 INTEGER, " 							\
+									"maxcount TEXT, type TEXT, blow_count TEXT, name TEXT, desc TEXT);"							\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS produce_he(" 													\
+									"item_id INTEGER PRIMARY KEY, item_lv INTEGER, " 											\
+									"req_skill INTEGER, req_skill_lv INTEGER, material TEXT, amount TEXT);"						\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS mercenary_he(" 													\
+									"id INTEGER PRIMARY KEY, sprite TEXT, name TEXT, " 											\
+									"lv INTEGER, hp INTEGER, sp INTEGER, range1 INTEGER, " 										\
+									"atk1 INTEGER, atk2 INTEGER, def INTEGER, mdef INTEGER, " 									\
+									"str INTEGER, agi INTEGER, vit INTEGER, intr INTEGER, " 									\
+									"dex INTEGER, luk INTEGER, range2 INTEGER, range3 INTEGER, " 								\
+									"scale INTEGER, race INTEGER, element INTEGER, speed INTEGER, " 							\
+									"adelay INTEGER, amotion INTEGER, dmotion INTEGER);"										\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS pet_he(" 														\
+									"mob_id INTEGER PRIMARY KEY, pet_name TEXT, pet_jname TEXT, " 								\
+									"lure_id INTEGER, egg_id INTEGER, equip_id INTEGER, " 										\
+									"food_id INTEGER, fullness INTEGER, hungry_delay INTEGER, " 								\
+									"r_hungry INTEGER, r_full INTEGER, intimate INTEGER, " 										\
+									"die INTEGER, capture INTEGER, speed INTEGER, " 											\
+									"s_performance INTEGER, talk_convert INTEGER, attack_rate INTEGER, " 						\
+									"defence_attack_rate INTEGER, change_target_rate INTEGER, pet_script TEXT, " 				\
+									"loyal_script TEXT);"																		\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS const_he(name TEXT, value INTEGER, type INTEGER);"				
+
+
+	#define item_he_insert 			"INSERT INTO item_he(" 																		\
+									"Id, AegisName, Name, Type, Buy, Sell, Weight, Atk, Matk," 									\
+									"Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, " 									\
+									"EquipLvMin, EquipLvMax, Refine, View, BindOnEquip, " 										\
+									"BuyingStore, Delay, override, nodrop, notrade, partneroverride, " 							\
+									"noselltonpc, nocart, nostorage, nogstorage, nomail, noauction, " 							\
+									"ltoverride, sitting, StackAmount, StackType, Sprite, Script, " 							\
+									"OnEquipScript, OnUnequipScript) VALUES(" 													\
+									"$Id, $AegisName, $Name, $Type, $Buy, $Sell, $Weight, $Atk, $Matk," 						\
+									"$Def, $Range, $Slots, $Job, $Upper, $Gender, $Loc, $WeaponLv, " 							\
+									"$EquipLvMin, $EquipLvMax, $Refine, $View, $BindOnEquip, " 									\
+									"$BuyingStore, $Delay, $override, $nodrop, $notrade, $partneroverride, " 					\
+									"$noselltonpc, $nocart, $nostorage, $nogstorage, $nomail, $noauction, " 					\
+									"$ltoverride, $sitting, $StackAmount, $StackType, $Sprite, $Script, " 						\
+									"$OnEquipScript, $OnUnequipScript);"
+	#define mob_he_insert 			"INSERT INTO mob_he VALUES(" 																\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?);"
+	#define skill_he_insert 		"INSERT INTO skill_he VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define produce_he_insert 		"INSERT INTO produce_he VALUES(?, ?, ?, ?, ?, ?);"
+	#define mercenary_he_insert 	"INSERT INTO mercenary_he VALUES(" 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 													\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define pet_he_insert 			"INSERT INTO pet_he VALUES(" 																\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+	#define const_he_insert			"INSERT INTO const_he VALUES(?, ?, ?);"
+
+	typedef struct db_he_t {
+		sqlite3 * db;
+		sqlite3_stmt * item_he_sql_insert;
+		sqlite3_stmt * mob_he_sql_insert;
+		sqlite3_stmt * skill_he_sql_insert;
+		sqlite3_stmt * produce_he_sql_insert;
+		sqlite3_stmt * mercenary_he_sql_insert;
+		sqlite3_stmt * pet_he_sql_insert;
+		sqlite3_stmt * const_he_sql_insert;
+	} db_he_t;
+
+	/* database loading depends on the path of the database */
+	int default_hercules_database(void);
+	int create_hercules_database(db_he_t * db, const char * path);
+	int finalize_hercules_database(db_he_t * db);
+	int item_he_sql_load(db_he_t * db, const char * path);
+	int mob_he_sql_load(db_he_t * db, const char * path);
+	int skill_he_sql_load(db_he_t * db, const char * path);
+	int produce_he_sql_load(db_he_t * db, const char * path);
+	int mercenary_he_sql_load(db_he_t * db, const char * path);
+	int pet_he_sql_load(db_he_t * db, const char * path);
+	int const_he_sql_load(db_he_t * db, const char * path);
 #endif

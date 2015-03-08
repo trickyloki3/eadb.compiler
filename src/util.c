@@ -354,3 +354,28 @@ int strnload(char * buf, int size, char * str) {
    buf[len] = '\0';
    return CHECK_PASSED;
 }
+
+char * array_to_string(char * buffer, int * array) {
+   int offset = 0;
+   for(int i = 0; array[i] > 0; i++)
+      offset += sprintf(buffer + offset, "%d%s", array[i], (array[i + 1] > 0) ? ":" : "");
+   buffer[offset] = '\0';
+   return buffer;
+}
+
+char * array_to_string_cnt(char * buffer, int * array, int size) {
+   int offset = 0;
+   for(int i = 0; i < size; i++)
+      offset += sprintf(buffer + offset, "%d%s", array[i], (i + 1 < size) ? ":" : "");
+   buffer[offset] = '\0';
+   return buffer;
+}
+
+int array_field_cnt(char * buf) {
+   int i = 0;
+   int cnt = 0;
+   int len = strlen(buf);
+   for(i = 0; i < len; i++)
+      if(buf[i] == ':') cnt++;
+   return cnt;
+}

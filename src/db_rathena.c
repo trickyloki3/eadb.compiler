@@ -285,7 +285,7 @@ int combo_ra_load(void * db, int row, int col, char * val) {
 	return 0;
 }
 
-int load_rathena_database(const char * eathena_path) {
+int load_rathena_database(const char * rathena_path) {
 	int status = 0;
 
 	native_t item_db;
@@ -379,4 +379,431 @@ int load_rathena_database(const char * eathena_path) {
 	free(combo_db.db);
 	
 	return 0;
+}
+
+int create_rathena_database(db_ra_t * db, const char * path) {
+	int status = 0;
+	const char * error = NULL;
+	char * sql_error = NULL;	
+	if( /* open database connection specified by path */
+		sqlite3_open(path, &db->db) != SQLITE_OK ||
+		/* execute rathena table creation script */
+		sqlite3_exec(db->db, rathena_database_sql, NULL, NULL, &sql_error) != SQLITE_OK ||
+		/* prepare the insertion statements */
+		sqlite3_prepare_v2(db->db, item_ra_insert, 	 	 strlen(item_ra_insert), 		&db->item_ra_sql_insert, 		NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, mob_ra_insert, 		 strlen(mob_ra_insert), 		&db->mob_ra_sql_insert, 		NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, skill_ra_insert, 	 strlen(skill_ra_insert), 		&db->skill_ra_sql_insert, 		NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, produce_ra_insert, 	 strlen(produce_ra_insert), 	&db->produce_ra_sql_insert, 	NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, mercenary_ra_insert,  strlen(mercenary_ra_insert), 	&db->mercenary_ra_sql_insert, 	NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, pet_ra_insert, 		 strlen(pet_ra_insert), 		&db->pet_ra_sql_insert, 		NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, item_group_ra_insert, strlen(item_group_ra_insert), 	&db->item_group_ra_sql_insert, 	NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, const_ra_insert, 	 strlen(const_ra_insert), 		&db->const_ra_sql_insert, 		NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, item_combo_ra_insert, strlen(item_combo_ra_insert), 	&db->item_combo_ra_sql_insert, 	NULL) != SQLITE_OK) {
+		/* print sqlite3 error before exiting */
+		status = sqlite3_errcode(db->db);
+		error = sqlite3_errmsg(db->db);
+		exit_func_safe("sqlite3 code %d; %s", status, (sql_error != NULL) ? sql_error : error);
+		/* release the error string and database handle */
+		if(sql_error != NULL) sqlite3_free(sql_error);
+		if(db->db != NULL) sqlite3_close(db->db);
+		return CHECK_FAILED;
+	}
+	return CHECK_PASSED;
+}
+
+int finalize_rathena_database(db_ra_t * db) {
+	sqlite3_finalize(db->item_ra_sql_insert);
+	sqlite3_finalize(db->mob_ra_sql_insert);
+	sqlite3_finalize(db->skill_ra_sql_insert);
+	sqlite3_finalize(db->produce_ra_sql_insert);
+	sqlite3_finalize(db->mercenary_ra_sql_insert);
+	sqlite3_finalize(db->pet_ra_sql_insert);
+	sqlite3_finalize(db->item_group_ra_sql_insert);
+	sqlite3_finalize(db->const_ra_sql_insert);
+	sqlite3_finalize(db->item_combo_ra_sql_insert);
+	sqlite3_close(db->db);
+	return CHECK_PASSED;
+}
+
+int item_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	native_t item_db;
+	item_ra * item_ra_db = NULL;
+	memset(&item_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &item_db, &load_ra_native[0]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena item database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(item_db.db == NULL || item_db.size <= 0) {
+		exit_func_safe("failed to load rathena item database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, item_ra_db = item_db.db; i < item_db.size; i++) {
+		sqlite3_clear_bindings(db->item_ra_sql_insert);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	1, 	item_ra_db[i].id);
+		sqlite3_bind_text(db->item_ra_sql_insert, 	2, 	item_ra_db[i].aegis, 		strlen(item_ra_db[i].aegis), SQLITE_STATIC);
+		sqlite3_bind_text(db->item_ra_sql_insert, 	3, 	item_ra_db[i].eathena, 		strlen(item_ra_db[i].eathena), SQLITE_STATIC);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	4, 	item_ra_db[i].type);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	5, 	item_ra_db[i].buy);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	6, 	item_ra_db[i].sell);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	7, 	item_ra_db[i].weight);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	8, 	item_ra_db[i].matk);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	9, 	item_ra_db[i].atk);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	10, item_ra_db[i].def);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	11, item_ra_db[i].range);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	12, item_ra_db[i].slots);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	13, item_ra_db[i].job);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	14, item_ra_db[i].upper);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	15, item_ra_db[i].gender);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	16, item_ra_db[i].loc);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	17, item_ra_db[i].wlv);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	18, item_ra_db[i].elv);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	19, item_ra_db[i].refineable);
+		sqlite3_bind_int(db->item_ra_sql_insert, 	20, item_ra_db[i].view);
+		sqlite3_bind_text(db->item_ra_sql_insert, 	21, item_ra_db[i].script, 		strlen(item_ra_db[i].script), SQLITE_STATIC);
+		sqlite3_bind_text(db->item_ra_sql_insert, 	22, item_ra_db[i].onequip, 		strlen(item_ra_db[i].onequip), SQLITE_STATIC);
+		sqlite3_bind_text(db->item_ra_sql_insert, 	23, item_ra_db[i].onunequip, 	strlen(item_ra_db[i].onunequip), SQLITE_STATIC);
+		sqlite3_step(db->item_ra_sql_insert);
+		sqlite3_reset(db->item_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(item_db.db);
+	return CHECK_PASSED;
+}
+
+int mob_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	native_t mob_db;
+	mob_ra * mob_ra_db = NULL;
+	memset(&mob_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &mob_db, &load_ra_native[1]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena mob database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(mob_db.db == NULL || mob_db.size <= 0) {
+		exit_func_safe("failed to load rathena mob database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, mob_ra_db = mob_db.db; i < mob_db.size; i++) {
+		sqlite3_clear_bindings(db->mob_ra_sql_insert);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	1, 	mob_ra_db[i].id);
+		sqlite3_bind_text(db->mob_ra_sql_insert, 	2, 	mob_ra_db[i].sprite, 	strlen(mob_ra_db[i].sprite), 	SQLITE_STATIC);
+		sqlite3_bind_text(db->mob_ra_sql_insert, 	3, 	mob_ra_db[i].kro, 		strlen(mob_ra_db[i].kro), 		SQLITE_STATIC);
+		sqlite3_bind_text(db->mob_ra_sql_insert, 	4, 	mob_ra_db[i].iro, 		strlen(mob_ra_db[i].iro), 		SQLITE_STATIC);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	5, 	mob_ra_db[i].lv);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	6, 	mob_ra_db[i].hp);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	7, 	mob_ra_db[i].sp);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	8, 	mob_ra_db[i].exp);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	9, 	mob_ra_db[i].jexp);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	10, mob_ra_db[i].range);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	11, mob_ra_db[i].atk1);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	12, mob_ra_db[i].atk2);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	13, mob_ra_db[i].def);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	14, mob_ra_db[i].mdef);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	15, mob_ra_db[i].str);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	16, mob_ra_db[i].agi);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	17, mob_ra_db[i].vit);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	18, mob_ra_db[i].intr);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	19, mob_ra_db[i].dex);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	20, mob_ra_db[i].luk);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	21, mob_ra_db[i].range2);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	22, mob_ra_db[i].range3);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	23, mob_ra_db[i].scale);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	24, mob_ra_db[i].race);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	25, mob_ra_db[i].element);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	26, mob_ra_db[i].mode);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	27, mob_ra_db[i].speed);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	28, mob_ra_db[i].adelay);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	29, mob_ra_db[i].amotion);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	30, mob_ra_db[i].dmotion);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	31, mob_ra_db[i].mexp);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	32, mob_ra_db[i].mvp1id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	33, mob_ra_db[i].mvp1per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	34, mob_ra_db[i].mvp2id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	35, mob_ra_db[i].mvp2per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	36, mob_ra_db[i].mvp3id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	37, mob_ra_db[i].mvp3per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	38, mob_ra_db[i].drop1id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	39, mob_ra_db[i].drop1per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	40, mob_ra_db[i].drop2id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	41, mob_ra_db[i].drop2per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	42, mob_ra_db[i].drop3id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	43, mob_ra_db[i].drop3per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	44, mob_ra_db[i].drop4id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	45, mob_ra_db[i].drop4per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	46, mob_ra_db[i].drop5id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	47, mob_ra_db[i].drop5per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	48, mob_ra_db[i].drop6id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	49, mob_ra_db[i].drop6per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	50, mob_ra_db[i].drop7id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	51, mob_ra_db[i].drop7per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	52, mob_ra_db[i].drop8id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	53, mob_ra_db[i].drop8per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	54, mob_ra_db[i].drop9id);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	55, mob_ra_db[i].drop9per);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	56, mob_ra_db[i].dropcardid);
+		sqlite3_bind_int(db->mob_ra_sql_insert, 	57, mob_ra_db[i].dropcardper);
+		sqlite3_step(db->mob_ra_sql_insert);
+		sqlite3_reset(db->mob_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(mob_db.db);
+	return CHECK_PASSED;
+}
+
+int skill_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	native_t skill_db;
+	skill_ra * skill_ra_db = NULL;
+	memset(&skill_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &skill_db, &load_ra_native[2]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena skill database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(skill_db.db == NULL || skill_db.size <= 0) {
+		exit_func_safe("failed to load rathena skill database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, skill_ra_db = skill_db.db; i < skill_db.size; i++) {
+		sqlite3_clear_bindings(db->skill_ra_sql_insert);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	1, skill_ra_db[i].id);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	2, skill_ra_db[i].range.str, 		strlen(skill_ra_db[i].range.str), 		SQLITE_STATIC);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	3, skill_ra_db[i].hit);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	4, skill_ra_db[i].inf);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	5, skill_ra_db[i].element.str, 		strlen(skill_ra_db[i].element.str), 	SQLITE_STATIC);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	6, skill_ra_db[i].nk);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	7, skill_ra_db[i].splash.str, 		strlen(skill_ra_db[i].splash.str), 		SQLITE_STATIC);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	8, skill_ra_db[i].maxlv);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	9, skill_ra_db[i].hit_amount.str, 	strlen(skill_ra_db[i].hit_amount.str), 	SQLITE_STATIC);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	10, skill_ra_db[i].cast_cancel, 	strlen(skill_ra_db[i].cast_cancel), 	SQLITE_STATIC);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	11, skill_ra_db[i].cast_def_reduce_rate);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	12, skill_ra_db[i].inf2);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	13, skill_ra_db[i].maxcount.str, 	strlen(skill_ra_db[i].maxcount.str), 	SQLITE_STATIC);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	14, skill_ra_db[i].type, 			strlen(skill_ra_db[i].type), 			SQLITE_STATIC);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	15, skill_ra_db[i].blow_count.str, 	strlen(skill_ra_db[i].blow_count.str), 	SQLITE_STATIC);
+		sqlite3_bind_int(db->skill_ra_sql_insert, 	16, skill_ra_db[i].inf3);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	17, skill_ra_db[i].name, 			strlen(skill_ra_db[i].name), 			SQLITE_STATIC);
+		sqlite3_bind_text(db->skill_ra_sql_insert, 	18, skill_ra_db[i].desc, 			strlen(skill_ra_db[i].desc), 			SQLITE_STATIC);
+		sqlite3_step(db->skill_ra_sql_insert);
+		sqlite3_reset(db->skill_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(skill_db.db);
+	return CHECK_PASSED;
+}
+
+int produce_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	char buf[BUF_SIZE];
+	native_t produce_db;
+	produce_ra * produce_ra_db = NULL;
+	memset(&produce_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &produce_db, &load_ra_native[3]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena produce database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(produce_db.db == NULL || produce_db.size <= 0) {
+		exit_func_safe("failed to load rathena produce database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, produce_ra_db = produce_db.db; i < produce_db.size; i++) {
+		sqlite3_clear_bindings(db->produce_ra_sql_insert);
+		sqlite3_bind_int(db->produce_ra_sql_insert, 	1, produce_ra_db[i].id);
+		sqlite3_bind_int(db->produce_ra_sql_insert, 	2, produce_ra_db[i].item_id);
+		sqlite3_bind_int(db->produce_ra_sql_insert, 	3, produce_ra_db[i].item_lv);
+		sqlite3_bind_int(db->produce_ra_sql_insert, 	4, produce_ra_db[i].skill_id);
+		sqlite3_bind_int(db->produce_ra_sql_insert, 	5, produce_ra_db[i].skill_lv);
+		array_to_string(buf, produce_ra_db[i].item_id_req);
+		sqlite3_bind_text(db->produce_ra_sql_insert, 	6, buf, strlen(buf), SQLITE_TRANSIENT);
+		array_to_string_cnt(buf, produce_ra_db[i].item_amount_req, array_field_cnt(buf) + 1);
+		sqlite3_bind_text(db->produce_ra_sql_insert, 	7, buf, strlen(buf), SQLITE_TRANSIENT);
+		sqlite3_step(db->produce_ra_sql_insert);
+		sqlite3_reset(db->produce_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(produce_db.db);
+	return CHECK_PASSED;
+}
+
+int mercenary_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	native_t mercenary_db;
+	mercenary_ra * mercenary_ra_db = NULL;
+	memset(&mercenary_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &mercenary_db, &load_ra_native[4]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena mercenary database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(mercenary_db.db == NULL || mercenary_db.size <= 0) {
+		exit_func_safe("failed to load rathena mercenary database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, mercenary_ra_db = mercenary_db.db; i < mercenary_db.size; i++) {
+		sqlite3_clear_bindings(db->mercenary_ra_sql_insert);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	1, 	mercenary_ra_db[i].id);
+		sqlite3_bind_text(db->mercenary_ra_sql_insert, 	2, 	mercenary_ra_db[i].sprite, 	strlen(mercenary_ra_db[i].sprite), 	SQLITE_STATIC);
+		sqlite3_bind_text(db->mercenary_ra_sql_insert, 	3, 	mercenary_ra_db[i].name, 	strlen(mercenary_ra_db[i].name), 	SQLITE_STATIC);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	4, 	mercenary_ra_db[i].lv);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	5, 	mercenary_ra_db[i].hp);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	6, 	mercenary_ra_db[i].sp);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	7, 	mercenary_ra_db[i].range1);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	8, 	mercenary_ra_db[i].atk1);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	9, 	mercenary_ra_db[i].atk2);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	10, mercenary_ra_db[i].def);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	11, mercenary_ra_db[i].mdef);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	12, mercenary_ra_db[i].str);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	13, mercenary_ra_db[i].agi);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	14, mercenary_ra_db[i].vit);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	15, mercenary_ra_db[i].intr);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	16, mercenary_ra_db[i].dex);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	17, mercenary_ra_db[i].luk);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	18, mercenary_ra_db[i].range2);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	19, mercenary_ra_db[i].range3);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	20, mercenary_ra_db[i].scale);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	21, mercenary_ra_db[i].race);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	22, mercenary_ra_db[i].element);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	23, mercenary_ra_db[i].speed);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	24, mercenary_ra_db[i].adelay);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	25, mercenary_ra_db[i].amotion);
+		sqlite3_bind_int(db->mercenary_ra_sql_insert, 	26, mercenary_ra_db[i].dmotion);
+		sqlite3_step(db->mercenary_ra_sql_insert);
+		sqlite3_reset(db->mercenary_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(mercenary_db.db);
+	return CHECK_PASSED;
+}
+
+int pet_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	native_t pet_db;
+	pet_ra * pet_ra_db = NULL;
+	memset(&pet_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &pet_db, &load_ra_native[5]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena mercenary database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(pet_db.db == NULL || pet_db.size <= 0) {
+		exit_func_safe("failed to load rathena mercenary database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, pet_ra_db = pet_db.db; i < pet_db.size; i++) {
+		sqlite3_clear_bindings(db->pet_ra_sql_insert);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	1, 	pet_ra_db[i].mob_id);
+		sqlite3_bind_text(db->pet_ra_sql_insert, 	2, 	pet_ra_db[i].name, 			strlen(pet_ra_db[i].name), 			SQLITE_STATIC);
+		sqlite3_bind_text(db->pet_ra_sql_insert, 	3, 	pet_ra_db[i].jname, 		strlen(pet_ra_db[i].jname), 		SQLITE_STATIC);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	4, 	pet_ra_db[i].lure_id);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	5, 	pet_ra_db[i].egg_id);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	6, 	pet_ra_db[i].equip_id);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	7, 	pet_ra_db[i].food_id);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	8, 	pet_ra_db[i].fullness);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	9, 	pet_ra_db[i].hungry_delay);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	10, pet_ra_db[i].r_hungry);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	11, pet_ra_db[i].r_full);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	12, pet_ra_db[i].intimate);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	13, pet_ra_db[i].die);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	14, pet_ra_db[i].speed);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	15, pet_ra_db[i].capture);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	16, pet_ra_db[i].s_performance);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	17, pet_ra_db[i].talk_convert);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	18, pet_ra_db[i].attack_rate);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	19, pet_ra_db[i].defence_attack_rate);
+		sqlite3_bind_int(db->pet_ra_sql_insert, 	20, pet_ra_db[i].change_target_rate);
+		sqlite3_bind_text(db->pet_ra_sql_insert, 	21, pet_ra_db[i].pet_script, 	strlen(pet_ra_db[i].pet_script), 	SQLITE_STATIC);
+		sqlite3_bind_text(db->pet_ra_sql_insert, 	22, pet_ra_db[i].loyal_script, 	strlen(pet_ra_db[i].loyal_script), 	SQLITE_STATIC);
+		sqlite3_step(db->pet_ra_sql_insert);
+		sqlite3_reset(db->pet_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(pet_db.db);
+	return CHECK_PASSED;
+}
+
+int const_ra_sql_load(db_ra_t * db, const char * path) {
+	int i = 0;
+	native_t const_db;
+	const_ra * const_ra_db = NULL;
+	memset(&const_db, 0, sizeof(native_t));
+
+	/* load the native database */
+	if(load_native(path, trim_alpha, load_native_general, &const_db, &load_ra_native[7]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena constant database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(const_db.db == NULL || const_db.size <= 0) {
+		exit_func_safe("failed to load rathena constant database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, const_ra_db = const_db.db; i < const_db.size; i++) {
+		sqlite3_clear_bindings(db->const_ra_sql_insert);
+		sqlite3_bind_text(db->const_ra_sql_insert, 	1, const_ra_db[i].name, strlen(const_ra_db[i].name), SQLITE_STATIC);
+		sqlite3_bind_int(db->const_ra_sql_insert, 	2, const_ra_db[i].value);
+		sqlite3_bind_int(db->const_ra_sql_insert, 	3, const_ra_db[i].type);
+		sqlite3_step(db->const_ra_sql_insert);
+		sqlite3_reset(db->const_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(const_db.db);
+	return CHECK_PASSED;
+}
+
+int default_rathena_database(void) {
+	db_ra_t db;
+	create_rathena_database(&db, "/root/Desktop/dev/eAdb.Compiler3/rathena.db");
+	item_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_db.txt");
+	mob_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/mob_db.txt");
+	skill_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/skill_db.txt");
+	produce_ra_sql_load(&db, "/root/Desktop/git/rathena/db/produce_db.txt");
+	mercenary_ra_sql_load(&db, "/root/Desktop/git/rathena/db/mercenary_db.txt");
+	pet_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/pet_db.txt");
+	const_ra_sql_load(&db, "/root/Desktop/git/rathena/db/const.txt");
+	finalize_rathena_database(&db);
+	return CHECK_PASSED;
 }

@@ -89,4 +89,9 @@
 	/* copy upto function */
 	void strncopy(char *, int, const unsigned char *);
 	int strnload(char * buf, int size, char * val);
+
+	/* auxiliary converters */
+	char * array_to_string(char *, int *);
+	char * array_to_string_cnt(char *, int *, int);
+	int array_field_cnt(char *);
 #endif

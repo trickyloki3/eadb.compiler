@@ -10,6 +10,7 @@
 	#include "load.h"
  	#include "util.h"
 	#include "setting.h"
+ 	#include "sqlite3.h"
 
  	/* rathena database type definitions 
 	 * -----------------------------------------
@@ -257,4 +258,126 @@
 
 	/* rathena auxiliary */
 	int load_rathena_database(const char * eathena_path);
+
+	/* rathena sqlite3 database interface */
+	#define rathena_database_sql	"DROP TABLE IF EXISTS item_ra;"																\
+									"DROP TABLE IF EXISTS mob_ra;"																\
+									"DROP TABLE IF EXISTS skill_ra;"															\
+									"DROP TABLE IF EXISTS produce_ra;"															\
+									"DROP TABLE IF EXISTS mercenary_ra;"														\
+									"DROP TABLE IF EXISTS pet_ra;"																\
+									"DROP TABLE IF EXISTS item_group_ra;"														\
+									"DROP TABLE IF EXISTS const_ra;"															\
+									"DROP TABLE IF EXISTS item_combo_ra;"														\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS item_ra(" 														\
+									"id INTEGER PRIMARY KEY, aegis TEXT, eathena TEXT," 										\
+									"type INTEGER, buy INTEGER, sell INTEGER, weight INTEGER, " 								\
+									"matk INTEGER, atk INTEGER, def INTEGER, range INTEGER, slots INTEGER, " 					\
+									"job INTEGER, upper INTEGER, gender INTEGER, loc INTEGER, " 								\
+									"wlv INTEGER, elv INTEGER, refineable INTEGER, view INTEGER, " 								\
+									"script TEXT, onequip TEXT, onunequip TEXT);"												\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS mob_ra(" 														\
+									"id INTEGER PRIMARY KEY, sprite TEXT, kro TEXT, iro TEXT, " 								\
+									"lv INTEGER, hp INTEGER, sp INTEGER, exp INTEGER, jexp INTEGER, " 							\
+									"range INTEGER, atk1 INTEGER, atk2 INTEGER, def INTEGER, mdef INTEGER, " 					\
+									"str INTEGER, agi INTEGER, vit INTEGER, intr INTEGER, dex INTEGER, " 						\
+									"luk INTEGER, range2 INTEGER, range3 INTEGER, scale INTEGER, race INTEGER, " 				\
+									"element INTEGER, mode INTEGER, speed INTEGER, adelay INTEGER, amotion INTEGER, " 			\
+									"dmotion INTEGER, mexp INTEGER, mvp1id INTEGER, mvp1per INTEGER, " 							\
+									"mvp2id INTEGER, mvp2per INTEGER, mvp3id INTEGER, mvp3per INTEGER, drop1id INTEGER, " 		\
+									"drop1per INTEGER, drop2id INTEGER, drop2per INTEGER, drop3id INTEGER, drop3per INTEGER, " 	\
+									"drop4id INTEGER, drop4per INTEGER, drop5id INTEGER, drop5per INTEGER, drop6id INTEGER, " 	\
+									"drop6per INTEGER, drop7id INTEGER, drop7per INTEGER, drop8id INTEGER, drop8per INTEGER, " 	\
+									"drop9id INTEGER, drop9per INTEGER, dropcardid INTEGER, dropcardper INTEGER); "				\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS skill_ra(" 														\
+									"id INTEGER PRIMARY KEY, range TEXT, hit INTEGER, inf INTEGER, " 							\
+									"element TEXT, nk INTEGER, splash TEXT, max INTEGER, hit_amount INTEGER, " 					\
+									"cast_cancel TEXT, cast_def_reduce_rate INTEGER, inf2 INTEGER, " 							\
+									"maxcount TEXT, type TEXT, blow_count TEXT, inf3 INTEGER, name TEXT, desc TEXT);"			\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS produce_ra(" 													\
+									"id INTEGER PRIMARY KEY, item_id INTEGER, item_lv INTEGER, " 								\
+									"req_skill INTEGER, req_skill_lv INTEGER, material TEXT, amount TEXT);"						\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS mercenary_ra(" 													\
+									"id INTEGER PRIMARY KEY, sprite TEXT, name TEXT, " 											\
+									"lv INTEGER, hp INTEGER, sp INTEGER, range1 INTEGER, " 										\
+									"atk1 INTEGER, atk2 INTEGER, def INTEGER, mdef INTEGER, " 									\
+									"str INTEGER, agi INTEGER, vit INTEGER, intr INTEGER, " 									\
+									"dex INTEGER, luk INTEGER, range2 INTEGER, range3 INTEGER, "								\
+									"scale INTEGER, race INTEGER, element INTEGER, speed INTEGER, " 							\
+									"adelay INTEGER, amotion INTEGER, dmotion INTEGER);"										\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS pet_ra(" 														\
+									"mob_id INTEGER PRIMARY KEY, pet_name TEXT, pet_jname TEXT, " 								\
+									"lure_id INTEGER, egg_id INTEGER, equip_id INTEGER, " 										\
+									"food_id INTEGER, fullness INTEGER, hungry_delay INTEGER, " 								\
+									"r_hungry INTEGER, r_full INTEGER, intimate INTEGER, " 										\
+									"die INTEGER, capture INTEGER, speed INTEGER, " 											\
+									"s_performance INTEGER, talk_convert INTEGER, attack_rate INTEGER, " 						\
+									"defence_attack_rate INTEGER, change_target_rate INTEGER, pet_script TEXT, " 				\
+									"loyal_script TEXT);"																		\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS item_group_ra(group_id INTEGER, item_id INTEGER, rate INTEGER);"\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS const_ra(name TEXT, value INTEGER, type INTEGER);"				\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS item_combo_ra(" 												\
+									"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"						
+
+
+
+	#define item_ra_insert 			"INSERT INTO item_ra VALUES(?, " 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+	#define mob_ra_insert 			"INSERT INTO mob_ra VALUES(" 																\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?);"
+	#define skill_ra_insert 		"INSERT INTO skill_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define produce_ra_insert 		"INSERT INTO produce_ra VALUES(?, ?, ?, ?, ?, ?, ?);"
+	#define mercenary_ra_insert 	"INSERT INTO mercenary_ra VALUES(" 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 													\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+	#define pet_ra_insert 			"INSERT INTO pet_ra VALUES(" 																\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define item_group_ra_insert 	"INSERT INTO item_group_ra VALUES(?, ?, ?);"
+	#define const_ra_insert			"INSERT INTO const_ra VALUES(?, ?, ?);"
+	#define item_combo_ra_insert 	"INSERT INTO item_combo_ra VALUES(?, ?, ?);"
+
+	typedef struct db_ra_t {
+		sqlite3 * db;
+		sqlite3_stmt * item_ra_sql_insert;
+		sqlite3_stmt * mob_ra_sql_insert;
+		sqlite3_stmt * skill_ra_sql_insert;
+		sqlite3_stmt * produce_ra_sql_insert;
+		sqlite3_stmt * mercenary_ra_sql_insert;
+		sqlite3_stmt * pet_ra_sql_insert;
+		sqlite3_stmt * item_group_ra_sql_insert;
+		sqlite3_stmt * const_ra_sql_insert;
+		sqlite3_stmt * item_combo_ra_sql_insert;
+	} db_ra_t;
+
+	/* database loading depends on the path of the database */
+	int default_rathena_database(void);
+	int create_rathena_database(db_ra_t * db, const char * path);
+	int finalize_rathena_database(db_ra_t * db);
+	int item_ra_sql_load(db_ra_t * db, const char * path);
+	int mob_ra_sql_load(db_ra_t * db, const char * path);
+	int skill_ra_sql_load(db_ra_t * db, const char * path);
+	int produce_ra_sql_load(db_ra_t * db, const char * path);
+	int mercenary_ra_sql_load(db_ra_t * db, const char * path);
+	int pet_ra_sql_load(db_ra_t * db, const char * path);
+	int const_ra_sql_load(db_ra_t * db, const char * path);
+
+	int item_group_ra_sql_load(db_ra_t * db, const char * path);
+	int item_package_ra_sql_load(db_ra_t * db, const char * path);
+	int item_combo_ra_sql_load(db_ra_t * db, const char * path);
 #endif

@@ -96,13 +96,13 @@ int main(int argc, char * argv[]) {
 			load_db_t * db12 = load("../radb/produce_db.txt", trim_numeric, load_general, ra_produce_load);
 			load_db_t * db15 = load("../radb/mercenary_db.txt", trim_numeric, load_general, merc_load);
 			load_db_t * db18 = load("../radb/pet_db.txt", trim_numeric, load_general, pet_load);
+			load_db_t * db23 = load("../radb/const.txt", trim_general, load_general, const_load);
 			load_db_t * db33 = load("../radb/item_group/item_bluebox.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db34 = load("../radb/item_group/item_cardalbum.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db35 = load("../radb/item_group/item_findingore.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db36 = load("../radb/item_group/item_giftbox.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db37 = load("../radb/item_group/item_violetbox.txt", trim_alpha, load_general, ra_item_group_load);
 			load_db_t * db38 = load("../radb/item_group/item_misc.txt", trim_alpha, load_general, ra_item_group_load);
-			load_db_t * db23 = load("../radb/const.txt", trim_general, load_general, const_load);
 			load_db_t * db39 = load("../radb/item_group/item_package.txt", trim_alpha, load_general, ra_item_package_load);
 			load_db_t * db40 = load("../radb/item_combo_db.txt", trim_numeric, load_general, ra_item_combo_load);
 			load_db_t * db41 = load("res/option_db.txt", trim_alpha, load_general, option_load);
