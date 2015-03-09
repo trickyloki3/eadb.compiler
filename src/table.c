@@ -90,7 +90,7 @@ char * regen_tbl(int i) {
 	switch(i) {
 		case 1: return "HP"; break;
 		case 2: return "SP"; break;
-		default: return "Error"; break;
+		default: return "error"; break;
 	};
 }
 
@@ -98,7 +98,7 @@ char * spgd_tbl(int i) {
 	switch(i) {
 		case 0: return "heal SP"; break;
 		case 1: return "drain SP"; break;
-		default: return "Error"; break;
+		default: return "error"; break;
 	};
 }
 
@@ -108,7 +108,7 @@ char * castgt_tbl(int i) {
 		case 1: return "on enemy"; break;
 		case 2: return "on self and random skill level"; break;
 		case 3: return "on enemey and random skill level"; break;
-		default: return "Error"; break;
+		default: return "error"; break;
 	};
 }
 
@@ -117,7 +117,7 @@ char * flagtgt_tbl(int i) {
 		case 1: return "on self";
 		case 2: return "random skill level";
 		case 3: return "on self and random skill level";
-		default: return "Error";
+		default: return "error";
 	};
 }
 
@@ -163,7 +163,7 @@ char * loc_tbl(int i) {
 		case 524288: return "Shadow Shoes";
 		case 1048576: return "Shadow Right Accessory";
 		case 2097152: return "Shadow Left Accessory";
-		default: return "Error";
+		default: return "error";
 	}
 }
 
@@ -192,7 +192,7 @@ char * weapon_tbl(int i) {
 		case 20: return "Shotgun";
 		case 21: return "Grenade Launcher";
 		case 22: return "Fuuma Shuriken";
-		default: return "Error";
+		default: return "error";
 	};
 }
 
@@ -405,7 +405,7 @@ char * job_tbl(int i) {
 		case 4191: return "Baby Novice S";
 		case 4211: return "Kagerou";
 		case 4212: return "Oboro";
-		default: return "Error";
+		default: return "error";
 	};
 }
 

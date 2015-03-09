@@ -610,6 +610,8 @@ int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id) {
 	combo_t * temp = NULL;
 	combo_t * root = NULL;
 	combo_t * iter = NULL;
+	/* only supported on rathena */
+	if(db->mode != MODE_RATHENA) return CHECK_FAILED;
 	if(exit_null_safe(3, db, search, db->item_combo_id_search)) return CHECK_FAILED;
 	stmt = db->item_combo_id_search;
 	sqlite3_clear_bindings(stmt);

@@ -33,9 +33,9 @@ int main(int argc, char * argv[]) {
 	}
 	
 	/* attach database to script */
-	script.mode = MODE_RATHENA;
+	script.mode = MODE_HERCULES;
 	script.db = &db;
-	init_db(script.db, MODE_RATHENA, "/root/Desktop/dev/eAdb.Compiler3/resources.db", "/root/Desktop/dev/eAdb.Compiler3/rathena.db");
+	init_db(script.db, script.mode, "/root/Desktop/dev/eAdb.Compiler3/resources.db", "/root/Desktop/dev/eAdb.Compiler3/hercules.db");
 
 	/* process all items in database */
 	ret = item_iterate(script.db, &item);

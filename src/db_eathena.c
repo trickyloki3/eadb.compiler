@@ -320,7 +320,7 @@ int load_eathena_database(const char * eathena_path) {
 
 	native_t const_db;
 	status = load_native("/root/Desktop/git/eathena/db/const.txt",
-	trim_numeric, load_native_general, &const_db, &load_ea_native[7]);
+	trim_general, load_native_general, &const_db, &load_ea_native[7]);
 	if(status == CHECK_FAILED) {
 		fprintf(stderr,"failed to load eathena const database.\n");
 		exit(EXIT_FAILURE);
@@ -748,7 +748,7 @@ int const_ea_sql_load(db_ea_t * db, const char * path) {
 	memset(&const_db, 0, sizeof(native_t));
 
 	/* load the native database */
-	if(load_native(path, trim_numeric, load_native_general, &const_db, &load_ea_native[7]) == CHECK_FAILED) {
+	if(load_native(path, trim_general, load_native_general, &const_db, &load_ea_native[7]) == CHECK_FAILED) {
 		exit_func_safe("failed to load eathena constant database at %s; invalid path", path);
 		return CHECK_FAILED;
 	}

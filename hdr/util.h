@@ -17,27 +17,8 @@
     #include <stdint.h>
  	#include "setting.h"
 
- 	/* database buffer size */
- 	#define BONUS_PREFIX_SIZE 8
- 	#define BONUS_BONUS_SIZE 64
- 	#define BONUS_FORMAT_SIZE 256
- 	#define BONUS_PARAMATER_SIZE 5
- 	#define CONST_NAME_SIZE 128
- 	#define SKILL_NAME 64
- 	#define SKILL_FORMAT 256
- 	#define MOB_NAME_SIZE 64
- 	#define MERC_NAME_SIZE 64
- 	#define STATUS_NAME_SIZE 64
- 	#define STATUS_FORMAT_SIZE 256
- 	#define STATUS_PARAMATER_SIZE 4
- 	#define VAR_ID 32
- 	#define VAR_NAME 32
- 	#define OPTION_SIZE 32
- 	#define OPTION_NAME_SIZE 64
- 	#define MAP_SIZE 64
-
 	/* error checking and exiting */
- 	#define ENABLE_EXIT 1
+ 	#define ENABLE_EXIT 0
  	#define CHECK_PASSED 0 /* return by exit function for error checking */
  	#define CHECK_FAILED 1
  	extern char err_buf[BUF_SIZE];

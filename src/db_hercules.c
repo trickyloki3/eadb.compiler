@@ -392,7 +392,7 @@ int load_hercules_database(const char * hercules_path) {
 
 	native_t const_db;
 	status = load_native("/root/Desktop/git/Hercules/db/const.txt",
-	trim_numeric, load_native_general, &const_db, &load_he_native[5]);
+	trim_general, load_native_general, &const_db, &load_he_native[5]);
 	if(status == CHECK_FAILED) {
 		fprintf(stderr,"failed to load hercules const database.\n");
 		exit(EXIT_FAILURE);
@@ -806,7 +806,7 @@ int const_he_sql_load(db_he_t * db, const char * path) {
 	memset(&const_db, 0, sizeof(native_t));
 
 	/* load the native database */
-	if(load_native(path, trim_numeric, load_native_general, &const_db, &load_he_native[5]) == CHECK_FAILED) {
+	if(load_native(path, trim_general, load_native_general, &const_db, &load_he_native[5]) == CHECK_FAILED) {
 		exit_func_safe("failed to load hercules constant database at %s; invalid path", path);
 		return CHECK_FAILED;
 	}

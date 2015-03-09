@@ -353,7 +353,7 @@ int load_rathena_database(const char * rathena_path) {
 
 	native_t const_db;
 	status = load_native("/root/Desktop/git/rathena/db/const.txt",
-	trim_alpha, load_native_general, &const_db, &load_ra_native[7]);
+	trim_general, load_native_general, &const_db, &load_ra_native[7]);
 	if(status == CHECK_FAILED) {
 		fprintf(stderr,"failed to load rathena item group database.\n");
 		exit(EXIT_FAILURE);
@@ -768,7 +768,7 @@ int const_ra_sql_load(db_ra_t * db, const char * path) {
 	memset(&const_db, 0, sizeof(native_t));
 
 	/* load the native database */
-	if(load_native(path, trim_alpha, load_native_general, &const_db, &load_ra_native[7]) == CHECK_FAILED) {
+	if(load_native(path, trim_general, load_native_general, &const_db, &load_ra_native[7]) == CHECK_FAILED) {
 		exit_func_safe("failed to load rathena constant database at %s; invalid path", path);
 		return CHECK_FAILED;
 	}
