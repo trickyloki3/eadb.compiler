@@ -117,20 +117,17 @@ int load_he_item(const char * file_name, native_t * native) {
 				item[i].equiplv[STACK_AMOUNT] = config_setting_get_int_elem(item_sub, STACK_AMOUNT);
 				item[i].equiplv[STACK_TYPE] = config_setting_get_int_elem(item_sub, STACK_TYPE);
 			}
-			config_setting_lookup_string(item_row, "Script", &str);
-			if(str == NULL) 
+			if(config_setting_lookup_string(item_row, "Script", &str) == CONFIG_FALSE) 
 				strnload(item[i].script, MAX_SCRIPT_SIZE, "");
 			else
 				strnload(item[i].script, MAX_SCRIPT_SIZE, (char *) str);
 
-			config_setting_lookup_string(item_row, "OnEquipScript", &str);
-			if(str == NULL) 
+			if(config_setting_lookup_string(item_row, "OnEquipScript", &str) == CONFIG_FALSE) 
 				strnload(item[i].onequipscript, MAX_SCRIPT_SIZE, "");
 			else
 				strnload(item[i].onequipscript, MAX_SCRIPT_SIZE, (char *) str);
-
-			config_setting_lookup_string(item_row, "OnUnequipScript", &str);
-			if(str == NULL) 
+			
+			if(config_setting_lookup_string(item_row, "OnUnequipScript", &str) == CONFIG_FALSE) 
 				strnload(item[i].onunequipscript, MAX_SCRIPT_SIZE, "");
 			else
 				strnload(item[i].onunequipscript, MAX_SCRIPT_SIZE, (char *) str);

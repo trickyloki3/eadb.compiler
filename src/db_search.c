@@ -185,6 +185,7 @@ int test_db(void) {
 int item_iterate(db_search_t * db, item_t * item) {
 	int status = 0;
 	status = sqlite3_step(db->item_iterate);
+	memset(item, 0, sizeof(item_t));
     switch(db->mode) {
         case MODE_EATHENA:
             if(status == SQLITE_ROW) {
