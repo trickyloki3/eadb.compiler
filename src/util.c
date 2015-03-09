@@ -299,7 +299,7 @@ int convert_integer_list_static(const char * str, const char * delimit, int * li
          list[i] = convert_integer(fld, 10);
    }
 
-   return CHECK_PASSED;
+   return i;
 }
 
 void array_io(array_w array, FILE * file_stm) {

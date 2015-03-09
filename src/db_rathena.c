@@ -234,9 +234,9 @@ int pet_ra_load(void * db, int row, int col, char * val) {
 int item_group_ra_load(void * db, int row, int col, char * val) {
 	item_group_ra * record = &((item_group_ra *) db)[row];
 	switch(col) {
-		case 0: record->group_id = convert_integer(val, 10); break;
+		case 0: strnload(record->name, MAX_NAME_SIZE, val); break;
 		case 1: record->item_id = convert_integer(val, 10); break;
-		case 2: record->rate = convert_integer(val, 10); break;
+		case 2: record->rate = convert_integer(val, 10); 	break;
 		default: exit_func_safe("invalid column field %d in rathena item group database.\n", col);
 	}
 	return 0;
@@ -794,8 +794,229 @@ int const_ra_sql_load(db_ra_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
+int item_group_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search) {
+	int i = 0;
+	native_t item_group_db;
+	const_ra const_name_search;
+	item_group_ra * item_group_ra_db = NULL;
+	memset(&item_group_db, 0, sizeof(native_t));
+	memset(&const_name_search, 0, sizeof(const_ra));
+
+	/* load the native database */
+	if(load_native(path, trim_alpha, load_native_general, &item_group_db, &load_ra_native[6]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena item group database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(item_group_db.db == NULL || item_group_db.size <= 0) {
+		exit_func_safe("failed to load rathena item group database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, item_group_ra_db = item_group_db.db; i < item_group_db.size; i++) {
+		/* search for group id from group name */
+		if(const_ra_name_search(db_search, item_group_ra_db[i].name, &const_name_search) != CHECK_PASSED) {
+			exit_func_safe("failed to search for group id from group name %s", item_group_ra_db[i].name);
+			break;
+		}
+
+		/* load the item group record */
+		sqlite3_clear_bindings(db->item_group_ra_sql_insert);
+		sqlite3_bind_int(db->item_group_ra_sql_insert, 1, const_name_search.value);
+		sqlite3_bind_int(db->item_group_ra_sql_insert, 2, item_group_ra_db[i].item_id);
+		sqlite3_bind_int(db->item_group_ra_sql_insert, 3, item_group_ra_db[i].rate);
+		sqlite3_step(db->item_group_ra_sql_insert);
+		sqlite3_reset(db->item_group_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(item_group_db.db);
+	return CHECK_PASSED;
+}
+
+int item_package_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search) {
+	int i = 0;
+	native_t package_db;
+	const_ra const_name_search;
+	item_ra item_name_search;
+	package_ra * package_ra_db = NULL;
+	memset(&package_db, 0, sizeof(native_t));
+	memset(&const_name_search, 0, sizeof(const_ra));
+	memset(&item_name_search, 0, sizeof(item_ra));
+
+	/* load the native database */
+	if(load_native(path, trim_alpha, load_native_general, &package_db, &load_ra_native[8]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena item package database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(package_db.db == NULL || package_db.size <= 0) {
+		exit_func_safe("failed to load rathena item package database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, package_ra_db = package_db.db; i < package_db.size; i++) {
+		/* search for group id from group name */
+		if(const_ra_name_search(db_search, package_ra_db[i].group_name, &const_name_search) != CHECK_PASSED) {
+			exit_func_safe("failed to search for group id from group name %s", package_ra_db[i].group_name);
+			break;
+		}
+		/* search for item id from item name or verified item id exists */
+		if(item_ra_name_search(db_search, package_ra_db[i].item_name, &item_name_search) != CHECK_PASSED) {
+			if(item_ra_id_search(db_search, convert_integer(package_ra_db[i].item_name, 10), &item_name_search) != CHECK_PASSED) {
+				exit_func_safe("failed to search for item id from item name %s", package_ra_db[i].item_name);
+				break;	
+			}
+		}
+		/* load the package into the item group database */
+		sqlite3_clear_bindings(db->item_group_ra_sql_insert);
+		sqlite3_bind_int(db->item_group_ra_sql_insert, 1, const_name_search.value);
+		sqlite3_bind_int(db->item_group_ra_sql_insert, 2, item_name_search.id);
+		sqlite3_bind_int(db->item_group_ra_sql_insert, 3, package_ra_db[i].rate);
+		sqlite3_step(db->item_group_ra_sql_insert);
+		sqlite3_reset(db->item_group_ra_sql_insert);
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(package_db.db);
+	return CHECK_PASSED;
+}
+
+int item_combo_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search) {
+	int i = 0;
+	int j = 0;
+	int offset = 0;
+	char buffer[BUF_SIZE];
+	native_t combo_db;
+	combo_ra * combo_ra_db = NULL;
+	item_ra item_name_search;
+	array_w item_id_list;
+	int * item_id_array = NULL;
+	memset(&combo_db, 0, sizeof(native_t));
+	memset(&item_name_search, 0, sizeof(item_ra));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &combo_db, &load_ra_native[9]) == CHECK_FAILED) {
+		exit_func_safe("failed to load rathena combo database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(combo_db.db == NULL || combo_db.size <= 0) {
+		exit_func_safe("failed to load rathena combo database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 rathena database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, combo_ra_db = combo_db.db; i < combo_db.size; i++) {
+		offset = 0;
+		/* convert the item group string into an array of integers */
+		memset(&item_id_list, 0, sizeof(array_w));
+		convert_integer_list(combo_ra_db[i].item_id.str, ":", &item_id_list);
+		item_id_array = item_id_list.array;
+
+		/* add the item id and script in the array of integers */
+		if(item_id_array != NULL) {
+			/* build a buffer of all item names */
+			memset(&item_name_search, 0, sizeof(item_ra));
+			for(j = 0; j < item_id_list.size; j++) {
+				if(item_ra_id_search(db_search, item_id_array[j], &item_name_search) == CHECK_PASSED) {
+					offset += (offset == 0)?
+						sprintf(buffer + offset, "[%s", item_name_search.eathena):
+						sprintf(buffer + offset, ", %s", item_name_search.eathena);
+					buffer[offset] = '\0';
+				}
+			}
+			offset += sprintf(buffer + offset, " Combo]");
+
+			for(j = 0; j < item_id_list.size; j++) {
+				sqlite3_clear_bindings(db->item_combo_ra_sql_insert);
+				sqlite3_bind_int(db->item_combo_ra_sql_insert, 1, item_id_array[j]);
+				sqlite3_bind_text(db->item_combo_ra_sql_insert, 2, combo_ra_db[i].script, strlen(combo_ra_db[i].script), SQLITE_STATIC);
+				sqlite3_bind_text(db->item_combo_ra_sql_insert, 3, buffer, offset, SQLITE_STATIC);
+				sqlite3_step(db->item_combo_ra_sql_insert);
+				sqlite3_reset(db->item_combo_ra_sql_insert);
+			}
+			/* free the list of integers */
+			free(item_id_list.array);
+		}
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(combo_db.db);
+	return CHECK_PASSED;
+}
+
+int init_ra_search(db_ra_t * db, db_ra_aux_t * db_search) {
+	static const char * const_name_sql = "SELECT * FROM const_ra WHERE name = ? COLLATE NOCASE;";
+	static const char * item_name_sql = "SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;";
+	static const char * item_id_sql = "SELECT id, eathena, script FROM item_ra WHERE id = ? COLLATE NOCASE;";
+	if(sqlite3_prepare_v2(db->db, const_name_sql, strlen(const_name_sql), &db_search->const_ra_name_search, NULL) != SQLITE_OK ||
+	   sqlite3_prepare_v2(db->db, item_name_sql, strlen(item_name_sql), &db_search->item_ra_name_search, NULL) != SQLITE_OK ||
+	   sqlite3_prepare_v2(db->db, item_id_sql, strlen(item_id_sql), &db_search->item_ra_id_search, NULL) != SQLITE_OK) {
+		exit_abt_safe("item and constant database must be loaded");
+		return CHECK_FAILED;
+	}
+	return CHECK_PASSED;
+}
+
+int const_ra_name_search(db_ra_aux_t * db_search, char * group_name, const_ra * const_name_search) {
+	int status = 0;
+	sqlite3_clear_bindings(db_search->const_ra_name_search);
+	sqlite3_bind_text(db_search->const_ra_name_search, 1, group_name, strlen(group_name), SQLITE_STATIC);
+	status = sqlite3_step(db_search->const_ra_name_search);
+	if(status == SQLITE_ROW) {
+		strncopy(const_name_search->name, MAX_NAME_SIZE, sqlite3_column_text(db_search->const_ra_name_search, 0));
+		const_name_search->value = sqlite3_column_int(db_search->const_ra_name_search, 1);
+		const_name_search->type = sqlite3_column_int(db_search->const_ra_name_search, 2);
+	}
+	sqlite3_reset(db_search->const_ra_name_search);
+	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+}
+
+int item_ra_name_search(db_ra_aux_t * db_search, char * item_name, item_ra * item_name_search) {
+	int status = 0;
+	sqlite3_clear_bindings(db_search->item_ra_name_search);
+	sqlite3_bind_text(db_search->item_ra_name_search, 1, item_name, strlen(item_name), SQLITE_STATIC);
+	sqlite3_bind_text(db_search->item_ra_name_search, 2, item_name, strlen(item_name), SQLITE_STATIC);
+	status = sqlite3_step(db_search->item_ra_name_search);
+	if(status == SQLITE_ROW) {
+		item_name_search->id = sqlite3_column_int(db_search->item_ra_name_search, 0);
+		strncopy(item_name_search->eathena, MAX_NAME_SIZE, sqlite3_column_text(db_search->item_ra_name_search, 1));
+		strncopy(item_name_search->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db_search->item_ra_name_search, 2));
+	}
+	sqlite3_reset(db_search->item_ra_name_search);
+	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+}
+
+int item_ra_id_search(db_ra_aux_t * db_search, int item_id, item_ra * item_name_search) {
+	int status = 0;
+	sqlite3_clear_bindings(db_search->item_ra_id_search);
+	sqlite3_bind_int(db_search->item_ra_id_search, 1, item_id);
+	status = sqlite3_step(db_search->item_ra_id_search);
+	if(status == SQLITE_ROW) {
+		item_name_search->id = sqlite3_column_int(db_search->item_ra_id_search, 0);
+		strncopy(item_name_search->eathena, MAX_NAME_SIZE, sqlite3_column_text(db_search->item_ra_id_search, 1));
+    	strncopy(item_name_search->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db_search->item_ra_id_search, 2));
+	}
+	sqlite3_reset(db_search->item_ra_id_search);
+	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+}
+
+int deit_ra_search(db_ra_aux_t * db_search) {
+	sqlite3_finalize(db_search->const_ra_name_search);
+	sqlite3_finalize(db_search->item_ra_name_search);
+	sqlite3_finalize(db_search->item_ra_id_search);
+	return CHECK_PASSED;
+}
+
 int default_rathena_database(void) {
 	db_ra_t db;
+	db_ra_aux_t db_search;
 	create_rathena_database(&db, "/root/Desktop/dev/eAdb.Compiler3/rathena.db");
 	item_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_db.txt");
 	mob_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/mob_db.txt");
@@ -804,6 +1025,18 @@ int default_rathena_database(void) {
 	mercenary_ra_sql_load(&db, "/root/Desktop/git/rathena/db/mercenary_db.txt");
 	pet_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/pet_db.txt");
 	const_ra_sql_load(&db, "/root/Desktop/git/rathena/db/const.txt");
+
+	/* load item and constant search queries */
+	init_ra_search(&db, &db_search);
+	item_group_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_bluebox.txt", &db_search);
+	item_group_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_cardalbum.txt", &db_search);
+	item_group_ra_sql_load(&db, "/root/Desktop/git/rathena/db/item_findingore.txt", &db_search);
+	item_group_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_giftbox.txt", &db_search);
+	item_group_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_violetbox.txt", &db_search);
+	item_group_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_misc.txt", &db_search);
+	item_package_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_package.txt", &db_search);
+	item_combo_ra_sql_load(&db, "/root/Desktop/git/rathena/db/re/item_combo_db.txt", &db_search);
+	deit_ra_search(&db_search);
 	finalize_rathena_database(&db);
 	return CHECK_PASSED;
 }

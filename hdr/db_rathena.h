@@ -153,7 +153,6 @@
 		int item_id_req[MAX_INGREDIENT];
 		int item_amount_req[MAX_INGREDIENT];
 		int ingredient_count;
-		struct produce_ra * next;
 	} produce_ra;
 
 	typedef struct {
@@ -211,7 +210,8 @@
 	} pet_ra;
 
 	typedef struct {
-		int group_id;
+		int id;
+		char name[MAX_NAME_SIZE];
 		int item_id;
 		int rate;
 	} item_group_ra;
@@ -352,6 +352,12 @@
 	#define const_ra_insert			"INSERT INTO const_ra VALUES(?, ?, ?);"
 	#define item_combo_ra_insert 	"INSERT INTO item_combo_ra VALUES(?, ?, ?);"
 
+	typedef struct db_ra_aux_t {
+		sqlite3_stmt * const_ra_name_search;
+		sqlite3_stmt * item_ra_name_search;
+		sqlite3_stmt * item_ra_id_search;
+	} db_ra_aux_t;
+
 	typedef struct db_ra_t {
 		sqlite3 * db;
 		sqlite3_stmt * item_ra_sql_insert;
@@ -376,8 +382,14 @@
 	int mercenary_ra_sql_load(db_ra_t * db, const char * path);
 	int pet_ra_sql_load(db_ra_t * db, const char * path);
 	int const_ra_sql_load(db_ra_t * db, const char * path);
+	int item_group_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
+	int item_package_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
+	int item_combo_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
 
-	int item_group_ra_sql_load(db_ra_t * db, const char * path);
-	int item_package_ra_sql_load(db_ra_t * db, const char * path);
-	int item_combo_ra_sql_load(db_ra_t * db, const char * path);
+	/* item group and combo require searching existing database */
+	int init_ra_search(db_ra_t * db, db_ra_aux_t * db_search);
+	int deit_ra_search(db_ra_aux_t * db_search);
+	int const_ra_name_search(db_ra_aux_t * db_search, char * group_name, const_ra * const_name_search);
+	int item_ra_name_search(db_ra_aux_t * db_search, char * item_name, item_ra * item_name_search);
+	int item_ra_id_search(db_ra_aux_t * db_search, int item_id, item_ra * item_name_search);
 #endif

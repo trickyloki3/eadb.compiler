@@ -11,6 +11,7 @@
  	#include "util.h"
  	#include "setting.h"
  	#include "libconfig.h"
+ 	#include "sqlite3.h"
 
  	/* resource database type definitions 
 	 * -----------------------------------------
@@ -66,6 +67,20 @@
 		int voff[4];  					/* offset translation stack */
 	} status_res;
 
+	/* type flag */
+	#define TYPE_FUNC 0x00000001
+	#define TYPE_VARI 0x00000002
+
+	/* variable flags */
+	#define VARI_DIRECT 0x00000001
+
+	/* function flags */
+	#define FUNC_DIRECT     0x00000001  /* retrieve min and max directly */
+	#define FUNC_PARAMS     0x00000002  /* retrieve min and max from handler */
+	#define FUNC_GETSKILLLV 0x10000000  /* getskilllv */
+	#define FUNC_RAND       0x20000000  /* rand */
+	#define FUNC_POW        0x40000000  /* pow */
+	
 	typedef struct {
       int tag;         			/* in-house identification */
       char id[MAX_NAME_SIZE]; 	/* identifier string */
@@ -92,4 +107,58 @@
 	int var_res_load(void *, int, int, char *);
 	int block_res_load(void *, int, int, char *);
 	int load_resource_database(const char * resource_path);
+
+	/* resources sqlite3 database interface */
+	#define resource_database_sql 	"DROP TABLE IF EXISTS option_res;"																	\
+									"DROP TABLE IF EXISTS map_res;"																		\
+									"DROP TABLE IF EXISTS bonus_res;"																	\
+									"DROP TABLE IF EXISTS status_res;"																	\
+									"DROP TABLE IF EXISTS var_res;"																		\
+									"DROP TABLE IF EXISTS block_res;"																	\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS option_res(opt TEXT, name TEXT, PRIMARY KEY(opt));"						\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS map_res(id INTEGER, map TEXT, name TEXT, PRIMARY KEY(id));"				\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS bonus_res(" 															\
+									"id INTEGER, flag INTEGER, attr INTEGER, pref TEXT, buff TEXT, desc TEXT," 							\
+									"type_param TEXT, type_cnt INTEGER, order_param TEXT, "												\
+									"order_cnt INTEGER, PRIMARY KEY(id, pref, buff));"													\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS status_res("															\
+									"scid INTEGER, scstr TEXT, type INTEGER, scfmt TEXT, "												\
+									"scend TEXT, vcnt INTEGER, vmod TEXT, voff TEXT, PRIMARY KEY(scid, scstr));"						\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS var_res(tag INTEGER PRIMARY KEY, id TEXT, type INTEGER,  "				\
+									"vflag INTEGER, fflag INTEGER, min INTEGER, max INTEGER, str TEXT);"								\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS block_res(id INTEGER PRIMARY KEY, key TEXT, flag INTEGER);"				\
+
+	#define option_insert 			"INSERT INTO option_res VALUES(?, ?);"
+	#define map_insert				"INSERT INTO map_res VALUES(?, ?, ?);"
+	#define bonus_insert			"INSERT INTO bonus_res VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define status_insert			"INSERT INTO status_res VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+	#define var_insert				"INSERT INTO var_res VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+	#define block_insert			"INSERT INTO block_res VALUES(?, ?, ?);"
+
+	typedef struct db_res_t {
+		sqlite3 * db;
+		sqlite3_stmt * option_sql_insert;
+		sqlite3_stmt * map_sql_insert;
+		sqlite3_stmt * bonus_sql_insert;
+		sqlite3_stmt * status_sql_insert;
+		sqlite3_stmt * var_sql_insert;
+		sqlite3_stmt * block_sql_insert;
+	} db_res_t;
+
+	/* database loading depends on the path of the database */
+	int default_resource_database(void);
+	int create_resource_database(db_res_t * db, const char * path);
+	int finalize_resource_database(db_res_t * db);
+	int resource_option_sql_load(db_res_t * db, const char * path);
+	int resource_map_sql_load(db_res_t * db, const char * path);
+	int resource_bonus_sql_load(db_res_t * db, const char * path);
+	int resource_status_sql_load(db_res_t * db, const char * path);
+	int resource_var_sql_load(db_res_t * db, const char * path);
+	int resource_block_sql_load(db_res_t * db, const char * path);
 #endif
