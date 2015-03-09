@@ -12,12 +12,11 @@
     #include <stdlib.h>
     #include <string.h>
     #include <ctype.h>
-    #include "db.h"
-    #include "api.h"
     #include "util.h"
     #include "name_range.h"
     #include "range.h"
     #include "table.h"
+    #include "db_search.h"
 
     /* return code from (nearly) all functions */
     #define SCRIPT_PASSED 0
@@ -160,11 +159,11 @@
         /* set block node for dependency */
         node_t * set_node;
         /* bonus block keep bonus query and integer results for post analysis */
-        ic_bonus_t bonus;                    /* bonus structure contain entry from item_bonus.txt */
+        bonus_res bonus;                    /* bonus structure contain entry from item_bonus.txt */
         node_t * result[BONUS_SIZE];         /* keep until after minimization */
         /* database references; duplicate information from script_t to prevent 
          * passing script_t to every translator; read only */
-        struct ic_db_t * db;                 /* sqlite3 database handle to athena */
+        db_search_t * db;                   /* sqlite3 database handle to athena */
         int mode;                            /* multiplexer for rathena, eathena, or hercule tables */
         /* translation information */
         logic_node_t * logic_tree;           /* calculational and dependency information */
@@ -189,16 +188,13 @@
         block_list_t block;     /* linked list of allocated blocks */
         block_list_t free;      /* linked list of deallocated blocks */
         token_r token;          /* tokenize script */        
-        struct ic_db_t * db;    /* sqlite3 database handle to athena */
+        db_search_t * db;       /* sqlite3 database handle to athena */
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
     } script_t;
 
 
     /* set this to some file descriptor to dump nodes */
     FILE * node_dbg;
-
-    /* iterate through all the items in athena database */
-    int iter_item_db(int, struct ic_db_t *, ic_item_t *);
 
     /* block linked list operations */
     int list_forward(block_list_t *);
@@ -237,8 +233,8 @@
     int script_translate(script_t *);
     int script_bonus(script_t *);
     int script_generate(script_t *, char *, int *);
-    int script_generate_combo(int, char *, int *, struct ic_db_t *, int);
-    char * script_compile_raw(char *, int, FILE *, struct ic_db_t *, int);
+    int script_generate_combo(int, char *, int *, db_search_t *, int);
+    char * script_compile_raw(char *, int, FILE *, db_search_t *, int);
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
     /* script translation functions */  
@@ -300,7 +296,7 @@
     void node_free(node_t *);
 
     /* support translation */
-    int translate_bonus_desc(node_t **, block_r *, ic_bonus_t *);
+    int translate_bonus_desc(node_t **, block_r *, bonus_res *);
     char * translate_bonus_template(char *, int *, char *, ...);
     void translate_bonus_integer(block_r *, node_t *, int *);
     void translate_bonus_integer2(block_r *, node_t *, int *, char *, char *, char *);

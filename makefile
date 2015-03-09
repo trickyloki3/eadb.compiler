@@ -7,7 +7,7 @@ HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
 LIB = -lsqlite3 -ldl -lpthread -lm
-_OBJ = util.o load.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o db_search.o
+_OBJ = util.o load.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o db_search.o script.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
 # hercule item database require libconfig
@@ -29,10 +29,10 @@ memloki: loki
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./loki
 
 item: src/item.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 itemr: src/itemr.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 loki: src/loki.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)

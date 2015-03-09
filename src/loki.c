@@ -13,7 +13,7 @@ int main(int argc, char * argv[]) {
 	/*default_eathena_database();
 	default_rathena_database();
 	default_hercules_database();
-	default_resource_database();
-	test_db();*/
+	default_resource_database();*/
+	/*test_db();*/
 	return 0;
 }

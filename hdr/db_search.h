@@ -59,6 +59,9 @@
  		char name[MAX_NAME_SIZE];
  		char script[MAX_SCRIPT_SIZE];
  	} item_t;
+ 	#define item_ea_iterate			"SELECT * from item_ea;"
+ 	#define item_ra_iterate			"SELECT * from item_ra;"
+ 	#define item_he_iterate			"SELECT * from item_he;"
  	#define item_ea_name_search 	"SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
 	#define item_ra_name_search 	"SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
 	#define item_he_name_search 	"SELECT Id, Name, Script FROM item_he WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"
@@ -141,6 +144,7 @@
  		sqlite3_stmt * var_res_id_search;
  		sqlite3_stmt * block_res_key_search;
  		/* athena database search */
+ 		sqlite3_stmt * item_iterate;
  		sqlite3_stmt * const_db_name_search;
  		sqlite3_stmt * const_db_id_search;
  		sqlite3_stmt * skill_db_name_search;
@@ -169,6 +173,7 @@
  	int block_search_name(db_search_t * db, block_res * block, const char * name);
 
  	/* athena database querying */
+ 	int item_iterate(db_search_t * db, item_t * item);
  	int const_db_search_name(db_search_t * db, const_t * search, const char * name);
  	int const_db_search_id(db_search_t * db, const_t * search, int id);
  	int skill_db_search_name(db_search_t * db, skill_t * search, const char * name);

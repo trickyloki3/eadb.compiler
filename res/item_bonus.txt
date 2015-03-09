@@ -71,6 +71,8 @@
 70,0x00000000,24,bonus2,bHPVanishRate,"%s chance to drain %s HP of opponent with each physical attack.",2,o,p,2,0,1
 71,0x00000000,24,bonus2,bSPVanishRate,"%s chance to drain %s SP of opponent with each physical attack.",2,o,p,2,0,1
 72,0x00000000,24,bonus3,bSPVanishRate,"%s chance to drain %s SP of opponent with each physical attack.",3,o,p,t,3,0,1,2
+209,0x00000000,26,bonus3,bHPVanishRaceRate,"%s chance to drain %s HP of %s opponent with each physical attack.",3,r,q,p,3,1,2,0
+210,0x00000000,26,bonus3,bSPVanishRaceRate,"%s chance to drain %s SP of %s opponent with each physical attack.",3,r,q,p,3,1,2,0
 73,0x00000000,24,bonus2,bHPDrainRate,"%s chance to absorb %s HP on physical attack.",2,o,p,2,0,1
 74,0x00000000,24,bonus2,bSPDrainRate,"%s chance to absorb %s SP on physical attack.",2,o,p,2,0,1
 75,0x00000000,25,bonus3,bSPDrainRate,"%s chance to absorb %s SP on physical attack.",3,o,p,h,3,0,2,1

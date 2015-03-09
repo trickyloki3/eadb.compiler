@@ -50,7 +50,8 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 	db->mode = mode;
 	switch(mode) {
 		case MODE_EATHENA:
-			if(sqlite3_prepare_v2(db->athena, const_ea_name_search, strlen(const_ea_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
+			if(sqlite3_prepare_v2(db->athena, item_ea_iterate, strlen(item_ea_iterate), &db->item_iterate, NULL) != SQLITE_OK ||
+			   sqlite3_prepare_v2(db->athena, const_ea_name_search, strlen(const_ea_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, const_ea_id_search, strlen(const_ea_id_search), &db->const_db_id_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, skill_ea_name_search, strlen(skill_ea_name_search), &db->skill_db_name_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, skill_ea_id_search, strlen(skill_ea_id_search), &db->skill_db_id_search, NULL) != SQLITE_OK ||
@@ -64,7 +65,8 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 				goto abort;
 			break;
 		case MODE_RATHENA:
-			if(sqlite3_prepare_v2(db->athena, const_ra_name_search, strlen(const_ra_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
+			if(sqlite3_prepare_v2(db->athena, item_ra_iterate, strlen(item_ra_iterate), &db->item_iterate, NULL) != SQLITE_OK ||
+			   sqlite3_prepare_v2(db->athena, const_ra_name_search, strlen(const_ra_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, const_ra_id_search, strlen(const_ra_id_search), &db->const_db_id_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, skill_ra_name_search, strlen(skill_ra_name_search), &db->skill_db_name_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, skill_ra_id_search, strlen(skill_ra_id_search), &db->skill_db_id_search, NULL) != SQLITE_OK ||
@@ -79,7 +81,8 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 				goto abort;
 			break;
 		case MODE_HERCULES:
-			if(sqlite3_prepare_v2(db->athena, const_he_name_search, strlen(const_he_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
+			if(sqlite3_prepare_v2(db->athena, item_he_iterate, strlen(item_he_iterate), &db->item_iterate, NULL) != SQLITE_OK ||
+			   sqlite3_prepare_v2(db->athena, const_he_name_search, strlen(const_he_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, const_he_id_search, strlen(const_he_id_search), &db->const_db_id_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, skill_he_name_search, strlen(skill_he_name_search), &db->skill_db_name_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, skill_he_id_search, strlen(skill_he_id_search), &db->skill_db_id_search, NULL) != SQLITE_OK ||
@@ -177,6 +180,35 @@ int test_db(void) {
 	combo_free(combo_search);
 	deit_db(&db);
 	return 0;
+}
+
+int item_iterate(db_search_t * db, item_t * item) {
+	int status = 0;
+	status = sqlite3_step(db->item_iterate);
+    switch(db->mode) {
+        case MODE_EATHENA:
+            if(status == SQLITE_ROW) {
+                item->id = sqlite3_column_int(db->item_iterate, 0);
+                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 2));
+                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 19));
+            }
+            break;
+        case MODE_RATHENA:
+            if(status == SQLITE_ROW) {
+                item->id = sqlite3_column_int(db->item_iterate, 0);
+                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 2));
+                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 20));
+            }
+            break;
+        case MODE_HERCULES:
+            if(status == SQLITE_ROW) {
+                item->id = sqlite3_column_int(db->item_iterate, 0);
+                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 2));
+                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 39));
+            }
+            break;
+    }
+    return status;
 }
 
 int option_search_name(db_search_t * db, option_res * option, const char * name) {

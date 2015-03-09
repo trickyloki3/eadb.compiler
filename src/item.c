@@ -6,7 +6,7 @@
  *  email: tricky.loki3@gmail.com
  */
 #include "time.h"
-#include "db.h"
+#include "db_search.h"
 #include "script.h"
 
 int main(int argc, char * argv[]) {
@@ -16,14 +16,15 @@ int main(int argc, char * argv[]) {
 	int start_time = time(NULL);
 	FILE * fitem = NULL;
 	FILE * debug = NULL;
-	ic_item_t item;
+	item_t item;
 	script_t script;
 	char buffer[BUF_SIZE];
 	int offset = 0;
 
 	/* init resources */
+	db_search_t db;
 	memset(&script, 0, sizeof(script_t));
-	memset(&item, 0, sizeof(ic_item_t));
+	memset(&item, 0, sizeof(item_t));
 	fitem = fopen("item.txt", "w");
 	debug = fopen("dump.txt", "w");
 	if(fitem == NULL || debug == NULL) {
@@ -32,11 +33,12 @@ int main(int argc, char * argv[]) {
 	}
 	
 	/* attach database to script */
-	script.mode = RATHENA;
-	script.db = init_ic_db("athena.db");
+	script.mode = MODE_RATHENA;
+	script.db = &db;
+	init_db(script.db, MODE_RATHENA, "/root/Desktop/dev/eAdb.Compiler3/resources.db", "/root/Desktop/dev/eAdb.Compiler3/rathena.db");
 
 	/* process all items in database */
-	ret = iter_item_db(script.mode, script.db, &item);
+	ret = item_iterate(script.db, &item);
 	if(ret == SQLITE_ROW) {
 		while(ret == SQLITE_ROW) {
 			if(item.script != NULL && strlen(item.script) > 0) {
@@ -76,7 +78,7 @@ int main(int argc, char * argv[]) {
 				script_block_reset(&script);
 				cnt++;
 			}
-			ret = iter_item_db(script.mode, script.db, &item);
+			ret = item_iterate(script.db, &item);
 		}
 	} else if(ret == SQLITE_DONE) {
 		exit_abt_safe("database contains zero item entries");
@@ -89,6 +91,6 @@ int main(int argc, char * argv[]) {
 	fclose(debug);
 	fclose(fitem);
 	script_block_finalize(&script);
-	deit_ic_db(script.db);
+	deit_db(script.db);
 	return 0;
 }

@@ -7,38 +7,6 @@
  */
 #include "script.h"
 
-int iter_item_db(int mode, struct ic_db_t * db, ic_item_t * item) {
-    int status = 0;
-    switch(mode) {
-        case EATHENA:
-            status = sqlite3_step(db->ea_item_iterate);
-            if(status == SQLITE_ROW) {
-                item->id = sqlite3_column_int(db->ea_item_iterate, 0);
-                strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->ea_item_iterate, 2));
-                strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->ea_item_iterate, 19));
-            }
-            break;
-        case RATHENA:
-            status = sqlite3_step(db->ra_item_iterate);
-            if(status == SQLITE_ROW) {
-                item->id = sqlite3_column_int(db->ra_item_iterate, 0);
-                strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->ra_item_iterate, 2));
-                strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->ra_item_iterate, 20));
-            }
-            break;
-        case HERCULES:
-            status = sqlite3_step(db->he_item_iterate);
-            if(status == SQLITE_ROW) {
-                item->id = sqlite3_column_int(db->he_item_iterate, 0);
-                strncopy(item->name, BUF_SIZE, sqlite3_column_text(db->he_item_iterate, 2));
-                strncopy(item->script, BUF_SIZE, sqlite3_column_text(db->he_item_iterate, 39));
-            }
-            break;
-        default: return 0;
-    }
-    return status;
-}
-
 int list_forward(block_list_t * list) {
     int off = 0;
     char buf[BUF_SIZE];
@@ -554,7 +522,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     int block_cnt = 0;
     char ** token = NULL;
     int token_cnt = 0;
-    block_db_t block_type;      /* block id in block_db.txt */
+    block_res block_type;       /* block id in block_db.txt */
     block_r * block = NULL;     /* current block being parsed */
     block_r * link = parent;    /* link blocks to if, else-if, else, and for */
     block_r * set = (var != NULL) ? *var : NULL;
@@ -579,7 +547,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     /* parse tokens to build blocks */
     for(i = 0; i < token_cnt; i++) {
         if(token[i][0] == '{' || token[i][0] == '}') continue;
-        if(!block_keyword_search(script->db, &block_type, token[i])) {
+        if(!block_search_name(script->db, &block_type, token[i])) {
             /* count the number of blocks parsed */
             block_cnt++;
 
@@ -1400,15 +1368,15 @@ int script_generate(script_t * script, char * buffer, int * offset) {
     return SCRIPT_PASSED;
 }
 
-int script_generate_combo(int item_id, char * buffer, int * offset, struct ic_db_t * db, int mode) {
+int script_generate_combo(int item_id, char * buffer, int * offset, struct db_search_t * db, int mode) {
     char * item_desc = NULL;
-    ra_item_combo_t * item_combo_list = NULL;
-    ra_item_combo_t * item_combo_iter = NULL;
+    combo_t * item_combo_list = NULL;
+    combo_t * item_combo_iter = NULL;
     /* search the item id for combos */
-    if(!ra_item_combo_search_id(db, &item_combo_list, item_id)) {
+    if(!item_combo_db_search_id(db, &item_combo_list, item_id)) {
         item_combo_iter = item_combo_list;
         while(item_combo_iter != NULL) {
-            *offset += sprintf(buffer + *offset, "%s\n", item_combo_iter->combo);
+            *offset += sprintf(buffer + *offset, "%s\n", item_combo_iter->group);
             /* compile each script write to buffer */
             item_desc = script_compile(item_combo_iter->script, -1, db, mode);
             if(item_desc != NULL) {
@@ -1420,12 +1388,12 @@ int script_generate_combo(int item_id, char * buffer, int * offset, struct ic_db
         buffer[*offset] = '\0';
         /* free the list of item combo */
         if(item_combo_list != NULL)
-            free_combo(item_combo_list);
+            combo_free(item_combo_list);
     }
     return SCRIPT_PASSED;
 }
 
-char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct ic_db_t * db, int mode) {
+char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_search_t * db, int mode) {
     char buffer[BUF_SIZE];
     int offset = 0;
     script_t script;
@@ -1674,7 +1642,7 @@ int translate_pet_egg(block_r * block, int handler) {
     int len = 0;
     int offset = 0;
     char buf[BUF_SIZE];
-    ic_pet_t pet;
+    pet_t pet;
     node_t * pet_id = NULL;
     char * pet_script = NULL;
     char * loyal_script = NULL;
@@ -1700,8 +1668,8 @@ int translate_pet_egg(block_r * block, int handler) {
     }
 
     /* search for pet and loyal script using pet id */
-    memset(&pet, 0, sizeof(ic_pet_t));
-    if(pet_id_search(block->db, &pet, pet_id->min, block->mode)) {
+    memset(&pet, 0, sizeof(pet_t));
+    if(pet_db_search_id(block->db, &pet, pet_id->min)) {
         node_free(pet_id);
         /*exit_func_safe("failed to search for pet id %d in item %d", pet_id->min, block->item_id);*/
         return SCRIPT_FAILED;
@@ -1879,8 +1847,8 @@ int translate_bonus(block_r * block, char * bonus) {
 
     /* bonus information and integer results are kept for minimizing and post processing */
     memset(block->result, 0, sizeof(node_t *) * BONUS_SIZE);
-    if(bonus_name_search(block->db, &block->bonus, bonus, block->ptr[0])) {
-        exit_func_safe("failed to search for bonus %s for item %d", block->ptr[0], block->item_id);
+    if(bonus_search_name(block->db, &block->bonus, bonus, block->ptr[0])) {
+        exit_func_safe("failed to search for bonus '%s %s' for item %d", bonus, block->ptr[0], block->item_id);
         return SCRIPT_FAILED;
     }
 
@@ -1938,7 +1906,7 @@ int translate_const(block_r * block, char * expr, int flag) {
     int tbl_index = 0;
     char * tbl_str = NULL;
     /*char buffer[BUF_SIZE];*/
-    ic_const_t const_info;
+    const_t const_info;
     /* check null paramater */
     if(exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
@@ -1946,7 +1914,7 @@ int translate_const(block_r * block, char * expr, int flag) {
     if(isdigit(expr[0])) {
         tbl_index = convert_integer(expr,10);
     } else {
-        if(const_keyword_search(block->db, &const_info, expr, block->mode)) {
+        if(const_db_search_name(block->db, &const_info, expr)) {
             exit_func_safe("failed to search constant %s for %d", expr, block->item_id);
             return SCRIPT_FAILED;
         }
@@ -1996,14 +1964,14 @@ int translate_const(block_r * block, char * expr, int flag) {
 int translate_skill(block_r * block, char * expr) {
     int offset = 0;
     char buf[BUF_SIZE];
-    ic_skill_t skill_info;
-    memset(&skill_info, 0, sizeof(ic_skill_t));
+    skill_t skill_info;
+    memset(&skill_info, 0, sizeof(skill_t));
     /* check null paramater */
     if(exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
     if(((isdigit(expr[0]))) ?
-        skill_name_search_id(block->db, &skill_info, convert_integer(expr, 10), block->mode):
-        skill_name_search(block->db, &skill_info, expr, block->mode)) {
+        skill_db_search_id(block->db, &skill_info, convert_integer(expr, 10)):
+        skill_db_search_name(block->db, &skill_info, expr)) {
         exit_func_safe("failed to resolve skill %s for %d", expr, block->item_id);
     }
     offset = sprintf(buf, "%s", skill_info.desc);
@@ -2179,29 +2147,29 @@ int translate_time(block_r * block, char * expr) {
 
 int translate_id(block_r * block, char * expr, int flag) {
     int id = 0;
-    ic_merc_t merc;
-    ic_mob_t mob;
-    ic_item_t item;
-    memset(&merc, 0, sizeof(ic_merc_t));
-    memset(&mob, 0, sizeof(ic_mob_t));
-    memset(&item, 0, sizeof(ic_item_t));
+    merc_t merc;
+    mob_t mob;
+    item_t item;
+    memset(&merc, 0, sizeof(merc_t));
+    memset(&mob, 0, sizeof(mob_t));
+    memset(&item, 0, sizeof(item_t));
 
     /* check null paramater */
     if(exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
 
     id = convert_integer(expr, 10);
-    if(flag & 0x01 && !mob_id_search(block->db, &mob, id, block->mode)) {
-        translate_write(block, mob.iro, 0x01);
+    if(flag & 0x01 && !mob_db_search_id(block->db, &mob, id)) {
+        translate_write(block, mob.name, 0x01);
         return SCRIPT_PASSED;
     }
 
-    if(flag & 0x02 && !item_name_id_search(block->db, &item, id, block->mode)) {
+    if(flag & 0x02 && !item_db_search_id(block->db, &item, id)) {
         translate_write(block, item.name, 0x01);
         return SCRIPT_PASSED;
     }
 
-    if(flag & 0x04 && !merc_id_search(block->db, &merc, id, block->mode)) {
+    if(flag & 0x04 && !merc_db_search_id(block->db, &merc, id)) {
         translate_write(block, merc.name, 0x01);
         return SCRIPT_PASSED;
     }
@@ -2213,7 +2181,7 @@ int translate_id(block_r * block, char * expr, int flag) {
 }
 
 int translate_item(block_r * block, char * expr) {
-    ic_item_t item;
+    item_t item;
     /* check null paramater */
     if(exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
@@ -2222,8 +2190,8 @@ int translate_item(block_r * block, char * expr) {
         return translate_id(block, expr, 0x02);
     /* search the const id if identifer */
     else if(isalpha(expr[0])) {
-        memset(&item, 0, sizeof(ic_item_t));
-        if(item_name_search(block->db, &item, expr, block->mode))
+        memset(&item, 0, sizeof(item_t));
+        if(item_db_search_name(block->db, &item, expr))
             return translate_const(block, expr, 0x20);
         translate_write(block, item.name, 0x01);
     } else {
@@ -2380,8 +2348,8 @@ int translate_produce(block_r * block, int handler) {
     int item_lv = 0;
     int offset = 0;
     int recipe_offset = 1;
-    ic_produce_t * produce = NULL;
-    ic_produce_t * iter = NULL;
+    produce_t * produce = NULL;
+    produce_t * iter = NULL;
     char buf[BUF_SIZE];
     char num[BUF_SIZE];
     node_t * result = NULL;
@@ -2416,7 +2384,7 @@ int translate_produce(block_r * block, int handler) {
     }
  
     /* Write out all the recipes */
-    if(prod_lv_search(block->db, &produce, item_lv, block->mode)) {
+    if(produce_db_search_id(block->db, &produce, item_lv)) {
         node_free(result);
         return SCRIPT_FAILED;
     }
@@ -2426,14 +2394,14 @@ int translate_produce(block_r * block, int handler) {
             sprintf(num,"%d",iter->item_id);
             translate_id(block, num, 0x02);
             offset += sprintf(buf + offset,"Recipe: %s\n", block->eng[recipe_offset++]);
-            for(j = 0; j < iter->req_cnt; j++) {
-                sprintf(num,"%d",iter->material[j]);
+            for(j = 0; j < iter->ingredient_count; j++) {
+                sprintf(num,"%d",iter->item_id_req[j]);
                 translate_id(block, num, 0x02);
-                offset += sprintf(buf + offset," - %s [%d]\n", block->eng[recipe_offset++], iter->amount[j]);
+                offset += sprintf(buf + offset," - %s [%d]\n", block->eng[recipe_offset++], iter->item_amount_req[j]);
             }
         iter = iter->next;
     }
-    free_prod(produce);
+    produce_free(produce);
     buf[offset] = '\0';
     translate_write(block, buf, 1);
     if(result != NULL) node_free(result);
@@ -2447,28 +2415,28 @@ int translate_status(block_r * block, int handler) {
     int off = 0;
     char * item_script = NULL;
     int ret_value = 0;
-    ic_item_t item;
-    ic_status_t status;
-    ic_const_t const_info;
+    item_t item;
+    status_res status;
+    const_t const_info;
     node_t * result[BONUS_SIZE];
     node_t * rate = NULL;
     /* check null paramater */
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
-    memset(&item, 0, sizeof(ic_item_t));
-    memset(&status, 0, sizeof(ic_status_t));
+    memset(&item, 0, sizeof(item_t));
+    memset(&status, 0, sizeof(status_res));
     memset(&result, 0, sizeof(node_t *) * BONUS_SIZE);
 
-    if(const_keyword_search(block->db, &const_info, block->ptr[0], block->mode)) {
+    if(const_db_search_name(block->db, &const_info, block->ptr[0])) {
         exit_func_safe("failed to search const %s in item %d", block->ptr[0], block->item_id);
         return SCRIPT_FAILED;
     }
 
-    if(status_id_search(block->db, &status, const_info.value, block->ptr[0])) {
-        if(block->mode == HERCULES) {
+    if(status_search_id_name(block->db, &status, const_info.value, block->ptr[0])) {
+        if(block->mode == MODE_HERCULES) {
             /* Hercules decided to change the status constants by + or - 1; what the fuck? */
-            if(status_id_search(block->db, &status, const_info.value - 1, block->ptr[0]))
-                if(status_id_search(block->db, &status, const_info.value + 1, block->ptr[0])) {
+            if(status_search_id_name(block->db, &status, const_info.value - 1, block->ptr[0]))
+                if(status_search_id_name(block->db, &status, const_info.value + 1, block->ptr[0])) {
                     exit_func_safe("failed to search status id %d name %s in item %d", 
                         const_info.value, block->ptr[0], block->item_id);
                     return SCRIPT_FAILED;
@@ -2562,7 +2530,7 @@ int translate_status(block_r * block, int handler) {
         buf[off] = '\0';
     } else {
         /* translate an item script within an item script */
-        if(item_name_id_search(block->db, &item, convert_integer(block->ptr[2], 10), block->mode)) {
+        if(item_db_search_id(block->db, &item, convert_integer(block->ptr[2], 10))) {
             exit_func_safe("failed to search item id %d in item %s (sc_itemscript)", block->item_id, block->ptr[2]);
             return SCRIPT_FAILED;
         }
@@ -2593,20 +2561,20 @@ int translate_status(block_r * block, int handler) {
 int translate_status_end(block_r * block) {
     int offset = 0;
     char buf[BUF_SIZE];
-    ic_status_t status;
-    ic_const_t const_info;
-    memset(&status, 0, sizeof(ic_status_t));
+    status_res status;
+    const_t const_info;
+    memset(&status, 0, sizeof(status_res));
     /* check null paramater */
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
 
-    if(const_keyword_search(block->db, &const_info, block->ptr[0], block->mode)) {
+    if(const_db_search_name(block->db, &const_info, block->ptr[0])) {
         exit_func_safe("failed to search const %s in "
             "item %d", block->ptr[0], block->item_id);
         return SCRIPT_FAILED;
     }
 
-    if(status_id_search(block->db, &status, const_info.value, block->ptr[0])) {
+    if(status_search_id_name(block->db, &status, const_info.value, block->ptr[0])) {
         exit_func_safe("failed to search status id %d name %s in "
             "item %d", const_info.value, block->ptr[0], block->item_id);
         return SCRIPT_FAILED;
@@ -3137,9 +3105,9 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     int expr_sub_level = 0;
     int op_cnt = 0;
     block_r * set_iter = NULL;
-    ic_const_t const_info;
-    ic_var_t var_info;
-    map_t map_info;
+    const_t const_info;
+    var_res var_info;
+    map_res map_info;
 
     /* operator precedence tree */
     static int op_pred[PRED_LEVEL_MAX][PRED_LEVEL_PER] = {
@@ -3234,8 +3202,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             id_write(temp_node,"%s", expr[i]);
 
             /* handle variable or function */
-            memset(&var_info, 0, sizeof(ic_var_t));
-            if(!var_keyword_search(block->db, &var_info, expr[i])) {
+            memset(&var_info, 0, sizeof(var_res));
+            if(!var_search_id(block->db, &var_info, expr[i])) {
                 temp_node->cond_cnt = 1;
                 temp_node->var = var_info.tag;
                 id_write(temp_node, "%s", var_info.str);
@@ -3287,12 +3255,12 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                     }
                 }
             /* handle constant */
-            } else if(!const_keyword_search(block->db, &const_info, expr[i], block->mode)) {
+            } else if(!const_db_search_name(block->db, &const_info, expr[i])) {
                 /* create constant node */
                 temp_node->type = NODE_TYPE_CONSTANT;
                 temp_node->min = temp_node->max = const_info.value;
             /* handle map name */
-            } else if(!client_map_search(block->db, &map_info, expr[i])) {
+            } else if(!map_search_name(block->db, &map_info, expr[i])) {
                 temp_node->type = NODE_TYPE_CONSTANT;
                 temp_node->min = temp_node->max = map_info.id;
             /* handle set'd variable */
@@ -3482,18 +3450,18 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
 
     /* token variable to handle special argument */
     token_r token;
-    ic_skill_t skill;
-    ic_item_t item;
-    ic_const_t const_info;
+    skill_t skill;
+    item_t item;
+    const_t const_info;
     /*ea_item_group_t ea_item_group;*/
-    option_t option;
+    option_res option;
 
     if(ncs_strcmp(func,"getskilllv") == 0) {
         /* search by skill id or skill constant for max level */
-        memset(&skill, 0, sizeof(ic_skill_t));
-        if(skill_name_search(block->db, &skill, expr[start], block->mode))
-            if(isdigit(expr[start][0]) && skill_name_search_id(block->db, 
-            &skill, convert_integer(expr[start], 10), block->mode)) {
+        memset(&skill, 0, sizeof(skill_t));
+        if(skill_db_search_name(block->db, &skill, expr[start]))
+            if(isdigit(expr[start][0]) && skill_db_search_id(block->db, 
+            &skill, convert_integer(expr[start], 10))) {
                 exit_func_safe("failed to search for skill %s in %d", expr[start], block->item_id);
                 return SCRIPT_FAILED;
             }
@@ -3503,7 +3471,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         id_write(node, "%s Level", skill.desc);
         /* skill level minimum is 0 (not learnt) or maximum level */
         *min = 0;
-        *max = skill.max;
+        *max = skill.maxlv;
     } else if(ncs_strcmp(func,"pow") == 0) {
         split_paramater(expr, start, end, &i);
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
@@ -3639,8 +3607,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             exit_func_safe("%s must be a constant expression in item %d\n", expr, block->item_id);
             return SCRIPT_FAILED;
         }
-        memset(&item, 0, sizeof(ic_item_t));
-        if(item_name_id_search(block->db, &item, resultOne->min, block->mode)) {
+        memset(&item, 0, sizeof(item_t));
+        if(item_db_search_id(block->db, &item, resultOne->min)) {
             exit_func_safe("failed to search for item %d in %d", resultOne->min, block->item_id);
             return SCRIPT_FAILED;
         }
@@ -3687,8 +3655,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             name = resultOne->cond->name;
         } else {
             /* search for item name from item id */
-            memset(&item, 0, sizeof(ic_item_t));
-            if(item_name_id_search(block->db, &item, resultOne->min, block->mode)) {
+            memset(&item, 0, sizeof(item_t));
+            if(item_db_search_id(block->db, &item, resultOne->min)) {
                 exit_func_safe("failed to search for item %d in %d", resultOne->min, block->item_id);
                 return SCRIPT_FAILED;
             }
@@ -3718,7 +3686,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 return SCRIPT_FAILED;
         }
     } else if(ncs_strcmp(func,"getequipid") == 0) {
-        if(const_keyword_search(block->db, &const_info, expr[start], block->mode)) {
+        if(const_db_search_name(block->db, &const_info, expr[start])) {
             exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
             return SCRIPT_FAILED;
         }
@@ -3749,8 +3717,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         node->id = &node->stack[node->stack_cnt];
         for(i = start; i < end; i++) {
             if(expr[i][0] != ',') {
-                memset(&item, 0, sizeof(ic_item_t));
-                if(item_name_id_search(block->db, &item, convert_integer(expr[i], 10), block->mode)) {
+                memset(&item, 0, sizeof(item_t));
+                if(item_db_search_id(block->db, &item, convert_integer(expr[i], 10))) {
                     exit_func_safe("failed to search for item %s in %d", expr[i], block->item_id);
                     return SCRIPT_FAILED;
                 }
@@ -3798,7 +3766,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             default: id_write(node, expr[start]); break;
         }
     } else if(ncs_strcmp(func,"readparam") == 0) {
-        if(const_keyword_search(block->db, &const_info, expr[start], block->mode)) {
+        if(const_db_search_name(block->db, &const_info, expr[start])) {
             exit_func_safe("failed to search for const '%s' in %d", expr[start], block->item_id);
             return SCRIPT_FAILED;
         }
@@ -3834,8 +3802,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
     } else if(ncs_strcmp(func,"checkoption") == 0) {
         /* constants are not defined in const.txt, but specified 
          * in the script command. See option_db.txt for mappings.*/
-        memset(&option, 0, sizeof(option_t));
-        if(ra_option_search_str(block->db, &option, expr[start])) {
+        memset(&option, 0, sizeof(option_res));
+        if(option_search_name(block->db, &option, expr[start])) {
             exit_func_safe("failed to search for option '%s' in %d", expr[start], block->item_id);
             return SCRIPT_FAILED;
         }
@@ -4213,7 +4181,7 @@ void node_free(node_t * node) {
     }
 }
 
-int translate_bonus_desc(node_t ** result, block_r * block, ic_bonus_t * bonus) {
+int translate_bonus_desc(node_t ** result, block_r * block, bonus_res * bonus) {
     int i = 0;
     int arg_cnt = bonus->type_cnt;
     int offset = 0;                 /* current buffer offset */
@@ -4639,11 +4607,11 @@ int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, blo
 }
 
 int condition_write_strcharinfo(char * buf, int * offset, logic_node_t * tree, block_r * block) {
-    map_t map_info;
+    map_res map_info;
     int val_min = minrange(tree->range);
     switch(get_func(tree)) {
         case 3: /* maps */
-            if(client_map_id_search(block->db, &map_info, val_min)) {
+            if(map_search_id(block->db, &map_info, val_min)) {
                 exit_func_safe("failed to search for map id"
                 " %d in item %d", val_min, block->item_id);
                 return SCRIPT_FAILED;
@@ -4683,14 +4651,14 @@ int condition_write_getiteminfo(char * buf, int * offset, logic_node_t * tree) {
 
 int condition_write_item(char * buf, int * offset, range_t * range, block_r * block) {
     int i = 0;
-    ic_item_t item;
+    item_t item;
     range_t * itr = range;
     /* iterate the range of item id */
     while(itr != NULL) {
         for(i = itr->min; i <= itr->max; i++) {
             /* search for item name from item id */
-            memset(&item, 0, sizeof(ic_item_t));
-            if(item_name_id_search(block->db, &item, i, block->mode)) {
+            memset(&item, 0, sizeof(item_t));
+            if(item_db_search_id(block->db, &item, i)) {
                 exit_func_safe("failed to search for item %d in %d", i, block->item_id);
                 return SCRIPT_FAILED;
             }
