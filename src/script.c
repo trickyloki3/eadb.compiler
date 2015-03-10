@@ -1884,7 +1884,7 @@ int translate_bonus(block_r * block, char * bonus) {
             case 'f': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Cell */
             case 'b': ret = translate_tbl(block, block->ptr[j], 0x08);                          break; /* Flag Bitfield */
             case 'i': ret = translate_tbl(block, block->ptr[j], 0x10);                          break; /* Weapon Type */
-            case 'j': ret = translate_const(block, block->ptr[j], 0x10);                        break; /* Class Group */
+            case 'j': ret = translate_const(block, block->ptr[j], 0x10 | 0x40);                 break; /* Class Group & Monster */
             default: break;
         }
 
@@ -1904,8 +1904,8 @@ int translate_bonus(block_r * block, char * bonus) {
 
 int translate_const(block_r * block, char * expr, int flag) {
     int tbl_index = 0;
-    char * tbl_str = NULL;
-    /*char buffer[BUF_SIZE];*/
+    char * tbl_str = "error";
+    mob_t mob;
     const_t const_info;
     /* check null paramater */
     if(exit_null_safe(2, block, expr))
@@ -1932,20 +1932,11 @@ int translate_const(block_r * block, char * expr, int flag) {
         tbl_str = size_tbl(tbl_index);
     if(flag & 0x10) 
         tbl_str = class_tbl(tbl_index);
-    if(flag & 0x20) {
-        /*if(block->mode == EATHENA) {
-            if(ea_item_group_search(block->db, tbl_index, block->mode, buffer))
-                return SCRIPT_FAILED;
-            tbl_str = buffer;
-        } else if(block->mode == RATHENA) {
-            if(ra_item_group_search(block->db, tbl_index, block->mode, buffer))
-                return SCRIPT_FAILED;
-            tbl_str = buffer;
-        } else {
-            tbl_str = itemgrp_tbl(tbl_index);
-        }*/
+    /* 0x02 is for item group id; simplified */
+    if(flag & 0x20)
         tbl_str = "a box"; /* lol */
-    }
+    if(flag & 0x40 && strcmp(tbl_str, "error") == 0)
+        tbl_str = (mob_db_search_id(block->db, &mob, tbl_index) == CHECK_PASSED) ? mob.name : "error";
  
     /* indicate unresolve item group; there are many I am too lazy to add */
     if(strcmp(tbl_str,"error") == 0)
@@ -2174,7 +2165,7 @@ int translate_id(block_r * block, char * expr, int flag) {
         return SCRIPT_PASSED;
     }
     /* last resort assuming that it could be a constant */
-    if(translate_const(block, expr, 0xFF) == SCRIPT_PASSED)
+    if(translate_const(block, expr, 0xBF) == SCRIPT_PASSED)
         return SCRIPT_PASSED;
     exit_func_safe("failed to resolve id %s for %d", expr, block->item_id);
     return SCRIPT_FAILED;

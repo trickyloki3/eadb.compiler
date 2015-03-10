@@ -188,4 +188,7 @@
  	int item_group_db_search_id(db_search_t * db, item_group_t * search, int id, char * buffer);
  	int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id);
  	void combo_free(combo_t * combo); 	
+
+ 	/* debug */
+ 	void print_stmt(void * data,const char * sql);
 #endif

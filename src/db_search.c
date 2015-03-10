@@ -110,6 +110,7 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 }
 
 int deit_db(db_search_t * db) {
+	sqlite3_finalize(db->item_iterate);
 	sqlite3_finalize(db->option_res_name_search);
 	sqlite3_finalize(db->map_res_name_search);
 	sqlite3_finalize(db->map_res_id_search);

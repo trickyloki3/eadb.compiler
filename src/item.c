@@ -33,10 +33,10 @@ int main(int argc, char * argv[]) {
 	}
 	
 	/* attach database to script */
-	script.mode = MODE_HERCULES;
+	script.mode = MODE_RATHENA;
 	script.db = &db;
-	init_db(script.db, script.mode, "/root/Desktop/dev/eAdb.Compiler3/resources.db", "/root/Desktop/dev/eAdb.Compiler3/hercules.db");
-
+	init_db(script.db, script.mode, "/root/Desktop/dev/eAdb.Compiler3/resources.db", "/root/Desktop/dev/eAdb.Compiler3/rathena.db");
+	
 	/* process all items in database */
 	ret = item_iterate(script.db, &item);
 	if(ret == SQLITE_ROW) {
@@ -56,24 +56,24 @@ int main(int argc, char * argv[]) {
 										fprintf(fitem,"%d#\n%s#\n", script.item_id, buffer);
 										script_block_dump(&script, debug);
 									} else {
-										fprintf(stderr,"[warn]: failed to item combo '%s' on item %d\n", item.script, script.item_id);	
+										/*fprintf(stderr,"[warn]: failed to item combo '%s' on item %d\n", item.script, script.item_id);*/
 									}
 								} else {
-									fprintf(stderr,"[warn]: failed to generate '%s' on item %d\n", item.script, script.item_id);	
+									/*fprintf(stderr,"[warn]: failed to generate '%s' on item %d\n", item.script, script.item_id);*/
 								}
 							} else {
-								fprintf(stderr,"[warn]: failed to bonus '%s' on item %d\n", item.script, script.item_id);	
+								/*fprintf(stderr,"[warn]: failed to bonus '%s' on item %d\n", item.script, script.item_id);*/
 							}
 						} else {
-							fprintf(stderr,"[warn]: failed to translate '%s' on item %d\n", item.script, script.item_id);		
+							/*fprintf(stderr,"[warn]: failed to translate '%s' on item %d\n", item.script, script.item_id);*/
 						}
 					} else if(skip == SCRIPT_SKIP) {
 						/* empty script */
 					} else {
-						fprintf(stderr,"[warn]: failed to parser '%s' on item %d\n", item.script, script.item_id);	
+						/*fprintf(stderr,"[warn]: failed to parser '%s' on item %d\n", item.script, script.item_id);*/
 					}
 				} else {
-					fprintf(stderr,"[warn]: failed to lex '%s' on item %d\n", item.script, script.item_id);
+					/*fprintf(stderr,"[warn]: failed to lex '%s' on item %d\n", item.script, script.item_id);*/
 				}
 				script_block_reset(&script);
 				cnt++;
@@ -91,6 +91,6 @@ int main(int argc, char * argv[]) {
 	fclose(debug);
 	fclose(fitem);
 	script_block_finalize(&script);
-	deit_db(script.db);
+	deit_db(&db);
 	return 0;
 }
