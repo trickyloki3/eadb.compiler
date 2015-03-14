@@ -56,25 +56,4 @@
     typedef int (*NATIVE_DB_LOAD)(FILE *, void *, int, native_config_t *);
     int load_native_general(FILE *, void *, int, native_config_t *);
     int load_native(const char *, DB_TRIM, NATIVE_DB_LOAD, native_t *, native_config_t *);
-
-   /* legacy native database load interface */
-    typedef struct {
-        void * db;
-        int size;
-        void (*dealloc)(void *, int);
-    } load_db_t;
-
-    typedef struct {
-        int (*load_column)(void * db, int row, int col, char * val);
-        int (*is_row_sentinel)(char);
-        int (*is_row_delimiter)(char);
-        int column_count;
-        size_t type_size;
-        int flag;
-        void (*dealloc)(void *, int);
-    } load_cb_t;
-
-    typedef int (*DB_LOAD)(FILE *, void *, int, load_cb_t *);
-    int load_general(FILE *, void *, int, load_cb_t *);
-    void * load(const char *, DB_TRIM, DB_LOAD, load_cb_t * (*loader)());
 #endif

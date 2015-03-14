@@ -11,9 +11,9 @@ int main(int argc, char * argv[]) {
 
 	/* test loading all the databases to sqlite3 */
 	default_eathena_database();
-	default_rathena_database();
-	default_hercules_database();
-	default_resource_database();
+	/*default_rathena_database();*/
+	/*default_hercules_database();*/
+	/*default_resource_database();*/
 	/*test_db();*/
 	return 0;
 }
