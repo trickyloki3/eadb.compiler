@@ -13,7 +13,8 @@ native_config_t load_he_native[HERCULES_DB_COUNT] = {
 	{ produce_he_load, sentinel_newline, delimit_cvs, SKIP_NEXT_WS, 0, sizeof(produce_he) },
 	{ mercenary_he_load, sentinel_newline, delimit_cvs, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MERCENARY_HE_FIELD_COUNT, sizeof(mercenary_he) },
 	{ pet_he_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, PET_HE_FIELD_COUNT, sizeof(pet_he) },
-	{ const_he_load, sentinel_newline, delimit_cvs_whitespace, SKIP_NEXT_WS, 0, sizeof(const_he) }
+	{ const_he_load, sentinel_newline, delimit_cvs_whitespace, SKIP_NEXT_WS, 0, sizeof(const_he) },
+	{ combo_he_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_COMBO_HE_FIELD_COUNT, sizeof(combo_he) }
 };
 
 int load_he_item(const char * file_name, native_t * native) {
@@ -335,6 +336,16 @@ int const_he_load(void * db, int row, int col, char * val) {
 	return 0;
 }
 
+int combo_he_load(void * db, int row, int col, char * val) {
+	combo_he * record = &((combo_he *) db)[row];
+	switch(col) {
+		case 0: strnload(record->item_id.str, MAX_VARARG_SIZE, val); 	break;
+		case 1: strnload(record->script, MAX_SCRIPT_SIZE, val); 		break;
+		default: break;
+	}
+	return 0;
+}
+
 int load_hercules_database(const char * hercules_path) {
 	int status = 0;
 
@@ -396,11 +407,21 @@ int load_hercules_database(const char * hercules_path) {
 	}
 	free(const_db.db);
 
+	native_t combo_db;
+	status = load_native("/root/Desktop/git/Hercules/db/re/item_combo_db.txt",
+	trim_numeric, load_native_general, &combo_db, &load_he_native[6]);
+	if(status == CHECK_FAILED) {
+		fprintf(stderr,"failed to load hercules item combo database.\n");
+		exit(EXIT_FAILURE);
+	}
+	free(combo_db.db);
+
 	return 0;
 }
 
 int default_hercules_database(void) {
 	db_he_t db;
+	db_he_aux_t db_search;
 	create_hercules_database(&db, "/root/Desktop/dev/eAdb.Compiler3/hercules.db");
 	item_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/item_db.conf");
 	mob_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/mob_db.txt");
@@ -409,6 +430,10 @@ int default_hercules_database(void) {
 	mercenary_he_sql_load(&db, "/root/Desktop/git/Hercules/db/mercenary_db.txt");
 	pet_he_sql_load(&db, "/root/Desktop/git/Hercules/db/pet_db.txt");
 	const_he_sql_load(&db, "/root/Desktop/git/Hercules/db/const.txt");
+
+	init_he_search(&db, &db_search);
+	item_combo_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/item_combo_db.txt", &db_search);
+	deit_he_search(&db_search);
 	finalize_hercules_database(&db);
 	return 0;
 }
@@ -428,7 +453,9 @@ int create_hercules_database(db_he_t * db, const char * path) {
 		sqlite3_prepare_v2(db->db, produce_he_insert, 	 strlen(produce_he_insert), 	&db->produce_he_sql_insert, 	NULL) != SQLITE_OK ||
 		sqlite3_prepare_v2(db->db, mercenary_he_insert,  strlen(mercenary_he_insert), 	&db->mercenary_he_sql_insert, 	NULL) != SQLITE_OK ||
 		sqlite3_prepare_v2(db->db, pet_he_insert, 		 strlen(pet_he_insert), 		&db->pet_he_sql_insert, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, const_he_insert, 	 strlen(const_he_insert), 		&db->const_he_sql_insert, 		NULL) != SQLITE_OK) {
+		sqlite3_prepare_v2(db->db, const_he_insert, 	 strlen(const_he_insert), 		&db->const_he_sql_insert, 		NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->db, item_combo_he_insert, strlen(item_combo_he_insert), 	&db->item_combo_he_sql_insert, 	NULL) != SQLITE_OK) {
+
 		/* print sqlite3 error before exiting */
 		status = sqlite3_errcode(db->db);
 		error = sqlite3_errmsg(db->db);
@@ -449,6 +476,7 @@ int finalize_hercules_database(db_he_t * db) {
 	sqlite3_finalize(db->mercenary_he_sql_insert);
 	sqlite3_finalize(db->pet_he_sql_insert);
 	sqlite3_finalize(db->const_he_sql_insert);
+	sqlite3_finalize(db->item_combo_he_sql_insert);
 	sqlite3_close(db->db);
 	return CHECK_PASSED;
 }
@@ -827,4 +855,97 @@ int const_he_sql_load(db_he_t * db, const char * path) {
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(const_db.db);
 	return CHECK_PASSED;
+}
+
+int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_search) {
+	int i = 0;
+	int j = 0;
+	int offset = 0;
+	char buffer[BUF_SIZE];
+	native_t combo_db;
+	combo_he * combo_he_db = NULL;
+	item_he item_name_search;
+	array_w item_id_list;
+	int * item_id_array = NULL;
+	memset(&combo_db, 0, sizeof(native_t));
+	memset(&item_name_search, 0, sizeof(item_he));
+
+	/* load the native database */
+	if(load_native(path, trim_numeric, load_native_general, &combo_db, &load_he_native[6]) == CHECK_FAILED) {
+		exit_func_safe("failed to load hercules combo database at %s; invalid path", path);
+		return CHECK_FAILED;
+	}
+
+	/* check the native database */
+	if(combo_db.db == NULL || combo_db.size <= 0) {
+		exit_func_safe("failed to load hercules combo database at %s; detected zero entries", path);
+		return CHECK_FAILED;
+	}
+
+	/* load the native database into the sqlite3 hercules database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+	for(i = 0, combo_he_db = combo_db.db; i < combo_db.size; i++) {
+		offset = 0;
+		/* convert the item group string into an array of integers */
+		memset(&item_id_list, 0, sizeof(array_w));
+		convert_integer_list(combo_he_db[i].item_id.str, ":", &item_id_list);
+		item_id_array = item_id_list.array;
+
+		/* add the item id and script in the array of integers */
+		if(item_id_array != NULL) {
+			/* build a buffer of all item names */
+			memset(&item_name_search, 0, sizeof(item_he));
+			for(j = 0; j < item_id_list.size; j++) {
+				if(item_he_id_search(db_search, item_id_array[j], &item_name_search) == CHECK_PASSED) {
+					offset += (offset == 0)?
+						sprintf(buffer + offset, "[%s", item_name_search.name):
+						sprintf(buffer + offset, ", %s", item_name_search.name);
+					buffer[offset] = '\0';
+				}
+			}
+			offset += sprintf(buffer + offset, " Combo]");
+
+			for(j = 0; j < item_id_list.size; j++) {
+				sqlite3_clear_bindings(db->item_combo_he_sql_insert);
+				sqlite3_bind_int(db->item_combo_he_sql_insert, 1, item_id_array[j]);
+				sqlite3_bind_text(db->item_combo_he_sql_insert, 2, combo_he_db[i].script, strlen(combo_he_db[i].script), SQLITE_STATIC);
+				sqlite3_bind_text(db->item_combo_he_sql_insert, 3, buffer, offset, SQLITE_STATIC);
+				sqlite3_step(db->item_combo_he_sql_insert);
+				sqlite3_reset(db->item_combo_he_sql_insert);
+			}
+			/* free the list of integers */
+			free(item_id_list.array);
+		}
+	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+	free(combo_db.db);
+	return CHECK_PASSED;
+}
+
+int init_he_search(db_he_t * db, db_he_aux_t * db_search) {
+	static const char * item_id_sql = "SELECT Id, Name, Script FROM item_he WHERE id = ? COLLATE NOCASE;";
+	if(sqlite3_prepare_v2(db->db, item_id_sql, strlen(item_id_sql), &db_search->item_he_id_search, NULL) != SQLITE_OK) {
+		exit_abt_safe("item database must be loaded");
+		return CHECK_FAILED;
+	}
+	return CHECK_PASSED;
+}
+
+int deit_he_search(db_he_aux_t * db_search) {
+	sqlite3_finalize(db_search->item_he_id_search);
+	return CHECK_PASSED;
+}
+
+int item_he_id_search(db_he_aux_t * db_search, int item_id, item_he * item_name_search) {
+	int status = 0;
+	sqlite3_clear_bindings(db_search->item_he_id_search);
+	sqlite3_bind_int(db_search->item_he_id_search, 1, item_id);
+	status = sqlite3_step(db_search->item_he_id_search);
+	if(status == SQLITE_ROW) {
+		item_name_search->id = sqlite3_column_int(db_search->item_he_id_search, 0);
+		strncopy(item_name_search->name, MAX_NAME_SIZE, sqlite3_column_text(db_search->item_he_id_search, 1));
+    	strncopy(item_name_search->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db_search->item_he_id_search, 2));
+	}
+	sqlite3_reset(db_search->item_he_id_search);
+	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
 }

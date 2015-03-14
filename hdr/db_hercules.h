@@ -24,6 +24,7 @@
 	 * mercenary_he 	-	hercules mecenary database
 	 * pet_he			-	hercules pet database
 	 * const_he 		- 	hercules constant database
+	 * combo_he 		- 	hercules item combo database
 	 */
 
  	/* database record counts */
@@ -31,6 +32,7 @@
 	#define SKILL_HE_FIELD_COUNT 			17
 	#define MERCENARY_HE_FIELD_COUNT		26
 	#define PET_HE_FIELD_COUNT				22
+	#define ITEM_COMBO_HE_FIELD_COUNT		2
 
 	/* constant to index equip array */
 	#define EQUIP_MIN					0
@@ -243,6 +245,12 @@
 		int type;
 	} const_he;
 
+	typedef struct combo_he {
+		varlist item_id;
+		char script[MAX_SCRIPT_SIZE];
+		struct combo_he * next;
+	} combo_he;
+
 	/* hercules shares the same database format as eathena and rathena
 	 * but who knows what they'll change completely, better keep separate */
 	int load_he_item(const char * file_name, native_t * native);
@@ -255,6 +263,7 @@
 	int mercenary_he_load(void * db, int row, int col, char * val);
 	int pet_he_load(void * db, int row, int col, char * val);
 	int const_he_load(void * db, int row, int col, char * val);
+	int combo_he_load(void * db, int row, int col, char * val);
 
 	/* hercules auxiliary */
 	int load_hercules_database(const char * hercules_path);
@@ -324,7 +333,10 @@
 									"defence_attack_rate INTEGER, change_target_rate INTEGER, pet_script TEXT, " 				\
 									"loyal_script TEXT);"																		\
 									""																							\
-									"CREATE TABLE IF NOT EXISTS const_he(name TEXT, value INTEGER, type INTEGER);"				
+									"CREATE TABLE IF NOT EXISTS const_he(name TEXT, value INTEGER, type INTEGER);"				\
+									""																							\
+									"CREATE TABLE IF NOT EXISTS item_combo_he(" 												\
+									"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"						
 
 
 	#define item_he_insert 			"INSERT INTO item_he(" 																		\
@@ -358,6 +370,11 @@
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
 	#define const_he_insert			"INSERT INTO const_he VALUES(?, ?, ?);"
+	#define item_combo_he_insert 	"INSERT INTO item_combo_he VALUES(?, ?, ?);"
+
+	typedef struct db_he_aux_t {
+		sqlite3_stmt * item_he_id_search;
+	} db_he_aux_t;
 
 	typedef struct db_he_t {
 		sqlite3 * db;
@@ -368,6 +385,7 @@
 		sqlite3_stmt * mercenary_he_sql_insert;
 		sqlite3_stmt * pet_he_sql_insert;
 		sqlite3_stmt * const_he_sql_insert;
+		sqlite3_stmt * item_combo_he_sql_insert;
 	} db_he_t;
 
 	/* database loading depends on the path of the database */
@@ -381,4 +399,10 @@
 	int mercenary_he_sql_load(db_he_t * db, const char * path);
 	int pet_he_sql_load(db_he_t * db, const char * path);
 	int const_he_sql_load(db_he_t * db, const char * path);
+	int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_search);
+
+	/* combo require searching existing database */
+	int init_he_search(db_he_t * db, db_he_aux_t * db_search);
+	int deit_he_search(db_he_aux_t * db_search);
+	int item_he_id_search(db_he_aux_t * db_search, int item_id, item_he * item_name_search);
 #endif

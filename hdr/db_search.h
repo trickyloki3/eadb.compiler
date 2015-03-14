@@ -129,6 +129,7 @@
 		struct combo_t * next;
 	} combo_t;
 	#define item_combo_ra_id_search "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
+	#define item_combo_he_id_search "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
 
  	typedef struct db_search_t {
  		sqlite3 * athena;

@@ -10,6 +10,8 @@
 int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path) {
 	int status = 0;
 	const char * error = NULL;
+	memset(db, 0, sizeof(db_search_t));
+
 	/* open database connection to resource database */
 	if(sqlite3_open(resource_path, &db->resource) != SQLITE_OK) {
 		/* print sqlite3 error before exiting */
@@ -46,6 +48,7 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 			if(db->athena != NULL) sqlite3_close(db->athena);
 			return CHECK_FAILED;
 		}
+
 	/* build all athena search queries */
 	db->mode = mode;
 	switch(mode) {
@@ -91,7 +94,8 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 			   sqlite3_prepare_v2(db->athena, mob_he_id_search, strlen(mob_he_id_search), &db->mob_db_id_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, merc_he_id_search, strlen(merc_he_id_search), &db->merc_db_id_search, NULL) != SQLITE_OK ||
 			   sqlite3_prepare_v2(db->athena, pet_he_id_search, strlen(pet_he_id_search), &db->pet_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, produce_he_id_search, strlen(produce_he_id_search), &db->produce_db_id_search, NULL) != SQLITE_OK)
+			   sqlite3_prepare_v2(db->athena, produce_he_id_search, strlen(produce_he_id_search), &db->produce_db_id_search, NULL) != SQLITE_OK ||
+			   sqlite3_prepare_v2(db->athena, item_combo_he_id_search, strlen(item_combo_he_id_search), &db->item_combo_id_search, NULL) != SQLITE_OK)
 				goto abort;
 			break;
 		default:
@@ -612,8 +616,8 @@ int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id) {
 	combo_t * temp = NULL;
 	combo_t * root = NULL;
 	combo_t * iter = NULL;
-	/* only supported on rathena */
-	if(db->mode != MODE_RATHENA) return CHECK_FAILED;
+	/* eathena has not support item combo databases */
+	if(db->mode == MODE_EATHENA) return CHECK_FAILED;
 	if(exit_null_safe(3, db, search, db->item_combo_id_search)) return CHECK_FAILED;
 	stmt = db->item_combo_id_search;
 	sqlite3_clear_bindings(stmt);
