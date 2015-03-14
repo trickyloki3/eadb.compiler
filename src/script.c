@@ -1378,7 +1378,7 @@ int script_generate_combo(int item_id, char * buffer, int * offset, struct db_se
         while(item_combo_iter != NULL) {
             *offset += sprintf(buffer + *offset, "%s\n", item_combo_iter->group);
             /* compile each script write to buffer */
-            item_desc = script_compile(item_combo_iter->script, -1, db, mode);
+            item_desc = script_compile(item_combo_iter->script, item_id, db, mode);
             if(item_desc != NULL) {
                 *offset += sprintf(buffer + *offset, "%s", item_desc);
                 free(item_desc);
@@ -1408,9 +1408,7 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_s
             if(!script_translate(&script))
                 if(!script_bonus(&script))
                     if(!script_generate(&script, buffer, &offset))
-                        if(!script_generate_combo(script.item_id, buffer, &offset, script.db, script.mode))
-                            if(dbg != NULL)
-                                script_block_dump(&script, dbg);
+                        ;
     script_block_reset(&script);
     script_block_finalize(&script);
     return (offset <= 0) ? NULL : convert_string(buffer);

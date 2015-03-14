@@ -41,7 +41,6 @@ lclean:
 	rm -rf obj
 	mkdir obj
 	rm -f item
-	rm -f itemr
 	rm -f loki
 	rm -f dump.txt
 	rm -f item.txt
