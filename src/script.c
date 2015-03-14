@@ -2965,10 +2965,10 @@ void var_write(node_t * node, char * fmt, ...) {
     va_start(expr_list, fmt);
     int offset = node->stack_cnt;                               /* current offset on stack */
     char * temp = &node->stack[offset];                         /* record current offset on stack */
-    offset += vsprintf(node->stack + offset, fmt, expr_list);   /* write new string onto stack */
+    offset += vsprintf(node->stack + offset, fmt, expr_list);
     node->stack[offset] = '\0';                                 /* null terminate new string */
     va_end(expr_list);
-    node->stack_cnt += offset + 1;
+    node->stack_cnt = offset + 1;
     node->var_str[node->var_cnt] = temp;
     node->var_cnt++;
 }
@@ -3381,7 +3381,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             root_node->cond = copy_any_tree(root_node->next->cond);
         root_node->cond_cnt = root_node->next->cond_cnt;
         expression_write(root_node, "%s", root_node->next->formula);
-
+        
         /* collect all the arguments on the last stack */
         node_write_recursive(root_node->next, root_node);
         
@@ -3389,7 +3389,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         if(root_node->var_cnt > 0) {
             off = root_node->stack_cnt;
             root_node->formula = &root_node->stack[off];
-            /*off += sprintf(root_node->stack + off,"based on ");*/
             for(i = 0; i < root_node->var_cnt; i++) {
                 if(root_node->var_set[i] != 0)
                     off += (i > 0) ? 
@@ -4061,7 +4060,6 @@ void node_write_recursive(node_t * node, node_t * root) {
         if(node->left != NULL) node_write_recursive(node->left, root);
         if(node->right != NULL) node_write_recursive(node->right, root);
     }
-
     /* write function or variable to simple list */
     if(node->var_cnt > 0) {
         /* include var stack of any node with var on stack */

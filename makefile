@@ -18,9 +18,7 @@ HE_LIBDIR = ../lib/hconfig.a
 all: 
 	make lclean
 	make loki
-	make conv
 	make item
-	make itemr
 
 memchk: item
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
@@ -29,9 +27,6 @@ memloki: loki
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./loki
 
 item: src/item.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
-
-itemr: src/itemr.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 loki: src/loki.c $(OBJ)
