@@ -6,7 +6,7 @@ CFlags = -std=c99 -pedantic -Wall -g
 HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
-LIB = -lsqlite3 -ldl -lpthread -lm
+LIB = -lsqlite3 -ldl -lpthread -lm -llua
 _OBJ = util.o load.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o db_search.o script.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
@@ -17,19 +17,19 @@ HE_LIBDIR = ../lib/hconfig.a
 # compile all applications or projects
 all: 
 	make lclean
-	make loki
+	make iteml
 	make item
 
 memchk: item
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
 
-memloki: loki	
-	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./loki
+memiteml: iteml	
+	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./iteml
 
 item: src/item.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
-loki: src/loki.c $(OBJ)
+iteml: src/iteml.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
@@ -41,7 +41,7 @@ lclean:
 	rm -rf obj
 	mkdir obj
 	rm -f item
-	rm -f loki
+	rm -f iteml
 	rm -f dump.txt
 	rm -f item.txt
 	rm -f itemc_mem_check.log
