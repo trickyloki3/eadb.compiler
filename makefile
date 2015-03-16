@@ -18,15 +18,15 @@ HE_LIBDIR = ../lib/hconfig.a
 all: 
 	make lclean
 	make iteml
-	make item
+	make itemc
 
-memchk: item
-	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./item rathena
+memchk: itemc
+	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./itemc
 
 memiteml: iteml	
 	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./iteml
 
-item: src/item.c $(OBJ)
+itemc: src/itemc.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 iteml: src/iteml.c $(OBJ)
@@ -40,7 +40,7 @@ $(OBJDIR)%.o: $(SRCDIR)%.c
 lclean:
 	rm -rf obj
 	mkdir obj
-	rm -f item
+	rm -f itemc
 	rm -f iteml
 	rm -f dump.txt
 	rm -f item.txt

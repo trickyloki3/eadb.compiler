@@ -16,6 +16,8 @@
  	#define MODE_EATHENA 	0x1
 	#define MODE_RATHENA 	0x2
 	#define MODE_HERCULES 	0x4
+ 	#define FORMAT_TXT		0x1
+ 	#define FORMAT_LUA		0x2
 
  	/* resource database */
  	#define option_res_name_sql		"SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
@@ -57,9 +59,28 @@
  	typedef struct item_t {
  		int id;
  		char name[MAX_NAME_SIZE];
- 		char script[MAX_SCRIPT_SIZE];
+ 		int type;
+		int buy;
+		int sell;
+		int weight;
+		int atk;
+		int matk;
+		int def;
+		int range;
+		int slots;
+		int job;
+		int upper;
+		int gender;
+		int loc;
+		int wlv;
+		int elv_min;
+		int elv_max;
+		int refineable;
+		int view;
+		char script[MAX_SCRIPT_SIZE];
  	} item_t;
- 	#define item_ea_iterate			"SELECT * from item_ea;"
+ 	
+ 	#define item_ea_iterate			"SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
  	#define item_ra_iterate			"SELECT * from item_ra;"
  	#define item_he_iterate			"SELECT * from item_he;"
  	#define item_ea_name_search 	"SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"

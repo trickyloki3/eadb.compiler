@@ -1,3 +1,10 @@
+/*
+ *   file: iteml.c
+ *   date: 03/15/2015
+ *   auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
 #include "lua.h"
 #include "lauxlib.h"
 #include "db_search.h"
@@ -24,7 +31,7 @@ int main(int argc, char * argv[]) {
 	lstate = luaL_newstate();
 	if(lstate == NULL) 
 		exit_abt_safe("failed to allocate lua state");
-	if(luaL_loadfile(lstate, "item.cfg"))
+	if(luaL_loadfile(lstate, "iteml.cfg"))
 		return exit_func_safe("item configuration syntax error; %s", lua_tostring(lstate, -1));
 	if(lua_pcall(lstate, 0, 0, 0))
 		return exit_func_safe("item configuration syntax error; %s", lua_tostring(lstate, -1));

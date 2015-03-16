@@ -194,9 +194,29 @@ int item_iterate(db_search_t * db, item_t * item) {
     switch(db->mode) {
         case MODE_EATHENA:
             if(status == SQLITE_ROW) {
-                item->id = sqlite3_column_int(db->item_iterate, 0);
-                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 2));
-                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 19));
+            	item->id = sqlite3_column_int(db->item_iterate, 0);
+                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 1));
+                item->type = sqlite3_column_int(db->item_iterate, 2);
+                item->buy = sqlite3_column_int(db->item_iterate, 3);
+                item->sell = sqlite3_column_int(db->item_iterate, 4);
+                if(item->sell <= 0) item->sell = item->buy / 2;
+                if(item->buy <= 0) item->buy = item->sell * 2;
+                item->weight = sqlite3_column_int(db->item_iterate, 5);
+                item->atk = sqlite3_column_int(db->item_iterate, 6);
+                item->matk = -1;
+                item->def = sqlite3_column_int(db->item_iterate, 7);
+                item->range = sqlite3_column_int(db->item_iterate, 8);
+                item->slots = sqlite3_column_int(db->item_iterate, 9);
+                item->job = sqlite3_column_int(db->item_iterate, 10);
+                item->upper = sqlite3_column_int(db->item_iterate, 11);
+                item->gender = sqlite3_column_int(db->item_iterate, 12);
+                item->loc = sqlite3_column_int(db->item_iterate, 13);
+                item->wlv = sqlite3_column_int(db->item_iterate, 14);
+                item->elv_min = sqlite3_column_int(db->item_iterate, 15);
+                item->elv_max = item->elv_min;
+                item->refineable = sqlite3_column_int(db->item_iterate, 16);
+                item->view = sqlite3_column_int(db->item_iterate, 17);
+                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 18));
             }
             break;
         case MODE_RATHENA:
