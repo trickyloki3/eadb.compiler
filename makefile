@@ -32,6 +32,9 @@ itemc: src/itemc.c $(OBJ)
 iteml: src/iteml.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
+loki: src/loki.c $(OBJ)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
+
 $(OBJDIR)%.o: $(SRCDIR)%.c
 	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR)
 
@@ -46,6 +49,8 @@ lclean:
 	rm -f item.txt
 	rm -f itemc_mem_check.log
 	rm -rf *.dSYM
+	rm -f loki
+	rm -f text.db
 	
 wclean:
 	rmdir obj /S /Q
