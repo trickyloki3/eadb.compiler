@@ -50,7 +50,6 @@ lclean:
 	rm -f itemc_mem_check.log
 	rm -rf *.dSYM
 	rm -f loki
-	rm -f text.db
 	
 wclean:
 	rmdir obj /S /Q

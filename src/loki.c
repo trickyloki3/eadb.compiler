@@ -196,7 +196,7 @@ int main(int argc, char * argv[]) {
 		/* user enter the next commands */
 		command[0] = 0;
 		while(command[0] != 'n' && command[0] != 'd' && command[0] != 'a') {
-			fprintf(stdout, "next(n) done (d) exit(e) concatenate lines (c) modify lines (m) add item (a): ");
+			fprintf(stdout, "next(n) done (d) exit(e) concatenate lines (c) modify lines (m) add item (a) add empty(x): ");
 			fgets(command, BUF_SIZE, stdin);
 			switch(command[0]) {
 				case 'a':
@@ -344,6 +344,28 @@ int main(int argc, char * argv[]) {
 							printf("[%d] %s\n", i, lua_tostring(lstate, i));
 					} while(line_main > 0);
 					break;
+				case 'x':
+					/* pop all the lines from the stack */
+					buffer[0] = '\0';
+					lua_pop(lstate, lua_gettop(lstate) - desc_index - 2);
+					unidentifiedDisplayName = lua_tostring(lstate, -8);
+					unidentifiedResourceName = lua_tostring(lstate, -7);
+					identifiedDisplayName = lua_tostring(lstate, -5);
+					identifiedResourceName = lua_tostring(lstate, -4);
+					slotCount = lua_tonumber(lstate, -2);
+					classNum = lua_tonumber(lstate, -1);
+					sqlite3_bind_int(text_insert_stmt, 1, item_id);
+					sqlite3_bind_text(text_insert_stmt, 2, unidentifiedDisplayName, strlen(unidentifiedDisplayName), SQLITE_STATIC);
+					sqlite3_bind_text(text_insert_stmt, 3, unidentifiedResourceName, strlen(unidentifiedResourceName), SQLITE_STATIC);
+					sqlite3_bind_text(text_insert_stmt, 4, buffer, strlen(buffer), SQLITE_STATIC);
+			      	sqlite3_bind_text(text_insert_stmt, 5, identifiedDisplayName, strlen(identifiedDisplayName), SQLITE_STATIC);
+			      	sqlite3_bind_text(text_insert_stmt, 6, identifiedResourceName, strlen(identifiedResourceName), SQLITE_STATIC);
+			      	sqlite3_bind_text(text_insert_stmt, 7, buffer, strlen(buffer), SQLITE_STATIC);
+			      	sqlite3_bind_int(text_insert_stmt, 8, slotCount);
+			      	sqlite3_bind_int(text_insert_stmt, 9, classNum);
+			      	sqlite3_step(text_insert_stmt);
+			      	sqlite3_reset(text_insert_stmt);
+			      	break;
 				case 'e':
 					exit(EXIT_SUCCESS);
 				default: 
