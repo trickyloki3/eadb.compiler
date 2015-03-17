@@ -10,11 +10,15 @@
 #include "script.h"
 #include "db_search.h"
 
-
+void dump_lua_stack(lua_State * lstate);
 
 int main(int argc, char * argv[]) {
 	int i = 0;
-	char command[BUF_SIZE];
+	int line_main = 0;							/* description line numbers */
+	int line_number = 0;
+	char command[BUF_SIZE];						/* command buffer */
+	char buffer[BUF_SIZE];						/* concatenation buffer */
+	int length = 0;
 	/* testing manual flavour text data miner */
 	int item_id = 0;
 	int check_field = 0;
@@ -23,7 +27,13 @@ int main(int argc, char * argv[]) {
 	int entry_index = 0;						/* the entry table index on the lua stack */
 	int desc_index = 0;
 	lua_State * lstate = luaL_newstate();		/* the lua state maintains the lua stack */
-
+	/* item description entry */
+	const char * unidentifiedDisplayName = NULL;
+	const char * unidentifiedResourceName = NULL;
+	const char * identifiedDisplayName = NULL;
+	const char * identifiedResourceName = NULL;
+	int slotCount = 0;
+	int classNum = 0;
 	/* initialize the script compilers and databases */
 	int ea_flag = 0;
 	int ra_flag = 0;
@@ -96,7 +106,14 @@ int main(int argc, char * argv[]) {
 		item_id = lua_tonumber(lstate, -2);
 
 		/* skip entry if it is already added to the database */
-
+		sqlite3_bind_int(text_search_stmt, 1, item_id);
+		if(sqlite3_step(text_search_stmt) != SQLITE_DONE) {
+			sqlite3_reset(text_search_stmt);
+			lua_pop(lstate, 1);
+			continue;
+		} else {
+			sqlite3_reset(text_search_stmt);
+		}
 		/* push every single table element on the stack */
 		check_field = lua_gettop(lstate);
 		lua_getfield(lstate, entry_index, "unidentifiedDisplayName");
@@ -178,26 +195,168 @@ int main(int argc, char * argv[]) {
 
 		/* user enter the next commands */
 		command[0] = 0;
-		while(command[0] != 'n' && command[0] != 'd') {
-			fprintf(stdout, "next(n) done (d) concatenate lines (c) add lines (a) modify lines (m): ");
+		while(command[0] != 'n' && command[0] != 'd' && command[0] != 'a') {
+			fprintf(stdout, "next(n) done (d) exit(e) concatenate lines (c) modify lines (m) add item (a): ");
 			fgets(command, BUF_SIZE, stdin);
 			switch(command[0]) {
 				case 'a':
+					buffer[0] = '\0';
+					/* select which lines to include in final description */
+					do {
+						/* check that there are enough lines to add */
+						if(desc_index + 3 >= lua_gettop(lstate)) {
+							fprintf(stdout, "no more lines to add\n");
+							fgets(command, BUF_SIZE, stdin);
+							break;
+						}
+
+						/* print the line numbers and the text */
+						for(i = desc_index + 3; i <= lua_gettop(lstate); i++)
+							printf("[%d] %s\n", i, lua_tostring(lstate, i));
+						fprintf(stdout, "current description: %s\n", buffer);
+						fprintf(stdout, "enter line to add (zero to stop): ");
+						if(scanf("%d", &line_number) == 0 || line_number <= 0) {
+							fgets(command, BUF_SIZE, stdin);
+							break;
+						}
+						/* check the line is within range */
+						if(line_number < desc_index || line_number > lua_gettop(lstate)) {
+							fprintf(stdout, "invalid line number\n");
+						} else {
+							length = sprintf(buffer, "%s%s", buffer, lua_tolstring(lstate, line_number, NULL));
+							buffer[length] = 0;
+						}
+					} while(line_number > 0);
+
+					/* pop all the lines from the stack */
+					lua_pop(lstate, lua_gettop(lstate) - desc_index - 2);
+
+					/* get reference to the item description entry */
+					unidentifiedDisplayName = lua_tostring(lstate, -8);
+					unidentifiedResourceName = lua_tostring(lstate, -7);
+					identifiedDisplayName = lua_tostring(lstate, -5);
+					identifiedResourceName = lua_tostring(lstate, -4);
+					slotCount = lua_tonumber(lstate, -2);
+					classNum = lua_tonumber(lstate, -1);
+
+					fprintf(stdout, "=================================\n"
+									"Item Id: %d\nFlavour Text: %s\n"
+									"=================================\n", 
+									item_id, buffer);
+					fprintf(stdout, "Do you want to add this item? (Y/N)");
+					fgets(command, BUF_SIZE, stdin);
+					switch(command[0]) {
+						case 'y': case 'Y':
+							sqlite3_bind_int(text_insert_stmt, 1, item_id);
+							sqlite3_bind_text(text_insert_stmt, 2, unidentifiedDisplayName, strlen(unidentifiedDisplayName), SQLITE_STATIC);
+							sqlite3_bind_text(text_insert_stmt, 3, unidentifiedResourceName, strlen(unidentifiedResourceName), SQLITE_STATIC);
+							sqlite3_bind_text(text_insert_stmt, 4, buffer, strlen(buffer), SQLITE_STATIC);
+					      	sqlite3_bind_text(text_insert_stmt, 5, identifiedDisplayName, strlen(identifiedDisplayName), SQLITE_STATIC);
+					      	sqlite3_bind_text(text_insert_stmt, 6, identifiedResourceName, strlen(identifiedResourceName), SQLITE_STATIC);
+					      	sqlite3_bind_text(text_insert_stmt, 7, buffer, strlen(buffer), SQLITE_STATIC);
+					      	sqlite3_bind_int(text_insert_stmt, 8, slotCount);
+					      	sqlite3_bind_int(text_insert_stmt, 9, classNum);
+					      	sqlite3_step(text_insert_stmt);
+					      	sqlite3_reset(text_insert_stmt);
+							break;
+						default:
+							fprintf(stdout,"did not added the item description\n");
+							break;
+					}
 					break;
 				case 'c':
+					/* ask the user for the starting line */
+					fprintf(stdout, "enter starting line to concatenate to (zero to stop): ");
+					if(scanf("%d", &line_main) == 0 || line_main <= 0) { 
+						fgets(buffer, BUF_SIZE, stdin); 
+						break; 
+					}
+
+					/* check the line is within range */
+					if(line_main < desc_index || line_main > lua_gettop(lstate)) {
+						fprintf(stdout, "invalid line number\n");
+						fgets(buffer, BUF_SIZE, stdin); 
+						break;
+					}
+
+					/* concatenate all the lines requested */
+					do {
+						/* check that there are enough lines to concatenate */
+						if(desc_index + 3 >= lua_gettop(lstate)) {
+							fprintf(stdout, "no more lines to concatenate\n");
+							fgets(buffer, BUF_SIZE, stdin);
+							break;
+						}
+
+						/* print the line numbers and the text */
+						for(i = desc_index + 3; i <= lua_gettop(lstate); i++)
+							printf("[%d] %s\n", i, lua_tostring(lstate, i));
+
+						fprintf(stdout, "enter line to concatenate (zero to stop): ");
+						if(scanf("%d", &line_number) == 0 || line_number <= 0) {
+							fgets(buffer, BUF_SIZE, stdin);
+							break;
+						}
+						/* check the line is within range */
+						if(line_number < desc_index || line_number > lua_gettop(lstate)) {
+							fprintf(stdout, "invalid line number\n");
+						} else if(line_number == line_main) {
+							fprintf(stdout, "cannot concatenate a line to itself\n");
+						} else {
+							length = sprintf(buffer, "%s%s", lua_tolstring(lstate, line_main, NULL), lua_tolstring(lstate, line_number, NULL));
+							buffer[length] = 0;
+							lua_pushstring(lstate, buffer);
+							lua_replace(lstate, line_main);
+							lua_remove(lstate, line_number);
+						}
+					} while(line_number > 0);
+
+					/* print the end result */
+					for(i = desc_index + 3; i <= lua_gettop(lstate); i++)
+						printf("[%d] %s\n", i, lua_tostring(lstate, i));
 					break;
 				case 'm':
+					do {
+						/* ask the user which line to modified */
+						fprintf(stdout, "enter line to modify to (zero to stop): ");
+						if(scanf("%d", &line_main) == 0) { 
+							fgets(buffer, BUF_SIZE, stdin); 
+							break; 
+						}
+
+						/* check the line is within range */
+						if(line_main < desc_index || line_main > lua_gettop(lstate)) {
+							fprintf(stdout, "invalid line number\n");
+							fgets(buffer, BUF_SIZE, stdin); 
+							break;
+						}
+
+						/* ask the user to enter the new line */
+						fprintf(stdout, "enter the new line: ");
+						scanf("%s", buffer);
+
+						/* replace the previous string */
+						lua_pushstring(lstate, buffer);
+						lua_replace(lstate, line_main);
+						lua_remove(lstate, line_number);
+
+						for(i = desc_index + 3; i <= lua_gettop(lstate); i++)
+							printf("[%d] %s\n", i, lua_tostring(lstate, i));
+					} while(line_main > 0);
 					break;
+				case 'e':
+					exit(EXIT_SUCCESS);
 				default: 
 					break;
 			}
 		}
+		if(command[0] == 'd') break;
 		lua_pop(lstate, lua_gettop(lstate) - table_index - 1);
 		entry_count++;
 	}
 
 
-	fprintf(stderr,"[loki]: %d item description entries.\n", entry_count);
+	fprintf(stderr,"[loki]: added %d item description entries.\n", entry_count);
 	sqlite3_close(text_db);
 	deit_db(&ea_db);
 	deit_db(&ra_db);
@@ -207,4 +366,24 @@ int main(int argc, char * argv[]) {
 	script_block_finalize(&he_script);
 	lua_close(lstate);
 	return 0;
+}
+
+void dump_lua_stack(lua_State * lstate) {
+	int index = 0;
+	int length = 0;
+	length = lua_gettop(lstate);
+	fprintf(stderr,"-- stack --\n");
+	for(index = length; index >= 1; index--) {
+		switch(lua_type(lstate, index)) {
+			case LUA_TNIL:      fprintf(stderr, "index: %d type: %s\n", index, "nil"); break;
+			case LUA_TBOOLEAN:  fprintf(stderr, "index: %d type: %s\n", index, "boolean"); break;
+			case LUA_TNUMBER:   fprintf(stderr, "index: %d type: %s\n", index, "number"); break;
+			case LUA_TSTRING:   fprintf(stderr, "index: %d type: %s\n", index, "string"); break;
+			case LUA_TTABLE:    fprintf(stderr, "index: %d type: %s\n", index, "table"); break;
+			case LUA_TTHREAD:   fprintf(stderr, "index: %d type: %s\n", index, "thread"); break;
+			case LUA_TUSERDATA: fprintf(stderr, "index: %d type: %s\n", index, "userdata"); break;
+			case LUA_TFUNCTION: fprintf(stderr, "index: %d type: %s\n", index, "function"); break;
+			default: exit_abt_safe("invalid type");
+		}
+	}
 }
