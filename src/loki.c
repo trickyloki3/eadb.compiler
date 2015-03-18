@@ -14,6 +14,8 @@ void dump_lua_stack(lua_State * lstate);
 
 int main(int argc, char * argv[]) {
 	int i = 0;
+	int j = 0;
+	int len = 0;
 	int line_main = 0;							/* description line numbers */
 	int line_number = 0;
 	char command[BUF_SIZE];						/* command buffer */
@@ -73,7 +75,7 @@ int main(int argc, char * argv[]) {
 	sqlite3 * text_db = NULL;
 	sqlite3_stmt * text_search_stmt = NULL;
 	sqlite3_stmt * text_insert_stmt = NULL;
-	if(sqlite3_open("text.db", &text_db) != SQLITE_OK)
+	if(sqlite3_open("flavour_text.db", &text_db) != SQLITE_OK)
 		exit_abt_safe("failed to open text database");
 
 	/* create the table only if not exist */
@@ -90,7 +92,7 @@ int main(int argc, char * argv[]) {
 
 	if(lstate == NULL) 
 		exit_abt_safe("failed to allocate lua state");
-	if(luaL_loadfile(lstate, "../misc/itemInfo.lua"))
+	if(luaL_loadfile(lstate, "../misc/itemInfo.lub"))
 		return exit_func_safe("syntax error; %s", lua_tostring(lstate, -1));
 	if(lua_pcall(lstate, 0, 0, 0))
 		return exit_func_safe("syntax error; %s", lua_tostring(lstate, -1));
@@ -195,10 +197,40 @@ int main(int argc, char * argv[]) {
 
 		/* user enter the next commands */
 		command[0] = 0;
-		while(command[0] != 'n' && command[0] != 'd' && command[0] != 'a') {
-			fprintf(stdout, "next(n) done (d) exit(e) concatenate lines (c) modify lines (m) add item (a) add empty(x): ");
+		while(command[0] != 'n' && command[0] != 'd' && command[0] != 'a' && command[0] != 'x') {
+			fprintf(stdout, "next(n) done (d) exit(e) concatenate lines (c) modify lines (m) add item (a) add empty(x) add only first line(s): ");
 			fgets(command, BUF_SIZE, stdin);
 			switch(command[0]) {
+				case 's':
+					length = sprintf(buffer, "%s", lua_tolstring(lstate, desc_index + 3, NULL));
+					buffer[length] = 0;
+					fprintf(stdout, "=================================\n"
+									"Item Id: %d\nFlavour Text: %s\n"
+									"=================================\n", 
+									item_id, buffer);
+					/* pop all the lines from the stack */
+					lua_pop(lstate, lua_gettop(lstate) - desc_index - 2);
+
+					/* get reference to the item description entry */
+					unidentifiedDisplayName = lua_tostring(lstate, -8);
+					unidentifiedResourceName = lua_tostring(lstate, -7);
+					identifiedDisplayName = lua_tostring(lstate, -5);
+					identifiedResourceName = lua_tostring(lstate, -4);
+					slotCount = lua_tonumber(lstate, -2);
+					classNum = lua_tonumber(lstate, -1);
+					sqlite3_bind_int(text_insert_stmt, 1, item_id);
+					sqlite3_bind_text(text_insert_stmt, 2, unidentifiedDisplayName, strlen(unidentifiedDisplayName), SQLITE_STATIC);
+					sqlite3_bind_text(text_insert_stmt, 3, unidentifiedResourceName, strlen(unidentifiedResourceName), SQLITE_STATIC);
+					sqlite3_bind_text(text_insert_stmt, 4, buffer, strlen(buffer), SQLITE_STATIC);
+			      	sqlite3_bind_text(text_insert_stmt, 5, identifiedDisplayName, strlen(identifiedDisplayName), SQLITE_STATIC);
+			      	sqlite3_bind_text(text_insert_stmt, 6, identifiedResourceName, strlen(identifiedResourceName), SQLITE_STATIC);
+			      	sqlite3_bind_text(text_insert_stmt, 7, buffer, strlen(buffer), SQLITE_STATIC);
+			      	sqlite3_bind_int(text_insert_stmt, 8, slotCount);
+			      	sqlite3_bind_int(text_insert_stmt, 9, classNum);
+			      	sqlite3_step(text_insert_stmt);
+			      	sqlite3_reset(text_insert_stmt);
+			      	command[0] = 'a';
+			      	break;
 				case 'a':
 					buffer[0] = '\0';
 					/* select which lines to include in final description */
@@ -223,7 +255,7 @@ int main(int argc, char * argv[]) {
 						if(line_number < desc_index || line_number > lua_gettop(lstate)) {
 							fprintf(stdout, "invalid line number\n");
 						} else {
-							length = sprintf(buffer, "%s%s", buffer, lua_tolstring(lstate, line_number, NULL));
+							length = sprintf(buffer, "%s\n%s", buffer, lua_tolstring(lstate, line_number, NULL));
 							buffer[length] = 0;
 						}
 					} while(line_number > 0);
@@ -243,10 +275,10 @@ int main(int argc, char * argv[]) {
 									"Item Id: %d\nFlavour Text: %s\n"
 									"=================================\n", 
 									item_id, buffer);
-					fprintf(stdout, "Do you want to add this item? (Y/N)");
+					fprintf(stdout, "Do you want to add this item? (A/Z)");
 					fgets(command, BUF_SIZE, stdin);
 					switch(command[0]) {
-						case 'y': case 'Y':
+						case 'A': case 'a':
 							sqlite3_bind_int(text_insert_stmt, 1, item_id);
 							sqlite3_bind_text(text_insert_stmt, 2, unidentifiedDisplayName, strlen(unidentifiedDisplayName), SQLITE_STATIC);
 							sqlite3_bind_text(text_insert_stmt, 3, unidentifiedResourceName, strlen(unidentifiedResourceName), SQLITE_STATIC);
@@ -258,6 +290,7 @@ int main(int argc, char * argv[]) {
 					      	sqlite3_bind_int(text_insert_stmt, 9, classNum);
 					      	sqlite3_step(text_insert_stmt);
 					      	sqlite3_reset(text_insert_stmt);
+					      	command[0] = 'a';
 							break;
 						default:
 							fprintf(stdout,"did not added the item description\n");
@@ -303,7 +336,7 @@ int main(int argc, char * argv[]) {
 						} else if(line_number == line_main) {
 							fprintf(stdout, "cannot concatenate a line to itself\n");
 						} else {
-							length = sprintf(buffer, "%s%s", lua_tolstring(lstate, line_main, NULL), lua_tolstring(lstate, line_number, NULL));
+							length = sprintf(buffer, "%s %s", lua_tolstring(lstate, line_main, NULL), lua_tolstring(lstate, line_number, NULL));
 							buffer[length] = 0;
 							lua_pushstring(lstate, buffer);
 							lua_replace(lstate, line_main);
@@ -319,7 +352,7 @@ int main(int argc, char * argv[]) {
 					do {
 						/* ask the user which line to modified */
 						fprintf(stdout, "enter line to modify to (zero to stop): ");
-						if(scanf("%d", &line_main) == 0) { 
+						if(scanf("%d", &line_main) == 0 || line_main <= 0) { 
 							fgets(buffer, BUF_SIZE, stdin); 
 							break; 
 						}
@@ -330,15 +363,21 @@ int main(int argc, char * argv[]) {
 							fgets(buffer, BUF_SIZE, stdin); 
 							break;
 						}
+						fgets(buffer, BUF_SIZE, stdin);
 
 						/* ask the user to enter the new line */
 						fprintf(stdout, "enter the new line: ");
-						scanf("%s", buffer);
+						fgets(buffer, BUF_SIZE, stdin);
+						len = strlen(buffer);
+						for(j = len - 1; j >= 0; j--)
+							if(buffer[j] == '\n') {
+								buffer[j] = 0;
+								break;
+							}
 
 						/* replace the previous string */
 						lua_pushstring(lstate, buffer);
 						lua_replace(lstate, line_main);
-						lua_remove(lstate, line_number);
 
 						for(i = desc_index + 3; i <= lua_gettop(lstate); i++)
 							printf("[%d] %s\n", i, lua_tostring(lstate, i));
