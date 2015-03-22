@@ -119,7 +119,10 @@ int main(int argc, char * argv[]) {
 				}
 
 				/* write the item flavour text, attribute, and script per the file format */
-				write_item(&format, &item, script_translation);
+				write_item(description_file, &format, &item, script_translation);
+
+				/* reset the script translation buffer */
+				script_translation[0] = '\0';
 
 				/* get the next item record in the item database */
 				item_status = item_iterate(script.db, &item);

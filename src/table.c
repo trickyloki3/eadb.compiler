@@ -126,8 +126,8 @@ char * item_type_tbl(int i) {
 		case 0: return "Healing Item";
 		case 2: return "Usable Item";
 		case 3: return "Etc Item";
-		case 4: return "Armor";
-		case 5: return "Weapon";
+		case 4: return "Weapon";
+		case 5: return "Armor";
 		case 6: return "Card";
 		case 7: return "Pet Egg";
 		case 8: return "Pet Equipment";
@@ -142,27 +142,27 @@ char * item_type_tbl(int i) {
 /* skip flag checking; select only one */
 char * loc_tbl(int i) {
 	switch(i) {
-		case 256: return "Upper Headgear";
-		case 512: return "Middle Headgear";
-		case 1: return "Lower Headgear";
-		case 16: return "Armor";
-		case 2: return "Weapon";
-		case 32: return "Shield";
-		case 4: return "Garment";
-		case 64: return "Shoes";
-		case 8: return "Right Accessory";
-		case 128: return "Left Accessory";
-		case 1024: return "Costume Upper Headgear";
-		case 2048: return "Costume Middle Headgear";
-		case 4096: return "Costume Lower Headgear";
-		case 8192: return "Costume Garment";
-		case 32768: return "Ammo";
-		case 65536: return "Shadow Armor";
-		case 131072: return "Shadow Weapon";
-		case 262144: return "Shadow Shield";
-		case 524288: return "Shadow Shoes";
-		case 1048576: return "Shadow Right Accessory";
-		case 2097152: return "Shadow Left Accessory";
+		case 0x000100: return "Upper Headgear";
+		case 0x000200: return "Middle Headgear";
+		case 0x000001: return "Lower Headgear";
+		case 0x000010: return "Armor";
+		case 0x000002: return "Weapon";
+		case 0x000020: return "Shield";
+		case 0x000004: return "Garment";
+		case 0x000040: return "Shoes";
+		case 0x000008: return "Right Accessory";
+		case 0x000080: return "Left Accessory";
+		case 0x000400: return "Costume Upper Headgear";
+		case 0x000800: return "Costume Middle Headgear";
+		case 0x001000: return "Costume Lower Headgear";
+		case 0x002000: return "Costume Garment";
+		case 0x008000: return "Ammo";
+		case 0x010000: return "Shadow Armor";
+		case 0x020000: return "Shadow Weapon";
+		case 0x040000: return "Shadow Shield";
+		case 0x080000: return "Shadow Shoes";
+		case 0x100000: return "Shadow Right Accessory";
+		case 0x200000: return "Shadow Left Accessory";
 		default: return "error";
 	}
 }
@@ -192,6 +192,14 @@ char * weapon_tbl(int i) {
 		case 20: return "Shotgun";
 		case 21: return "Grenade Launcher";
 		case 22: return "Fuuma Shuriken";
+		/* added from rathena */
+		case 23: return "Two-Handed Staves";
+		case 24: return "Dual-Wield Daggers";
+		case 25: return "Dual-Wield Swords";
+		case 26: return "Dual-Wield Axes";
+		case 27: return "Dagger & Sword";
+		case 28: return "Dagger & Axe";
+		case 29: return "Sword & Axe";
 		default: return "error";
 	};
 }
@@ -408,7 +416,6 @@ char * job_tbl(int i) {
 		default: return "error";
 	};
 }
-
 
 char * block_tbl(int i) {
 	switch(i) {

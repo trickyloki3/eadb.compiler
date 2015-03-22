@@ -10,6 +10,7 @@
  	#include "util.h"
  	#include "range.h"
  	#include "setting.h"
+ 	#include "table.h"
  	#include "db_search.h"
  	#include "sqlite3.h"
 	#include "lua.h"
@@ -28,6 +29,10 @@
  		int class_num;
  	} flavour_text_t;
  	#define flavour_text_id_sql "SELECT * FROM flavour_text WHERE id = ?;"
+
+ 	/* supported file formats */
+ 	#define FORMAT_TXT		0x1
+ 	#define FORMAT_LUA		0x2
 
  	/* item type */
  	#define HEALING_ITEM_TYPE 		0
@@ -60,17 +65,19 @@
  	#define LEVEL_REQUIRE_ITEM_FIELD 	12
  	#define REFINE_ABILITY_ITEM_FIELD	13
 	#define SCRIPT_ITEM_FIELD			14
+	#define VIEW_ITEM_FIELD				15
 
  	typedef struct format_field_t {
- 		int item_field;
+ 		int field;
+ 		char text[FMT_TEXT_SIZE];
  		struct format_field_t * next;
  	} format_field_t;
 
- 	typedef struct format_type_t {
+ 	typedef struct format_rule_t {
  		range_t * item_id;
  		format_field_t * format;
- 		struct format_type_t * next;
- 	} format_type_t;
+ 		struct format_rule_t * next;
+ 	} format_rule_t;
 
 	typedef struct format_t {
 		int file_format;
@@ -78,7 +85,7 @@
 		sqlite3 * flavour_text;
 		sqlite3_stmt * flavour_text_id_search;
 		/* item format rules */
-		format_type_t * format_type_list[ITEM_TYPE_SIZE];
+		format_rule_t * format_type_list[ITEM_TYPE_SIZE];
 	} format_t;
 
 	/* item format rule functions */
@@ -87,9 +94,9 @@
 	int deit_format(format_t *);
 
 	/* auxiliary item format loading functions */
-	int load_item_id(format_type_t *, lua_State *, int);
-	int load_item_id_re(format_type_t *, lua_State *, int);
-	int load_type_format(format_type_t *, lua_State *, int);
+	int load_item_id(format_rule_t *, lua_State *, int);
+	int load_item_id_re(format_rule_t *, lua_State *, int);
+	int load_type_format(format_rule_t *, lua_State *, int);
 	int load_type_format_field(format_field_t *, lua_State *, int);
 
 	/* flavour text database load and search functions */
@@ -97,5 +104,14 @@
 	int flavour_text_id_search(format_t *, flavour_text_t *, int);
 
 	/* write item fields */
-	int write_item(format_t *, item_t *, char *);
+	int write_item(FILE *, format_t *, item_t *, char *);
+	int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
+	int format_flavour_text(char *, int *, format_t *, format_field_t *, flavour_text_t *, int);
+	int format_script(char *, int *, format_field_t *, char *);
+	int format_integer(char *, int *, format_field_t *, int);		/* non-interpreted values */
+	int format_refinement(char *, int *, format_field_t *, int);	/* refinement is interpreted either refine (don't write text) or nonrefine (write text) */
+	int format_gender(char *, int *, format_field_t *, int);		/* gender is interpreted female (0), male(1), unisex(2) */
+	int format_view(char *, int *, format_field_t *, int, int);		/* view is interpreted only for weapon and ammo type */
+	int format_type(char *, int *, format_field_t *, int);
+	int format_job(char *, int *, format_field_t *, int, int);
 #endif

@@ -16,8 +16,6 @@
  	#define MODE_EATHENA 	0x1
 	#define MODE_RATHENA 	0x2
 	#define MODE_HERCULES 	0x4
- 	#define FORMAT_TXT		0x1
- 	#define FORMAT_LUA		0x2
 
  	/* resource database */
  	#define option_res_name_sql		"SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"

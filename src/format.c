@@ -38,7 +38,7 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 		return CHECK_FAILED;
 
 	/* initialize the item rule array */
-	memset(format->format_type_list, 0, sizeof(format_type_t *) * ITEM_TYPE_SIZE);
+	memset(format->format_type_list, 0, sizeof(format_rule_t *) * ITEM_TYPE_SIZE);
 	format->file_format = file_format;
 
 	/* get the item format table */
@@ -105,8 +105,8 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 }
 
 int init_format_type(format_t * format, lua_State * lstate, int type_table, int item_type_id) {
-	format_type_t * format_type_temp = NULL;
-	format_type_t * format_type_iter = NULL;
+	format_rule_t * format_rule_temp = NULL;
+	format_rule_t * format_type_iter = NULL;
 
 	/* check the item type id index */
 	if(item_type_id < 0 || item_type_id > ITEM_TYPE_SIZE) {
@@ -117,7 +117,7 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 	/* get the root of the format type's linked list */
 	lua_pushnil(lstate);
 	while(lua_next(lstate, type_table)) {
-		format_type_temp = calloc(1, sizeof(format_type_t));
+		format_rule_temp = calloc(1, sizeof(format_rule_t));
 
 		/* check that each rule is a table */
 		if(!lua_istable(lstate, -1)) {
@@ -126,11 +126,11 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 		}
 
 		/* load the item table and format */
-		if(load_item_id(format_type_temp, lstate, lua_gettop(lstate)) != CHECK_PASSED) {
+		if(load_item_id(format_rule_temp, lstate, lua_gettop(lstate)) != CHECK_PASSED) {
 			exit_abt_safe("failed to load item id in item format rule");
 			return CHECK_FAILED;
 		}
-		if(load_type_format(format_type_temp, lstate, lua_gettop(lstate)) != CHECK_PASSED) {
+		if(load_type_format(format_rule_temp, lstate, lua_gettop(lstate)) != CHECK_PASSED) {
 			exit_abt_safe("failed to load item format in item format rule");
 			return CHECK_FAILED;
 		}
@@ -153,8 +153,8 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 		}
 
 		format_type_iter = (format->format_type_list[item_type_id] == NULL) ?
-			(format->format_type_list[item_type_id] = format_type_temp):
-			(format_type_iter->next = format_type_temp);
+			(format->format_type_list[item_type_id] = format_rule_temp):
+			(format_type_iter->next = format_rule_temp);
 		lua_pop(lstate, lua_gettop(lstate) - type_table - 1);
 	}
 	return CHECK_PASSED;
@@ -162,27 +162,27 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 
 int deit_format(format_t * format) {
 	int i = 0;
-	format_type_t * format_type_temp = NULL;
-	format_type_t * format_type_iter = NULL;
+	format_rule_t * format_rule_temp = NULL;
+	format_rule_t * format_type_iter = NULL;
 	format_field_t * format_field_temp = NULL;
 	format_field_t * format_field_iter = NULL;
 
 	for(i = 0; i < ITEM_TYPE_SIZE;i++) {
 		format_type_iter = format->format_type_list[i];
 		while(format_type_iter != NULL) {
-			format_type_temp = format_type_iter;
+			format_rule_temp = format_type_iter;
 			format_type_iter = format_type_iter->next;
 			/* free the item id range */
-			if(format_type_temp->item_id != NULL)
-				freerange(format_type_temp->item_id);
+			if(format_rule_temp->item_id != NULL)
+				freerange(format_rule_temp->item_id);
 			/* free the format */
-			format_field_iter = format_type_temp->format;
+			format_field_iter = format_rule_temp->format;
 			while(format_field_iter != NULL) {
 				format_field_temp = format_field_iter;
 				format_field_iter = format_field_iter->next;
 				free(format_field_temp);
 			}
-			free(format_type_temp);
+			free(format_rule_temp);
 		}
 	}
 
@@ -190,6 +190,7 @@ int deit_format(format_t * format) {
 		sqlite3_finalize(format->flavour_text_id_search);
 		sqlite3_close(format->flavour_text);
 	}
+	return CHECK_PASSED;
 }
 
 int flavour_text_id_search(format_t * format, flavour_text_t * flavour_text, int item_id) {
@@ -218,14 +219,14 @@ int flavour_text_id_search(format_t * format, flavour_text_t * flavour_text, int
 	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
 }
 
-int load_item_id(format_type_t * type, lua_State * lstate, int table_index) {
+int load_item_id(format_rule_t * type, lua_State * lstate, int table_index) {
 	int status = 0;
 	int item_id_table = 0;
 
 	/* get the item id field */
 	lua_getfield(lstate, table_index, "item_id");
 	item_id_table = lua_gettop(lstate);
-	if(!lua_istable(lstate, -1) || table_index == item_id_table) {
+	if(!lua_istable(lstate, -1) || lua_isnil(lstate, -1)) {
 		exit_abt_safe("item rule's item_id value must be a table or item_id is missing");
 		return CHECK_FAILED;
 	}
@@ -236,7 +237,7 @@ int load_item_id(format_type_t * type, lua_State * lstate, int table_index) {
 	return status;
 }
 
-int load_item_id_re(format_type_t * type, lua_State * lstate, int table_index) {
+int load_item_id_re(format_rule_t * type, lua_State * lstate, int table_index) {
 	int phase = 0;
 	int item_id_start = 0;
 	int item_id_final = 0;
@@ -291,7 +292,7 @@ int load_item_id_re(format_type_t * type, lua_State * lstate, int table_index) {
 	return CHECK_PASSED;
 }
 
-int load_type_format(format_type_t * type, lua_State * lstate, int table_index) {
+int load_type_format(format_rule_t * type, lua_State * lstate, int table_index) {
 	int item_format_table = 0;
 	format_field_t * temp = NULL;
 	format_field_t * iter = NULL;
@@ -299,7 +300,7 @@ int load_type_format(format_type_t * type, lua_State * lstate, int table_index) 
 	/* get the item id field */
 	lua_getfield(lstate, table_index, "format");
 	item_format_table = lua_gettop(lstate);
-	if(!lua_istable(lstate, -1) || table_index == item_format_table) {
+	if(!lua_istable(lstate, -1) || lua_isnil(lstate, -1)) {
 		exit_abt_safe("item rule's format value must be a table or format is missing");
 		return CHECK_FAILED;
 	}
@@ -331,50 +332,259 @@ int load_type_format_field(format_field_t * field, lua_State * lstate, int table
 	/* map the item format type to a constant */
 	item_type_field = lua_tostring(lstate, -1);
 	if(ncs_strcmp(item_type_field, "flavour") == 0) {
-		field->item_field = FLAVOUR_ITEM_FIELD;
+		field->field = FLAVOUR_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "type") == 0) {
-		field->item_field = TYPE_ITEM_FIELD;
+		field->field = TYPE_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "buy") == 0) {
-		field->item_field = BUY_ITEM_FIELD;
+		field->field = BUY_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "sell") == 0) {
-		field->item_field = SELL_ITEM_FIELD;
+		field->field = SELL_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "weight") == 0) {
-		field->item_field = WEIGHT_ITEM_FIELD;
+		field->field = WEIGHT_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "attack") == 0) {
-		field->item_field = ATK_ITEM_FIELD;
+		field->field = ATK_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "defense") == 0) {
-		field->item_field = DEF_ITEM_FIELD;
+		field->field = DEF_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "range") == 0) {
-		field->item_field = RANGE_ITEM_FIELD;
+		field->field = RANGE_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "job") == 0 ||
 			  ncs_strcmp(item_type_field, "class") == 0) {
-		field->item_field = JOB_ITEM_FIELD;
+		field->field = JOB_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "gender") == 0) {
-		field->item_field = GENDER_ITEM_FIELD;
+		field->field = GENDER_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "location") == 0) {
-		field->item_field = LOC_ITEM_FIELD;
+		field->field = LOC_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "weapon_level") == 0) {
-		field->item_field = WEAPON_LEVEL_ITEM_FIELD;
+		field->field = WEAPON_LEVEL_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "require_level") == 0) {
-		field->item_field = LEVEL_REQUIRE_ITEM_FIELD;
+		field->field = LEVEL_REQUIRE_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "refinement") == 0) {
-		field->item_field = REFINE_ABILITY_ITEM_FIELD;
+		field->field = REFINE_ABILITY_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "script") == 0) {
-		field->item_field = SCRIPT_ITEM_FIELD;
+		field->field = SCRIPT_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "view") == 0) {
+		field->field = VIEW_ITEM_FIELD;
 	} else {
 		exit_func_safe("invalid item format field %s", item_type_field);
 		lua_pop(lstate, 1);
 		return CHECK_FAILED;
 	}
-	lua_pop(lstate, 1);
+
+	/* load the text */
+	lua_getfield(lstate, table_index, "text");
+	if(!lua_isnil(lstate, -1)) {
+		if(!lua_isstring(lstate, -1)) {
+			exit_abt_safe("item rule's text must be a string");
+			return CHECK_FAILED;
+		}
+		strncopy(field->text, FMT_TEXT_SIZE, (const unsigned char *) lua_tostring(lstate, -1));
+	}
+
+	lua_pop(lstate, 2);
 	return CHECK_PASSED;
 }
 
-int write_item(format_t * format, item_t * item, char * script) {
+int write_item(FILE * file, format_t * format, item_t * item, char * script) {
+	format_rule_t * item_rule = NULL;
+	format_field_t * item_field = NULL;
+
+	/* check item type is valid */
+	if(item->type < 0 || item->type > ITEM_TYPE_SIZE) {
+		exit_func_safe("invalid item type %d\n", item->type);
+		return CHECK_FAILED;
+	}
+
+	/* find a matching item rule per item type  */
+	item_rule = format->format_type_list[item->type];
+	while(item_rule != NULL) {
+		/* filter by item id */
+		if(!searchrange(item_rule->item_id, item->id)) {
+			item_rule = item_rule->next;
+			continue;
+		}
+		break;
+	}
+
+	/* check whether an item rule is found */
+	if(item_rule == NULL) return CHECK_FAILED;
+
+	/* write item based on format */
+	item_field = item_rule->format;
+	if(format->file_format & FORMAT_TXT)
+		return write_item_text(file, format, item_field, item, script);
+
+	return CHECK_PASSED;
+}
+
+int write_item_text(FILE * file, format_t * format, format_field_t * field, item_t * item, char * script) {
+	char buffer[FMT_BUF_SIZE];
+	int offset = 0;
 	flavour_text_t flavour;
 
-	/* search for the item's flavour text */
-	flavour_text_id_search(format, &flavour, item->id);
-
+	/* write text format header */
+	fprintf(file,"%d#\n", item->id);
 	
+	while(field != NULL) {
+		switch(field->field) {
+			/* item flavour and script */
+			case FLAVOUR_ITEM_FIELD: 		format_flavour_text(buffer, &offset, format, field, &flavour, item->id); 	break;
+			case SCRIPT_ITEM_FIELD:			format_script(buffer, &offset, field, script); 								break;
+			/* item attributes */
+			case TYPE_ITEM_FIELD:			format_type(buffer, &offset, field, item->type);							break;
+			case BUY_ITEM_FIELD:			format_integer(buffer, &offset, field, item->buy); 							break;
+			case SELL_ITEM_FIELD:			format_integer(buffer, &offset, field, item->sell); 						break;
+			case WEIGHT_ITEM_FIELD: 		format_integer(buffer, &offset, field, item->weight /10); 					break;
+			case ATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->atk); 							break;
+			case DEF_ITEM_FIELD:			format_integer(buffer, &offset, field, item->def); 							break;
+			case RANGE_ITEM_FIELD:			format_integer(buffer, &offset, field, item->range); 						break;
+			case JOB_ITEM_FIELD:			format_view(buffer, &offset, field, item->job, item->upper);				break;
+			case GENDER_ITEM_FIELD:			format_gender(buffer, &offset, field, item->gender);						break;
+			case LOC_ITEM_FIELD:				break;
+			case WEAPON_LEVEL_ITEM_FIELD:	format_integer(buffer, &offset, field, item->wlv); 							break;
+			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, &offset, field, item->elv_min); 						break;
+			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable);				break;
+			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);				break;
+			default: break;
+		}
+		field = field->next;
+	}
+
+	/* write the text format content and footer */
+	fprintf(file, "%s#\n", buffer);
+	return CHECK_PASSED;
+}
+
+int format_flavour_text(char * buffer, int * offset, format_t * format, format_field_t * field, flavour_text_t * flavour, int item_id) {
+	int i = 0;
+	char * flavor = NULL;			/* reference the item description name */
+	int length = 0;					/* length of the item description name */
+	char * string[FMT_LINE_SIZE];	/* parsed strings separated by a peroid */
+	int count = 0;					/* number of parsed strings */
+
+	/* search flavour text for item id */
+	if(flavour_text_id_search(format, flavour, item_id) != CHECK_PASSED)
+		return CHECK_FAILED;
+	
+	/* preprocess the flavour text buffer */
+	flavor = flavour->identified_description_name;
+	length = strlen(flavor);
+	
+	/* skip initial newline and space characters */
+	for(i = 0; i < length; i++)
+		if(isspace(flavor[i])) flavor[i] = '\0'; else break;
+
+	/* set the initial string */
+	string[count++] = &flavor[i];
+
+	for(; i < length && flavor[i] != '\0'; i++) {
+		/* convert period to a newline character */
+		if(flavor[i] == '.' || (i + 1 < length && flavor[i + 1] == '\0')) {
+			/* skip up to the last peroid */
+			while(i + 1 < length && flavor[i + 1] == '.') i++;
+			flavor[i] = '\0';
+			/* skip up to the last initial whitespace */
+			while(i + 1 < length && isspace(flavor[i + 1])) i++;
+			/* set the next string */
+			string[count++] = &flavor[i + 1];
+			if(count > FMT_LINE_SIZE) {
+				return exit_func_safe("description string count overflowed; only support up to %d strings", FMT_LINE_SIZE);
+			}
+		}
+	}
+
+	/* the last string is always nil */
+	count--;
+
+	/* write the flavour text strings into the buffer */
+	for(i = 0; i < count; i++)
+		*offset += sprintf(&buffer[*offset], "%s.\n", string[i]);
+	
+	return CHECK_PASSED;
+}
+
+int format_script(char * buffer, int * offset, format_field_t * field, char * script) {
+	/* write the script into the buffer */
+	if(script[0] != '\0')
+		*offset += sprintf(&buffer[*offset], "%s", script);
+	return CHECK_PASSED;
+}
+
+int format_integer(char * buffer, int * offset, format_field_t * field, int value) {
+	/* write the the text and value */
+	if(value >= 0)
+		*offset += (field->text[0] != '\0')?
+			sprintf(&buffer[*offset], "%s %d\n", field->text, value):
+			sprintf(&buffer[*offset], "%d\n", value);
+	return CHECK_PASSED;
+}
+
+int format_refinement(char * buffer, int * offset, format_field_t * field, int value) {
+	if(value == 0)
+		if(field->text[0] != '\0')
+			*offset += sprintf(&buffer[*offset], "%s\n", field->text);
+	return CHECK_PASSED;
+}
+
+int format_gender(char * buffer, int * offset, format_field_t * field, int value) {
+	char * gender = NULL;
+
+	/* resolve the gender to a gender string */
+	switch(value) {
+		case 0: gender = "female"; break;
+		case 1: gender = "male"; break;
+		case 2: break;
+		default: exit_func_safe("cannot interpret gender value %d", value);
+	}
+
+	/* unisex or invalid gender values are not interpreted */
+	if(gender == NULL) return CHECK_FAILED;
+
+	/* write the female or male only restriction */
+	*offset += (field->text[0] != '\0')?
+		sprintf(&buffer[*offset], "%s %s\n", field->text, gender):
+		sprintf(&buffer[*offset], "%s\n", gender);
+	return CHECK_PASSED;
+}
+
+int format_view(char * buffer, int * offset, format_field_t * field, int view, int type) {
+	char * weapon_type = NULL;
+
+	/* view is only interpreted for weapon and ammo type */
+	if(type != WEAPON_ITEM_TYPE && type != AMMO_ITEM_TYPE) 
+		return CHECK_FAILED;
+
+	/* map the weapon type constant to weapon type string */
+	weapon_type = weapon_tbl(type);
+	if(ncs_strcmp(weapon_type, "error") == 0) {
+		exit_func_safe("failed to find weapon type for view %d on type %d", view, type);
+		return CHECK_FAILED;
+	}
+
+	/* write the weapon type string */
+	*offset += (field->text[0] != '\0')?
+		sprintf(&buffer[*offset], "%s %s\n", field->text, weapon_type):
+		sprintf(&buffer[*offset], "%s\n", weapon_type);
+	return CHECK_PASSED;
+}
+
+int format_type(char * buffer, int * offset, format_field_t * field, int type) {
+	char * item_type = NULL;
+
+	/* map the item type constant to item type string */
+	item_type = item_type_tbl(type);
+	if(ncs_strcmp(item_type, "error") == 0) {
+		exit_func_safe("failed to find item type for item type %d", type);
+		return CHECK_FAILED;
+	}
+
+	/* write the item type string */
+	*offset += (field->text[0] != '\0')?
+		sprintf(&buffer[*offset], "%s %s\n", field->text, item_type):
+		sprintf(&buffer[*offset], "%s\n", item_type);
+	return CHECK_PASSED;
+}
+
+int format_job(char * buffer, int * offset, format_field_t * field, int job, int upper) {
+	
+	return CHECK_PASSED;
 }

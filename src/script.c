@@ -1822,7 +1822,7 @@ int translate_heal(block_r * block, int handler) {
             (handler == 9)?"%":"");
     if(!CHECK_ZERO(block->eng[1])) 
         offset += sprintf(buf + offset - 1,"%s%s SP by %s%s.",
-            (!CHECK_ZERO(block->eng[0])?" ":""),
+            (!CHECK_ZERO(block->eng[0])?"\n":""),
             (CHECK_NEGATIVE(block->eng[1])?"Drain":"Recover"), 
             /*formula(aux, block->eng[1], sp),*/
             block->eng[1],
