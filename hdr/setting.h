@@ -15,6 +15,7 @@
 
  	#define BUF_SIZE				4096		/* maximum buffer size in bytes */
 	#define MAX_SCRIPT_SIZE 		4096		/* maximum length of script in bytes */
+ 	#define MAX_DESCRIPTION_SIZE	4096
  	#define MAX_NAME_SIZE 			128			/* maximum length of names in bytes */
  	#define MAX_FORMAT_SIZE			512			/* maximum length of format & description in bytes */
  	#define MAX_VARARG_SIZE 		128			/* maximum length of fields in bytes */

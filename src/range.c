@@ -812,3 +812,13 @@ void calcrangemax(int operator, range_t * range_1, int max) {
       iter = iter->next;
    }
 }
+
+int searchrange(range_t * range, int search) {
+   range_t * iter = range;
+   while(iter != NULL) {
+      if(iter->min >= search && iter->max <= search)
+         return 1;
+      iter = iter->next;
+   }
+   return 0;
+}

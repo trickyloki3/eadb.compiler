@@ -7,7 +7,7 @@ HDRDIR = -Ihdr/
 OBJDIR = obj/
 SRCDIR = src/
 LIB = -lsqlite3 -ldl -lpthread -lm -llua
-_OBJ = util.o load.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o db_search.o script.o
+_OBJ = util.o load.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o db_search.o script.o format.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
 # hercule item database require libconfig
@@ -32,6 +32,9 @@ itemc: src/itemc.c $(OBJ)
 iteml: src/iteml.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
+flavour: src/flavour.c $(OBJ)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
+
 loki: src/loki.c $(OBJ)
 	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
@@ -45,6 +48,7 @@ lclean:
 	mkdir obj
 	rm -f itemc
 	rm -f iteml
+	rm -f flavour
 	rm -f dump.txt
 	rm -f item.txt
 	rm -f itemc_mem_check.log

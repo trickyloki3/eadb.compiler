@@ -42,7 +42,6 @@
 
    /* specifies a x to y range set */
    typedef struct range {
-      char * id;
       int min;
       int max;
       int id_min; /* absolute minimum limit of the identifier */
@@ -70,4 +69,5 @@
    void fliprange(range_t *);
    void calcrangemin(int, range_t *, int);
    void calcrangemax(int, range_t *, int);
+   int searchrange(range_t *, int);
 #endif
