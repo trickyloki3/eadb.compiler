@@ -62,7 +62,6 @@
 		int sell;
 		int weight;
 		int atk;
-		int matk;
 		int def;
 		int range;
 		int slots;
@@ -76,11 +75,20 @@
 		int refineable;
 		int view;
 		char script[MAX_SCRIPT_SIZE];
+		/* rathena and hercules only */
+		int matk;
+		/* hercules only */
+		int bindonequip;
+		int buyingstore;
+		int delay;
+		int trade[TRADE_TOTAL];
+		int nouse[NOUSE_TOTAL];
+		int stack[STACK_TOTAL];
  	} item_t;
  	
  	#define item_ea_iterate			"SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
  	#define item_ra_iterate			"SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
- 	#define item_he_iterate			"SELECT * from item_he;"
+ 	#define item_he_iterate			"SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script from item_he;"
  	#define item_ea_name_search 	"SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
 	#define item_ra_name_search 	"SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
 	#define item_he_name_search 	"SELECT Id, Name, Script FROM item_he WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"

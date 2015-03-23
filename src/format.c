@@ -494,24 +494,24 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 	
 	while(field != NULL) {
 		switch(field->field) {
-			case FLAVOUR_ITEM_FIELD: 		format_flavour_text(buffer, &offset, format, field, &flavour, item->id); 	break;
-			case SCRIPT_ITEM_FIELD:			format_script(buffer, &offset, field, script); 								break;
-			case TYPE_ITEM_FIELD:			format_type(buffer, &offset, field, item->type);							break;
-			case BUY_ITEM_FIELD:			format_integer(buffer, &offset, field, item->buy); 							break;
-			case SELL_ITEM_FIELD:			format_integer(buffer, &offset, field, item->sell); 						break;
-			case WEIGHT_ITEM_FIELD: 		format_weight(buffer, &offset, field, item->weight); 						break;
-			case ATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->atk); 							break;
-			case DEF_ITEM_FIELD:			format_integer(buffer, &offset, field, item->def); 							break;
-			case RANGE_ITEM_FIELD:			format_integer(buffer, &offset, field, item->range); 						break;
-			case JOB_ITEM_FIELD:			format_job(buffer, &offset, field, item->job, item->upper, item->gender);	break;
-			case GENDER_ITEM_FIELD:			format_gender(buffer, &offset, field, item->gender);						break;
-			case LOC_ITEM_FIELD:			format_location(buffer, &offset, field, item->loc);							break;
-			case WEAPON_LEVEL_ITEM_FIELD:	format_integer(buffer, &offset, field, item->wlv); 							break;
-			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, &offset, field, item->elv_min); 						break;
-			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable);				break;
-			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);				break;
-			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper);							break;
-			case MATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->matk); 						break;
+			case FLAVOUR_ITEM_FIELD: 		format_flavour_text(buffer, &offset, format, field, &flavour, item->id); 			break;
+			case SCRIPT_ITEM_FIELD:			format_script(buffer, &offset, field, script); 										break;
+			case TYPE_ITEM_FIELD:			format_type(buffer, &offset, field, item->type);									break;
+			case BUY_ITEM_FIELD:			format_integer(buffer, &offset, field, item->buy); 									break;
+			case SELL_ITEM_FIELD:			format_integer(buffer, &offset, field, item->sell); 								break;
+			case WEIGHT_ITEM_FIELD: 		format_weight(buffer, &offset, field, item->weight); 								break;
+			case ATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->atk); 									break;
+			case DEF_ITEM_FIELD:			format_integer(buffer, &offset, field, item->def); 									break;
+			case RANGE_ITEM_FIELD:			format_integer(buffer, &offset, field, item->range); 								break;
+			case JOB_ITEM_FIELD:			format_job(buffer, &offset, field, item->job, item->upper, item->gender);			break;
+			case GENDER_ITEM_FIELD:			format_gender(buffer, &offset, field, item->gender);								break;
+			case LOC_ITEM_FIELD:			format_location(buffer, &offset, field, item->loc);									break;
+			case WEAPON_LEVEL_ITEM_FIELD:	format_integer(buffer, &offset, field, item->wlv); 									break;
+			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, &offset, field, item->elv_min); 								break;
+			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable, format->server_type);	break;
+			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);						break;
+			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper);									break;
+			case MATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->matk); 								break;
 			default: break;
 		}
 		field = field->next;
@@ -586,10 +586,16 @@ int format_integer(char * buffer, int * offset, format_field_t * field, int valu
 	return CHECK_PASSED;
 }
 
-int format_refinement(char * buffer, int * offset, format_field_t * field, int value) {
-	if(value == 0)
-		if(field->text[0] != '\0')
-			*offset += sprintf(&buffer[*offset], "%s\n", field->text);
+int format_refinement(char * buffer, int * offset, format_field_t * field, int value, int server_type) {
+	if(server_type != MODE_HERCULES) {
+		if(value == 0)
+			if(field->text[0] != '\0')
+				*offset += sprintf(&buffer[*offset], "%s\n", field->text);
+	} else {
+		if(value != 0)
+			if(field->text[0] != '\0')
+				*offset += sprintf(&buffer[*offset], "%s\n", field->text);
+	}
 	return CHECK_PASSED;
 }
 

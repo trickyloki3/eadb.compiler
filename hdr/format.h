@@ -146,10 +146,10 @@
 	int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
 	int format_flavour_text(char *, int *, format_t *, format_field_t *, flavour_text_t *, int);
 	int format_script(char *, int *, format_field_t *, char *);
-	int format_integer(char *, int *, format_field_t *, int);		/* non-interpreted values */
-	int format_refinement(char *, int *, format_field_t *, int);	/* refinement is interpreted either refine (don't write text) or nonrefine (write text) */
-	int format_gender(char *, int *, format_field_t *, int);		/* gender is interpreted female (0), male(1), unisex(2) */
-	int format_view(char *, int *, format_field_t *, int, int);		/* view is interpreted only for weapon and ammo type */
+	int format_integer(char *, int *, format_field_t *, int);			/* non-interpreted values */
+	int format_refinement(char *, int *, format_field_t *, int, int);	/* refinement is interpreted either refine (don't write text) or nonrefine (write text) */
+	int format_gender(char *, int *, format_field_t *, int);			/* gender is interpreted female (0), male(1), unisex(2) */
+	int format_view(char *, int *, format_field_t *, int, int);			/* view is interpreted only for weapon and ammo type */
 	int format_type(char *, int *, format_field_t *, int);
 	int format_job(char *, int *, format_field_t *, int, int, int);
 	int format_upper(char *, int *, format_field_t *, int);
