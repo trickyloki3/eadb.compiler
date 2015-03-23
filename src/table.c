@@ -194,12 +194,12 @@ char * weapon_tbl(int i) {
 		case 22: return "Fuuma Shuriken";
 		/* added from rathena */
 		case 23: return "Two-Handed Staves";
-		case 24: return "Dual-Wield Daggers";
-		case 25: return "Dual-Wield Swords";
-		case 26: return "Dual-Wield Axes";
-		case 27: return "Dagger & Sword";
-		case 28: return "Dagger & Axe";
-		case 29: return "Sword & Axe";
+		case 25: return "Dual-Wield Daggers";
+		case 26: return "Dual-Wield Swords";
+		case 27: return "Dual-Wield Axes";
+		case 28: return "Dagger & Sword";
+		case 29: return "Dagger & Axe";
+		case 30: return "Sword & Axe";
 		default: return "error";
 	}
 }

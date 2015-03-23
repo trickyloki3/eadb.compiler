@@ -94,7 +94,7 @@ int main(int argc, char * argv[]) {
 			exit_func_safe("failed to open flavour text database at %s", flavour_db_path);
 
 		/* load the item format information */
-		if(init_format(&format, lstate, table_index, file_format_type) != CHECK_PASSED)
+		if(init_format(&format, lstate, table_index, file_format_type, script.mode) != CHECK_PASSED)
 			exit_abt_safe("failed to load item format configuration");
 
 		/* process all items in database */

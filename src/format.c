@@ -28,7 +28,7 @@ int init_flavour_db(format_t * format, const char * flavour_db_path) {
 	return CHECK_PASSED;
 }
 
-int init_format(format_t * format, lua_State * lstate, int format_index, int file_format) {
+int init_format(format_t * format, lua_State * lstate, int format_index, int file_format, int server_type) {
 	int table_index = 0;
 	int item_type_id = 0;
 	const char * item_type = NULL;
@@ -40,6 +40,7 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 	/* initialize the item rule array */
 	memset(format->format_type_list, 0, sizeof(format_rule_t *) * ITEM_TYPE_SIZE);
 	format->file_format = file_format;
+	format->server_type = server_type;
 
 	/* get the item format table */
 	lua_getfield(lstate, format_index, "item_format");
@@ -71,9 +72,19 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 		else if(ncs_strcmp(item_type, "etc") == 0)
 			item_type_id = ETC_ITEM_TYPE;
 		else if(ncs_strcmp(item_type, "weapon") == 0)
-			item_type_id = WEAPON_ITEM_TYPE;
+			/* rathena swap item type for weapon and armor */
+			if(server_type == MODE_RATHENA) {
+				item_type_id = WEAPON_ITEM_TYPE_RA;
+			} else {
+				item_type_id = WEAPON_ITEM_TYPE;
+			}
 		else if(ncs_strcmp(item_type, "armor") == 0)
-			item_type_id = ARMOR_ITEM_TYPE;
+			/* rathena swap item type for weapon and armor */
+			if(server_type == MODE_RATHENA) {
+				item_type_id = ARMOR_ITEM_TYPE_RA;
+			} else {
+				item_type_id = ARMOR_ITEM_TYPE;
+			}
 		else if(ncs_strcmp(item_type, "card") == 0)
 			item_type_id = CARD_ITEM_TYPE;
 		else if(ncs_strcmp(item_type, "pet_egg") == 0)
@@ -136,19 +147,26 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 		}
 
 		/* load item type specified filters */
-		switch(item_type_id) {
-			case HEALING_ITEM_TYPE:			break;
-			case USABLE_ITEM_TYPE:			break;
-			case ETC_ITEM_TYPE:				break;
-			case WEAPON_ITEM_TYPE:			load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
-			case ARMOR_ITEM_TYPE:			break;
-			case CARD_ITEM_TYPE:			break;
-			case PET_EGG_ITEM_TYPE:			break;
-			case PET_EQUIP_ITEM_TYPE:		break;
-			case AMMO_ITEM_TYPE:			break;
-			case DELAY_USABLE_ITEM_TYPE:	break;
-			case DELAY_CONFIRM_ITEM_TYPE:	break;
-			case SHADOW_EQUIP_ITEM_TYPE:	break;
+		if(format->server_type != MODE_RATHENA) {
+			switch(item_type_id) {
+				case HEALING_ITEM_TYPE:			break;
+				case USABLE_ITEM_TYPE:			break;
+				case ETC_ITEM_TYPE:				break;
+				case WEAPON_ITEM_TYPE:			load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
+				case ARMOR_ITEM_TYPE:			break;
+				case CARD_ITEM_TYPE:			break;
+				case PET_EGG_ITEM_TYPE:			break;
+				case PET_EQUIP_ITEM_TYPE:		break;
+				case AMMO_ITEM_TYPE:			break;
+				case DELAY_USABLE_ITEM_TYPE:	break;
+				case DELAY_CONFIRM_ITEM_TYPE:	break;
+				case SHADOW_EQUIP_ITEM_TYPE:	break;
+			}
+		} else {
+			switch(item_type_id) {
+				case WEAPON_ITEM_TYPE_RA:		load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
+				case ARMOR_ITEM_TYPE_RA:		break;
+			}
 		}
 
 		format_type_iter = (format->format_type_list[item_type_id] == NULL) ?
@@ -368,6 +386,8 @@ int load_type_format_field(format_field_t * field, lua_State * lstate, int table
 		field->field = VIEW_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "upper") == 0) {
 		field->field = UPPER_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "magical_attack") == 0) {
+		field->field = MATK_ITEM_FIELD;
 	} else {
 		exit_func_safe("invalid item format field %s", item_type_field);
 		lua_pop(lstate, 1);
@@ -441,7 +461,8 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 			continue;
 		}
 		/* filter by weapon type */
-		if(item->type == WEAPON_ITEM_TYPE) {
+		if((item->type == WEAPON_ITEM_TYPE && format->server_type != MODE_RATHENA) ||
+		   (item->type == WEAPON_ITEM_TYPE_RA && format->server_type == MODE_RATHENA)){
 			if(item_rule->weapon_filter & weapon_flag(item->view)) {
 				break;
 			} else {
@@ -490,6 +511,7 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable);				break;
 			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);				break;
 			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper);							break;
+			case MATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->matk); 						break;
 			default: break;
 		}
 		field = field->next;
@@ -596,11 +618,11 @@ int format_view(char * buffer, int * offset, format_field_t * field, int view, i
 	char * view_type = NULL;
 
 	/* view is only interpreted for weapon and ammo type */
-	if(type != WEAPON_ITEM_TYPE && type != AMMO_ITEM_TYPE) 
+	if(type != WEAPON_ITEM_TYPE && type != WEAPON_ITEM_TYPE_RA && type != AMMO_ITEM_TYPE) 
 		return CHECK_FAILED;
 
 	/* map the weapon type constant to weapon type string */
-	if(type == WEAPON_ITEM_TYPE) {
+	if(type == WEAPON_ITEM_TYPE || type == WEAPON_ITEM_TYPE_RA) {
 		view_type = weapon_tbl(view);
 		if(ncs_strcmp(view_type, "error") == 0) {
 			exit_func_safe("failed to find weapon type for view %d on type %d", view, type);

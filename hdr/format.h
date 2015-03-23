@@ -39,7 +39,9 @@
  	#define USABLE_ITEM_TYPE 			2
  	#define ETC_ITEM_TYPE				3
  	#define WEAPON_ITEM_TYPE			4
+ 	#define WEAPON_ITEM_TYPE_RA			5
  	#define ARMOR_ITEM_TYPE				5
+ 	#define ARMOR_ITEM_TYPE_RA			4
  	#define CARD_ITEM_TYPE				6
  	#define PET_EGG_ITEM_TYPE			7
  	#define PET_EQUIP_ITEM_TYPE			8
@@ -67,6 +69,7 @@
 	#define SCRIPT_ITEM_FIELD			14
 	#define VIEW_ITEM_FIELD				15
 	#define UPPER_ITEM_FIELD			16
+	#define MATK_ITEM_FIELD				17
 
 	/* weapon type */
 	#define FIST_WEAPON					0x10000000
@@ -113,6 +116,7 @@
  	} format_rule_t;
 
 	typedef struct format_t {
+		int server_type;
 		int file_format;
 		/* flavour text database */
 		sqlite3 * flavour_text;
@@ -122,7 +126,7 @@
 	} format_t;
 
 	/* item format rule functions */
-	int init_format(format_t *, lua_State *, int, int);
+	int init_format(format_t *, lua_State *, int, int, int);
 	int init_format_type(format_t *, lua_State *, int, int);
 	int deit_format(format_t *);
 
