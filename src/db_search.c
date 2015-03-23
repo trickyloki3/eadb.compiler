@@ -217,6 +217,12 @@ int item_iterate(db_search_t * db, item_t * item) {
                 item->refineable = sqlite3_column_int(db->item_iterate, 16);
                 item->view = sqlite3_column_int(db->item_iterate, 17);
                 strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 18));
+                /* zero out hercules only */
+                item->bindonequip = -1;
+                item->buyingstore = -1;
+                item->delay = -1;
+                memset(item->trade, 0, sizeof(int) * TRADE_TOTAL);
+                memset(item->stack, 0, sizeof(int) * STACK_TOTAL);
             }
             break;
         case MODE_RATHENA:
@@ -244,6 +250,12 @@ int item_iterate(db_search_t * db, item_t * item) {
                 item->refineable = sqlite3_column_int(db->item_iterate, 17);
                 item->view = sqlite3_column_int(db->item_iterate, 18);
                 strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 19));
+                /* zero out hercules only */
+                item->bindonequip = -1;
+                item->buyingstore = -1;
+                item->delay = -1;
+                memset(item->trade, 0, sizeof(int) * TRADE_TOTAL);
+                memset(item->stack, 0, sizeof(int) * STACK_TOTAL);
             }
             break;
         case MODE_HERCULES:
@@ -271,6 +283,22 @@ int item_iterate(db_search_t * db, item_t * item) {
                 item->refineable = sqlite3_column_int(db->item_iterate, 17);
                 item->view = sqlite3_column_int(db->item_iterate, 18);
                 strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 19));
+                /* hercules only */
+                item->bindonequip = sqlite3_column_int(db->item_iterate, 20);
+                item->buyingstore = sqlite3_column_int(db->item_iterate, 21);
+                item->delay = sqlite3_column_int(db->item_iterate, 22);
+                item->trade[TRADE_OVERRIDE] = sqlite3_column_int(db->item_iterate, 23);
+                item->trade[TRADE_NODROP] = sqlite3_column_int(db->item_iterate, 24);
+                item->trade[TRADE_NOTRADE] = sqlite3_column_int(db->item_iterate, 25);
+                item->trade[TRADE_PARTNEROVERRIDE] = sqlite3_column_int(db->item_iterate, 26);
+                item->trade[TRADE_NOSELLTONPC] = sqlite3_column_int(db->item_iterate, 27);
+                item->trade[TRADE_NOCART] = sqlite3_column_int(db->item_iterate, 28);
+                item->trade[TRADE_NOSTORAGE] = sqlite3_column_int(db->item_iterate, 29);
+                item->trade[TRADE_NOGSTORAGE] = sqlite3_column_int(db->item_iterate, 30);
+                item->trade[TRADE_NOMAIL] = sqlite3_column_int(db->item_iterate, 31);
+                item->trade[TRADE_NOAUCTION] = sqlite3_column_int(db->item_iterate, 32);
+                item->stack[STACK_AMOUNT] = sqlite3_column_int(db->item_iterate, 33);
+                item->stack[STACK_TYPE] = sqlite3_column_int(db->item_iterate, 34);
             }
             break;
     }

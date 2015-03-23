@@ -70,6 +70,12 @@
 	#define VIEW_ITEM_FIELD				15
 	#define UPPER_ITEM_FIELD			16
 	#define MATK_ITEM_FIELD				17
+	/* item field hercules only */
+	#define BINDONEQUIP_ITEM_FIELD		18
+	#define BUYINGSTORE_ITEM_FIELD		19
+	#define DELAY_ITEM_FIELD			20
+	#define TRADE_ITEM_FIELD			21
+	#define STACK_ITEM_FIELD			22
 
 	/* weapon type */
 	#define FIST_WEAPON					0x10000000
@@ -155,4 +161,8 @@
 	int format_upper(char *, int *, format_field_t *, int);
 	int format_location(char *, int *, format_field_t *, int);
 	int format_weight(char *, int * , format_field_t *, int);
+	int format_boolean(char *, int * , format_field_t *, int);
+	int format_delay(char *, int * , format_field_t *, int);
+	int format_trade(char *, int * , format_field_t *, int *);
+	int format_stack(char *, int * , format_field_t *, int *);
 #endif

@@ -97,16 +97,16 @@ int load_he_item(const char * file_name, native_t * native) {
 			config_setting_lookup_int(item_row, "Delay", &item[i].delay);
 			item_sub = config_setting_get_member(item_row, "Trade");
 			if(item_sub != NULL && config_setting_is_group(item_sub) == CONFIG_TRUE) {
-				config_setting_lookup_int(item_row, "override", &item[i].trade[TRADE_OVERRIDE]);
-				config_setting_lookup_bool(item_row, "nodrop", &item[i].trade[TRADE_NODROP]);
-				config_setting_lookup_bool(item_row, "notrade", &item[i].trade[TRADE_NOTRADE]);
-				config_setting_lookup_bool(item_row, "partneroverride", &item[i].trade[TRADE_PARTNEROVERRIDE]);
-				config_setting_lookup_bool(item_row, "noselltonpc", &item[i].trade[TRADE_NOSELLTONPC]);
-				config_setting_lookup_bool(item_row, "nocart", &item[i].trade[TRADE_NOCART]);
-				config_setting_lookup_bool(item_row, "nostorage", &item[i].trade[TRADE_NOSTORAGE]);
-				config_setting_lookup_bool(item_row, "nogstorage", &item[i].trade[TRADE_NOGSTORAGE]);
-				config_setting_lookup_bool(item_row, "nomail", &item[i].trade[TRADE_NOMAIL]);
-				config_setting_lookup_bool(item_row, "noauction", &item[i].trade[TRADE_NOAUCTION]);
+				config_setting_lookup_int(item_sub, "override", &item[i].trade[TRADE_OVERRIDE]);
+				config_setting_lookup_bool(item_sub, "nodrop", &item[i].trade[TRADE_NODROP]);
+				config_setting_lookup_bool(item_sub, "notrade", &item[i].trade[TRADE_NOTRADE]);
+				config_setting_lookup_bool(item_sub, "partneroverride", &item[i].trade[TRADE_PARTNEROVERRIDE]);
+				config_setting_lookup_bool(item_sub, "noselltonpc", &item[i].trade[TRADE_NOSELLTONPC]);
+				config_setting_lookup_bool(item_sub, "nocart", &item[i].trade[TRADE_NOCART]);
+				config_setting_lookup_bool(item_sub, "nostorage", &item[i].trade[TRADE_NOSTORAGE]);
+				config_setting_lookup_bool(item_sub, "nogstorage", &item[i].trade[TRADE_NOGSTORAGE]);
+				config_setting_lookup_bool(item_sub, "nomail", &item[i].trade[TRADE_NOMAIL]);
+				config_setting_lookup_bool(item_sub, "noauction", &item[i].trade[TRADE_NOAUCTION]);
 			}
 			item_sub = config_setting_get_member(item_row, "Nouse");
 			if(item_sub != NULL && config_setting_is_group(item_sub) == CONFIG_TRUE) {
@@ -114,9 +114,9 @@ int load_he_item(const char * file_name, native_t * native) {
 				config_setting_lookup_bool(item_row, "sitting", &item[i].trade[NOUSE_SITTING]);
 			}
 			item_sub = config_setting_get_member(item_row, "Stack");
-			if(item_sub != NULL && config_setting_is_list(item_sub) == CONFIG_TRUE) {
-				item[i].equiplv[STACK_AMOUNT] = config_setting_get_int_elem(item_sub, STACK_AMOUNT);
-				item[i].equiplv[STACK_TYPE] = config_setting_get_int_elem(item_sub, STACK_TYPE);
+			if(item_sub != NULL && config_setting_is_array(item_sub) == CONFIG_TRUE) {
+				item[i].stack[STACK_AMOUNT] = config_setting_get_int_elem(item_sub, STACK_AMOUNT);
+				item[i].stack[STACK_TYPE] = config_setting_get_int_elem(item_sub, STACK_TYPE);
 			}
 			if(config_setting_lookup_string(item_row, "Script", &str) == CONFIG_FALSE) 
 				strnload(item[i].script, MAX_SCRIPT_SIZE, "");
@@ -535,6 +535,7 @@ int item_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_text(db->item_he_sql_insert, 	40, item_he_db[i].script, 			strlen(item_he_db[i].script), SQLITE_STATIC);
 		sqlite3_bind_text(db->item_he_sql_insert, 	41, item_he_db[i].onequipscript, 	strlen(item_he_db[i].onequipscript), SQLITE_STATIC);
 		sqlite3_bind_text(db->item_he_sql_insert, 	42, item_he_db[i].onunequipscript, 	strlen(item_he_db[i].onunequipscript), SQLITE_STATIC);
+
 		status = sqlite3_step(db->item_he_sql_insert);
 		if(status != SQLITE_DONE) exit_abt_safe("fail to insert hercules item record");
 		sqlite3_reset(db->item_he_sql_insert);

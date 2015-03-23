@@ -149,23 +149,11 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 		/* load item type specified filters */
 		if(format->server_type != MODE_RATHENA) {
 			switch(item_type_id) {
-				case HEALING_ITEM_TYPE:			break;
-				case USABLE_ITEM_TYPE:			break;
-				case ETC_ITEM_TYPE:				break;
 				case WEAPON_ITEM_TYPE:			load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
-				case ARMOR_ITEM_TYPE:			break;
-				case CARD_ITEM_TYPE:			break;
-				case PET_EGG_ITEM_TYPE:			break;
-				case PET_EQUIP_ITEM_TYPE:		break;
-				case AMMO_ITEM_TYPE:			break;
-				case DELAY_USABLE_ITEM_TYPE:	break;
-				case DELAY_CONFIRM_ITEM_TYPE:	break;
-				case SHADOW_EQUIP_ITEM_TYPE:	break;
 			}
 		} else {
 			switch(item_type_id) {
 				case WEAPON_ITEM_TYPE_RA:		load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
-				case ARMOR_ITEM_TYPE_RA:		break;
 			}
 		}
 
@@ -388,6 +376,16 @@ int load_type_format_field(format_field_t * field, lua_State * lstate, int table
 		field->field = UPPER_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "magical_attack") == 0) {
 		field->field = MATK_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "bind") == 0) {
+		field->field = BINDONEQUIP_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "buyingstore") == 0) {
+		field->field = BUYINGSTORE_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "delay") == 0) {
+		field->field = DELAY_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "trade") == 0) {
+		field->field = TRADE_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "stack") == 0) {
+		field->field = STACK_ITEM_FIELD;
 	} else {
 		exit_func_safe("invalid item format field %s", item_type_field);
 		lua_pop(lstate, 1);
@@ -512,6 +510,11 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);						break;
 			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper);									break;
 			case MATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->matk); 								break;
+			case BINDONEQUIP_ITEM_FIELD:	format_boolean(buffer, &offset, field, item->bindonequip); 							break;
+			case BUYINGSTORE_ITEM_FIELD:	format_boolean(buffer, &offset, field, item->buyingstore); 							break;
+			case DELAY_ITEM_FIELD:			format_delay(buffer, &offset, field, item->delay); 									break;
+			case TRADE_ITEM_FIELD:			format_trade(buffer, &offset, field, item->trade);									break;
+			case STACK_ITEM_FIELD:			format_stack(buffer, &offset, field, item->stack);									break;
 			default: break;
 		}
 		field = field->next;
@@ -777,5 +780,74 @@ int format_weight(char * buffer, int * offset, format_field_t * field, int weigh
 	} else {
 		format_integer(buffer, offset, field, weight / 10);
 	}
+	return CHECK_PASSED;
+}
+
+int format_boolean(char * buffer, int * offset, format_field_t * field, int value) {
+	if(value > 0)
+		if(field->text[0] != '\0')
+			*offset += sprintf(&buffer[*offset], "%s\n", field->text);
+	return CHECK_PASSED;
+}
+
+int format_delay(char * buffer, int * offset, format_field_t * field, int delay) {
+	if((delay / 1000) == 0) {
+		if(delay > 0)
+			*offset += (field->text[0] != '\0')?
+				sprintf(&buffer[*offset], "%s %d milliseconds\n", field->text, delay):
+				sprintf(&buffer[*offset], "%d milliseconds\n", delay);
+	} else {
+		*offset += (field->text[0] != '\0')?
+			sprintf(&buffer[*offset], "%s %d seconds\n", field->text, delay / 1000):
+			sprintf(&buffer[*offset], "%d seconds\n", delay / 1000);
+	}
+	return CHECK_PASSED;
+}
+
+int format_trade(char * buffer, int * offset, format_field_t * field, int * trade) {
+	int initial_offset = 0;
+	if(trade[TRADE_NODROP] > 0 || trade[TRADE_NOTRADE] > 0 || 
+	   trade[TRADE_NOAUCTION] > 0 || trade[TRADE_NOSELLTONPC] > 0 || 
+	   trade[TRADE_NOMAIL] > 0) {
+		*offset += sprintf(&buffer[*offset], "Item cannot be ");
+		initial_offset = *offset;
+		if(trade[TRADE_NODROP] > 0) 		*offset += sprintf(&buffer[*offset], "%sdropped", (initial_offset < *offset)?", ":"");
+		if(trade[TRADE_NOTRADE] > 0) 		*offset += sprintf(&buffer[*offset], "%straded, vended", (initial_offset < *offset)?", ":"");
+		if(trade[TRADE_NOAUCTION] > 0) 		*offset += sprintf(&buffer[*offset], "%sauctioned", (initial_offset < *offset)?", ":"");
+		if(trade[TRADE_NOSELLTONPC] > 0) 	*offset += sprintf(&buffer[*offset], "%ssold", (initial_offset < *offset)?", ":"");
+		if(trade[TRADE_NOMAIL] > 0) 		*offset += sprintf(&buffer[*offset], "%smailed", (initial_offset < *offset)?", ":"");
+		*offset += sprintf(&buffer[*offset], ".\n");
+	}
+
+
+	if(trade[TRADE_NOCART] > 0 || trade[TRADE_NOSTORAGE] > 0 || trade[TRADE_NOGSTORAGE] > 0) {
+		*offset += sprintf(&buffer[*offset], "Item cannot be stored in ");
+		initial_offset = *offset;
+		if(trade[TRADE_NOCART] > 0) 			*offset += sprintf(&buffer[*offset], "%scart", (initial_offset < *offset)?", ":"");
+		if(trade[TRADE_NOSTORAGE] > 0) 			*offset += sprintf(&buffer[*offset], "%sstorage", (initial_offset < *offset)?", ":"");
+		if(trade[TRADE_NOGSTORAGE] > 0) 		*offset += sprintf(&buffer[*offset], "%sguild storage", (initial_offset < *offset)?", ":"");
+		*offset += sprintf(&buffer[*offset], ".\n");
+	}
+
+	if(trade[TRADE_PARTNEROVERRIDE] > 0) 	*offset += sprintf(&buffer[*offset], "Item shared between partners.\n");
+	return CHECK_PASSED;
+}
+
+int format_stack(char * buffer, int * offset, format_field_t * field, int * stack) {
+	int type = stack[STACK_TYPE];
+	int amount = stack[STACK_AMOUNT];
+	int initial_offset = 0;
+
+	/* zero type or amount means no stack restriction */
+	if(amount == 0 || type == 0) return CHECK_FAILED;
+
+	/* write the text */
+	*offset += sprintf(&buffer[*offset], "Stack Restriction: ");
+	initial_offset = *offset;
+	if(type & 0x1) *offset += sprintf(&buffer[*offset], "%sInventory", (initial_offset < *offset)?", ":"");
+	if(type & 0x2) *offset += sprintf(&buffer[*offset], "%sCart", (initial_offset < *offset)?", ":"");
+	if(type & 0x3) *offset += sprintf(&buffer[*offset], "%sStorage", (initial_offset < *offset)?", ":"");
+	if(type & 0x4) *offset += sprintf(&buffer[*offset], "%sGuild Storage", (initial_offset < *offset)?", ":"");
+	*offset += sprintf(&buffer[*offset], "\nStack Limit: %d\n", amount);
 	return CHECK_PASSED;
 }
