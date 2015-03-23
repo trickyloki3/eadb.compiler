@@ -35,19 +35,19 @@
  	#define FORMAT_LUA		0x2
 
  	/* item type */
- 	#define HEALING_ITEM_TYPE 		0
- 	#define USABLE_ITEM_TYPE 		2
- 	#define ETC_ITEM_TYPE			3
- 	#define WEAPON_ITEM_TYPE		4
- 	#define ARMOR_ITEM_TYPE			5
- 	#define CARD_ITEM_TYPE			6
- 	#define PET_EGG_ITEM_TYPE		7
- 	#define PET_EQUIP_ITEM_TYPE		8
- 	#define AMMO_ITEM_TYPE			10
- 	#define DELAY_USABLE_ITEM_TYPE	11
- 	#define SHADOW_EQUIP_ITEM_TYPE	12	/* rathena only */
- 	#define DELAY_CONFIRM_ITEM_TYPE	18
- 	#define ITEM_TYPE_SIZE			20
+ 	#define HEALING_ITEM_TYPE 			0
+ 	#define USABLE_ITEM_TYPE 			2
+ 	#define ETC_ITEM_TYPE				3
+ 	#define WEAPON_ITEM_TYPE			4
+ 	#define ARMOR_ITEM_TYPE				5
+ 	#define CARD_ITEM_TYPE				6
+ 	#define PET_EGG_ITEM_TYPE			7
+ 	#define PET_EQUIP_ITEM_TYPE			8
+ 	#define AMMO_ITEM_TYPE				10
+ 	#define DELAY_USABLE_ITEM_TYPE		11
+ 	#define SHADOW_EQUIP_ITEM_TYPE		12	/* rathena only */
+ 	#define DELAY_CONFIRM_ITEM_TYPE		18
+ 	#define ITEM_TYPE_SIZE				20
 
  	/* item fields */
  	#define FLAVOUR_ITEM_FIELD			0
@@ -66,6 +66,38 @@
  	#define REFINE_ABILITY_ITEM_FIELD	13
 	#define SCRIPT_ITEM_FIELD			14
 	#define VIEW_ITEM_FIELD				15
+	#define UPPER_ITEM_FIELD			16
+
+	/* weapon type */
+	#define FIST_WEAPON					0x10000000
+	#define DAGGER_WEAPON				0x00000001
+	#define H1_SWORD_WEAPON				0x00000002
+	#define H2_SWORD_WEAPON				0x00000004
+	#define H1_SPEAR_WEAPON				0x00000008
+	#define H2_SPEAR_WEAPON				0x00000010
+	#define H1_AXE_WEAPON				0x00000020
+	#define H2_AXE_WEAPON				0x00000040
+	#define MACE_WEAPON					0x00000080
+ 	#define STAVE_WEAPON				0x00000100
+ 	#define BOW_WEAPON					0x00000200
+ 	#define KNUCKLE_WEAPON				0x00000400
+ 	#define INSTRUMENT_WEAPON			0x00000800
+ 	#define WHIP_WEAPON					0x00001000
+ 	#define BOOK_WEAPON					0x00002000
+ 	#define KATAR_WEAPON				0x00004000
+ 	#define REVOLVER_WEAPON				0x00008000
+ 	#define RIFLES_WEAPON				0x00010000
+ 	#define GATLING_GUN_WEAPON			0x00020000
+ 	#define SHOTGUN_WEAPON				0x00040000
+ 	#define GRENADE_WEAPON				0x00080000
+ 	#define SHURIKEN_WEAPON				0x00100000
+ 	#define H2_STAVE_WEAPON				0x00200000
+ 	#define DUAL_DAGGER_WEAPON			0x00400000
+ 	#define DUAL_SWORD_WEAPON			0x00800000
+ 	#define DUAL_AXE_WEAPON				0x01000000
+ 	#define DAGGER_SWORD_WEAPON			0x02000000
+ 	#define DAGGER_AXE_WEAPON			0x04000000
+ 	#define SWORD_AXE_WEAPON			0x08000000
 
  	typedef struct format_field_t {
  		int field;
@@ -75,6 +107,7 @@
 
  	typedef struct format_rule_t {
  		range_t * item_id;
+ 		int weapon_filter;
  		format_field_t * format;
  		struct format_rule_t * next;
  	} format_rule_t;
@@ -98,6 +131,7 @@
 	int load_item_id_re(format_rule_t *, lua_State *, int);
 	int load_type_format(format_rule_t *, lua_State *, int);
 	int load_type_format_field(format_field_t *, lua_State *, int);
+	int load_weapon_type(format_rule_t *, lua_State *, int);
 
 	/* flavour text database load and search functions */
 	int init_flavour_db(format_t *, const char *);
@@ -113,5 +147,8 @@
 	int format_gender(char *, int *, format_field_t *, int);		/* gender is interpreted female (0), male(1), unisex(2) */
 	int format_view(char *, int *, format_field_t *, int, int);		/* view is interpreted only for weapon and ammo type */
 	int format_type(char *, int *, format_field_t *, int);
-	int format_job(char *, int *, format_field_t *, int, int);
+	int format_job(char *, int *, format_field_t *, int, int, int);
+	int format_upper(char *, int *, format_field_t *, int);
+	int format_location(char *, int *, format_field_t *, int);
+	int format_weight(char *, int * , format_field_t *, int);
 #endif

@@ -18,9 +18,11 @@
 	char * castgt_tbl(int i); 			/* case 'v': return 18;	// Cast Self, Enemy */
    char * flagtgt_tbl(int i);			/* case 'b': return 23;	// Flag Bitfield On Self | Random Level */
    char * weapon_tbl(int i);			/* case 'i': return 24;	// Weapon Type */
+   char * ammo_tbl(int i);
    char * item_type_tbl(int i);
    char * loc_tbl(int i);
    char * itemgrp_tbl(int i);
    char * job_tbl(int i);
    char * block_tbl(int i);
+   int weapon_flag(int i);
 #endif

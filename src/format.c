@@ -137,19 +137,18 @@ int init_format_type(format_t * format, lua_State * lstate, int type_table, int 
 
 		/* load item type specified filters */
 		switch(item_type_id) {
-			case HEALING_ITEM_TYPE:
-			case USABLE_ITEM_TYPE:
-			case ETC_ITEM_TYPE:
-			case WEAPON_ITEM_TYPE:
-			case ARMOR_ITEM_TYPE:
-			case CARD_ITEM_TYPE:
-			case PET_EGG_ITEM_TYPE:
-			case PET_EQUIP_ITEM_TYPE:
-			case AMMO_ITEM_TYPE:
-			case DELAY_USABLE_ITEM_TYPE:
-			case DELAY_CONFIRM_ITEM_TYPE:
-			case SHADOW_EQUIP_ITEM_TYPE:
-				break;
+			case HEALING_ITEM_TYPE:			break;
+			case USABLE_ITEM_TYPE:			break;
+			case ETC_ITEM_TYPE:				break;
+			case WEAPON_ITEM_TYPE:			load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
+			case ARMOR_ITEM_TYPE:			break;
+			case CARD_ITEM_TYPE:			break;
+			case PET_EGG_ITEM_TYPE:			break;
+			case PET_EQUIP_ITEM_TYPE:		break;
+			case AMMO_ITEM_TYPE:			break;
+			case DELAY_USABLE_ITEM_TYPE:	break;
+			case DELAY_CONFIRM_ITEM_TYPE:	break;
+			case SHADOW_EQUIP_ITEM_TYPE:	break;
 		}
 
 		format_type_iter = (format->format_type_list[item_type_id] == NULL) ?
@@ -228,6 +227,7 @@ int load_item_id(format_rule_t * type, lua_State * lstate, int table_index) {
 	item_id_table = lua_gettop(lstate);
 	if(!lua_istable(lstate, -1) || lua_isnil(lstate, -1)) {
 		exit_abt_safe("item rule's item_id value must be a table or item_id is missing");
+		lua_pop(lstate, 1);
 		return CHECK_FAILED;
 	}
 
@@ -302,6 +302,7 @@ int load_type_format(format_rule_t * type, lua_State * lstate, int table_index) 
 	item_format_table = lua_gettop(lstate);
 	if(!lua_istable(lstate, -1) || lua_isnil(lstate, -1)) {
 		exit_abt_safe("item rule's format value must be a table or format is missing");
+		lua_pop(lstate, 1);
 		return CHECK_FAILED;
 	}
 
@@ -317,15 +318,16 @@ int load_type_format(format_rule_t * type, lua_State * lstate, int table_index) 
 	}
 
 	/* pop the last key and format table */
-	lua_pop(lstate, 2);
+	lua_pop(lstate, 1);
 	return CHECK_PASSED;
 }
 
 int load_type_format_field(format_field_t * field, lua_State * lstate, int table_index) {
 	const char * item_type_field = NULL;
 	lua_getfield(lstate, table_index, "type");
-	if(!lua_isstring(lstate, -1)) {
-		exit_abt_safe("item format's type must be a string");
+	if(!lua_isstring(lstate, -1) || lua_isnil(lstate, -1)) {
+		exit_abt_safe("item format's type must be a string or is missing");
+		lua_pop(lstate, 1);
 		return CHECK_FAILED;
 	}
 
@@ -364,6 +366,8 @@ int load_type_format_field(format_field_t * field, lua_State * lstate, int table
 		field->field = SCRIPT_ITEM_FIELD;
 	} else if(ncs_strcmp(item_type_field, "view") == 0) {
 		field->field = VIEW_ITEM_FIELD;
+	} else if(ncs_strcmp(item_type_field, "upper") == 0) {
+		field->field = UPPER_ITEM_FIELD;
 	} else {
 		exit_func_safe("invalid item format field %s", item_type_field);
 		lua_pop(lstate, 1);
@@ -384,6 +388,40 @@ int load_type_format_field(format_field_t * field, lua_State * lstate, int table
 	return CHECK_PASSED;
 }
 
+int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
+	int weapon_table = 0;
+
+	lua_getfield(lstate, rule_table, "weapon_type");
+	weapon_table = lua_gettop(lstate);
+	if(lua_isnil(lstate, -1)) {
+		rule->weapon_filter = 0xFFFFFFFF;
+		lua_pop(lstate, 1);
+		return CHECK_PASSED;
+	}
+
+	if(!lua_istable(lstate, weapon_table)) {
+		exit_abt_safe("weapon type must be a table in item rule");
+		lua_pop(lstate, 1);
+		return CHECK_FAILED;
+	}
+
+	rule->weapon_filter = 0;
+	lua_pushnil(lstate);
+	while(lua_next(lstate, weapon_table)) {
+		if(!lua_isnumber(lstate, -1)) {
+			exit_abt_safe("all values in weapon type table must be numbers");
+			lua_pop(lstate, lua_gettop(lstate) - weapon_table + 1);
+			return CHECK_FAILED;
+		}
+		rule->weapon_filter |= weapon_flag((int) lua_tointeger(lstate, -1));
+		lua_pop(lstate, lua_gettop(lstate) - weapon_table - 1);
+	}
+
+	/* pop the weapon table and last key */
+	lua_pop(lstate, 1);
+	return CHECK_PASSED;
+}
+
 int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	format_rule_t * item_rule = NULL;
 	format_field_t * item_field = NULL;
@@ -401,6 +439,15 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 		if(!searchrange(item_rule->item_id, item->id)) {
 			item_rule = item_rule->next;
 			continue;
+		}
+		/* filter by weapon type */
+		if(item->type == WEAPON_ITEM_TYPE) {
+			if(item_rule->weapon_filter & weapon_flag(item->view)) {
+				break;
+			} else {
+				item_rule = item_rule->next;
+				continue;
+			}
 		}
 		break;
 	}
@@ -426,24 +473,23 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 	
 	while(field != NULL) {
 		switch(field->field) {
-			/* item flavour and script */
 			case FLAVOUR_ITEM_FIELD: 		format_flavour_text(buffer, &offset, format, field, &flavour, item->id); 	break;
 			case SCRIPT_ITEM_FIELD:			format_script(buffer, &offset, field, script); 								break;
-			/* item attributes */
 			case TYPE_ITEM_FIELD:			format_type(buffer, &offset, field, item->type);							break;
 			case BUY_ITEM_FIELD:			format_integer(buffer, &offset, field, item->buy); 							break;
 			case SELL_ITEM_FIELD:			format_integer(buffer, &offset, field, item->sell); 						break;
-			case WEIGHT_ITEM_FIELD: 		format_integer(buffer, &offset, field, item->weight /10); 					break;
+			case WEIGHT_ITEM_FIELD: 		format_weight(buffer, &offset, field, item->weight); 						break;
 			case ATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->atk); 							break;
 			case DEF_ITEM_FIELD:			format_integer(buffer, &offset, field, item->def); 							break;
 			case RANGE_ITEM_FIELD:			format_integer(buffer, &offset, field, item->range); 						break;
-			case JOB_ITEM_FIELD:			format_view(buffer, &offset, field, item->job, item->upper);				break;
+			case JOB_ITEM_FIELD:			format_job(buffer, &offset, field, item->job, item->upper, item->gender);	break;
 			case GENDER_ITEM_FIELD:			format_gender(buffer, &offset, field, item->gender);						break;
-			case LOC_ITEM_FIELD:				break;
+			case LOC_ITEM_FIELD:			format_location(buffer, &offset, field, item->loc);							break;
 			case WEAPON_LEVEL_ITEM_FIELD:	format_integer(buffer, &offset, field, item->wlv); 							break;
 			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, &offset, field, item->elv_min); 						break;
 			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable);				break;
 			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);				break;
+			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper);							break;
 			default: break;
 		}
 		field = field->next;
@@ -511,7 +557,7 @@ int format_script(char * buffer, int * offset, format_field_t * field, char * sc
 
 int format_integer(char * buffer, int * offset, format_field_t * field, int value) {
 	/* write the the text and value */
-	if(value >= 0)
+	if(value > 0)
 		*offset += (field->text[0] != '\0')?
 			sprintf(&buffer[*offset], "%s %d\n", field->text, value):
 			sprintf(&buffer[*offset], "%d\n", value);
@@ -547,23 +593,31 @@ int format_gender(char * buffer, int * offset, format_field_t * field, int value
 }
 
 int format_view(char * buffer, int * offset, format_field_t * field, int view, int type) {
-	char * weapon_type = NULL;
+	char * view_type = NULL;
 
 	/* view is only interpreted for weapon and ammo type */
 	if(type != WEAPON_ITEM_TYPE && type != AMMO_ITEM_TYPE) 
 		return CHECK_FAILED;
 
 	/* map the weapon type constant to weapon type string */
-	weapon_type = weapon_tbl(type);
-	if(ncs_strcmp(weapon_type, "error") == 0) {
-		exit_func_safe("failed to find weapon type for view %d on type %d", view, type);
-		return CHECK_FAILED;
+	if(type == WEAPON_ITEM_TYPE) {
+		view_type = weapon_tbl(view);
+		if(ncs_strcmp(view_type, "error") == 0) {
+			exit_func_safe("failed to find weapon type for view %d on type %d", view, type);
+			return CHECK_FAILED;
+		}
+	} else {
+		view_type = ammo_tbl(view);
+		if(ncs_strcmp(view_type, "error") == 0) {
+			exit_func_safe("failed to find ammo type for view %d on type %d", view, type);
+			return CHECK_FAILED;
+		}
 	}
 
 	/* write the weapon type string */
 	*offset += (field->text[0] != '\0')?
-		sprintf(&buffer[*offset], "%s %s\n", field->text, weapon_type):
-		sprintf(&buffer[*offset], "%s\n", weapon_type);
+		sprintf(&buffer[*offset], "%s %s\n", field->text, view_type):
+		sprintf(&buffer[*offset], "%s\n", view_type);
 	return CHECK_PASSED;
 }
 
@@ -584,7 +638,116 @@ int format_type(char * buffer, int * offset, format_field_t * field, int type) {
 	return CHECK_PASSED;
 }
 
-int format_job(char * buffer, int * offset, format_field_t * field, int job, int upper) {
+int format_job(char * buffer, int * offset, format_field_t * field, int job, int upper, int gender) {
+	int initial_offset = 0;
 	
+	/* check the common classes */
+	if(job == 0xFFFFFFFF) {
+		*offset += sprintf(&buffer[*offset], "%s Every Job\n", field->text);
+		return CHECK_PASSED;
+	} else if(job == 0xFFFFFFFE) {
+		*offset += sprintf(&buffer[*offset], "%s Every Job except Novice\n", field->text);
+		return CHECK_PASSED;
+	}
+
+	/* write the text */
+	*offset += sprintf(&buffer[*offset], "%s ", field->text);
+	initial_offset = *offset;
+
+	/* simplified the combination explosion */
+	if(job & 0x00000001) *offset += sprintf(&buffer[*offset], "%sNovice", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000002) *offset += sprintf(&buffer[*offset], "%sSwordsman", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000080) *offset += sprintf(&buffer[*offset], "%sKnight", (initial_offset < *offset)?", ":"");
+	if(job & 0x00004000) *offset += sprintf(&buffer[*offset], "%sCrusader", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000004) *offset += sprintf(&buffer[*offset], "%sMagician", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000200) *offset += sprintf(&buffer[*offset], "%sWizard", (initial_offset < *offset)?", ":"");
+	if(job & 0x00010000) *offset += sprintf(&buffer[*offset], "%sSage", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000008) *offset += sprintf(&buffer[*offset], "%sArcher", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000800) *offset += sprintf(&buffer[*offset], "%sHunter", (initial_offset < *offset)?", ":"");
+	if(job & 0x00080000 && gender == 0) *offset += sprintf(&buffer[*offset], "%sDancer", (initial_offset < *offset)?", ":"");
+	if(job & 0x00080000 && gender == 1) *offset += sprintf(&buffer[*offset], "%sBard", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000010) *offset += sprintf(&buffer[*offset], "%sAcolyte", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000100) *offset += sprintf(&buffer[*offset], "%sPriest", (initial_offset < *offset)?", ":"");
+	if(job & 0x00008000) *offset += sprintf(&buffer[*offset], "%sMonk", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000020) *offset += sprintf(&buffer[*offset], "%sMerchant", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000400) *offset += sprintf(&buffer[*offset], "%sBlacksmith", (initial_offset < *offset)?", ":"");
+	if(job & 0x00040000) *offset += sprintf(&buffer[*offset], "%sAlchemist", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000040) *offset += sprintf(&buffer[*offset], "%sThief", (initial_offset < *offset)?", ":"");
+	if(job & 0x00001000) *offset += sprintf(&buffer[*offset], "%sAssassin", (initial_offset < *offset)?", ":"");
+	if(job & 0x00020000) *offset += sprintf(&buffer[*offset], "%sRogue", (initial_offset < *offset)?", ":"");
+	if(job & 0x02000000) *offset += sprintf(&buffer[*offset], "%sNinja", (initial_offset < *offset)?", ":"");
+	if(job & 0x20000000) *offset += sprintf(&buffer[*offset], "%sKagerou & Oboro", (initial_offset < *offset)?", ":"");
+	if(job & 0x01000000) *offset += sprintf(&buffer[*offset], "%sGunslinger", (initial_offset < *offset)?", ":"");
+	if(job & 0x40000000) *offset += sprintf(&buffer[*offset], "%sRebellion", (initial_offset < *offset)?", ":"");
+	if(job & 0x00200000) *offset += sprintf(&buffer[*offset], "%sTaekwon", (initial_offset < *offset)?", ":"");
+	if(job & 0x00400000) *offset += sprintf(&buffer[*offset], "%sStar Gladiator", (initial_offset < *offset)?", ":"");
+	if(job & 0x00800000) *offset += sprintf(&buffer[*offset], "%sSoul Linker", (initial_offset < *offset)?", ":"");
+	if(job & 0x04000000) *offset += sprintf(&buffer[*offset], "%sGangsi", (initial_offset < *offset)?", ":"");
+	if(job & 0x08000000) *offset += sprintf(&buffer[*offset], "%sDeath Knight", (initial_offset < *offset)?", ":"");
+	if(job & 0x10000000) *offset += sprintf(&buffer[*offset], "%sDark Collector", (initial_offset < *offset)?", ":"");
+	*offset += sprintf(&buffer[*offset], "\n");
+	return CHECK_PASSED;
+}
+
+int format_upper(char * buffer, int * offset, format_field_t * field, int upper) {
+	int initial_offset = 0;
+
+	/* write the text */
+	*offset += sprintf(&buffer[*offset], "%s ", field->text);
+	initial_offset = *offset;
+
+	if(upper & 0x01) *offset += sprintf(&buffer[*offset], "%sFirst & Second Job", (initial_offset < *offset)?", ":"");
+	if(upper & 0x02) *offset += sprintf(&buffer[*offset], "%sRebirth First & Second Job", (initial_offset < *offset)?", ":"");
+	if(upper & 0x08) *offset += sprintf(&buffer[*offset], "%sThird Job", (initial_offset < *offset)?", ":"");
+	if(upper & 0x10) *offset += sprintf(&buffer[*offset], "%sRebirth Third Job", (initial_offset < *offset)?", ":"");
+	if(upper & 0x04) *offset += sprintf(&buffer[*offset], "%sSecond Baby Job", (initial_offset < *offset)?", ":"");
+	if(upper & 0x20) *offset += sprintf(&buffer[*offset], "%sThird Baby Job", (initial_offset < *offset)?", ":"");
+
+	*offset += sprintf(&buffer[*offset], "\n");
+	return CHECK_PASSED;
+}
+
+int format_location(char * buffer, int * offset, format_field_t * field, int loc) {
+	int initial_offset = 0;
+
+	/* write the text */
+	*offset += sprintf(&buffer[*offset], "%s ", field->text);
+	initial_offset = *offset;
+
+	if(loc & 0x000100) *offset += sprintf(&buffer[*offset], "%sUpper Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000200) *offset += sprintf(&buffer[*offset], "%sMiddle Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000001) *offset += sprintf(&buffer[*offset], "%sLower Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000010) *offset += sprintf(&buffer[*offset], "%sArmor", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000002) *offset += sprintf(&buffer[*offset], "%sWeapon", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000020) *offset += sprintf(&buffer[*offset], "%sShield", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000004) *offset += sprintf(&buffer[*offset], "%sGarment", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000040) *offset += sprintf(&buffer[*offset], "%sShoes", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000008) *offset += sprintf(&buffer[*offset], "%sRight Accessory", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000080) *offset += sprintf(&buffer[*offset], "%sLeft Accessory", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000400) *offset += sprintf(&buffer[*offset], "%sCostume Upper Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000800) *offset += sprintf(&buffer[*offset], "%sCostume Middle Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x001000) *offset += sprintf(&buffer[*offset], "%sCostume Lower Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x002000) *offset += sprintf(&buffer[*offset], "%sCostume Garment", (initial_offset < *offset)?", ":"");
+	if(loc & 0x008000) *offset += sprintf(&buffer[*offset], "%sAmmo", (initial_offset < *offset)?", ":"");
+	if(loc & 0x010000) *offset += sprintf(&buffer[*offset], "%sShadow Armor", (initial_offset < *offset)?", ":"");
+	if(loc & 0x020000) *offset += sprintf(&buffer[*offset], "%sShadow Weapon", (initial_offset < *offset)?", ":"");
+	if(loc & 0x040000) *offset += sprintf(&buffer[*offset], "%sShadow Shield", (initial_offset < *offset)?", ":"");
+	if(loc & 0x080000) *offset += sprintf(&buffer[*offset], "%sShadow Shoes", (initial_offset < *offset)?", ":"");
+	if(loc & 0x100000) *offset += sprintf(&buffer[*offset], "%sShadow Right Accessory", (initial_offset < *offset)?", ":"");
+	if(loc & 0x200000) *offset += sprintf(&buffer[*offset], "%sShadow Left Accessory", (initial_offset < *offset)?", ":"");
+
+	*offset += sprintf(&buffer[*offset], "\n");
+	return CHECK_PASSED;
+}
+
+int format_weight(char * buffer, int * offset, format_field_t * field, int weight) {
+	if(weight == 0) return CHECK_FAILED;	
+	if(weight / 10 == 0) {
+		*offset += (field->text[0] != '\0') ?
+			sprintf(&buffer[*offset], "%s %.2f\n", field->text, ((double) weight) / 10):
+			sprintf(&buffer[*offset], "%.2f\n", ((double) weight) / 10);
+	} else {
+		format_integer(buffer, offset, field, weight / 10);
+	}
 	return CHECK_PASSED;
 }

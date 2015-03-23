@@ -201,7 +201,22 @@ char * weapon_tbl(int i) {
 		case 28: return "Dagger & Axe";
 		case 29: return "Sword & Axe";
 		default: return "error";
-	};
+	}
+}
+
+char * ammo_tbl(int i) {
+	switch(i) {
+		case 1: return "Arrows";
+		case 2: return "Throwable Daggers";
+		case 3: return "Bullets";
+		case 4: return "Shells";
+		case 5: return "Grenades";
+		case 6: return "Shuriken";
+		case 7: return "Kunai";
+		case 8: return "Cannonballs";
+		case 9: return "Throwable Items";
+		default: return "error";
+	}
 }
 
 char * itemgrp_tbl(int i) {
@@ -484,4 +499,40 @@ char * block_tbl(int i) {
 		case 62: return "for";
 		default: return "error";
 	}
+}
+
+int weapon_flag(int i) {
+	switch(i) {
+		case 0: return 0x10000000;
+		case 1: return 0x00000001;
+		case 2: return 0x00000002;
+		case 3: return 0x00000004;
+		case 4: return 0x00000008;
+		case 5: return 0x00000010;
+		case 6: return 0x00000020;
+		case 7: return 0x00000040;
+		case 8: return 0x00000080;
+		case 10: return 0x00000100;
+		case 11: return 0x00000200;
+		case 12: return 0x00000400;
+		case 13: return 0x00000800;
+		case 14: return 0x00001000;
+		case 15: return 0x00002000;
+		case 16: return 0x00004000;
+		case 17: return 0x00008000;
+		case 18: return 0x00010000;
+		case 19: return 0x00020000;
+		case 20: return 0x00040000;
+		case 21: return 0x00080000;
+		case 22: return 0x00100000;
+		case 23: return 0x00200000;
+		case 25: return 0x00400000;
+		case 26: return 0x00800000;
+		case 27: return 0x01000000;
+		case 28: return 0x02000000;
+		case 29: return 0x04000000;
+		case 30: return 0x08000000;
+		default: break;
+	}
+	return 0;
 }
