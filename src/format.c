@@ -17,183 +17,14 @@ int init_flavour_db(format_t * format, const char * flavour_db_path) {
 
 	/* open the flavour text database and compiled sql statements */
 	if(sqlite3_open(flavour_db_path, &format->flavour_text) != SQLITE_OK ||
-	   sqlite3_prepare_v2(format->flavour_text, flavour_text_id_sql, strlen(flavour_text_id_sql), &format->flavour_text_id_search, NULL) != SQLITE_OK) {
+	  (sqlite3_prepare_v2(format->flavour_text, flavour_text_id_sql, strlen
+	  (flavour_text_id_sql), &format->flavour_text_id_search, NULL) != SQLITE_OK)) {
 		/* print sqlite3 error before exiting */
 		status = sqlite3_errcode(format->flavour_text);
 		error = sqlite3_errmsg(format->flavour_text);
 		exit_func_safe("sqlite3 code %d; %s", status, error);
 		if(format->flavour_text != NULL) sqlite3_close(format->flavour_text);
 		return CHECK_FAILED;
-	}
-	return CHECK_PASSED;
-}
-
-int init_format(format_t * format, lua_State * lstate, int format_index, int file_format, int server_type) {
-	int table_index = 0;
-	int item_type_id = 0;
-	const char * item_type = NULL;
-
-	/* check for null */
-	if(exit_null_safe(2, format, lstate))
-		return CHECK_FAILED;
-
-	/* initialize the item rule array */
-	memset(format->format_type_list, 0, sizeof(format_rule_t *) * ITEM_TYPE_SIZE);
-	format->file_format = file_format;
-	format->server_type = server_type;
-
-	/* get the item format table */
-	lua_getfield(lstate, format_index, "item_format");
-	table_index = lua_gettop(lstate);
-	if(!lua_istable(lstate, table_index)) {
-		exit_abt_safe("failed to find 'item_format' setting");
-		return CHECK_FAILED;
-	}
-
-	/* iterate and initialize format structure */
-	lua_pushnil(lstate);
-	while(lua_next(lstate, table_index)) {
-		if(!lua_istable(lstate, -1)) {
-			exit_abt_safe("'item_format' table's value type must be a table");
-			return CHECK_FAILED;
-		}
-		/* check that the key type is a string */
-		if(!lua_isstring(lstate, -2)) {
-			exit_abt_safe("'item_format' table's key type must be a string");
-			return CHECK_FAILED;
-		}
-
-		/* map the string to constant */
-		item_type = lua_tostring(lstate, -2);
-		if(ncs_strcmp(item_type, "healing") == 0)
-			item_type_id = HEALING_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "usable") == 0)
-			item_type_id = USABLE_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "etc") == 0)
-			item_type_id = ETC_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "weapon") == 0)
-			/* rathena swap item type for weapon and armor */
-			if(server_type == MODE_RATHENA) {
-				item_type_id = WEAPON_ITEM_TYPE_RA;
-			} else {
-				item_type_id = WEAPON_ITEM_TYPE;
-			}
-		else if(ncs_strcmp(item_type, "armor") == 0)
-			/* rathena swap item type for weapon and armor */
-			if(server_type == MODE_RATHENA) {
-				item_type_id = ARMOR_ITEM_TYPE_RA;
-			} else {
-				item_type_id = ARMOR_ITEM_TYPE;
-			}
-		else if(ncs_strcmp(item_type, "card") == 0)
-			item_type_id = CARD_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "pet_egg") == 0)
-			item_type_id = PET_EGG_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "pet_equip") == 0)
-			item_type_id = PET_EQUIP_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "ammo") == 0)
-			item_type_id = AMMO_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "delay_usable") == 0)
-			item_type_id = DELAY_USABLE_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "confirm_usable") == 0)
-			item_type_id = DELAY_CONFIRM_ITEM_TYPE;
-		else if(ncs_strcmp(item_type, "shadow_equip") == 0)
-			item_type_id = SHADOW_EQUIP_ITEM_TYPE;
-		else {
-			exit_func_safe("'item_format' has invalid item type %s\n", item_type);
-			lua_pop(lstate, 3);
-			return CHECK_FAILED;
-		}
-
-		/* load the item format linked list */
-		if(init_format_type(format, lstate, lua_gettop(lstate), item_type_id) != CHECK_PASSED)
-			return CHECK_FAILED;
-		lua_pop(lstate, 1);
-	}
-	/* remove the key and item format table */
-	lua_pop(lstate, 2);
-	return CHECK_PASSED;
-}
-
-int init_format_type(format_t * format, lua_State * lstate, int type_table, int item_type_id) {
-	format_rule_t * format_rule_temp = NULL;
-	format_rule_t * format_type_iter = NULL;
-
-	/* check the item type id index */
-	if(item_type_id < 0 || item_type_id > ITEM_TYPE_SIZE) {
-		exit_func_safe("invalid format item type id %d", item_type_id);
-		return CHECK_FAILED;
-	}
-
-	/* get the root of the format type's linked list */
-	lua_pushnil(lstate);
-	while(lua_next(lstate, type_table)) {
-		format_rule_temp = calloc(1, sizeof(format_rule_t));
-
-		/* check that each rule is a table */
-		if(!lua_istable(lstate, -1)) {
-			exit_abt_safe("item format's rules must be a table");
-			return CHECK_FAILED;
-		}
-
-		/* load the item table and format */
-		if(load_item_id(format_rule_temp, lstate, lua_gettop(lstate)) != CHECK_PASSED) {
-			exit_abt_safe("failed to load item id in item format rule");
-			return CHECK_FAILED;
-		}
-		if(load_type_format(format_rule_temp, lstate, lua_gettop(lstate)) != CHECK_PASSED) {
-			exit_abt_safe("failed to load item format in item format rule");
-			return CHECK_FAILED;
-		}
-
-		/* load item type specified filters */
-		if(format->server_type != MODE_RATHENA) {
-			switch(item_type_id) {
-				case WEAPON_ITEM_TYPE:			load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
-			}
-		} else {
-			switch(item_type_id) {
-				case WEAPON_ITEM_TYPE_RA:		load_weapon_type(format_rule_temp, lstate, lua_gettop(lstate)); break;
-			}
-		}
-
-		format_type_iter = (format->format_type_list[item_type_id] == NULL) ?
-			(format->format_type_list[item_type_id] = format_rule_temp):
-			(format_type_iter->next = format_rule_temp);
-		lua_pop(lstate, lua_gettop(lstate) - type_table - 1);
-	}
-	return CHECK_PASSED;
-}
-
-int deit_format(format_t * format) {
-	int i = 0;
-	format_rule_t * format_rule_temp = NULL;
-	format_rule_t * format_type_iter = NULL;
-	format_field_t * format_field_temp = NULL;
-	format_field_t * format_field_iter = NULL;
-
-	for(i = 0; i < ITEM_TYPE_SIZE;i++) {
-		format_type_iter = format->format_type_list[i];
-		while(format_type_iter != NULL) {
-			format_rule_temp = format_type_iter;
-			format_type_iter = format_type_iter->next;
-			/* free the item id range */
-			if(format_rule_temp->item_id != NULL)
-				freerange(format_rule_temp->item_id);
-			/* free the format */
-			format_field_iter = format_rule_temp->format;
-			while(format_field_iter != NULL) {
-				format_field_temp = format_field_iter;
-				format_field_iter = format_field_iter->next;
-				free(format_field_temp);
-			}
-			free(format_rule_temp);
-		}
-	}
-
-	if(format->flavour_text != NULL) {
-		sqlite3_finalize(format->flavour_text_id_search);
-		sqlite3_close(format->flavour_text);
 	}
 	return CHECK_PASSED;
 }
@@ -224,26 +55,150 @@ int flavour_text_id_search(format_t * format, flavour_text_t * flavour_text, int
 	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
 }
 
-int load_item_id(format_rule_t * type, lua_State * lstate, int table_index) {
-	int status = 0;
-	int item_id_table = 0;
+int init_format(format_t * format, lua_State * lstate, int format_index, int file_format, int server_type) {
+	int item_type_table = 0;				/* index on stack to item type table */
+	int item_format_table = 0;				/* index on stack to item format table */
+	int item_rule_table = 0;				/* item format rule table for item type */
+	/* item type name and constant */
+	const char * item_type_name = NULL;
+	int item_type_constant = 0;
 
-	/* get the item id field */
-	lua_getfield(lstate, table_index, "item_id");
-	item_id_table = lua_gettop(lstate);
-	if(!lua_istable(lstate, -1) || lua_isnil(lstate, -1)) {
-		exit_abt_safe("item rule's item_id value must be a table or item_id is missing");
+	/* check for null references */	
+	if(exit_null_safe(2, format, lstate)) 
+		return CHECK_FAILED;
+
+	/* set server type, file format, and format rules */
+	format->file_format = file_format;
+	format->server_type = server_type;
+	memset(format->rule_list, 0, sizeof(format_rule_t *) * ITEM_TYPE_SIZE);
+
+	/* get the item type and item format table */
+	lua_getglobal(lstate, "item_type");
+	if(lua_isnil(lstate, -1)) {
+		exit_abt_safe("failed to find global item type table");
 		lua_pop(lstate, 1);
 		return CHECK_FAILED;
 	}
+	if(lua_get_field(lstate, format_index, "item_format", LUA_TTABLE))
+		return CHECK_FAILED;
+	item_type_table = lua_gettop(lstate) - 1;
+	item_format_table = lua_gettop(lstate);
 
-	/* item id can specified an array of tuples or a single tuple */
+	/* iterate the item format table */
+	lua_pushnil(lstate);
+	while(lua_next(lstate, item_format_table)) {
+		/* check that the key type is a string */
+		if(lua_isnil(lstate, -2)) {
+			exit_abt_safe("'item format' has invalid nil key");
+			break;
+		} else if(!lua_isstring(lstate, -2)) {
+			exit_abt_safe("'item format' key values must be a string value");
+			break;
+		}
+		item_type_name = lua_tostring(lstate, -2);
+
+		/* check that the value type is a table */
+		if(lua_isnil(lstate, -1)) {
+			exit_func_safe("'item format' key '%s' has nil value", item_type_name);
+			break;
+		} else if(!lua_istable(lstate, -1)) {
+			exit_func_safe("'item format' key '%s' must have a table value", item_type_name);
+			break;
+		}
+		item_rule_table = lua_gettop(lstate);
+
+		/* conver item type name to item type constant */
+		if(lua_get_field(lstate, item_type_table, item_type_name, LUA_TNUMBER)) {
+			break;
+		} else {
+			item_type_constant = lua_tonumber(lstate, -1);
+			lua_pop(lstate, 1);
+		}
+
+		/* load the item format linked list */
+		if(init_format_type(format, lstate, item_rule_table, item_type_constant)) {
+			exit_func_safe("failed to load item rule for '%s'", item_type_name);
+			break;
+		}
+
+		/* remove element until the last key */
+		lua_pop(lstate, lua_gettop(lstate) - item_format_table - 1);
+	}
+	
+	/* remove all element until the configuration table */
+	lua_pop(lstate, lua_gettop(lstate) - format_index);
+	return CHECK_PASSED;
+}
+
+int init_format_type(format_t * format, lua_State * lstate, int rule_table, int item_type_constant) {
+	/* I am a linked list monster; nom nom nom */
+	format_rule_t * rule_temp = NULL;
+	format_rule_t * rule_iter = NULL;
+	int rule = 0;
+	/* check the item type constant index */
+	if(item_type_constant < 0 || item_type_constant > ITEM_TYPE_SIZE) {
+		exit_func_safe("invalid format item type constant %d", item_type_constant);
+		return CHECK_FAILED;
+	}
+
+	/* iterate the item rule table */
+	lua_pushnil(lstate);
+	while(lua_next(lstate, rule_table)) {
+		/* check the that the value type is a table */
+		if(lua_isnil(lstate, -1)) {
+			exit_abt_safe("invalid item rule table with nil value");
+			break;
+		} else if(!lua_istable(lstate, -1)) {
+			exit_abt_safe("item rule must be a table value");
+			break;
+		}
+		rule = lua_gettop(lstate);
+
+		/* create an item rule node and add to linked list */
+		rule_temp = calloc(1, sizeof(format_rule_t));
+		rule_iter = (format->rule_list[item_type_constant] == NULL) ?
+					(format->rule_list[item_type_constant] = rule_temp):
+					(rule_iter->next = rule_temp);
+
+		/* load the item table and format */
+		if(load_item_id(rule_temp, lstate, rule) != CHECK_PASSED) {
+			exit_abt_safe("failed to load item id for item rule");
+			break;
+		}
+		if(load_item_field(rule_temp, lstate, rule) != CHECK_PASSED) {
+			exit_abt_safe("failed to load item format for item rule");
+			break;
+		}
+
+		/* load special item rule filters */
+		if(item_type_constant == WEAPON_ITEM_TYPE)
+			load_weapon_type(rule_temp, lstate, rule);
+
+		
+		lua_pop(lstate, lua_gettop(lstate) - rule_table - 1);
+	}
+
+	/* remove all element until the item rule table */
+	lua_pop(lstate, lua_gettop(lstate) - rule_table);
+	return CHECK_PASSED;
+}
+
+int load_item_id(format_rule_t * type, lua_State * lstate, int rule) {
+	int status = 0;
+	int item_id_table = 0;
+
+	/* get the item id table */
+	if(lua_get_field(lstate, rule, "item_id", LUA_TTABLE))
+		return CHECK_FAILED;
+	item_id_table = lua_gettop(lstate);
+
+	/* recursive add item id ranges */
 	status = load_item_id_re(type, lstate, item_id_table);
-	lua_pop(lstate, 1);
+	lua_pop(lstate, lua_gettop(lstate) - rule);
 	return status;
 }
 
-int load_item_id_re(format_rule_t * type, lua_State * lstate, int table_index) {
+int load_item_id_re(format_rule_t * type, lua_State * lstate, int item_id_table) {
 	int phase = 0;
 	int item_id_start = 0;
 	int item_id_final = 0;
@@ -252,31 +207,33 @@ int load_item_id_re(format_rule_t * type, lua_State * lstate, int table_index) {
 
 	/* item id can be a single tuple or a list of tuple */
 	lua_pushnil(lstate);
-	while(lua_next(lstate, table_index)) {
+	while(lua_next(lstate, item_id_table)) {
 		if(phase == 0) {
-			/* either a list of tuple or tuple */
+			/* item id is either a list of item id tuples or a single item id tuple */
 			if(lua_istable(lstate, -1)) {
 				load_item_id_re(type, lstate, lua_gettop(lstate));
 			} else {
-				if(!lua_isnumber(lstate, -1)){
-					exit_abt_safe("item_id tuple must contain numbers only");
-					return CHECK_FAILED;
+				if(!lua_isnumber(lstate, -1)) {
+					exit_abt_safe("invalid item id value");
+					break;
 				}
 				item_id_start = lua_tonumber(lstate, -1);
 				phase++;
 			}
 		} else {
-			if(!lua_isnumber(lstate, -1)){
-				exit_abt_safe("item_id tuple must contain numbers only");
-				return CHECK_FAILED;
+			/* each tuple has two item id */
+			if(!lua_isnumber(lstate, -1)) {
+				exit_abt_safe("invalid item id value");
+				break;
 			}
 			item_id_final = lua_tonumber(lstate, -1);
 
-			/* specifying start and final to be -1 means default */
-			if(item_id_start == item_id_final && item_id_start == -1) {
+			/* default item id range if item id is -1 */
+			if(item_id_start == -1 || item_id_final == -1) {
 				item_id_start = 0;
 				item_id_final = INT_MAX;
 			}
+
 
 			if(type->item_id == NULL) {
 				/* create the initial range */
@@ -289,160 +246,189 @@ int load_item_id_re(format_rule_t * type, lua_State * lstate, int table_index) {
 				freerange(left_range);
 				freerange(right_range);
 			}
-			/* each tuple only has start and final item id */
-			lua_pop(lstate, lua_gettop(lstate) - table_index);
+			
+			lua_pop(lstate, lua_gettop(lstate) - item_id_table);
 			break;
 		}
-		lua_pop(lstate, lua_gettop(lstate) - table_index - 1);
+		lua_pop(lstate, lua_gettop(lstate) - item_id_table - 1);
 	}
 	return CHECK_PASSED;
 }
 
-int load_type_format(format_rule_t * type, lua_State * lstate, int table_index) {
-	int item_format_table = 0;
-	format_field_t * temp = NULL;
-	format_field_t * iter = NULL;
+int load_item_field(format_rule_t * type, lua_State * lstate, int rule) {
+	int item_field_table = 0;
+	format_field_t * field_temp = NULL;
+	format_field_t * field_iter = NULL;
 
 	/* get the item id field */
-	lua_getfield(lstate, table_index, "format");
-	item_format_table = lua_gettop(lstate);
-	if(!lua_istable(lstate, -1) || lua_isnil(lstate, -1)) {
-		exit_abt_safe("item rule's format value must be a table or format is missing");
-		lua_pop(lstate, 1);
+	if(lua_get_field(lstate, rule, "format", LUA_TTABLE))
 		return CHECK_FAILED;
-	}
-
-	/* create the format linked list */
+	item_field_table = lua_gettop(lstate);
+	
+	/* iterate through the format table */
 	lua_pushnil(lstate);
-	while(lua_next(lstate, item_format_table)) {
-		temp = calloc(1, sizeof(format_field_t));
-		load_type_format_field(temp, lstate, lua_gettop(lstate));
-		iter = (type->format == NULL) ?
-			(type->format = temp):
-			(iter->next = temp);
-		lua_pop(lstate, lua_gettop(lstate) - item_format_table - 1);
-	}
+	while(lua_next(lstate, item_field_table)) {
+		/* check the that the value type is a table */
+		if(lua_isnil(lstate, -1)) {
+			exit_abt_safe("invalid item field table with nil value");
+			break;
+		} else if(!lua_istable(lstate, -1)) {
+			exit_abt_safe("item field must be a table value");
+			break;
+		}
 
-	/* pop the last key and format table */
-	lua_pop(lstate, 1);
+		/* create the field node and add to linked list */
+		field_temp = calloc(1, sizeof(format_field_t));
+		field_iter = (type->format == NULL) ?
+			   (type->format = field_temp):
+			   (field_iter->next = field_temp);
+
+		/* load the item field */
+		if(load_item_field_re(field_temp, lstate, lua_gettop(lstate))) 
+			break;
+		lua_pop(lstate, lua_gettop(lstate) - item_field_table - 1);
+	}
+	lua_pop(lstate, lua_gettop(lstate) - item_field_table);
 	return CHECK_PASSED;
 }
 
-int load_type_format_field(format_field_t * field, lua_State * lstate, int table_index) {
-	const char * item_type_field = NULL;
-	lua_getfield(lstate, table_index, "type");
-	if(!lua_isstring(lstate, -1) || lua_isnil(lstate, -1)) {
-		exit_abt_safe("item format's type must be a string or is missing");
+int load_item_field_re(format_field_t * field, lua_State * lstate, int field_table) {
+	const char * item_field_type = NULL;
+	const char * item_field_text = NULL;
+	int item_field_table = 0;
+
+	/* get the item field type string */
+	if(lua_get_field(lstate, field_table, "type", LUA_TSTRING))
+		return CHECK_FAILED;
+	item_field_type = lua_tostring(lstate, -1);
+
+	/* get the item field type table */
+	lua_getglobal(lstate, "field_type");
+	if(lua_isnil(lstate, -1)) {
+		exit_abt_safe("failed to find global field type table");
 		lua_pop(lstate, 1);
 		return CHECK_FAILED;
 	}
+	item_field_table = lua_gettop(lstate);
 
-	/* map the item format type to a constant */
-	item_type_field = lua_tostring(lstate, -1);
-	if(ncs_strcmp(item_type_field, "flavour") == 0) {
-		field->field = FLAVOUR_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "type") == 0) {
-		field->field = TYPE_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "buy") == 0) {
-		field->field = BUY_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "sell") == 0) {
-		field->field = SELL_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "weight") == 0) {
-		field->field = WEIGHT_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "attack") == 0) {
-		field->field = ATK_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "defense") == 0) {
-		field->field = DEF_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "range") == 0) {
-		field->field = RANGE_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "job") == 0 ||
-			  ncs_strcmp(item_type_field, "class") == 0) {
-		field->field = JOB_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "gender") == 0) {
-		field->field = GENDER_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "location") == 0) {
-		field->field = LOC_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "weapon_level") == 0) {
-		field->field = WEAPON_LEVEL_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "require_level") == 0) {
-		field->field = LEVEL_REQUIRE_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "refinement") == 0) {
-		field->field = REFINE_ABILITY_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "script") == 0) {
-		field->field = SCRIPT_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "view") == 0) {
-		field->field = VIEW_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "upper") == 0) {
-		field->field = UPPER_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "magical_attack") == 0) {
-		field->field = MATK_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "bind") == 0) {
-		field->field = BINDONEQUIP_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "buyingstore") == 0) {
-		field->field = BUYINGSTORE_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "delay") == 0) {
-		field->field = DELAY_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "trade") == 0) {
-		field->field = TRADE_ITEM_FIELD;
-	} else if(ncs_strcmp(item_type_field, "stack") == 0) {
-		field->field = STACK_ITEM_FIELD;
-	} else {
-		exit_func_safe("invalid item format field %s", item_type_field);
-		lua_pop(lstate, 1);
+	/* map the item field type string to constant */
+	if(lua_get_field(lstate, item_field_table, item_field_type, LUA_TNUMBER)) 
 		return CHECK_FAILED;
+	field->field = lua_tointeger(lstate, -1);
+
+	/* load the text [optional] */
+	if(!lua_get_field(lstate, field_table, "text", LUA_TSTRING)) {
+		item_field_text = lua_tostring(lstate, -1);
+		strncopy(field->text, FMT_TEXT_SIZE, (const unsigned char *) item_field_text);
 	}
 
-	/* load the text */
-	lua_getfield(lstate, table_index, "text");
-	if(!lua_isnil(lstate, -1)) {
-		if(!lua_isstring(lstate, -1)) {
-			exit_abt_safe("item rule's text must be a string");
-			return CHECK_FAILED;
-		}
-		strncopy(field->text, FMT_TEXT_SIZE, (const unsigned char *) lua_tostring(lstate, -1));
-	}
-
-	lua_pop(lstate, 2);
+	lua_pop(lstate, lua_gettop(lstate) - field_table);
 	return CHECK_PASSED;
 }
 
 int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
-	int weapon_table = 0;
+	int weapon_type = 0;
+	int weapon_type_table = 0;
 
-	lua_getfield(lstate, rule_table, "weapon_type");
-	weapon_table = lua_gettop(lstate);
-	if(lua_isnil(lstate, -1)) {
-		rule->weapon_filter = 0xFFFFFFFF;
-		lua_pop(lstate, 1);
+	/* push the weapon type table */
+	if(lua_get_field(lstate, rule_table, "weapon_type", LUA_TTABLE))
 		return CHECK_PASSED;
-	}
+	weapon_type_table = lua_gettop(lstate);
+	
+	/* initialize the weapon type filter */
+	rule->weapon_type = 0;
 
-	if(!lua_istable(lstate, weapon_table)) {
-		exit_abt_safe("weapon type must be a table in item rule");
-		lua_pop(lstate, 1);
-		return CHECK_FAILED;
-	}
-
-	rule->weapon_filter = 0;
+	/* set each weapon type flag */
 	lua_pushnil(lstate);
-	while(lua_next(lstate, weapon_table)) {
-		if(!lua_isnumber(lstate, -1)) {
-			exit_abt_safe("all values in weapon type table must be numbers");
-			lua_pop(lstate, lua_gettop(lstate) - weapon_table + 1);
-			return CHECK_FAILED;
+	while(lua_next(lstate, weapon_type_table)) {
+		if(lua_isnil(lstate, -1)) {
+			exit_abt_safe("invalid weapon type table with nil value");
+			break;
+		} else if(!lua_isnumber(lstate, -1)) {
+			exit_abt_safe("weapon type table must have must be integer value");
+			break;
 		}
-		rule->weapon_filter |= weapon_flag((int) lua_tointeger(lstate, -1));
-		lua_pop(lstate, lua_gettop(lstate) - weapon_table - 1);
+		weapon_type = lua_tointeger(lstate, -1);
+		rule->weapon_type |= weapon_flag(weapon_type);
+		lua_pop(lstate, lua_gettop(lstate) - weapon_type_table - 1);
 	}
 
 	/* pop the weapon table and last key */
-	lua_pop(lstate, 1);
+	lua_pop(lstate, lua_gettop(lstate) - rule_table);
+	return CHECK_PASSED;
+}
+
+int lua_get_field(lua_State * state, int table, const char * key, int expected_type) {
+	int value_type = 0;
+	if(exit_null_safe(2, state, key)) 
+		return CHECK_FAILED;
+	if(lua_gettop(state) < table) {
+		exit_func_safe("invalid table index %d", table);
+		return CHECK_FAILED;
+	}
+
+	/* push the value on the stack */
+	lua_getfield(state, table, key);
+	if(lua_isnil(state, -1)) {
+		lua_pop(state, 1);
+		return CHECK_FAILED;
+	}
+
+	/* check the type of the value */
+	value_type = lua_type(state, -1);
+	if(value_type != expected_type) {
+		exit_func_safe("expected '%s' type but got '%s' type on key %s",
+		lua_typename(state, expected_type), lua_typename(state, value_type), key);
+		lua_pop(state, 1);
+		return CHECK_FAILED;
+	}
+	return CHECK_PASSED;
+}
+
+int deit_format(format_t * format) {
+	int i = 0;
+	format_rule_t * format_rule_temp = NULL;
+	format_rule_t * format_type_iter = NULL;
+	format_field_t * format_field_temp = NULL;
+	format_field_t * format_field_iter = NULL;
+
+	for(i = 0; i < ITEM_TYPE_SIZE;i++) {
+		format_type_iter = format->rule_list[i];
+		while(format_type_iter != NULL) {
+			format_rule_temp = format_type_iter;
+			format_type_iter = format_type_iter->next;
+			/* free the item id range */
+			if(format_rule_temp->item_id != NULL)
+				freerange(format_rule_temp->item_id);
+			/* free the format */
+			format_field_iter = format_rule_temp->format;
+			while(format_field_iter != NULL) {
+				format_field_temp = format_field_iter;
+				format_field_iter = format_field_iter->next;
+				free(format_field_temp);
+			}
+			free(format_rule_temp);
+		}
+	}
+
+	if(format->flavour_text != NULL) {
+		sqlite3_finalize(format->flavour_text_id_search);
+		sqlite3_close(format->flavour_text);
+	}
 	return CHECK_PASSED;
 }
 
 int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	format_rule_t * item_rule = NULL;
 	format_field_t * item_field = NULL;
+
+	/* rathena switched weapon type and armor type */
+	if(format->server_type == MODE_RATHENA) {
+		if(item->type == WEAPON_ITEM_TYPE)
+			item->type = ARMOR_ITEM_TYPE;
+		else if(item->type == ARMOR_ITEM_TYPE)
+			item->type = WEAPON_ITEM_TYPE;
+	}
 
 	/* check item type is valid */
 	if(item->type < 0 || item->type > ITEM_TYPE_SIZE) {
@@ -451,7 +437,7 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	}
 
 	/* find a matching item rule per item type  */
-	item_rule = format->format_type_list[item->type];
+	item_rule = format->rule_list[item->type];
 	while(item_rule != NULL) {
 		/* filter by item id */
 		if(!searchrange(item_rule->item_id, item->id)) {
@@ -459,14 +445,10 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 			continue;
 		}
 		/* filter by weapon type */
-		if((item->type == WEAPON_ITEM_TYPE && format->server_type != MODE_RATHENA) ||
-		   (item->type == WEAPON_ITEM_TYPE_RA && format->server_type == MODE_RATHENA)){
-			if(item_rule->weapon_filter & weapon_flag(item->view)) {
-				break;
-			} else {
-				item_rule = item_rule->next;
-				continue;
-			}
+		if(item->type == WEAPON_ITEM_TYPE) {
+			if(item_rule->weapon_type & weapon_flag(item->view)) break;
+			item_rule = item_rule->next;
+			continue;
 		}
 		break;
 	}
@@ -627,11 +609,11 @@ int format_view(char * buffer, int * offset, format_field_t * field, int view, i
 	char * view_type = NULL;
 
 	/* view is only interpreted for weapon and ammo type */
-	if(type != WEAPON_ITEM_TYPE && type != WEAPON_ITEM_TYPE_RA && type != AMMO_ITEM_TYPE) 
+	if(type != WEAPON_ITEM_TYPE && type != AMMO_ITEM_TYPE) 
 		return CHECK_FAILED;
 
 	/* map the weapon type constant to weapon type string */
-	if(type == WEAPON_ITEM_TYPE || type == WEAPON_ITEM_TYPE_RA) {
+	if(type == WEAPON_ITEM_TYPE) {
 		view_type = weapon_tbl(view);
 		if(ncs_strcmp(view_type, "error") == 0) {
 			exit_func_safe("failed to find weapon type for view %d on type %d", view, type);
@@ -844,10 +826,10 @@ int format_stack(char * buffer, int * offset, format_field_t * field, int * stac
 	/* write the text */
 	*offset += sprintf(&buffer[*offset], "Stack Restriction: ");
 	initial_offset = *offset;
-	if(type & 0x1) *offset += sprintf(&buffer[*offset], "%sInventory", (initial_offset < *offset)?", ":"");
-	if(type & 0x2) *offset += sprintf(&buffer[*offset], "%sCart", (initial_offset < *offset)?", ":"");
-	if(type & 0x3) *offset += sprintf(&buffer[*offset], "%sStorage", (initial_offset < *offset)?", ":"");
-	if(type & 0x4) *offset += sprintf(&buffer[*offset], "%sGuild Storage", (initial_offset < *offset)?", ":"");
-	*offset += sprintf(&buffer[*offset], "\nStack Limit: %d\n", amount);
+	if(type & 0x1) *offset += sprintf(&buffer[*offset], "%sinventory", (initial_offset < *offset)?", ":"");
+	if(type & 0x2) *offset += sprintf(&buffer[*offset], "%scart", (initial_offset < *offset)?", ":"");
+	if(type & 0x3) *offset += sprintf(&buffer[*offset], "%sstorage", (initial_offset < *offset)?", ":"");
+	if(type & 0x4) *offset += sprintf(&buffer[*offset], "%sguild storage", (initial_offset < *offset)?", ":"");
+	*offset += sprintf(&buffer[*offset], ".\nStack Limit: %d\n", amount);
 	return CHECK_PASSED;
 }

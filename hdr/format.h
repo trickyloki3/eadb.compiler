@@ -34,24 +34,22 @@
  	#define FORMAT_TXT		0x1
  	#define FORMAT_LUA		0x2
 
- 	/* item type */
+ 	/* item type for eathena, rathena, and hercules */
  	#define HEALING_ITEM_TYPE 			0
  	#define USABLE_ITEM_TYPE 			2
  	#define ETC_ITEM_TYPE				3
  	#define WEAPON_ITEM_TYPE			4
- 	#define WEAPON_ITEM_TYPE_RA			5
  	#define ARMOR_ITEM_TYPE				5
- 	#define ARMOR_ITEM_TYPE_RA			4
  	#define CARD_ITEM_TYPE				6
  	#define PET_EGG_ITEM_TYPE			7
  	#define PET_EQUIP_ITEM_TYPE			8
  	#define AMMO_ITEM_TYPE				10
  	#define DELAY_USABLE_ITEM_TYPE		11
- 	#define SHADOW_EQUIP_ITEM_TYPE		12	/* rathena only */
+ 	#define SHADOW_EQUIP_ITEM_TYPE		12
  	#define DELAY_CONFIRM_ITEM_TYPE		18
  	#define ITEM_TYPE_SIZE				20
 
- 	/* item fields */
+ 	/* item fields for eathena, rathena, and hercules */
  	#define FLAVOUR_ITEM_FIELD			0
  	#define TYPE_ITEM_FIELD				1
  	#define BUY_ITEM_FIELD				2
@@ -70,14 +68,13 @@
 	#define VIEW_ITEM_FIELD				15
 	#define UPPER_ITEM_FIELD			16
 	#define MATK_ITEM_FIELD				17
-	/* item field hercules only */
 	#define BINDONEQUIP_ITEM_FIELD		18
 	#define BUYINGSTORE_ITEM_FIELD		19
 	#define DELAY_ITEM_FIELD			20
 	#define TRADE_ITEM_FIELD			21
 	#define STACK_ITEM_FIELD			22
 
-	/* weapon type */
+ 	/* weapon type for eathena, rathena, and hercules */
 	#define FIST_WEAPON					0x10000000
 	#define DAGGER_WEAPON				0x00000001
 	#define H1_SWORD_WEAPON				0x00000002
@@ -116,36 +113,33 @@
 
  	typedef struct format_rule_t {
  		range_t * item_id;
- 		int weapon_filter;
+ 		int weapon_type;
  		format_field_t * format;
  		struct format_rule_t * next;
  	} format_rule_t;
 
 	typedef struct format_t {
-		int server_type;
-		int file_format;
-		/* flavour text database */
-		sqlite3 * flavour_text;
-		sqlite3_stmt * flavour_text_id_search;
-		/* item format rules */
-		format_rule_t * format_type_list[ITEM_TYPE_SIZE];
+		int server_type;									/* eAthena, rAthena, or Hercules */
+		int file_format;									/* idnum2itemdesctabke.txt or itemInfo.lua */
+		format_rule_t * rule_list[ITEM_TYPE_SIZE];			/* format rules for each item type */
+		sqlite3 * flavour_text;								/* flavour text database */
+		sqlite3_stmt * flavour_text_id_search;				/* search for flavour text by item id */
 	} format_t;
-
-	/* item format rule functions */
-	int init_format(format_t *, lua_State *, int, int, int);
-	int init_format_type(format_t *, lua_State *, int, int);
-	int deit_format(format_t *);
-
-	/* auxiliary item format loading functions */
-	int load_item_id(format_rule_t *, lua_State *, int);
-	int load_item_id_re(format_rule_t *, lua_State *, int);
-	int load_type_format(format_rule_t *, lua_State *, int);
-	int load_type_format_field(format_field_t *, lua_State *, int);
-	int load_weapon_type(format_rule_t *, lua_State *, int);
 
 	/* flavour text database load and search functions */
 	int init_flavour_db(format_t *, const char *);
 	int flavour_text_id_search(format_t *, flavour_text_t *, int);
+
+	/* item format rule functions */
+	int init_format(format_t *, lua_State *, int, int, int);
+	int init_format_type(format_t *, lua_State *, int, int);
+	int load_item_id(format_rule_t *, lua_State *, int);
+	int load_item_id_re(format_rule_t *, lua_State *, int);
+	int load_item_field(format_rule_t *, lua_State *, int);
+	int load_item_field_re(format_field_t *, lua_State *, int);
+	int load_weapon_type(format_rule_t *, lua_State *, int);
+	int lua_get_field(lua_State *, int, const char *, int);
+	int deit_format(format_t *);
 
 	/* write item fields */
 	int write_item(FILE *, format_t *, item_t *, char *);
@@ -165,4 +159,5 @@
 	int format_delay(char *, int * , format_field_t *, int);
 	int format_trade(char *, int * , format_field_t *, int *);
 	int format_stack(char *, int * , format_field_t *, int *);
+
 #endif
