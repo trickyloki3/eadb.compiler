@@ -109,6 +109,7 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 
 		/* conver item type name to item type constant */
 		if(lua_get_field(lstate, item_type_table, item_type_name, LUA_TNUMBER)) {
+			exit_func_safe("failed to map item type string %s to constant", item_type_name);
 			break;
 		} else {
 			item_type_constant = lua_tonumber(lstate, -1);
@@ -172,7 +173,8 @@ int init_format_type(format_t * format, lua_State * lstate, int rule_table, int 
 
 		/* load special item rule filters */
 		if(item_type_constant == WEAPON_ITEM_TYPE)
-			load_weapon_type(rule_temp, lstate, rule);
+			if(load_weapon_type(rule_temp, lstate, rule))
+				exit_abt_safe("failed to load weapon type filter");
 
 		
 		lua_pop(lstate, lua_gettop(lstate) - rule_table - 1);
@@ -283,11 +285,15 @@ int load_item_field(format_rule_t * type, lua_State * lstate, int rule) {
 			   (type->format = field_temp):
 			   (field_iter->next = field_temp);
 
-		/* load the item field */
+		/* loads the ["type"] and ["text"] for each table value in ["format"] */
 		if(load_item_field_re(field_temp, lstate, lua_gettop(lstate))) 
 			break;
+
+		/* pop everything except for the item field table and key */
 		lua_pop(lstate, lua_gettop(lstate) - item_field_table - 1);
 	}
+
+	/* pop everything except for the item format table */
 	lua_pop(lstate, lua_gettop(lstate) - item_field_table);
 	return CHECK_PASSED;
 }
@@ -303,17 +309,19 @@ int load_item_field_re(format_field_t * field, lua_State * lstate, int field_tab
 	item_field_type = lua_tostring(lstate, -1);
 
 	/* get the item field type table */
-	lua_getglobal(lstate, "field_type");
+	lua_getglobal(lstate, "item_field");
 	if(lua_isnil(lstate, -1)) {
-		exit_abt_safe("failed to find global field type table");
-		lua_pop(lstate, 1);
+		exit_abt_safe("failed to find global item field table");
+		lua_pop(lstate, lua_gettop(lstate) - field_table);
 		return CHECK_FAILED;
 	}
 	item_field_table = lua_gettop(lstate);
 
 	/* map the item field type string to constant */
-	if(lua_get_field(lstate, item_field_table, item_field_type, LUA_TNUMBER)) 
+	if(lua_get_field(lstate, item_field_table, item_field_type, LUA_TNUMBER)) {
+		exit_func_safe("failed to map item field string %s to constant", item_field_type);
 		return CHECK_FAILED;
+	}
 	field->field = lua_tointeger(lstate, -1);
 
 	/* load the text [optional] */
@@ -322,6 +330,7 @@ int load_item_field_re(format_field_t * field, lua_State * lstate, int field_tab
 		strncopy(field->text, FMT_TEXT_SIZE, (const unsigned char *) item_field_text);
 	}
 
+	/* pop everything except the field table */
 	lua_pop(lstate, lua_gettop(lstate) - field_table);
 	return CHECK_PASSED;
 }
@@ -422,7 +431,8 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	format_rule_t * item_rule = NULL;
 	format_field_t * item_field = NULL;
 
-	/* rathena switched weapon type and armor type */
+	/* rathena uses weapon(5) and armor(4), but eathena and hercules
+	 * uses weapon(4) and  armor(5), normalize to one item type set */
 	if(format->server_type == MODE_RATHENA) {
 		if(item->type == WEAPON_ITEM_TYPE)
 			item->type = ARMOR_ITEM_TYPE;
@@ -514,13 +524,19 @@ int format_flavour_text(char * buffer, int * offset, format_t * format, format_f
 	char * string[FMT_LINE_SIZE];	/* parsed strings separated by a peroid */
 	int count = 0;					/* number of parsed strings */
 
-	/* search flavour text for item id */
-	if(flavour_text_id_search(format, flavour, item_id) != CHECK_PASSED)
+	/* search flavour text using item id */
+	if(flavour_text_id_search(format, flavour, item_id) != CHECK_PASSED) {
+		/*fprintf(stderr,"[warn]: failed to search for flavour text for item id %d.\n", item_id);*/
 		return CHECK_FAILED;
+	}
 	
 	/* preprocess the flavour text buffer */
 	flavor = flavour->identified_description_name;
 	length = strlen(flavor);
+	if(length == 0) {
+		/*fprintf(stderr,"[warn]: empty flavour text for item id %d\n", item_id);*/
+		return CHECK_FAILED;
+	}
 	
 	/* skip initial newline and space characters */
 	for(i = 0; i < length; i++)
@@ -698,6 +714,7 @@ int format_job(char * buffer, int * offset, format_field_t * field, int job, int
 	if(job & 0x04000000) *offset += sprintf(&buffer[*offset], "%sGangsi", (initial_offset < *offset)?", ":"");
 	if(job & 0x08000000) *offset += sprintf(&buffer[*offset], "%sDeath Knight", (initial_offset < *offset)?", ":"");
 	if(job & 0x10000000) *offset += sprintf(&buffer[*offset], "%sDark Collector", (initial_offset < *offset)?", ":"");
+	
 	*offset += sprintf(&buffer[*offset], "\n");
 	return CHECK_PASSED;
 }

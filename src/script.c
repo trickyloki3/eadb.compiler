@@ -1660,8 +1660,8 @@ int translate_pet_egg(block_r * block, int handler) {
     pet_id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
     if(pet_id == NULL || pet_id->min != pet_id->max) {
         if(pet_id != NULL) node_free(pet_id);
-        exit_func_safe("failed to search for pet id or pet id is not constant %d ~ %d "
-            "in item %d\n", pet_id->min, pet_id->max, block->item_id);
+        exit_func_safe("failed to search for pet id or pet id is not constant"
+        " %d ~ %d in item %d\n", pet_id->min, pet_id->max, block->item_id);
         return SCRIPT_FAILED;
     }
 

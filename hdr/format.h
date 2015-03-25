@@ -16,6 +16,7 @@
 	#include "lua.h"
 	#include "lauxlib.h"
  	#include "limits.h"
+ 
  	/* flavour text */
  	typedef struct flavour_text_t {
  		int item_id;
@@ -75,49 +76,52 @@
 	#define STACK_ITEM_FIELD			22
 
  	/* weapon type for eathena, rathena, and hercules */
-	#define FIST_WEAPON					0x10000000
-	#define DAGGER_WEAPON				0x00000001
-	#define H1_SWORD_WEAPON				0x00000002
-	#define H2_SWORD_WEAPON				0x00000004
-	#define H1_SPEAR_WEAPON				0x00000008
-	#define H2_SPEAR_WEAPON				0x00000010
-	#define H1_AXE_WEAPON				0x00000020
-	#define H2_AXE_WEAPON				0x00000040
-	#define MACE_WEAPON					0x00000080
- 	#define STAVE_WEAPON				0x00000100
- 	#define BOW_WEAPON					0x00000200
- 	#define KNUCKLE_WEAPON				0x00000400
- 	#define INSTRUMENT_WEAPON			0x00000800
- 	#define WHIP_WEAPON					0x00001000
- 	#define BOOK_WEAPON					0x00002000
- 	#define KATAR_WEAPON				0x00004000
- 	#define REVOLVER_WEAPON				0x00008000
- 	#define RIFLES_WEAPON				0x00010000
- 	#define GATLING_GUN_WEAPON			0x00020000
- 	#define SHOTGUN_WEAPON				0x00040000
- 	#define GRENADE_WEAPON				0x00080000
- 	#define SHURIKEN_WEAPON				0x00100000
- 	#define H2_STAVE_WEAPON				0x00200000
- 	#define DUAL_DAGGER_WEAPON			0x00400000
- 	#define DUAL_SWORD_WEAPON			0x00800000
- 	#define DUAL_AXE_WEAPON				0x01000000
- 	#define DAGGER_SWORD_WEAPON			0x02000000
- 	#define DAGGER_AXE_WEAPON			0x04000000
- 	#define SWORD_AXE_WEAPON			0x08000000
+	#define FIST_WEAPON_TYPE			0x10000000
+	#define DAGGER_WEAPON_TYPE			0x00000001
+	#define H1_SWORD_WEAPON_TYPE		0x00000002
+	#define H2_SWORD_WEAPON_TYPE		0x00000004
+	#define H1_SPEAR_WEAPON_TYPE		0x00000008
+	#define H2_SPEAR_WEAPON_TYPE		0x00000010
+	#define H1_AXE_WEAPON_TYPE			0x00000020
+	#define H2_AXE_WEAPON_TYPE			0x00000040
+	#define MACE_WEAPON_TYPE			0x00000080
+ 	#define STAVE_WEAPON_TYPE			0x00000100
+ 	#define BOW_WEAPON_TYPE				0x00000200
+ 	#define KNUCKLE_WEAPON_TYPE			0x00000400
+ 	#define INSTRUMENT_WEAPON_TYPE		0x00000800
+ 	#define WHIP_WEAPON_TYPE			0x00001000
+ 	#define BOOK_WEAPON_TYPE			0x00002000
+ 	#define KATAR_WEAPON_TYPE			0x00004000
+ 	#define REVOLVER_WEAPON_TYPE		0x00008000
+ 	#define RIFLES_WEAPON_TYPE			0x00010000
+ 	#define GATLING_GUN_WEAPON_TYPE		0x00020000
+ 	#define SHOTGUN_WEAPON_TYPE			0x00040000
+ 	#define GRENADE_WEAPON_TYPE			0x00080000
+ 	#define SHURIKEN_WEAPON_TYPE		0x00100000
+ 	#define H2_STAVE_WEAPON_TYPE		0x00200000
+ 	#define DUAL_DAGGER_WEAPON_TYPE		0x00400000
+ 	#define DUAL_SWORD_WEAPON_TYPE		0x00800000
+ 	#define DUAL_AXE_WEAPON_TYPE		0x01000000
+ 	#define DAGGER_SWORD_WEAPON_TYPE	0x02000000
+ 	#define DAGGER_AXE_WEAPON_TYPE		0x04000000
+ 	#define SWORD_AXE_WEAPON_TYPE		0x08000000
 
+ 	/* item field specifies how the item field is written */
  	typedef struct format_field_t {
- 		int field;
- 		char text[FMT_TEXT_SIZE];
- 		struct format_field_t * next;
+ 		int field;						/* item field value (*_ITEM_FIELD macros) */
+ 		char text[FMT_TEXT_SIZE];		/* item field category text, i.e. "Weight:", "Job:", etc. */
+ 		struct format_field_t * next;	/* next item field to write */
  	} format_field_t;
 
+ 	/* item rule filters by item id, then by specific item type filters */
  	typedef struct format_rule_t {
- 		range_t * item_id;
- 		int weapon_type;
+ 		range_t * item_id;				/* item id range for which format applies */
+ 		int weapon_type;				/* weapon type for which format applies (bitmask) */
  		format_field_t * format;
- 		struct format_rule_t * next;
+ 		struct format_rule_t * next;	/* next item rule to test for match */
  	} format_rule_t;
 
+ 	/* high level structure for item rule list and flavour text database */
 	typedef struct format_t {
 		int server_type;									/* eAthena, rAthena, or Hercules */
 		int file_format;									/* idnum2itemdesctabke.txt or itemInfo.lua */
@@ -159,5 +163,4 @@
 	int format_delay(char *, int * , format_field_t *, int);
 	int format_trade(char *, int * , format_field_t *, int *);
 	int format_stack(char *, int * , format_field_t *, int *);
-
 #endif
