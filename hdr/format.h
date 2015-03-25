@@ -16,7 +16,7 @@
 	#include "lua.h"
 	#include "lauxlib.h"
  	#include "limits.h"
- 
+
  	/* flavour text */
  	typedef struct flavour_text_t {
  		int item_id;
@@ -156,7 +156,7 @@
 	int format_view(char *, int *, format_field_t *, int, int);			/* view is interpreted only for weapon and ammo type */
 	int format_type(char *, int *, format_field_t *, int);
 	int format_job(char *, int *, format_field_t *, int, int, int);
-	int format_upper(char *, int *, format_field_t *, int);
+	int format_upper(char *, int *, format_field_t *, int, int);
 	int format_location(char *, int *, format_field_t *, int);
 	int format_weight(char *, int * , format_field_t *, int);
 	int format_boolean(char *, int * , format_field_t *, int);

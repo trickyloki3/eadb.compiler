@@ -77,9 +77,12 @@ int load_he_item(const char * file_name, native_t * native) {
 			config_setting_lookup_int(item_row, "Def", &item[i].def);
 			config_setting_lookup_int(item_row, "Range", &item[i].range);
 			config_setting_lookup_int(item_row, "Slots", &item[i].slots);
-			config_setting_lookup_int(item_row, "Job", &item[i].job);
-			config_setting_lookup_int(item_row, "Upper", &item[i].upper);
-			config_setting_lookup_int(item_row, "Gender", &item[i].gender);
+			if(config_setting_lookup_int(item_row, "Job", &item[i].job) == CONFIG_FALSE)
+				item[i].job = 0xFFFFFFFF;	/* all job */
+			if(config_setting_lookup_int(item_row, "Upper", &item[i].upper) == CONFIG_FALSE)
+				item[i].upper = 0x3F;		/* all tier */
+			if(config_setting_lookup_int(item_row, "Gender", &item[i].gender) == CONFIG_FALSE)
+				item[i].gender = 0x2;		/* all sex */
 			config_setting_lookup_int(item_row, "Loc", &item[i].loc);
 			config_setting_lookup_int(item_row, "WeaponLv", &item[i].weaponlv);
 			item_sub = config_setting_get_member(item_row, "EquipLv");
@@ -90,14 +93,16 @@ int load_he_item(const char * file_name, native_t * native) {
 				config_setting_lookup_int(item_sub, "EquipLv", &item[i].equiplv[EQUIP_MIN]);
 				item[i].equiplv[EQUIP_MAX] = item[i].equiplv[EQUIP_MIN];
 			}
-			config_setting_lookup_bool(item_row, "Refine", &item[i].refine);
+			if(config_setting_lookup_bool(item_row, "Refine", &item[i].refine) == CONFIG_FALSE)
+				item[i].refine = 1;
 			config_setting_lookup_int(item_row, "View", &item[i].view);
 			config_setting_lookup_bool(item_row, "BindOnEquip", &item[i].bindonequip);
 			config_setting_lookup_bool(item_row, "BuyingStore", &item[i].buyingstore);
 			config_setting_lookup_int(item_row, "Delay", &item[i].delay);
 			item_sub = config_setting_get_member(item_row, "Trade");
 			if(item_sub != NULL && config_setting_is_group(item_sub) == CONFIG_TRUE) {
-				config_setting_lookup_int(item_sub, "override", &item[i].trade[TRADE_OVERRIDE]);
+				if(config_setting_lookup_int(item_sub, "override", &item[i].trade[TRADE_OVERRIDE]) == CONFIG_FALSE)
+					item[i].trade[TRADE_OVERRIDE] = 100; /* every group */
 				config_setting_lookup_bool(item_sub, "nodrop", &item[i].trade[TRADE_NODROP]);
 				config_setting_lookup_bool(item_sub, "notrade", &item[i].trade[TRADE_NOTRADE]);
 				config_setting_lookup_bool(item_sub, "partneroverride", &item[i].trade[TRADE_PARTNEROVERRIDE]);
@@ -110,7 +115,8 @@ int load_he_item(const char * file_name, native_t * native) {
 			}
 			item_sub = config_setting_get_member(item_row, "Nouse");
 			if(item_sub != NULL && config_setting_is_group(item_sub) == CONFIG_TRUE) {
-				config_setting_lookup_int(item_row, "override", &item[i].trade[NOUSE_OVERRIDE]);
+				if(config_setting_lookup_int(item_row, "override", &item[i].trade[NOUSE_OVERRIDE]) == CONFIG_FALSE)
+					item[i].trade[NOUSE_OVERRIDE] = 100; /* every group */
 				config_setting_lookup_bool(item_row, "sitting", &item[i].trade[NOUSE_SITTING]);
 			}
 			item_sub = config_setting_get_member(item_row, "Stack");

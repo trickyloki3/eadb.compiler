@@ -442,7 +442,7 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 
 	/* check item type is valid */
 	if(item->type < 0 || item->type > ITEM_TYPE_SIZE) {
-		exit_func_safe("invalid item type %d\n", item->type);
+		exit_func_safe("invalid item type %d", item->type);
 		return CHECK_FAILED;
 	}
 
@@ -470,6 +470,10 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	item_field = item_rule->format;
 	if(format->file_format & FORMAT_TXT)
 		return write_item_text(file, format, item_field, item, script);
+	else if(format->file_format & FORMAT_LUA)
+		;
+	else 
+		exit_func_safe("invalid item format %d", format->file_format);
 
 	return CHECK_PASSED;
 }
@@ -500,7 +504,7 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, &offset, field, item->elv_min); 								break;
 			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable, format->server_type);	break;
 			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);						break;
-			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper);									break;
+			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper, format->server_type);				break;
 			case MATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->matk); 								break;
 			case BINDONEQUIP_ITEM_FIELD:	format_boolean(buffer, &offset, field, item->bindonequip); 							break;
 			case BUYINGSTORE_ITEM_FIELD:	format_boolean(buffer, &offset, field, item->buyingstore); 							break;
@@ -513,7 +517,10 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 	}
 
 	/* write the text format content and footer */
-	fprintf(file, "%s#\n", buffer);
+	(offset > 0) ?
+		fprintf(file, "%s#\n", buffer):
+		fprintf(file, "#\n");
+
 	return CHECK_PASSED;
 }
 
@@ -593,7 +600,7 @@ int format_refinement(char * buffer, int * offset, format_field_t * field, int v
 			if(field->text[0] != '\0')
 				*offset += sprintf(&buffer[*offset], "%s\n", field->text);
 	} else {
-		if(value != 0)
+		if(value != 1)
 			if(field->text[0] != '\0')
 				*offset += sprintf(&buffer[*offset], "%s\n", field->text);
 	}
@@ -714,13 +721,32 @@ int format_job(char * buffer, int * offset, format_field_t * field, int job, int
 	if(job & 0x04000000) *offset += sprintf(&buffer[*offset], "%sGangsi", (initial_offset < *offset)?", ":"");
 	if(job & 0x08000000) *offset += sprintf(&buffer[*offset], "%sDeath Knight", (initial_offset < *offset)?", ":"");
 	if(job & 0x10000000) *offset += sprintf(&buffer[*offset], "%sDark Collector", (initial_offset < *offset)?", ":"");
-	
+
 	*offset += sprintf(&buffer[*offset], "\n");
 	return CHECK_PASSED;
 }
 
-int format_upper(char * buffer, int * offset, format_field_t * field, int upper) {
+int format_upper(char * buffer, int * offset, format_field_t * field, int upper, int server_type) {
 	int initial_offset = 0;
+
+	/* check common groups */
+	if((server_type == MODE_HERCULES || server_type == MODE_RATHENA)) {
+		if(upper == 0x3F) {
+			*offset += sprintf(&buffer[*offset], "%s Every Tier\n", field->text);
+			return CHECK_PASSED;
+		} else if(upper == 0x1C) {
+			*offset += sprintf(&buffer[*offset], "%s Every Tier except Baby Tier\n", field->text);
+			return CHECK_PASSED;
+		}
+	} else if(server_type == MODE_EATHENA) {
+		if(upper == 0x07) {
+			*offset += sprintf(&buffer[*offset], "%s Every Tier\n", field->text);
+			return CHECK_PASSED;
+		} else if(upper == 0x03) {
+			*offset += sprintf(&buffer[*offset], "%s Every Tier except Baby Tier\n", field->text);
+			return CHECK_PASSED;
+		}
+	}
 
 	/* write the text */
 	*offset += sprintf(&buffer[*offset], "%s ", field->text);
@@ -743,28 +769,44 @@ int format_location(char * buffer, int * offset, format_field_t * field, int loc
 	/* write the text */
 	*offset += sprintf(&buffer[*offset], "%s ", field->text);
 	initial_offset = *offset;
-
-	if(loc & 0x000100) *offset += sprintf(&buffer[*offset], "%sUpper Headgear", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000200) *offset += sprintf(&buffer[*offset], "%sMiddle Headgear", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000001) *offset += sprintf(&buffer[*offset], "%sLower Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000301) {
+		*offset += sprintf(&buffer[*offset], "%sHeadgear", (initial_offset < *offset)?", ":"");
+	} else {
+		if(loc & 0x000100) *offset += sprintf(&buffer[*offset], "%sUpper Headgear", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000200) *offset += sprintf(&buffer[*offset], "%sMiddle Headgear", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000001) *offset += sprintf(&buffer[*offset], "%sLower Headgear", (initial_offset < *offset)?", ":"");
+	}
 	if(loc & 0x000010) *offset += sprintf(&buffer[*offset], "%sArmor", (initial_offset < *offset)?", ":"");
 	if(loc & 0x000002) *offset += sprintf(&buffer[*offset], "%sWeapon", (initial_offset < *offset)?", ":"");
 	if(loc & 0x000020) *offset += sprintf(&buffer[*offset], "%sShield", (initial_offset < *offset)?", ":"");
 	if(loc & 0x000004) *offset += sprintf(&buffer[*offset], "%sGarment", (initial_offset < *offset)?", ":"");
 	if(loc & 0x000040) *offset += sprintf(&buffer[*offset], "%sShoes", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000008) *offset += sprintf(&buffer[*offset], "%sRight Accessory", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000080) *offset += sprintf(&buffer[*offset], "%sLeft Accessory", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000400) *offset += sprintf(&buffer[*offset], "%sCostume Upper Headgear", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000800) *offset += sprintf(&buffer[*offset], "%sCostume Middle Headgear", (initial_offset < *offset)?", ":"");
-	if(loc & 0x001000) *offset += sprintf(&buffer[*offset], "%sCostume Lower Headgear", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000088) {
+		*offset += sprintf(&buffer[*offset], "%sAccessory", (initial_offset < *offset)?", ":"");
+	} else {
+		if(loc & 0x000008) *offset += sprintf(&buffer[*offset], "%sRight Accessory", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000080) *offset += sprintf(&buffer[*offset], "%sLeft Accessory", (initial_offset < *offset)?", ":"");
+	}
+	if(loc & 0x001C00) {
+		*offset += sprintf(&buffer[*offset], "%sCostume Headgear", (initial_offset < *offset)?", ":"");
+	} else {
+		if(loc & 0x000400) *offset += sprintf(&buffer[*offset], "%sCostume Upper Headgear", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000800) *offset += sprintf(&buffer[*offset], "%sCostume Middle Headgear", (initial_offset < *offset)?", ":"");
+		if(loc & 0x001000) *offset += sprintf(&buffer[*offset], "%sCostume Lower Headgear", (initial_offset < *offset)?", ":"");
+	}
+
 	if(loc & 0x002000) *offset += sprintf(&buffer[*offset], "%sCostume Garment", (initial_offset < *offset)?", ":"");
 	if(loc & 0x008000) *offset += sprintf(&buffer[*offset], "%sAmmo", (initial_offset < *offset)?", ":"");
 	if(loc & 0x010000) *offset += sprintf(&buffer[*offset], "%sShadow Armor", (initial_offset < *offset)?", ":"");
 	if(loc & 0x020000) *offset += sprintf(&buffer[*offset], "%sShadow Weapon", (initial_offset < *offset)?", ":"");
 	if(loc & 0x040000) *offset += sprintf(&buffer[*offset], "%sShadow Shield", (initial_offset < *offset)?", ":"");
 	if(loc & 0x080000) *offset += sprintf(&buffer[*offset], "%sShadow Shoes", (initial_offset < *offset)?", ":"");
-	if(loc & 0x100000) *offset += sprintf(&buffer[*offset], "%sShadow Right Accessory", (initial_offset < *offset)?", ":"");
-	if(loc & 0x200000) *offset += sprintf(&buffer[*offset], "%sShadow Left Accessory", (initial_offset < *offset)?", ":"");
+	if(loc & 0x300000) {
+		*offset += sprintf(&buffer[*offset], "%sShadow Accessory", (initial_offset < *offset)?", ":"");
+	} else {
+		if(loc & 0x100000) *offset += sprintf(&buffer[*offset], "%sShadow Right Accessory", (initial_offset < *offset)?", ":"");
+		if(loc & 0x200000) *offset += sprintf(&buffer[*offset], "%sShadow Left Accessory", (initial_offset < *offset)?", ":"");
+	}
 
 	*offset += sprintf(&buffer[*offset], "\n");
 	return CHECK_PASSED;
