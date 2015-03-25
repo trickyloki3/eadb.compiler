@@ -681,7 +681,7 @@ int format_job(char * buffer, int * offset, format_field_t * field, int job, int
 	if(job == 0xFFFFFFFF) {
 		*offset += sprintf(&buffer[*offset], "%s Every Job\n", field->text);
 		return CHECK_PASSED;
-	} else if(job == 0xFFFFFFFE) {
+	} else if(job == 0xFFFFFFFE || job == 0x7FFFFFFE) {
 		*offset += sprintf(&buffer[*offset], "%s Every Job except Novice\n", field->text);
 		return CHECK_PASSED;
 	}
@@ -692,35 +692,83 @@ int format_job(char * buffer, int * offset, format_field_t * field, int job, int
 
 	/* simplified the combination explosion */
 	if(job & 0x00000001) *offset += sprintf(&buffer[*offset], "%sNovice", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000002) *offset += sprintf(&buffer[*offset], "%sSwordsman", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000080) *offset += sprintf(&buffer[*offset], "%sKnight", (initial_offset < *offset)?", ":"");
-	if(job & 0x00004000) *offset += sprintf(&buffer[*offset], "%sCrusader", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000004) *offset += sprintf(&buffer[*offset], "%sMagician", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000200) *offset += sprintf(&buffer[*offset], "%sWizard", (initial_offset < *offset)?", ":"");
-	if(job & 0x00010000) *offset += sprintf(&buffer[*offset], "%sSage", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000008) *offset += sprintf(&buffer[*offset], "%sArcher", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000800) *offset += sprintf(&buffer[*offset], "%sHunter", (initial_offset < *offset)?", ":"");
-	if(job & 0x00080000 && gender == 0) *offset += sprintf(&buffer[*offset], "%sDancer", (initial_offset < *offset)?", ":"");
-	if(job & 0x00080000 && gender == 1) *offset += sprintf(&buffer[*offset], "%sBard", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000010) *offset += sprintf(&buffer[*offset], "%sAcolyte", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000100) *offset += sprintf(&buffer[*offset], "%sPriest", (initial_offset < *offset)?", ":"");
-	if(job & 0x00008000) *offset += sprintf(&buffer[*offset], "%sMonk", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000020) *offset += sprintf(&buffer[*offset], "%sMerchant", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000400) *offset += sprintf(&buffer[*offset], "%sBlacksmith", (initial_offset < *offset)?", ":"");
-	if(job & 0x00040000) *offset += sprintf(&buffer[*offset], "%sAlchemist", (initial_offset < *offset)?", ":"");
-	if(job & 0x00000040) *offset += sprintf(&buffer[*offset], "%sThief", (initial_offset < *offset)?", ":"");
-	if(job & 0x00001000) *offset += sprintf(&buffer[*offset], "%sAssassin", (initial_offset < *offset)?", ":"");
-	if(job & 0x00020000) *offset += sprintf(&buffer[*offset], "%sRogue", (initial_offset < *offset)?", ":"");
-	if(job & 0x02000000) *offset += sprintf(&buffer[*offset], "%sNinja", (initial_offset < *offset)?", ":"");
-	if(job & 0x20000000) *offset += sprintf(&buffer[*offset], "%sKagerou & Oboro", (initial_offset < *offset)?", ":"");
-	if(job & 0x01000000) *offset += sprintf(&buffer[*offset], "%sGunslinger", (initial_offset < *offset)?", ":"");
-	if(job & 0x40000000) *offset += sprintf(&buffer[*offset], "%sRebellion", (initial_offset < *offset)?", ":"");
-	if(job & 0x00200000) *offset += sprintf(&buffer[*offset], "%sTaekwon", (initial_offset < *offset)?", ":"");
-	if(job & 0x00400000) *offset += sprintf(&buffer[*offset], "%sStar Gladiator", (initial_offset < *offset)?", ":"");
-	if(job & 0x00800000) *offset += sprintf(&buffer[*offset], "%sSoul Linker", (initial_offset < *offset)?", ":"");
-	if(job & 0x04000000) *offset += sprintf(&buffer[*offset], "%sGangsi", (initial_offset < *offset)?", ":"");
-	if(job & 0x08000000) *offset += sprintf(&buffer[*offset], "%sDeath Knight", (initial_offset < *offset)?", ":"");
-	if(job & 0x10000000) *offset += sprintf(&buffer[*offset], "%sDark Collector", (initial_offset < *offset)?", ":"");
+	if(job & 0x00004082) {
+		*offset += sprintf(&buffer[*offset], "%sSwordsman Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00000002) *offset += sprintf(&buffer[*offset], "%sSwordsman", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000080) *offset += sprintf(&buffer[*offset], "%sKnight", (initial_offset < *offset)?", ":"");
+		if(job & 0x00004000) *offset += sprintf(&buffer[*offset], "%sCrusader", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x00010204) {
+		*offset += sprintf(&buffer[*offset], "%sMagician Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00000004) *offset += sprintf(&buffer[*offset], "%sMagician", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000200) *offset += sprintf(&buffer[*offset], "%sWizard", (initial_offset < *offset)?", ":"");
+		if(job & 0x00010000) *offset += sprintf(&buffer[*offset], "%sSage", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x00080808) {
+		*offset += sprintf(&buffer[*offset], "%sArcher Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00000008) *offset += sprintf(&buffer[*offset], "%sArcher", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000800) *offset += sprintf(&buffer[*offset], "%sHunter", (initial_offset < *offset)?", ":"");
+		if(job & 0x00080000 && gender == 0) *offset += sprintf(&buffer[*offset], "%sDancer", (initial_offset < *offset)?", ":"");
+		if(job & 0x00080000 && gender == 1) *offset += sprintf(&buffer[*offset], "%sBard", (initial_offset < *offset)?", ":"");
+	}
+	if(job & 0x00008110) {
+		*offset += sprintf(&buffer[*offset], "%sAcolyte Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00000010) *offset += sprintf(&buffer[*offset], "%sAcolyte", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000100) *offset += sprintf(&buffer[*offset], "%sPriest", (initial_offset < *offset)?", ":"");
+		if(job & 0x00008000) *offset += sprintf(&buffer[*offset], "%sMonk", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x00040420) {
+		*offset += sprintf(&buffer[*offset], "%sMerchant Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00000020) *offset += sprintf(&buffer[*offset], "%sMerchant", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000400) *offset += sprintf(&buffer[*offset], "%sBlacksmith", (initial_offset < *offset)?", ":"");
+		if(job & 0x00040000) *offset += sprintf(&buffer[*offset], "%sAlchemist", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x00021040) {
+		*offset += sprintf(&buffer[*offset], "%sThief Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00000040) *offset += sprintf(&buffer[*offset], "%sThief", (initial_offset < *offset)?", ":"");
+		if(job & 0x00001000) *offset += sprintf(&buffer[*offset], "%sAssassin", (initial_offset < *offset)?", ":"");
+		if(job & 0x00020000) *offset += sprintf(&buffer[*offset], "%sRogue", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x22000000) {
+		*offset += sprintf(&buffer[*offset], "%sNinja Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x02000000) *offset += sprintf(&buffer[*offset], "%sNinja", (initial_offset < *offset)?", ":"");
+		if(job & 0x20000000) *offset += sprintf(&buffer[*offset], "%sKagerou & Oboro", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x41000000) {
+		*offset += sprintf(&buffer[*offset], "%sGunslinger Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x01000000) *offset += sprintf(&buffer[*offset], "%sGunslinger", (initial_offset < *offset)?", ":"");
+		if(job & 0x40000000) *offset += sprintf(&buffer[*offset], "%sRebellion", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x00E00000) {
+		*offset += sprintf(&buffer[*offset], "%sTaekwon Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x00200000) *offset += sprintf(&buffer[*offset], "%sTaekwon", (initial_offset < *offset)?", ":"");
+		if(job & 0x00400000) *offset += sprintf(&buffer[*offset], "%sStar Gladiator", (initial_offset < *offset)?", ":"");
+		if(job & 0x00800000) *offset += sprintf(&buffer[*offset], "%sSoul Linker", (initial_offset < *offset)?", ":"");
+	}
+
+	if(job & 0x1C000000) {
+		*offset += sprintf(&buffer[*offset], "%sGangsi Class", (initial_offset < *offset)?", ":"");
+	} else {
+		if(job & 0x04000000) *offset += sprintf(&buffer[*offset], "%sGangsi", (initial_offset < *offset)?", ":"");
+		if(job & 0x08000000) *offset += sprintf(&buffer[*offset], "%sDeath Knight", (initial_offset < *offset)?", ":"");
+		if(job & 0x10000000) *offset += sprintf(&buffer[*offset], "%sDark Collector", (initial_offset < *offset)?", ":"");
+	}
 
 	*offset += sprintf(&buffer[*offset], "\n");
 	return CHECK_PASSED;
