@@ -56,6 +56,7 @@
 		int loc;
 		int wlv;
 		int elv;
+		int elv_max;
 		int refineable;
 		int view;
 		char script[MAX_SCRIPT_SIZE];
@@ -256,9 +257,6 @@
 	int package_ra_load(void * db, int row, int col, char * val);
 	int combo_ra_load(void * db, int row, int col, char * val);
 
-	/* rathena auxiliary */
-	int load_rathena_database(const char * eathena_path);
-
 	/* rathena sqlite3 database interface */
 	#define rathena_database_sql	"DROP TABLE IF EXISTS item_ra;"																\
 									"DROP TABLE IF EXISTS mob_ra;"																\
@@ -275,7 +273,7 @@
 									"type INTEGER, buy INTEGER, sell INTEGER, weight INTEGER, " 								\
 									"matk INTEGER, atk INTEGER, def INTEGER, range INTEGER, slots INTEGER, " 					\
 									"job INTEGER, upper INTEGER, gender INTEGER, loc INTEGER, " 								\
-									"wlv INTEGER, elv INTEGER, refineable INTEGER, view INTEGER, " 								\
+									"wlv INTEGER, elv INTEGER, elv_max INTEGER, refineable INTEGER, view INTEGER, " 			\
 									"script TEXT, onequip TEXT, onunequip TEXT);"												\
 									""																							\
 									"CREATE TABLE IF NOT EXISTS mob_ra(" 														\
@@ -330,7 +328,7 @@
 
 
 
-	#define item_ra_insert 			"INSERT INTO item_ra VALUES(?, " 															\
+	#define item_ra_insert 			"INSERT INTO item_ra VALUES(?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
 	#define mob_ra_insert 			"INSERT INTO mob_ra VALUES(" 																\
@@ -372,7 +370,6 @@
 	} db_ra_t;
 
 	/* database loading depends on the path of the database */
-	int default_rathena_database(void);
 	int create_rathena_database(db_ra_t * db, const char * path);
 	int finalize_rathena_database(db_ra_t * db);
 	int item_ra_sql_load(db_ra_t * db, const char * path);

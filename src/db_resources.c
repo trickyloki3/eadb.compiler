@@ -129,80 +129,6 @@ int block_res_load(void * db, int row, int col, char * val) {
    return 0;
 }
 
-int load_resource_database(const char * resource_path) {
-   int status = 0;
-
-   native_t option_db;
-   status = load_native("/root/Desktop/dev/eAdb.Compiler3/res/option_db.txt",
-   trim_alpha, load_native_general, &option_db, &load_res_native[0]);
-   if(status == CHECK_FAILED) {
-      fprintf(stderr,"failed to load option database.\n");
-      exit(EXIT_FAILURE);
-   }
-   free(option_db.db);
-
-   native_t map_db;
-   status = load_native("/root/Desktop/dev/misc/map.txt",
-   trim_alpha, load_native_general, &map_db, &load_res_native[1]);
-   if(status == CHECK_FAILED) {
-      fprintf(stderr,"failed to load map database.\n");
-      exit(EXIT_FAILURE);
-   }
-   free(map_db.db);
-
-   native_t bonus_db;
-   status = load_native("/root/Desktop/dev/eAdb.Compiler3/res/item_bonus.txt",
-   trim_numeric, load_native_general, &bonus_db, &load_res_native[2]);
-   if(status == CHECK_FAILED) {
-      fprintf(stderr,"failed to load item bonus database.\n");
-      exit(EXIT_FAILURE);
-   }
-   free(bonus_db.db);
-
-   native_t status_db;
-   status = load_native("/root/Desktop/dev/eAdb.Compiler3/res/status_db.txt",
-   trim_numeric, load_native_general, &status_db, &load_res_native[3]);
-   if(status == CHECK_FAILED) {
-      fprintf(stderr,"failed to load item status database.\n");
-      exit(EXIT_FAILURE);
-   }
-   free(status_db.db);
-
-   native_t var_db;
-   status = load_native("/root/Desktop/dev/eAdb.Compiler3/res/var_db.txt",
-   trim_numeric, load_native_general, &var_db, &load_res_native[4]);
-   if(status == CHECK_FAILED) {
-      fprintf(stderr,"failed to load item variable and function database.\n");
-      exit(EXIT_FAILURE);
-   }
-   free(var_db.db);
-
-   native_t block_db;
-   status = load_native("/root/Desktop/dev/eAdb.Compiler3/res/block_db.txt",
-   trim_numeric, load_native_general, &block_db, &load_res_native[5]);
-   if(status == CHECK_FAILED) {
-      fprintf(stderr,"failed to load block database.\n");
-      exit(EXIT_FAILURE);
-   }
-   free(block_db.db);
-
-   return 0;
-}
-
-int default_resource_database(void) {
-   db_res_t db;
-   create_resource_database(&db, "/root/Desktop/dev/eAdb.Compiler3/resources.db");
-   resource_option_sql_load(&db, "/root/Desktop/dev/eAdb.Compiler3/res/option_db.txt");
-   resource_map_sql_load(&db, "/root/Desktop/dev/misc/map.txt");
-   resource_bonus_sql_load(&db, "/root/Desktop/dev/eAdb.Compiler3/res/item_bonus.txt");
-   resource_status_sql_load(&db, "/root/Desktop/dev/eAdb.Compiler3/res/status_db.txt");
-   resource_var_sql_load(&db, "/root/Desktop/dev/eAdb.Compiler3/res/var_db.txt");
-   resource_block_sql_load(&db, "/root/Desktop/dev/eAdb.Compiler3/res/block_db.txt");
-   finalize_resource_database(&db);
-   return CHECK_PASSED;
-}
-
-
 int create_resource_database(db_res_t * db, const char * path) {
    int status = 0;
    const char * error = NULL;
@@ -231,13 +157,13 @@ int create_resource_database(db_res_t * db, const char * path) {
 }
 
 int finalize_resource_database(db_res_t * db) {
-   sqlite3_finalize(db->option_sql_insert);
-   sqlite3_finalize(db->map_sql_insert);
-   sqlite3_finalize(db->bonus_sql_insert);
-   sqlite3_finalize(db->status_sql_insert);
-   sqlite3_finalize(db->var_sql_insert);
-   sqlite3_finalize(db->block_sql_insert);
-   sqlite3_close(db->db);
+   if(db->option_sql_insert != NULL)   sqlite3_finalize(db->option_sql_insert);
+   if(db->map_sql_insert != NULL)      sqlite3_finalize(db->map_sql_insert);
+   if(db->bonus_sql_insert != NULL)    sqlite3_finalize(db->bonus_sql_insert);
+   if(db->status_sql_insert != NULL)   sqlite3_finalize(db->status_sql_insert);
+   if(db->var_sql_insert != NULL)      sqlite3_finalize(db->var_sql_insert);
+   if(db->block_sql_insert != NULL)    sqlite3_finalize(db->block_sql_insert);
+   if(db->db != NULL)                  sqlite3_close(db->db);
    return CHECK_PASSED;
 }
 
@@ -267,6 +193,7 @@ int resource_option_sql_load(db_res_t * db, const char * path) {
       sqlite3_bind_text(db->option_sql_insert, 2, option_res_db[i].name,   strlen(option_res_db[i].name),   SQLITE_STATIC);
       sqlite3_step(db->option_sql_insert);
       sqlite3_reset(db->option_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, option_db.size);
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
    free(option_db.db);
@@ -300,6 +227,7 @@ int resource_map_sql_load(db_res_t * db, const char * path) {
       sqlite3_bind_text(db->map_sql_insert,  3, map_res_db[i].name,  strlen(map_res_db[i].name),   SQLITE_STATIC);
       sqlite3_step(db->map_sql_insert);
       sqlite3_reset(db->map_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, map_db.size);
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
    free(map_db.db);
@@ -343,6 +271,7 @@ int resource_bonus_sql_load(db_res_t * db, const char * path) {
       sqlite3_bind_text(db->bonus_sql_insert,   10, buf,       strlen(buf), SQLITE_TRANSIENT);   
       sqlite3_step(db->bonus_sql_insert);
       sqlite3_reset(db->bonus_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, bonus_db.size);
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 
@@ -387,6 +316,7 @@ int resource_status_sql_load(db_res_t * db, const char * path) {
       sqlite3_bind_text(db->status_sql_insert,     8, buf, strlen(buf), SQLITE_TRANSIENT);
       sqlite3_step(db->status_sql_insert);
       sqlite3_reset(db->status_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, status_db.size);
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
    free(status_db.db);
@@ -425,6 +355,7 @@ int resource_var_sql_load(db_res_t * db, const char * path) {
       sqlite3_bind_text(db->var_sql_insert,  8, var_res_db[i].str,   strlen(var_res_db[i].str), SQLITE_STATIC);
       sqlite3_step(db->var_sql_insert);
       sqlite3_reset(db->var_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, var_db.size);
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
    free(var_db.db);
@@ -458,6 +389,7 @@ int resource_block_sql_load(db_res_t * db, const char * path) {
       sqlite3_bind_int(db->block_sql_insert,    3, block_res_db[i].flag);
       sqlite3_step(db->block_sql_insert);
       sqlite3_reset(db->block_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, block_db.size);
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
    free(block_db.db);

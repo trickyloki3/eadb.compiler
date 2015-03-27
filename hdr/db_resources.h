@@ -106,7 +106,6 @@
 	int status_res_load(void *, int, int, char *);
 	int var_res_load(void *, int, int, char *);
 	int block_res_load(void *, int, int, char *);
-	int load_resource_database(const char * resource_path);
 
 	/* resources sqlite3 database interface */
 	#define resource_database_sql 	"DROP TABLE IF EXISTS option_res;"																	\
@@ -152,7 +151,6 @@
 	} db_res_t;
 
 	/* database loading depends on the path of the database */
-	int default_resource_database(void);
 	int create_resource_database(db_res_t * db, const char * path);
 	int finalize_resource_database(db_res_t * db);
 	int resource_option_sql_load(db_res_t * db, const char * path);

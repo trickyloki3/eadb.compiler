@@ -587,10 +587,11 @@ int format_script(char * buffer, int * offset, format_field_t * field, char * sc
 
 int format_integer(char * buffer, int * offset, format_field_t * field, int value) {
 	/* write the the text and value */
-	if(value > 0)
+	if(value > 0) {
 		*offset += (field->text[0] != '\0')?
 			sprintf(&buffer[*offset], "%s %d\n", field->text, value):
 			sprintf(&buffer[*offset], "%d\n", value);
+	}
 	return CHECK_PASSED;
 }
 
@@ -668,8 +669,8 @@ int format_type(char * buffer, int * offset, format_field_t * field, int type) {
 	}
 
 	/* write the item type string */
-	*offset += (field->text[0] != '\0')?
-		sprintf(&buffer[*offset], "%s %s\n", field->text, item_type):
+	*offset += (field->text[0] != '\0') ?
+		sprintf(&buffer[*offset], "%s %s\n", field->text, item_type) :
 		sprintf(&buffer[*offset], "%s\n", item_type);
 	return CHECK_PASSED;
 }

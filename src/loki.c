@@ -5,7 +5,9 @@
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
  */
+#include "db_rathena.h"
 
- int main(int argc, char * argv[]) {
- 	return 0;
- }
+int main(int argc, char * argv[]) {
+	
+	return 0;
+}

@@ -227,9 +227,6 @@
 	int item_group_ea_load(void * db, int row, int col, char * val);
 	int const_ea_load(void * db, int row, int col, char * val);
 
-	/* eathena auxiliary */
-	int load_eathena_database(const char * eathena_path);
-
 	/* eathena sqlite3 database interface */
 	#define eathena_database_sql 	"DROP TABLE IF EXISTS item_ea;"																\
 									"DROP TABLE IF EXISTS mob_ea;"																\
@@ -333,7 +330,6 @@
 	} db_ea_t;
 
 	/* database loading depends on the path of the database */
-	int default_eathena_database(void);
 	int create_eathena_database(db_ea_t * db, const char * path);
 	int finalize_eathena_database(db_ea_t * db);
 	int item_ea_sql_load(db_ea_t * db, const char * path);

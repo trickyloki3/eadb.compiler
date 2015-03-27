@@ -252,84 +252,6 @@ int const_ea_load(void * db, int row, int col, char * val) {
 	return 0;
 }
 
-int load_eathena_database(const char * eathena_path) {
-	int status = 0;
-
-	native_t item_db;
-	status = load_native("/root/Desktop/git/eathena/db/item_db.txt",
-	trim_numeric, load_native_general, &item_db, &load_ea_native[0]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena item database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(item_db.db);
-
-	native_t mob_db;
-	status = load_native("/root/Desktop/git/eathena/db/mob_db.txt",
-	trim_numeric, load_native_general, &mob_db, &load_ea_native[1]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena mob database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(mob_db.db);
-
-	native_t skill_db;
-	status = load_native("/root/Desktop/git/eathena/db/skill_db.txt",
-	trim_numeric, load_native_general, &skill_db, &load_ea_native[2]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena skill database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(skill_db.db);
-
-	native_t produce_db;
-	status = load_native("/root/Desktop/git/eathena/db/produce_db.txt",
-	trim_numeric, load_native_general, &produce_db, &load_ea_native[3]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena produce database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(produce_db.db);
-
-	native_t mercenary_db;
-	status = load_native("/root/Desktop/git/eathena/db/mercenary_db.txt",
-	trim_numeric, load_native_general, &mercenary_db, &load_ea_native[4]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena mercenary database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(mercenary_db.db);
-
-	native_t pet_db;
-	status = load_native("/root/Desktop/git/eathena/db/pet_db.txt",
-	trim_numeric, load_native_general, &pet_db, &load_ea_native[5]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena pet database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(pet_db.db);
-
-	native_t item_group;
-	status = load_native("/root/Desktop/git/eathena/db/item_violetbox.txt",
-	trim_numeric, load_native_general, &item_group, &load_ea_native[6]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena item group database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(item_group.db);
-
-	native_t const_db;
-	status = load_native("/root/Desktop/git/eathena/db/const.txt",
-	trim_general, load_native_general, &const_db, &load_ea_native[7]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load eathena const database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(const_db.db);
-
-	return 0;
-}
-
 int create_eathena_database(db_ea_t * db, const char * path) {
 	int status = 0;
 	const char * error = NULL;
@@ -360,15 +282,15 @@ int create_eathena_database(db_ea_t * db, const char * path) {
 }
 
 int finalize_eathena_database(db_ea_t * db) {
-	sqlite3_finalize(db->item_ea_sql_insert);
-	sqlite3_finalize(db->mob_ea_sql_insert);
-	sqlite3_finalize(db->skill_ea_sql_insert);
-	sqlite3_finalize(db->produce_ea_sql_insert);
-	sqlite3_finalize(db->mercenary_ea_sql_insert);
-	sqlite3_finalize(db->pet_ea_sql_insert);
-	sqlite3_finalize(db->item_group_ea_sql_insert);
-	sqlite3_finalize(db->const_ea_sql_insert);
-	sqlite3_close(db->db);
+	if(db->item_ea_sql_insert != NULL)			sqlite3_finalize(db->item_ea_sql_insert);
+	if(db->mob_ea_sql_insert != NULL) 			sqlite3_finalize(db->mob_ea_sql_insert);
+	if(db->skill_ea_sql_insert != NULL) 		sqlite3_finalize(db->skill_ea_sql_insert);
+	if(db->produce_ea_sql_insert != NULL) 		sqlite3_finalize(db->produce_ea_sql_insert);
+	if(db->mercenary_ea_sql_insert != NULL) 	sqlite3_finalize(db->mercenary_ea_sql_insert);
+	if(db->pet_ea_sql_insert != NULL) 			sqlite3_finalize(db->pet_ea_sql_insert);
+	if(db->item_group_ea_sql_insert != NULL)	sqlite3_finalize(db->item_group_ea_sql_insert);
+	if(db->const_ea_sql_insert != NULL) 		sqlite3_finalize(db->const_ea_sql_insert);
+	if(db->db != NULL) 							sqlite3_close(db->db);
 	return CHECK_PASSED;
 }
 
@@ -418,6 +340,7 @@ int item_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_text(db->item_ea_sql_insert, 	22, item_ea_db[i].onunequip, 	strlen(item_ea_db[i].onunequip), 	SQLITE_STATIC);
 		sqlite3_step(db->item_ea_sql_insert);
 		sqlite3_reset(db->item_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, item_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(item_db.db);
@@ -506,6 +429,7 @@ int mob_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_int(db->mob_ea_sql_insert, 	58, mob_ea_db[i].dropcardper);
 		sqlite3_step(db->mob_ea_sql_insert);
 		sqlite3_reset(db->mob_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, mob_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(mob_db.db);
@@ -553,6 +477,7 @@ int skill_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_text(db->skill_ea_sql_insert, 	17, skill_ea_db[i].desc, 					strlen(skill_ea_db[i].desc), 			SQLITE_STATIC);
 		sqlite3_step(db->skill_ea_sql_insert);
 		sqlite3_reset(db->skill_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, skill_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(skill_db.db);
@@ -592,6 +517,7 @@ int produce_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_text(db->produce_ea_sql_insert, 	6, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(db->produce_ea_sql_insert);
 		sqlite3_reset(db->produce_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, produce_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 
@@ -649,6 +575,7 @@ int mercenary_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_int(db->mercenary_ea_sql_insert, 	26, mercenary_ea_db[i].dmotion);
 		sqlite3_step(db->mercenary_ea_sql_insert);
 		sqlite3_reset(db->mercenary_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, mercenary_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(mercenary_db.db);
@@ -701,6 +628,7 @@ int pet_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_text(db->pet_ea_sql_insert, 	22, pet_ea_db[i].loyal_script, 	strlen(pet_ea_db[i].loyal_script), 	SQLITE_STATIC);
 		sqlite3_step(db->pet_ea_sql_insert);
 		sqlite3_reset(db->pet_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, pet_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 
@@ -735,6 +663,7 @@ int item_group_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_int(db->item_group_ea_sql_insert, 3, item_group_ea_db[i].rate);
 		sqlite3_step(db->item_group_ea_sql_insert);
 		sqlite3_reset(db->item_group_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, item_group_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(item_group_db.db);
@@ -768,32 +697,10 @@ int const_ea_sql_load(db_ea_t * db, const char * path) {
 		sqlite3_bind_int(db->const_ea_sql_insert, 	3, const_ea_db[i].type);
 		sqlite3_step(db->const_ea_sql_insert);
 		sqlite3_reset(db->const_ea_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, const_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	
 	free(const_db.db);
-	return CHECK_PASSED;
-}
-
-int default_eathena_database(void) {
-	db_ea_t db;
-	memset(&db, 0, sizeof(db_ea_t));
-	create_eathena_database(&db, "/root/Desktop/dev/eAdb.Compiler3/eathena.db");
-	item_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_db.txt");
-	mob_ea_sql_load(&db, "/root/Desktop/git/eathena/db/mob_db.txt");
-	skill_ea_sql_load(&db, "/root/Desktop/git/eathena/db/skill_db.txt");
-	produce_ea_sql_load(&db, "/root/Desktop/git/eathena/db/produce_db.txt");
-	mercenary_ea_sql_load(&db, "/root/Desktop/git/eathena/db/mercenary_db.txt");
-	pet_ea_sql_load(&db, "/root/Desktop/git/eathena/db/pet_db.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_bluebox.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_cardalbum.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_cookie_bag.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_findingore.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_giftbox.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_misc.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_scroll.txt");
-	item_group_ea_sql_load(&db, "/root/Desktop/git/eathena/db/item_violetbox.txt");
-	const_ea_sql_load(&db, "/root/Desktop/git/eathena/db/const.txt");
-	finalize_eathena_database(&db);
 	return CHECK_PASSED;
 }
