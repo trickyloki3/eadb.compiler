@@ -265,9 +265,6 @@
 	int const_he_load(void * db, int row, int col, char * val);
 	int combo_he_load(void * db, int row, int col, char * val);
 
-	/* hercules auxiliary */
-	int load_hercules_database(const char * hercules_path);
-
 	/* hercules sqlite3 database interface */
 	#define hercules_database_sql 	"DROP TABLE IF EXISTS item_he;"																\
 									"DROP TABLE IF EXISTS mob_he;"																\
@@ -389,7 +386,6 @@
 	} db_he_t;
 
 	/* database loading depends on the path of the database */
-	int default_hercules_database(void);
 	int create_hercules_database(db_he_t * db, const char * path);
 	int finalize_hercules_database(db_he_t * db);
 	int item_he_sql_load(db_he_t * db, const char * path);

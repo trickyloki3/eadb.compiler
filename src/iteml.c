@@ -81,8 +81,9 @@ int main(int argc, char * argv[]) {
 		} else if(ncs_strcmp(server_type, "rathena") == 0) {
 			if(load_rathena(lstate, database, table))
 				exit_abt_safe("failed to load rathena database files");
-		} else if(ncs_strcmp(server_type, "hercules_re") == 0) {
-			load_hercules(lstate, database, table);
+		} else if(ncs_strcmp(server_type, "hercules") == 0) {
+			if(load_hercules(lstate, database, table))
+				exit_abt_safe("failed to load hercules database files");
 		} else if(ncs_strcmp(server_type, "resource") == 0) {
 			if(load_resource(lstate, database, table))
 				exit_abt_safe("failed to load resource database files");
@@ -434,62 +435,124 @@ int load_hercules(lua_State * lstate, char * path, int table) {
 
 	memset(&db, 0, sizeof(db_he_t));
 	memset(&db_search, 0, sizeof(db_he_aux_t));
-	table_getfieldstring(lstate, "server_path", &server_path, table);
-	create_hercules_database(&db, path);
-	fprintf(stdout, "[info]: creating hercules database %s\n", path);
 
-	table_getfieldstring(lstate, "item_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	item_he_sql_load(&db, server_database_path);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "server_path", &server_path, table)) {
+		exit_abt_safe("server database path ('server_path') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		fprintf(stdout, "[info]: creating hercules database %s\n", path);
+		if(create_hercules_database(&db, path)) {
+			exit_func_safe("failed to create hercules database on path %s", path);
+			goto load_hercules_fail;
+		}
+	}
 
-	table_getfieldstring(lstate, "mob_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	mob_he_sql_load(&db, server_database_path);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "item_db_filename", &database_name, table)) {
+		exit_abt_safe("item database file name ('item_db_filename') missing from configuration");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(item_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load item database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
 
-	table_getfieldstring(lstate, "skill_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	skill_he_sql_load(&db, server_database_path);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "mob_db_filename", &database_name, table)) {
+		exit_abt_safe("mob database path ('mob_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(mob_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load mob database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
 
-	table_getfieldstring(lstate, "produce_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	produce_he_sql_load(&db, server_database_path);	
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "skill_db_filename", &database_name, table)) {
+		exit_abt_safe("skill database path ('skill_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(skill_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load skill database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
 
-	table_getfieldstring(lstate, "mercenary_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	mercenary_he_sql_load(&db, server_database_path);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "produce_db_filename", &database_name, table)) {
+		exit_abt_safe("produce database path ('produce_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(produce_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load produce database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
+	
 
-	table_getfieldstring(lstate, "pet_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	pet_he_sql_load(&db, server_database_path);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "mercenary_db_filename", &database_name, table)) {
+		exit_abt_safe("mercenary database path ('mercenary_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(mercenary_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load mercenary database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
 
-	table_getfieldstring(lstate, "const_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	const_he_sql_load(&db, server_database_path);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
-
+	if(table_getfieldstring(lstate, "pet_db_filename", &database_name, table)) {
+		exit_abt_safe("pet database path ('pet_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(pet_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load pet database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
+	
+	if(table_getfieldstring(lstate, "const_db_filename", &database_name, table)) {
+		exit_abt_safe("constant database path ('const_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(const_he_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load constant database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
+	
 	init_he_search(&db, &db_search);
-	table_getfieldstring(lstate, "combo_db_filename", &database_name, table);
-	path_concat(server_database_path, server_path, database_name);
-	item_combo_he_sql_load(&db, server_database_path, &db_search);
-	fprintf(stdout, "[info]: loading %s\n", server_database_path);
-	lua_pop(lstate, 1);
+	if(table_getfieldstring(lstate, "combo_db_filename", &database_name, table)) {
+		exit_abt_safe("item combo database path ('combo_db_filename') is missing from database");
+		goto load_hercules_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(item_combo_he_sql_load(&db, server_database_path, &db_search)) {
+			exit_func_safe("failed to load item combo database on path %s", server_database_path);
+			goto load_hercules_fail;
+		}
+	}
 	deit_he_search(&db_search);
+
 	finalize_hercules_database(&db);
-	lua_pop(lstate, 1);
 	return CHECK_PASSED;
+
+	load_hercules_fail:
+		deit_he_search(&db_search);
+		finalize_hercules_database(&db);
+		return CHECK_FAILED;
 }
 
 int load_resource(lua_State * lstate, char * path, int table) {

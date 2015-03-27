@@ -352,98 +352,6 @@ int combo_he_load(void * db, int row, int col, char * val) {
 	return 0;
 }
 
-int load_hercules_database(const char * hercules_path) {
-	int status = 0;
-
-	native_t item_db;
-	load_he_item("/root/Desktop/git/Hercules/db/re/item_db.conf", &item_db);
-	free(item_db.db);
-
-	native_t mob_db;
-	status = load_native("/root/Desktop/git/Hercules/db/re/mob_db.txt",
-	trim_numeric, load_native_general, &mob_db, &load_he_native[0]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules mob database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(mob_db.db);
-
-	native_t skill_db;
-	status = load_native("/root/Desktop/git/Hercules/db/re/skill_db.txt",
-	trim_numeric, load_native_general, &skill_db, &load_he_native[1]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules skill database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(skill_db.db);
-
-	native_t produce_db;
-	status = load_native("/root/Desktop/git/Hercules/db/produce_db.txt",
-	trim_numeric, load_native_general, &produce_db, &load_he_native[2]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules produce database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(produce_db.db);
-
-	native_t mercenary_db;
-	status = load_native("/root/Desktop/git/Hercules/db/mercenary_db.txt",
-	trim_numeric, load_native_general, &mercenary_db, &load_he_native[3]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules mercenary database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(mercenary_db.db);
-
-	native_t pet_db;
-	status = load_native("/root/Desktop/git/Hercules/db/pet_db.txt",
-	trim_numeric, load_native_general, &pet_db, &load_he_native[4]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules pet database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(pet_db.db);
-
-	native_t const_db;
-	status = load_native("/root/Desktop/git/Hercules/db/const.txt",
-	trim_general, load_native_general, &const_db, &load_he_native[5]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules const database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(const_db.db);
-
-	native_t combo_db;
-	status = load_native("/root/Desktop/git/Hercules/db/re/item_combo_db.txt",
-	trim_numeric, load_native_general, &combo_db, &load_he_native[6]);
-	if(status == CHECK_FAILED) {
-		fprintf(stderr,"failed to load hercules item combo database.\n");
-		exit(EXIT_FAILURE);
-	}
-	free(combo_db.db);
-
-	return 0;
-}
-
-int default_hercules_database(void) {
-	db_he_t db;
-	db_he_aux_t db_search;
-	create_hercules_database(&db, "/root/Desktop/dev/eAdb.Compiler3/hercules.db");
-	item_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/item_db.conf");
-	mob_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/mob_db.txt");
-	skill_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/skill_db.txt");
-	produce_he_sql_load(&db, "/root/Desktop/git/Hercules/db/produce_db.txt");
-	mercenary_he_sql_load(&db, "/root/Desktop/git/Hercules/db/mercenary_db.txt");
-	pet_he_sql_load(&db, "/root/Desktop/git/Hercules/db/pet_db.txt");
-	const_he_sql_load(&db, "/root/Desktop/git/Hercules/db/const.txt");
-
-	init_he_search(&db, &db_search);
-	item_combo_he_sql_load(&db, "/root/Desktop/git/Hercules/db/re/item_combo_db.txt", &db_search);
-	deit_he_search(&db_search);
-	finalize_hercules_database(&db);
-	return 0;
-}
-
 int create_hercules_database(db_he_t * db, const char * path) {
 	int status = 0;
 	const char * error = NULL;
@@ -475,15 +383,15 @@ int create_hercules_database(db_he_t * db, const char * path) {
 }
 
 int finalize_hercules_database(db_he_t * db) {
-	sqlite3_finalize(db->item_he_sql_insert);
-	sqlite3_finalize(db->mob_he_sql_insert);
-	sqlite3_finalize(db->skill_he_sql_insert);
-	sqlite3_finalize(db->produce_he_sql_insert);
-	sqlite3_finalize(db->mercenary_he_sql_insert);
-	sqlite3_finalize(db->pet_he_sql_insert);
-	sqlite3_finalize(db->const_he_sql_insert);
-	sqlite3_finalize(db->item_combo_he_sql_insert);
-	sqlite3_close(db->db);
+	if(db->item_he_sql_insert != NULL) 			sqlite3_finalize(db->item_he_sql_insert);
+	if(db->mob_he_sql_insert != NULL) 			sqlite3_finalize(db->mob_he_sql_insert);
+	if(db->skill_he_sql_insert != NULL) 		sqlite3_finalize(db->skill_he_sql_insert);
+	if(db->produce_he_sql_insert != NULL) 		sqlite3_finalize(db->produce_he_sql_insert);
+	if(db->mercenary_he_sql_insert != NULL) 	sqlite3_finalize(db->mercenary_he_sql_insert);
+	if(db->pet_he_sql_insert != NULL) 			sqlite3_finalize(db->pet_he_sql_insert);
+	if(db->const_he_sql_insert != NULL) 		sqlite3_finalize(db->const_he_sql_insert);
+	if(db->item_combo_he_sql_insert != NULL) 	sqlite3_finalize(db->item_combo_he_sql_insert);
+	if(db->db != NULL) 							sqlite3_close(db->db);
 	return CHECK_PASSED;
 }
 
@@ -541,7 +449,7 @@ int item_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_text(db->item_he_sql_insert, 	40, item_he_db[i].script, 			strlen(item_he_db[i].script), SQLITE_STATIC);
 		sqlite3_bind_text(db->item_he_sql_insert, 	41, item_he_db[i].onequipscript, 	strlen(item_he_db[i].onequipscript), SQLITE_STATIC);
 		sqlite3_bind_text(db->item_he_sql_insert, 	42, item_he_db[i].onunequipscript, 	strlen(item_he_db[i].onunequipscript), SQLITE_STATIC);
-
+		fprintf(stderr,"[load]: %d/%d\r", i, item_db.size);
 		status = sqlite3_step(db->item_he_sql_insert);
 		if(status != SQLITE_DONE) exit_abt_safe("fail to insert hercules item record");
 		sqlite3_reset(db->item_he_sql_insert);
@@ -631,6 +539,7 @@ int mob_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_int(db->mob_he_sql_insert, 	57, mob_he_db[i].dropcardper);
 		sqlite3_step(db->mob_he_sql_insert);
 		sqlite3_reset(db->mob_he_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, mob_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(mob_db.db);
@@ -678,6 +587,7 @@ int skill_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_text(db->skill_he_sql_insert, 	17, skill_he_db[i].desc, 			strlen(skill_he_db[i].desc), 		SQLITE_STATIC);
 		sqlite3_step(db->skill_he_sql_insert);
 		sqlite3_reset(db->skill_he_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, skill_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(skill_db.db);
@@ -717,6 +627,7 @@ int produce_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_text(db->produce_he_sql_insert, 	6, buf, strlen(buf), SQLITE_TRANSIENT);
 		sqlite3_step(db->produce_he_sql_insert);
 		sqlite3_reset(db->produce_he_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, produce_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(produce_db.db);
@@ -773,6 +684,7 @@ int mercenary_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_int(db->mercenary_he_sql_insert, 	26, mercenary_he_db[i].dmotion);
 		sqlite3_step(db->mercenary_he_sql_insert);
 		sqlite3_reset(db->mercenary_he_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, mercenary_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(mercenary_db.db);
@@ -825,6 +737,7 @@ int pet_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_text(db->pet_he_sql_insert, 	22, pet_he_db[i].loyal_script, 	strlen(pet_he_db[i].loyal_script), SQLITE_STATIC);
 		sqlite3_step(db->pet_he_sql_insert);
 		sqlite3_reset(db->pet_he_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, pet_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(pet_db.db);
@@ -858,6 +771,7 @@ int const_he_sql_load(db_he_t * db, const char * path) {
 		sqlite3_bind_int(db->const_he_sql_insert, 	3, const_he_db[i].type);
 		sqlite3_step(db->const_he_sql_insert);
 		sqlite3_reset(db->const_he_sql_insert);
+		fprintf(stderr,"[load]: %d/%d\r", i, const_db.size);
 	}
 	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(const_db.db);
@@ -919,6 +833,7 @@ int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_sea
 				sqlite3_bind_text(db->item_combo_he_sql_insert, 3, buffer, offset, SQLITE_STATIC);
 				sqlite3_step(db->item_combo_he_sql_insert);
 				sqlite3_reset(db->item_combo_he_sql_insert);
+				fprintf(stderr,"[load]: %d/%d\r", i, combo_db.size);
 			}
 			/* free the list of integers */
 			free(item_id_list.array);

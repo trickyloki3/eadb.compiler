@@ -51,6 +51,7 @@ int main(int argc, char * argv[]) {
 	/* process each configured item database */
 	lua_pushnil(lstate);
 	while(lua_next(lstate, 1)) {
+		item_count = 0;
 		/* save the current primary table index */
 		table_index = lua_gettop(lstate);
 		table_getfieldstring(lstate, "output_format", &description_format, table_index);
@@ -91,11 +92,11 @@ int main(int argc, char * argv[]) {
 
 		/* load the item flavour text database */
 		if(init_flavour_db(&format, flavour_db_path) != CHECK_PASSED)
-			exit_func_safe("failed to open flavour text database at %s", flavour_db_path);
+			return exit_func_safe("failed to open flavour text database at %s", flavour_db_path);
 
 		/* load the item format information */
 		if(init_format(&format, lstate, table_index, file_format_type, script.mode) != CHECK_PASSED)
-			exit_abt_safe("failed to load item format configuration");
+			return exit_abt_safe("failed to load item format configuration");
 
 		/* process all items in database */
 		item_status = item_iterate(script.db, &item);
