@@ -31,6 +31,9 @@
  	} flavour_text_t;
  	#define flavour_text_id_sql "SELECT * FROM flavour_text WHERE id = ?;"
 
+ 	/* default color */
+ 	#define DEFAULT_COLOR "000000"
+
  	/* supported file formats */
  	#define FORMAT_TXT		0x1
  	#define FORMAT_LUA		0x2
@@ -110,6 +113,7 @@
  	typedef struct format_field_t {
  		int field;						/* item field value (*_ITEM_FIELD macros) */
  		char text[FMT_TEXT_SIZE];		/* item field category text, i.e. "Weight:", "Job:", etc. */
+ 		char color[FMT_COLOR_SIZE];
  		struct format_field_t * next;	/* next item field to write */
  	} format_field_t;
 

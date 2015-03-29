@@ -26,6 +26,7 @@
  	#define FMT_TEXT_SIZE			64			/* maximum format text size */
  	#define FMT_BUF_SIZE			65536
  	#define FMT_LINE_SIZE			128
+ 	#define FMT_COLOR_SIZE			7
  	/* type definition for database with strings that contain parsable values,
  	 * 1:2:3:4:5 can be parsed into 5 separate values 1, 2, 3, 4, and 5 */
 	typedef union {

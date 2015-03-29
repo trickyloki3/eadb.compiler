@@ -299,6 +299,7 @@ int load_item_field(format_rule_t * type, lua_State * lstate, int rule) {
 }
 
 int load_item_field_re(format_field_t * field, lua_State * lstate, int field_table) {
+	size_t length = 0;
 	const char * item_field_type = NULL;
 	const char * item_field_text = NULL;
 	int item_field_table = 0;
@@ -330,6 +331,17 @@ int load_item_field_re(format_field_t * field, lua_State * lstate, int field_tab
 		strncopy(field->text, FMT_TEXT_SIZE, (const unsigned char *) item_field_text);
 	}
 
+	/* load the color [optional] */
+	if(!lua_get_field(lstate, field_table, "color", LUA_TSTRING)) {
+		item_field_text = lua_tolstring(lstate, -1, &length);
+
+		/* validate the color */
+		if(length != 6)
+			exit_func_safe("'color' for %s type must consist of 6 hexadecimal characters", item_field_type);
+
+		strncopy(field->color, FMT_COLOR_SIZE, (const unsigned char *) item_field_text);
+	}	
+
 	/* pop everything except the field table */
 	lua_pop(lstate, lua_gettop(lstate) - field_table);
 	return CHECK_PASSED;
@@ -340,8 +352,10 @@ int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
 	int weapon_type_table = 0;
 
 	/* push the weapon type table */
-	if(lua_get_field(lstate, rule_table, "weapon_type", LUA_TTABLE))
+	if(lua_get_field(lstate, rule_table, "weapon_type", LUA_TTABLE)) {
+		rule->weapon_type = 0xFFFFFFFF;
 		return CHECK_PASSED;
+	}
 	weapon_type_table = lua_gettop(lstate);
 	
 	/* initialize the weapon type filter */
@@ -652,9 +666,10 @@ int format_view(char * buffer, int * offset, format_field_t * field, int view, i
 	}
 
 	/* write the weapon type string */
-	*offset += (field->text[0] != '\0')?
-		sprintf(&buffer[*offset], "%s %s\n", field->text, view_type):
-		sprintf(&buffer[*offset], "%s\n", view_type);
+	if(field->text[0] != '\0')		sprintf(&buffer[*offset], "%s", field->text);
+	if(field->color[0] != '\0')		sprintf(&buffer[*offset], "^%s", field->color);
+	sprintf(&buffer[*offset], "%s\n", view_type);
+	if(field->color[0] != '\0')		sprintf(&buffer[*offset], "^%s", DEFAULT_COLOR);
 	return CHECK_PASSED;
 }
 
