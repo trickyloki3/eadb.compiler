@@ -26486,933 +26486,933 @@ Weight: ^7777771^000000
 4700#
 STR +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4701#
 STR +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4702#
 STR +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4703#
 STR +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4704#
 STR +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4705#
 STR +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4706#
 STR +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4707#
 STR +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4708#
 STR +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4709#
 STR +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4710#
 INT +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4711#
 INT +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4712#
 INT +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4713#
 INT +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4714#
 INT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4715#
 INT +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4716#
 INT +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4717#
 INT +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4718#
 INT +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4719#
 INT +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4720#
 DEX +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4721#
 DEX +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4722#
 DEX +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4723#
 DEX +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4724#
 DEX +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4725#
 DEX +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4726#
 DEX +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4727#
 DEX +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4728#
 DEX +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4729#
 DEX +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4730#
 AGI +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4731#
 AGI +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4732#
 AGI +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4733#
 AGI +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4734#
 AGI +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4735#
 AGI +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4736#
 AGI +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4737#
 AGI +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4738#
 AGI +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4739#
 AGI +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4740#
 VIT +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4741#
 VIT +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4742#
 VIT +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4743#
 VIT +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4744#
 VIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4745#
 VIT +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4746#
 VIT +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4747#
 VIT +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4748#
 VIT +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4749#
 VIT +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4750#
 LUK +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4751#
 LUK +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4752#
 LUK +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4753#
 LUK +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4754#
 LUK +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4755#
 LUK +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4756#
 LUK +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4757#
 LUK +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4758#
 LUK +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4759#
 LUK +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4760#
 MATK +1
 Reduce +1% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4761#
 MATK +2
 Reduce +1% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4762#
 FLEE +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4763#
 FLEE +12
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4764#
 CRIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4765#
 CRIT +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4766#
 Increase +2% physical damage on all classes enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4767#
 Increase +3% physical damage on all classes enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4768#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4769#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4770#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4771#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4772#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4773#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4774#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4775#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4776#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4777#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4778#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4779#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4780#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4781#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4782#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4783#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4784#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4785#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4786#
 MDEF +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4787#
 MDEF +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4788#
 MDEF +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4789#
 MDEF +8
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4790#
 MDEF +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4791#
 DEF +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4792#
 DEF +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4793#
 DEF +9
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4794#
 DEF +12
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4795#
 MaxHP +100
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4796#
 MaxHP +200
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4797#
 MaxHP +300
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4798#
 MaxHP +400
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4799#
 MaxHP +500
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4800#
 MaxSP +50
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4801#
 MaxSP +100
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4802#
 MaxSP +150
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4803#
 Reduce +3 seconds on cooldown time for Highness Heal //CHECK Info shows this has magic attack..
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4804#
 Reduce +30% SP consumption when using Coluceo Heal.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4805#
 Increase +3% heal amount of all healing magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4806#
 MATK +3
 Reduce +1% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4807#
 Attack Speed: +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4808#
 ATK +15
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4809#
 ATK +12
 HIT +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4810#
 ATK +9
 HIT +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4811#
 ATK +6
 HIT +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4812#
 MATK +15
 Reduce +10% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4813#
 MATK +12
 Reduce +8% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4814#
 MATK +9
 Reduce +6% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4815#
 MATK +6
 Reduce +4% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4816#
 CRIT +12
 HIT +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4817#
 CRIT +9
 HIT +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4818#
 CRIT +6
 HIT +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4819#
 Increase +1% physical damage on all classes enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4820#
 ATK +18
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4821#
 ATK +21
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4822#
 ATK +24
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4823#
 ATK +27
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4824#
 ATK +30
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4825#
 ATK +50
 HIT +15
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4826#
 MATK +18
 Reduce +10% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4827#
 MATK +21
 Reduce +10% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4828#
 MATK +24
 Reduce +10% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4829#
 MATK +27
 Reduce +10% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4830#
 MATK +30
 Reduce +10% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4831#
 MATK +50
 Reduce +20% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4832#
 Increase +2% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4833#
 Increase +4% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4834#
 Increase +6% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4835#
 Increase +8% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4836#
 Increase +10% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4837#
 Increase +12% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4838#
 Increase +14% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4839#
 Increase +16% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4840#
 Increase +18% long ranged damage.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4841#
 Increase +20% long ranged damage.
 Attack Speed: +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4842#
 Attack Speed: +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4843#
 CRIT +14
 HIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4844#
 CRIT +15
 HIT +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4845#
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4846#
 ATK +10
 MATK +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4847#
 ATK +10
 MATK +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4848#
 Add +5% neutral resistance.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4849#
 Add +5% resistance against demi-human and player enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4850#
 Increase +6% heal amount of all healing magic.
 Increase +5% SP consumption of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4851#
 Increase +12% heal amount of all healing magic.
 Increase +10% SP consumption of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4852#
 Increase +20% heal amount of all healing magic.
 Increase +15% SP consumption of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4853#
@@ -27425,7 +27425,7 @@ STR +1
  -> Attack Speed: +1
  -> Reduce +7% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4854#
@@ -27438,7 +27438,7 @@ AGI +1
  -> Attack Speed: +1
  -> Reduce +7% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4855#
@@ -27451,7 +27451,7 @@ VIT +1
  -> Attack Speed: +1
  -> Reduce +7% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4856#
@@ -27464,7 +27464,7 @@ INT +1
  -> Attack Speed: +1
  -> Reduce +7% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4857#
@@ -27477,7 +27477,7 @@ DEX +1
  -> Attack Speed: +1
  -> Reduce +7% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4858#
@@ -27490,241 +27490,241 @@ LUK +1
  -> Attack Speed: +1
  -> Reduce +7% fixed-cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4859#
 FLEE +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4860#
 FLEE +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4861#
 MaxHP +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4862#
 MaxHP +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4863#
 CRIT +4
 CRIT +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4864#
 CRIT +6
 CRIT +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4865#
 CRIT +8
 CRIT +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4866#
 CRIT +10
 CRIT +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4867#
 MaxHP +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4868#
 MaxHP +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4869#
 ASPD +4
 Reduce +4% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4870#
 MaxSP +25
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4871#
 MaxSP +75
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4872#
 ASPD +4
 Reduce +4% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4873#
 ASPD +4
 Reduce +4% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4881#
 ASPD +4
 Reduce +4% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4882#
 ATK +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4883#
 MATK +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4884#
 HIT +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4885#
 MATK +5
 Reduce +3% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4886#
 MATK +10
 Reduce +3% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4887#
 MATK +15
 Reduce +3% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4888#
 MATK +20
 Reduce +3% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4889#
 MATK +30
 Reduce +5% variable cast time of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4890#
 MDEF +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4891#
 MDEF +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4892#
 MDEF +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4893#
 MDEF +15
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4894#
 ATK +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4895#
 ATK +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4896#
 MATK +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4897#
 MATK +3
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4898#
 MATK +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4899#
 MATK +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4900#
 MaxSP +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4902#
 MDEF +18
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4903#
 MDEF +21
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4904#
 ATK +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4905#
 ATK +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4906#
 MATK +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4907#
 MATK +7
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4908#
 STR +1
 ATK +3
 INT -1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4909#
@@ -27732,7 +27732,7 @@ STR +2
 ATK +6
 INT -2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4910#
@@ -27740,7 +27740,7 @@ STR +4
 ATK +12
 INT -4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4911#
@@ -27748,7 +27748,7 @@ INT +1
 MATK +3
 STR -1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4912#
@@ -27756,7 +27756,7 @@ INT +2
 MATK +6
 STR -2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4913#
@@ -27764,7 +27764,7 @@ INT +4
 MATK +12
 STR -4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4914#
@@ -27772,7 +27772,7 @@ AGI +1
 FLEE +2
 VIT -1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4915#
@@ -27780,7 +27780,7 @@ AGI +2
 FLEE +4
 VIT -2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4916#
@@ -27788,7 +27788,7 @@ AGI +4
 FLEE +8
 VIT -4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4917#
@@ -27797,7 +27797,7 @@ DEF +3
 MDEF +2
 AGI -1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4918#
@@ -27806,7 +27806,7 @@ DEF +6
 MDEF +4
 AGI -2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4919#
@@ -27815,7 +27815,7 @@ DEF +12
 MDEF +8
 AGI -4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4920#
@@ -27823,7 +27823,7 @@ DEX +1
 HIT +2
 LUK -1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4921#
@@ -27831,7 +27831,7 @@ DEX +2
 HIT +4
 LUK -2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4922#
@@ -27839,7 +27839,7 @@ DEX +4
 HIT +8
 LUK -4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4923#
@@ -27847,7 +27847,7 @@ LUK +1
 CRIT +1
 DEX -1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4924#
@@ -27855,7 +27855,7 @@ LUK +2
 CRIT +2
 DEX -2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4925#
@@ -27863,23 +27863,23 @@ LUK +4
 CRIT +4
 DEX -4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4926#
 CRIT +1
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4927#
 MaxHP +50
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4928#
 MaxSP +10
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4929#
 MaxSP +1
@@ -27897,95 +27897,95 @@ Regain +1 SP for each monster killed using physical attacks.
 4933#
 Add +1% neutral resistance.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4934#
 Add +2% neutral resistance.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4935#
 Add +3% neutral resistance.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4936#
 Increase +1% physical damage on large size enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4937#
 Increase +1% physical damage on medium size enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4938#
 Increase +1% physical damage on small size enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4939#
 CRIT +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4940#
 CRIT +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4941#
 CRIT +6
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4942#
 Perfect Dodge +2
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4943#
 Perfect Dodge +4
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4944#
 Perfect Dodge +5
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4945#
 Decrease +2% SP consumption of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4946#
 Decrease +4% SP consumption of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4947#
 Decrease +6% SP consumption of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4948#
 Reduce +2% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4949#
 Reduce +4% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 4950#
 Reduce +6% after-cast skill delay of all magic.
 Class: ^777777Card^000000
-Compound On: ^777777Accessory^000000
+Compound On: ^777777^000000
 #
 5001#
 A strange device that was invented by an old craftsman, but has just recently been completed by his grandson.
@@ -28447,7 +28447,7 @@ Defense: ^7777772^000000
 Location: ^777777Headgear^000000
 Weight: ^77777735^000000
 Required Level: ^77777745^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5045#
@@ -36145,7 +36145,7 @@ Class: ^777777Armor^000000
 Defense: ^7777771^000000
 Location: ^777777Headgear^000000
 Weight: ^77777750^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5696#
@@ -36165,7 +36165,7 @@ VIT +1
 Class: ^777777Armor^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5698#
@@ -36175,7 +36175,7 @@ Defense: ^7777771^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
 Required Level: ^77777745^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5699#
@@ -36245,7 +36245,7 @@ Class: ^777777Armor^000000
 Defense: ^7777772^000000
 Location: ^777777Headgear^000000
 Weight: ^77777720^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5706#
@@ -36337,7 +36337,7 @@ Class: ^777777Armor^000000
 Location: ^777777Headgear^000000
 Weight: ^77777720^000000
 Required Level: ^77777730^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5715#
@@ -36356,7 +36356,7 @@ Class: ^777777Armor^000000
 Defense: ^7777771^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5717#
@@ -36629,7 +36629,7 @@ Class: ^777777Armor^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
 Required Level: ^7777771^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5744#
@@ -40322,19 +40322,19 @@ A sweet magic wand, feeling lovely just by holding it.
 6716#
 CRIT +1
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6717#
 MaxHP +50
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6718#
 MaxSP +10
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6719#
@@ -40380,38 +40380,38 @@ Weight: ^7777772^000000
 6740#
 Increase +2% HP recovery from all items.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6741#
 Increase +2% heal amount from ally healing magic.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6742#
 Gain 10 HP every 10 seconds.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6743#
 MaxHP +1
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6744#
 MaxSP +1
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6745#
 Regain +1 SP for each monster killed using physical attacks.
 Regain +1 HP for each monster killed using magical attacks.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 6746#
@@ -40504,19 +40504,19 @@ Weight: ^7777771^000000
 6790#
 Increase +1% physical damage on large size enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6791#
 Increase +1% physical damage on medium size enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6792#
 Increase +1% physical damage on small size enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6795#
@@ -40608,7 +40608,7 @@ Weight: ^7777771^000000
 #
 6846#
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 6860#
@@ -40701,7 +40701,7 @@ Weight: ^7777771^000000
 6908#
 Attack Speed: +1
 Class: ^777777Card^000000
-Compound On: ^777777Headgear^000000
+Compound On: ^777777^000000
 Weight: ^77777710^000000
 #
 6909#
@@ -58560,7 +58560,7 @@ Defense: ^77777737^000000
 Location: ^777777Armor^000000
 Weight: ^77777760^000000
 Required Level: ^7777771^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15034#
@@ -58571,7 +58571,7 @@ Defense: ^77777737^000000
 Location: ^777777Armor^000000
 Weight: ^77777760^000000
 Required Level: ^7777771^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15035#

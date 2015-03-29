@@ -39,14 +39,14 @@
 31 ,              checkoption,0x00000001,0x00000000,0x00000002,         0,2147483647,"Companion";
 32 ,              checkfalcon,0x00000001,0x00000000,0x00000001,         0,         1,"Falcon Companion";
 33 ,            checkmadogear,0x00000001,0x00000000,0x00000001,         0,         1,"Operating Mado Gear";
-46	 ,					        max,0x00000001,0x00000000,0x00000002,         0,         0,"Max";
-47  ,					        min,0x00000001,0x00000000,0x00000002,         0,         0,"Min";
-48  ,			       checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"Riding Mount";
+46 ,                      max,0x00000001,0x00000000,0x00000002,         0,         0,"Max";
+47 ,                      min,0x00000001,0x00000000,0x00000002,         0,         0,"Min";
+48 ,               checkmount,0x00000001,0x00000000,0x00000001,         0,         8,"Riding Mount";
 
 // non-condition functions
 26 ,                 callfunc,0x00000001,0x00000000,0x00000002,         0,         0,"Function";
 27 ,         getrandgroupitem,0x00000001,0x00000000,0x00000002,         0,         0,"Group Item";
-49	 ,			    groupranditem,0x00000001,0x00000000,0x00000002,         0,         0,"Item Group";
+49 ,            groupranditem,0x00000001,0x00000000,0x00000002,         0,         0,"Item Group";
 
 // complex functions
 8  ,              getiteminfo,0x00000001,0x00000000,0x00000002,         0,2147483647,"Item Info";

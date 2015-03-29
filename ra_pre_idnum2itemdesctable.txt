@@ -19651,499 +19651,499 @@ Weight: ^7777771^000000
 4700#
 STR +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4701#
 STR +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4702#
 STR +3
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4703#
 STR +4
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4704#
 STR +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4705#
 STR +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4706#
 STR +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4707#
 STR +8
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4708#
 STR +9
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4709#
 STR +10
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4710#
 INT +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4711#
 INT +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4712#
 INT +3
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4713#
 INT +4
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4714#
 INT +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4715#
 INT +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4716#
 INT +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4717#
 INT +8
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4718#
 INT +9
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4719#
 INT +10
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4720#
 DEX +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4721#
 DEX +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4722#
 DEX +3
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4723#
 DEX +4
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4724#
 DEX +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4725#
 DEX +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4726#
 DEX +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4727#
 DEX +8
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4728#
 DEX +9
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4729#
 DEX +10
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4730#
 AGI +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4731#
 AGI +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4732#
 AGI +3
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4733#
 AGI +4
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4734#
 AGI +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4735#
 AGI +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4736#
 AGI +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4737#
 AGI +8
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4738#
 AGI +9
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4739#
 AGI +10
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4740#
 VIT +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4741#
 VIT +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4742#
 VIT +3
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4743#
 VIT +4
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4744#
 VIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4745#
 VIT +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4746#
 VIT +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4747#
 VIT +8
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4748#
 VIT +9
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4749#
 VIT +10
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4750#
 LUK +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4751#
 LUK +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4752#
 LUK +3
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4753#
 LUK +4
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4754#
 LUK +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4755#
 LUK +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4756#
 LUK +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4757#
 LUK +8
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4758#
 LUK +9
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4759#
 LUK +10
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4760#
 MATK +1
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4761#
 MATK +2
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4762#
 FLEE +6
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4763#
 FLEE +12
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4764#
 CRIT +5
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4765#
 CRIT +7
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4766#
 Increase +2% physical damage on all classes enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4767#
 Increase +3% physical damage on all classes enemy.
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4768#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4769#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4770#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4771#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4772#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4773#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4774#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4775#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4776#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4777#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4778#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4779#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4780#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4781#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4782#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4783#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4784#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 4785#
 Class: ^777777Card^000000
-Compound On: ^777777Weapon^000000
+Compound On: ^777777^000000
 Weight: ^7777771^000000
 #
 5001#
@@ -20606,7 +20606,7 @@ Defense: ^7777772^000000
 Location: ^777777Headgear^000000
 Weight: ^77777735^000000
 Required Level: ^77777745^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5045#
@@ -20683,7 +20683,7 @@ A bell which can be used as a necklace, and makes a clear sound when it rings.
 Class: ^777777Armor^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
 5052#

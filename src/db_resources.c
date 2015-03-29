@@ -13,7 +13,9 @@ native_config_t load_res_native[RESOURCE_DB_COUNT] = {
    { bonus_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS , 0, sizeof(bonus_res) },
    { status_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, STATUS_RES_FIELD_COUNT, sizeof(status_res) },
    { var_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, VAR_RES_FIELD_COUNT, sizeof(var_res) },
-   { block_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, BLOCK_RES_FIELD_COUNT, sizeof(block_res) }
+   { block_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, BLOCK_RES_FIELD_COUNT, sizeof(block_res) },
+   { nid_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, NID_RES_FIELD_COUNT, sizeof(nid_res) },
+   { nid_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, NID_RES_FIELD_COUNT, sizeof(nid_res) }
 };
 
 int option_res_load(void * db, int row, int col, char * val) {
@@ -39,6 +41,16 @@ int map_res_load(void * db, int row, int col, char * val) {
 		default: exit_func_safe("invalid column field %d in map database", col);
 	}
 	return 0;
+}
+
+int nid_res_load(void * db, int row, int col, char * val) {
+   nid_res * record = &((nid_res *) db)[row];
+   switch(col) {
+      case 0: record->id = convert_integer(val, 10);           break;
+      case 1: strnload(record->res, MAX_RESNAME_SIZE, val);    break;
+      default: exit_func_safe("invalid column field %d in numid or id resource database", col);
+   }
+   return 0;
 }
 
 int bonus_res_load(void * db, int row, int col, char * val) {
@@ -143,7 +155,9 @@ int create_resource_database(db_res_t * db, const char * path) {
       sqlite3_prepare_v2(db->db, bonus_insert,     strlen(bonus_insert),   &db->bonus_sql_insert,  NULL) != SQLITE_OK ||
       sqlite3_prepare_v2(db->db, status_insert,    strlen(status_insert),  &db->status_sql_insert, NULL) != SQLITE_OK ||
       sqlite3_prepare_v2(db->db, var_insert,       strlen(var_insert),     &db->var_sql_insert,    NULL) != SQLITE_OK ||
-      sqlite3_prepare_v2(db->db, block_insert,     strlen(block_insert),   &db->block_sql_insert, NULL) != SQLITE_OK) {
+      sqlite3_prepare_v2(db->db, block_insert,     strlen(block_insert),   &db->block_sql_insert, NULL) != SQLITE_OK ||
+      sqlite3_prepare_v2(db->db, id_res_insert,    strlen(id_res_insert),   &db->id_res_sql_insert, NULL) != SQLITE_OK ||
+      sqlite3_prepare_v2(db->db, numid_res_insert, strlen(numid_res_insert),   &db->numid_res_sql_insert, NULL) != SQLITE_OK) {
       /* print sqlite3 error before exiting */
       status = sqlite3_errcode(db->db);
       error = sqlite3_errmsg(db->db);
@@ -157,13 +171,15 @@ int create_resource_database(db_res_t * db, const char * path) {
 }
 
 int finalize_resource_database(db_res_t * db) {
-   if(db->option_sql_insert != NULL)   sqlite3_finalize(db->option_sql_insert);
-   if(db->map_sql_insert != NULL)      sqlite3_finalize(db->map_sql_insert);
-   if(db->bonus_sql_insert != NULL)    sqlite3_finalize(db->bonus_sql_insert);
-   if(db->status_sql_insert != NULL)   sqlite3_finalize(db->status_sql_insert);
-   if(db->var_sql_insert != NULL)      sqlite3_finalize(db->var_sql_insert);
-   if(db->block_sql_insert != NULL)    sqlite3_finalize(db->block_sql_insert);
-   if(db->db != NULL)                  sqlite3_close(db->db);
+   if(db->option_sql_insert != NULL)      sqlite3_finalize(db->option_sql_insert);
+   if(db->map_sql_insert != NULL)         sqlite3_finalize(db->map_sql_insert);
+   if(db->bonus_sql_insert != NULL)       sqlite3_finalize(db->bonus_sql_insert);
+   if(db->status_sql_insert != NULL)      sqlite3_finalize(db->status_sql_insert);
+   if(db->var_sql_insert != NULL)         sqlite3_finalize(db->var_sql_insert);
+   if(db->block_sql_insert != NULL)       sqlite3_finalize(db->block_sql_insert);
+   if(db->id_res_sql_insert != NULL)      sqlite3_finalize(db->id_res_sql_insert);
+   if(db->numid_res_sql_insert != NULL)   sqlite3_finalize(db->numid_res_sql_insert);
+   if(db->db != NULL)                     sqlite3_close(db->db);
    return CHECK_PASSED;
 }
 
@@ -393,5 +409,71 @@ int resource_block_sql_load(db_res_t * db, const char * path) {
    }
    sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
    free(block_db.db);
+   return CHECK_PASSED;
+}
+
+int resource_id_res_sql_load(db_res_t * db, const char * path) {
+   int i = 0;
+   native_t idres_db;
+   nid_res * id_res_db = NULL;
+   memset(&idres_db, 0, sizeof(native_t));
+
+   /* load the native database */
+   if(load_native(path, trim_numeric, load_native_general, &idres_db, &load_res_native[6]) == CHECK_FAILED) {
+      exit_func_safe("failed to load identified item resource table at %s; invalid path", path);
+      return CHECK_FAILED;
+   }
+
+   /* check the native database */
+   if(idres_db.db == NULL || idres_db.size <= 0) {
+      exit_func_safe("failed to load identified item resource table at %s; detected zero entries", path);
+      return CHECK_FAILED;
+   }
+
+   /* load the native database into the sqlite3 resources database */
+   sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+   for(i = 0, id_res_db = idres_db.db; i < idres_db.size; i++) {
+      sqlite3_clear_bindings(db->id_res_sql_insert);
+      sqlite3_bind_int(db->id_res_sql_insert,   1, id_res_db[i].id);
+      sqlite3_bind_text(db->id_res_sql_insert,  2, id_res_db[i].res,   strlen(id_res_db[i].res),    SQLITE_STATIC);
+      sqlite3_step(db->id_res_sql_insert);
+      sqlite3_reset(db->id_res_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, idres_db.size);
+   }
+   sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+   free(idres_db.db);
+   return CHECK_PASSED;
+}
+
+int resource_num_id_res_sql_load(db_res_t * db, const char * path) {
+   int i = 0;
+   native_t numidres_db;
+   nid_res * num_id_res_db = NULL;
+   memset(&numidres_db, 0, sizeof(native_t));
+
+   /* load the native database */
+   if(load_native(path, trim_numeric, load_native_general, &numidres_db, &load_res_native[7]) == CHECK_FAILED) {
+      exit_func_safe("failed to load unidentified item resource table at %s; invalid path", path);
+      return CHECK_FAILED;
+   }
+
+   /* check the native database */
+   if(numidres_db.db == NULL || numidres_db.size <= 0) {
+      exit_func_safe("failed to load unidentified item resource table at %s; detected zero entries", path);
+      return CHECK_FAILED;
+   }
+
+   /* load the native database into the sqlite3 resources database */
+   sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
+   for(i = 0, num_id_res_db = numidres_db.db; i < numidres_db.size; i++) {
+      sqlite3_clear_bindings(db->numid_res_sql_insert);
+      sqlite3_bind_int(db->numid_res_sql_insert,   1, num_id_res_db[i].id);
+      sqlite3_bind_text(db->numid_res_sql_insert,  2, num_id_res_db[i].res,   strlen(num_id_res_db[i].res),    SQLITE_STATIC);
+      sqlite3_step(db->numid_res_sql_insert);
+      sqlite3_reset(db->numid_res_sql_insert);
+      fprintf(stderr,"[load]: %d/%d\r", i, numidres_db.size);
+   }
+   sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+   free(numidres_db.db);
    return CHECK_PASSED;
 }

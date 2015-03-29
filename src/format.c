@@ -485,7 +485,7 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	if(format->file_format & FORMAT_TXT)
 		return write_item_text(file, format, item_field, item, script);
 	else if(format->file_format & FORMAT_LUA)
-		;
+		return write_item_lua(file, format, item_field, item, script);
 	else 
 		exit_func_safe("invalid item format %d", format->file_format);
 
@@ -496,6 +496,7 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 	char buffer[FMT_BUF_SIZE];
 	int offset = 0;
 	flavour_text_t flavour;
+	buffer[0] = '\0';
 
 	/* write text format header */
 	fprintf(file,"%d#\n", item->id);
@@ -535,6 +536,11 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 		fprintf(file, "%s#\n", buffer):
 		fprintf(file, "#\n");
 
+	return CHECK_PASSED;
+}
+
+int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_t * item, char * script) {
+	
 	return CHECK_PASSED;
 }
 
@@ -683,7 +689,8 @@ int format_type(char * buffer, int * offset, format_field_t * field, int type) {
 int format_job(char * buffer, int * offset, format_field_t * field, int job, int upper, int gender) {
 	char job_list[BUF_SIZE];
 	int job_offset = 0;
-	
+	job_list[0] = '\0';
+
 	/* check the common classes */
 	if(job == 0xFFFFFFFF) {
 		format_field_string(buffer, offset, field, "Every Job");
@@ -779,6 +786,7 @@ int format_job(char * buffer, int * offset, format_field_t * field, int job, int
 int format_upper(char * buffer, int * offset, format_field_t * field, int upper, int server_type) {
 	char tier_list[BUF_SIZE];
 	int tier_offset = 0;
+	tier_list[0] = '\0';
 
 	/* check common groups */
 	if((server_type == MODE_HERCULES || server_type == MODE_RATHENA)) {
@@ -812,6 +820,7 @@ int format_upper(char * buffer, int * offset, format_field_t * field, int upper,
 int format_location(char * buffer, int * offset, format_field_t * field, int loc) {
 	char loc_list[BUF_SIZE];
 	int loc_offset = 0;
+	loc_list[0] = '\0';
 
 	if(loc & 0x000301) {
 		loc_offset += sprintf(&loc_list[loc_offset], "%sHeadgear", (loc_offset != 0)?", ":"");
@@ -876,6 +885,7 @@ int format_boolean(char * buffer, int * offset, format_field_t * field, int valu
 int format_delay(char * buffer, int * offset, format_field_t * field, int delay) {
 	char unit[BUF_SIZE];
 	int unit_offset = 0;
+	unit[0] = '\0';
 	if((delay / 1000) == 0) {
 		if(delay > 0) {
 			unit_offset = sprintf(unit, "%d milliseconds", delay);
@@ -891,6 +901,7 @@ int format_delay(char * buffer, int * offset, format_field_t * field, int delay)
 int format_trade(char * buffer, int * offset, format_field_t * field, int * trade) {
 	char trade_list[BUF_SIZE];
 	int trade_offset = 0;
+	trade_list[0] = '\0';
 
 	if(trade[TRADE_NODROP] > 0 || trade[TRADE_NOTRADE] > 0 || 
 	   trade[TRADE_NOAUCTION] > 0 || trade[TRADE_NOSELLTONPC] > 0 || 

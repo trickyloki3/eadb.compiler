@@ -645,6 +645,30 @@ int load_resource(lua_State * lstate, char * path, int table) {
 		}
 	}
 
+	if(table_getfieldstring(lstate, "idres_db_filename", &database_name, table)) {
+		exit_abt_safe("identified item resource table path ('idres_db_filename') is missing from database");
+		goto load_resource_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(resource_id_res_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load identified item resource table on path %s", server_database_path);
+			goto load_resource_fail;
+		}
+	}
+
+	if(table_getfieldstring(lstate, "numidres_db_filename", &database_name, table)) {
+		exit_abt_safe("unidentified item resource table path ('numidres_db_filename') is missing from database");
+		goto load_resource_fail;
+	} else {
+		path_concat(server_database_path, server_path, database_name);
+		fprintf(stdout, "[info]: loading %s.\n", server_database_path);
+		if(resource_num_id_res_sql_load(&db, server_database_path)) {
+			exit_func_safe("failed to load unidentified item resource table on path %s", server_database_path);
+			goto load_resource_fail;
+		}
+	}
+
 	finalize_resource_database(&db);
 	return CHECK_PASSED;
 

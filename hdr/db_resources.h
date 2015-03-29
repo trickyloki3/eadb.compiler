@@ -18,11 +18,13 @@
 	 * type name 	- 	type reference
 	 * -----------------------------------------
 	 * option_res 	- 	option database
-	 * map_res 		- 	map name database
 	 * bonus_res 	- 	bonus name database
 	 * status_res 	- 	status name database
 	 * var_res 		- 	variable and function name database
 	 * block_res 	- 	block name database
+	 * map_res 		- 	client-side map name table
+	 * id_res 		- 	client-side identified item resource table
+	 * numid_res 	- 	client-side unidentified item resource table
 	 */
 
 	/* database record counts */
@@ -31,6 +33,7 @@
 	#define STATUS_RES_FIELD_COUNT	14
 	#define VAR_RES_FIELD_COUNT		8
 	#define BLOCK_RES_FIELD_COUNT	3
+	#define NID_RES_FIELD_COUNT		2
 
 	typedef struct option_res {
 		char option[MAX_NAME_SIZE];
@@ -98,6 +101,11 @@
 		int flag;
 	} block_res;
 
+	typedef struct nid_res {
+		int id;
+		char res[MAX_RESNAME_SIZE];
+	} nid_res;
+
 	/* resource database loading */
 	extern native_config_t load_res_native[RESOURCE_DB_COUNT];
 	int option_res_load(void *, int, int, char *);
@@ -106,6 +114,7 @@
 	int status_res_load(void *, int, int, char *);
 	int var_res_load(void *, int, int, char *);
 	int block_res_load(void *, int, int, char *);
+	int nid_res_load(void *, int, int, char *);
 
 	/* resources sqlite3 database interface */
 	#define resource_database_sql 	"DROP TABLE IF EXISTS option_res;"																	\
@@ -132,6 +141,10 @@
 									"vflag INTEGER, fflag INTEGER, min INTEGER, max INTEGER, str TEXT);"								\
 									""																									\
 									"CREATE TABLE IF NOT EXISTS block_res(id INTEGER PRIMARY KEY, key TEXT, flag INTEGER);"				\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS id_res(id INTEGER PRIMARY KEY, res TEXT);"								\
+									""																									\
+									"CREATE TABLE IF NOT EXISTS numid_res(id INTEGER PRIMARY KEY, res TEXT);"							\
 
 	#define option_insert 			"INSERT INTO option_res VALUES(?, ?);"
 	#define map_insert				"INSERT INTO map_res VALUES(?, ?, ?);"
@@ -139,6 +152,8 @@
 	#define status_insert			"INSERT INTO status_res VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
 	#define var_insert				"INSERT INTO var_res VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
 	#define block_insert			"INSERT INTO block_res VALUES(?, ?, ?);"
+	#define id_res_insert			"INSERT INTO id_res VALUES(?, ?);"
+	#define numid_res_insert		"INSERT INTO numid_res VALUES(?, ?);"
 
 	typedef struct db_res_t {
 		sqlite3 * db;
@@ -148,6 +163,8 @@
 		sqlite3_stmt * status_sql_insert;
 		sqlite3_stmt * var_sql_insert;
 		sqlite3_stmt * block_sql_insert;
+		sqlite3_stmt * id_res_sql_insert;
+		sqlite3_stmt * numid_res_sql_insert;
 	} db_res_t;
 
 	/* database loading depends on the path of the database */
@@ -159,4 +176,6 @@
 	int resource_status_sql_load(db_res_t * db, const char * path);
 	int resource_var_sql_load(db_res_t * db, const char * path);
 	int resource_block_sql_load(db_res_t * db, const char * path);
+	int resource_id_res_sql_load(db_res_t * db, const char * path);
+	int resource_num_id_res_sql_load(db_res_t * db, const char * path);
 #endif

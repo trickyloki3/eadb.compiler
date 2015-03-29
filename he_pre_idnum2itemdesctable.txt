@@ -20534,7 +20534,7 @@ Class: ^777777Armor^000000
 Defense: ^7777772^000000
 Location: ^777777Headgear^000000
 Weight: ^77777735^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5045#
@@ -20609,7 +20609,7 @@ A bell which can be used as a necklace, and makes a clear sound when it rings.
 Class: ^777777Armor^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5052#

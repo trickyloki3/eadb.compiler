@@ -152,6 +152,7 @@
 	/* write item fields */
 	int write_item(FILE *, format_t *, item_t *, char *);
 	int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
+	int write_item_lua(FILE *, format_t *, format_field_t *, item_t *, char *);
 	int format_flavour_text(char *, int *, format_t *, format_field_t *, flavour_text_t *, int);
 	int format_script(char *, int *, format_field_t *, char *);
 	int format_integer(char *, int *, format_field_t *, int);			/* non-interpreted values */

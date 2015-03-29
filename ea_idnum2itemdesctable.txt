@@ -10376,7 +10376,7 @@ Defense: ^777777120^000000
 Location: ^777777Shield^000000
 Weight: ^777777250^000000
 Required Level: ^777777102^000000
-Job: ^777777Shield^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2154#
@@ -10397,7 +10397,7 @@ Defense: ^77777710^000000
 Location: ^777777Shield^000000
 Weight: ^77777750^000000
 Required Level: ^777777110^000000
-Job: ^777777Shield^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2199#
@@ -13233,7 +13233,7 @@ Defense: ^77777715^000000
 Location: ^777777Shoes^000000
 Weight: ^77777730^000000
 Required Level: ^777777105^000000
-Job: ^777777Shoes^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2466#
@@ -13252,7 +13252,7 @@ Defense: ^77777712^000000
 Location: ^777777Shoes^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Shoes^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2468#
@@ -13263,7 +13263,7 @@ Defense: ^77777712^000000
 Location: ^777777Shoes^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Shoes^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2469#
@@ -13274,7 +13274,7 @@ Defense: ^77777712^000000
 Location: ^777777Shoes^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Shoes^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2470#
@@ -13285,7 +13285,7 @@ Defense: ^77777712^000000
 Location: ^777777Shoes^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Shoes^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2501#
@@ -16288,7 +16288,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^77777710^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2801#
@@ -16299,7 +16299,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777200^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2802#
@@ -16309,7 +16309,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777100^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2803#
@@ -16320,7 +16320,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^77777750^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2804#
@@ -16331,7 +16331,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777250^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2805#
@@ -16342,7 +16342,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777600^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2806#
@@ -16354,7 +16354,7 @@ Defense: ^7777773^000000
 Location: ^777777Accessory^000000
 Weight: ^777777800^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2807#
@@ -16364,7 +16364,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^77777740^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2808#
@@ -16375,7 +16375,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777100^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2809#
@@ -16386,7 +16386,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777250^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2810#
@@ -16397,7 +16397,7 @@ Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Weight: ^777777250^000000
 Required Level: ^77777799^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2815#
@@ -16814,7 +16814,7 @@ Defense: ^7777772^000000
 Location: ^777777Accessory^000000
 Weight: ^77777720^000000
 Required Level: ^777777110^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2854#
@@ -16828,7 +16828,7 @@ Defense: ^7777771^000000
 Location: ^777777Accessory^000000
 Weight: ^77777710^000000
 Required Level: ^777777125^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2855#
@@ -16887,7 +16887,7 @@ Defense: ^7777772^000000
 Location: ^777777Accessory^000000
 Weight: ^77777720^000000
 Required Level: ^777777100^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2860#
@@ -16900,7 +16900,7 @@ Defense: ^7777772^000000
 Location: ^777777Accessory^000000
 Weight: ^77777720^000000
 Required Level: ^777777100^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2861#
@@ -16913,7 +16913,7 @@ Defense: ^7777772^000000
 Location: ^777777Accessory^000000
 Weight: ^77777720^000000
 Required Level: ^777777100^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2862#
@@ -16926,7 +16926,7 @@ Defense: ^7777772^000000
 Location: ^777777Accessory^000000
 Weight: ^77777720^000000
 Required Level: ^777777100^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2863#
@@ -16946,7 +16946,7 @@ VIT +2
 Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Required Level: ^777777110^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2865#
@@ -16956,7 +16956,7 @@ INT +2
 Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Required Level: ^777777110^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 2866#
@@ -16967,7 +16967,7 @@ DEX +2
 Class: ^777777Armor^000000
 Location: ^777777Accessory^000000
 Required Level: ^777777110^000000
-Job: ^777777Accessory^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 4001#
@@ -21246,7 +21246,7 @@ Defense: ^7777772^000000
 Location: ^777777Headgear^000000
 Weight: ^77777735^000000
 Required Level: ^77777745^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5045#
@@ -21318,7 +21318,7 @@ A bell which can be used as a necklace, and makes a clear sound when it rings.
 Class: ^777777Armor^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5052#
@@ -26638,7 +26638,7 @@ Location: ^777777Headgear^000000
 Weight: ^77777710^000000
 Required Level: ^777777100^000000
 Job: ^777777Thief Class^000000
-Tier: ^777777Thief Class^000000
+Tier: ^777777^000000
 #
 5756#
 A hat for a ritual ceremony which is made from a spiritual feather.
@@ -26690,7 +26690,7 @@ Defense: ^77777712^000000
 Location: ^777777Headgear^000000
 Weight: ^77777710^000000
 Required Level: ^777777100^000000
-Job: ^777777Headgear^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 5771#
@@ -42480,7 +42480,7 @@ Class: ^777777Armor^000000
 Defense: ^77777795^000000
 Location: ^777777Armor^000000
 Required Level: ^77777799^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15007#
@@ -42571,7 +42571,7 @@ Defense: ^77777793^000000
 Location: ^777777Armor^000000
 Weight: ^777777450^000000
 Required Level: ^777777100^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15015#
@@ -42682,7 +42682,7 @@ Defense: ^77777740^000000
 Location: ^777777Armor^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15026#
@@ -42694,7 +42694,7 @@ Defense: ^77777740^000000
 Location: ^777777Armor^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15027#
@@ -42706,7 +42706,7 @@ Defense: ^77777740^000000
 Location: ^777777Armor^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 15028#
@@ -42718,7 +42718,7 @@ Defense: ^77777740^000000
 Location: ^777777Armor^000000
 Weight: ^77777750^000000
 Required Level: ^777777100^000000
-Job: ^777777Armor^000000
+Job: ^777777^000000
 Tier: ^777777Every Tier^000000
 #
 16000#
