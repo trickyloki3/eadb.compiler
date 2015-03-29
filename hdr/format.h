@@ -167,4 +167,7 @@
 	int format_delay(char *, int * , format_field_t *, int);
 	int format_trade(char *, int * , format_field_t *, int *);
 	int format_stack(char *, int * , format_field_t *, int *);
+	int format_field_string(char *, int *, format_field_t *, char *);
+	int format_field_double(char *, int *, format_field_t *, double);
+	int format_field_integer(char *, int *, format_field_t *, int);
 #endif

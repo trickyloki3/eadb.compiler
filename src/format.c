@@ -601,11 +601,8 @@ int format_script(char * buffer, int * offset, format_field_t * field, char * sc
 
 int format_integer(char * buffer, int * offset, format_field_t * field, int value) {
 	/* write the the text and value */
-	if(value > 0) {
-		*offset += (field->text[0] != '\0')?
-			sprintf(&buffer[*offset], "%s %d\n", field->text, value):
-			sprintf(&buffer[*offset], "%d\n", value);
-	}
+	if(value > 0)
+		format_field_integer(buffer, offset, field, value);
 	return CHECK_PASSED;
 }
 
@@ -637,9 +634,7 @@ int format_gender(char * buffer, int * offset, format_field_t * field, int value
 	if(gender == NULL) return CHECK_FAILED;
 
 	/* write the female or male only restriction */
-	*offset += (field->text[0] != '\0')?
-		sprintf(&buffer[*offset], "%s %s\n", field->text, gender):
-		sprintf(&buffer[*offset], "%s\n", gender);
+	format_field_string(buffer, offset, field, gender);
 	return CHECK_PASSED;
 }
 
@@ -666,10 +661,7 @@ int format_view(char * buffer, int * offset, format_field_t * field, int view, i
 	}
 
 	/* write the weapon type string */
-	if(field->text[0] != '\0')		sprintf(&buffer[*offset], "%s", field->text);
-	if(field->color[0] != '\0')		sprintf(&buffer[*offset], "^%s", field->color);
-	sprintf(&buffer[*offset], "%s\n", view_type);
-	if(field->color[0] != '\0')		sprintf(&buffer[*offset], "^%s", DEFAULT_COLOR);
+	format_field_string(buffer, offset, field, view_type);
 	return CHECK_PASSED;
 }
 
@@ -684,204 +676,190 @@ int format_type(char * buffer, int * offset, format_field_t * field, int type) {
 	}
 
 	/* write the item type string */
-	*offset += (field->text[0] != '\0') ?
-		sprintf(&buffer[*offset], "%s %s\n", field->text, item_type) :
-		sprintf(&buffer[*offset], "%s\n", item_type);
+	format_field_string(buffer, offset, field, item_type);
 	return CHECK_PASSED;
 }
 
 int format_job(char * buffer, int * offset, format_field_t * field, int job, int upper, int gender) {
-	int initial_offset = 0;
+	char job_list[BUF_SIZE];
+	int job_offset = 0;
 	
 	/* check the common classes */
 	if(job == 0xFFFFFFFF) {
-		*offset += sprintf(&buffer[*offset], "%s Every Job\n", field->text);
+		format_field_string(buffer, offset, field, "Every Job");
 		return CHECK_PASSED;
 	} else if(job == 0xFFFFFFFE || job == 0x7FFFFFFE) {
-		*offset += sprintf(&buffer[*offset], "%s Every Job except Novice\n", field->text);
+		format_field_string(buffer, offset, field, "Every Job except Novice");
 		return CHECK_PASSED;
 	}
 
-	/* write the text */
-	*offset += sprintf(&buffer[*offset], "%s ", field->text);
-	initial_offset = *offset;
-
 	/* simplified the combination explosion */
-	if(job & 0x00000001) *offset += sprintf(&buffer[*offset], "%sNovice", (initial_offset < *offset)?", ":"");
+	if(job & 0x00000001) job_offset += sprintf(&job_list[job_offset], "%sNovice", (job_offset != 0)?", ":"");
 	if(job & 0x00004082) {
-		*offset += sprintf(&buffer[*offset], "%sSwordsman Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sSwordsman Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00000002) *offset += sprintf(&buffer[*offset], "%sSwordsman", (initial_offset < *offset)?", ":"");
-		if(job & 0x00000080) *offset += sprintf(&buffer[*offset], "%sKnight", (initial_offset < *offset)?", ":"");
-		if(job & 0x00004000) *offset += sprintf(&buffer[*offset], "%sCrusader", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000002) job_offset += sprintf(&job_list[job_offset], "%sSwordsman", (job_offset != 0)?", ":"");
+		if(job & 0x00000080) job_offset += sprintf(&job_list[job_offset], "%sKnight", (job_offset != 0)?", ":"");
+		if(job & 0x00004000) job_offset += sprintf(&job_list[job_offset], "%sCrusader", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x00010204) {
-		*offset += sprintf(&buffer[*offset], "%sMagician Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sMagician Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00000004) *offset += sprintf(&buffer[*offset], "%sMagician", (initial_offset < *offset)?", ":"");
-		if(job & 0x00000200) *offset += sprintf(&buffer[*offset], "%sWizard", (initial_offset < *offset)?", ":"");
-		if(job & 0x00010000) *offset += sprintf(&buffer[*offset], "%sSage", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000004) job_offset += sprintf(&job_list[job_offset], "%sMagician", (job_offset != 0)?", ":"");
+		if(job & 0x00000200) job_offset += sprintf(&job_list[job_offset], "%sWizard", (job_offset != 0)?", ":"");
+		if(job & 0x00010000) job_offset += sprintf(&job_list[job_offset], "%sSage", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x00080808) {
-		*offset += sprintf(&buffer[*offset], "%sArcher Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sArcher Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00000008) *offset += sprintf(&buffer[*offset], "%sArcher", (initial_offset < *offset)?", ":"");
-		if(job & 0x00000800) *offset += sprintf(&buffer[*offset], "%sHunter", (initial_offset < *offset)?", ":"");
-		if(job & 0x00080000 && gender == 0) *offset += sprintf(&buffer[*offset], "%sDancer", (initial_offset < *offset)?", ":"");
-		if(job & 0x00080000 && gender == 1) *offset += sprintf(&buffer[*offset], "%sBard", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000008) job_offset += sprintf(&job_list[job_offset], "%sArcher", (job_offset != 0)?", ":"");
+		if(job & 0x00000800) job_offset += sprintf(&job_list[job_offset], "%sHunter", (job_offset != 0)?", ":"");
+		if(job & 0x00080000 && gender == 0) job_offset += sprintf(&job_list[job_offset], "%sDancer", (job_offset != 0)?", ":"");
+		if(job & 0x00080000 && gender == 1) job_offset += sprintf(&job_list[job_offset], "%sBard", (job_offset != 0)?", ":"");
 	}
 	if(job & 0x00008110) {
-		*offset += sprintf(&buffer[*offset], "%sAcolyte Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sAcolyte Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00000010) *offset += sprintf(&buffer[*offset], "%sAcolyte", (initial_offset < *offset)?", ":"");
-		if(job & 0x00000100) *offset += sprintf(&buffer[*offset], "%sPriest", (initial_offset < *offset)?", ":"");
-		if(job & 0x00008000) *offset += sprintf(&buffer[*offset], "%sMonk", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000010) job_offset += sprintf(&job_list[job_offset], "%sAcolyte", (job_offset != 0)?", ":"");
+		if(job & 0x00000100) job_offset += sprintf(&job_list[job_offset], "%sPriest", (job_offset != 0)?", ":"");
+		if(job & 0x00008000) job_offset += sprintf(&job_list[job_offset], "%sMonk", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x00040420) {
-		*offset += sprintf(&buffer[*offset], "%sMerchant Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sMerchant Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00000020) *offset += sprintf(&buffer[*offset], "%sMerchant", (initial_offset < *offset)?", ":"");
-		if(job & 0x00000400) *offset += sprintf(&buffer[*offset], "%sBlacksmith", (initial_offset < *offset)?", ":"");
-		if(job & 0x00040000) *offset += sprintf(&buffer[*offset], "%sAlchemist", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000020) job_offset += sprintf(&job_list[job_offset], "%sMerchant", (job_offset != 0)?", ":"");
+		if(job & 0x00000400) job_offset += sprintf(&job_list[job_offset], "%sBlacksmith", (job_offset != 0)?", ":"");
+		if(job & 0x00040000) job_offset += sprintf(&job_list[job_offset], "%sAlchemist", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x00021040) {
-		*offset += sprintf(&buffer[*offset], "%sThief Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sThief Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00000040) *offset += sprintf(&buffer[*offset], "%sThief", (initial_offset < *offset)?", ":"");
-		if(job & 0x00001000) *offset += sprintf(&buffer[*offset], "%sAssassin", (initial_offset < *offset)?", ":"");
-		if(job & 0x00020000) *offset += sprintf(&buffer[*offset], "%sRogue", (initial_offset < *offset)?", ":"");
+		if(job & 0x00000040) job_offset += sprintf(&job_list[job_offset], "%sThief", (job_offset != 0)?", ":"");
+		if(job & 0x00001000) job_offset += sprintf(&job_list[job_offset], "%sAssassin", (job_offset != 0)?", ":"");
+		if(job & 0x00020000) job_offset += sprintf(&job_list[job_offset], "%sRogue", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x22000000) {
-		*offset += sprintf(&buffer[*offset], "%sNinja Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sNinja Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x02000000) *offset += sprintf(&buffer[*offset], "%sNinja", (initial_offset < *offset)?", ":"");
-		if(job & 0x20000000) *offset += sprintf(&buffer[*offset], "%sKagerou & Oboro", (initial_offset < *offset)?", ":"");
+		if(job & 0x02000000) job_offset += sprintf(&job_list[job_offset], "%sNinja", (job_offset != 0)?", ":"");
+		if(job & 0x20000000) job_offset += sprintf(&job_list[job_offset], "%sKagerou & Oboro", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x41000000) {
-		*offset += sprintf(&buffer[*offset], "%sGunslinger Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sGunslinger Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x01000000) *offset += sprintf(&buffer[*offset], "%sGunslinger", (initial_offset < *offset)?", ":"");
-		if(job & 0x40000000) *offset += sprintf(&buffer[*offset], "%sRebellion", (initial_offset < *offset)?", ":"");
+		if(job & 0x01000000) job_offset += sprintf(&job_list[job_offset], "%sGunslinger", (job_offset != 0)?", ":"");
+		if(job & 0x40000000) job_offset += sprintf(&job_list[job_offset], "%sRebellion", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x00E00000) {
-		*offset += sprintf(&buffer[*offset], "%sTaekwon Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sTaekwon Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x00200000) *offset += sprintf(&buffer[*offset], "%sTaekwon", (initial_offset < *offset)?", ":"");
-		if(job & 0x00400000) *offset += sprintf(&buffer[*offset], "%sStar Gladiator", (initial_offset < *offset)?", ":"");
-		if(job & 0x00800000) *offset += sprintf(&buffer[*offset], "%sSoul Linker", (initial_offset < *offset)?", ":"");
+		if(job & 0x00200000) job_offset += sprintf(&job_list[job_offset], "%sTaekwon", (job_offset != 0)?", ":"");
+		if(job & 0x00400000) job_offset += sprintf(&job_list[job_offset], "%sStar Gladiator", (job_offset != 0)?", ":"");
+		if(job & 0x00800000) job_offset += sprintf(&job_list[job_offset], "%sSoul Linker", (job_offset != 0)?", ":"");
 	}
 
 	if(job & 0x1C000000) {
-		*offset += sprintf(&buffer[*offset], "%sGangsi Class", (initial_offset < *offset)?", ":"");
+		job_offset += sprintf(&job_list[job_offset], "%sGangsi Class", (job_offset != 0)?", ":"");
 	} else {
-		if(job & 0x04000000) *offset += sprintf(&buffer[*offset], "%sGangsi", (initial_offset < *offset)?", ":"");
-		if(job & 0x08000000) *offset += sprintf(&buffer[*offset], "%sDeath Knight", (initial_offset < *offset)?", ":"");
-		if(job & 0x10000000) *offset += sprintf(&buffer[*offset], "%sDark Collector", (initial_offset < *offset)?", ":"");
+		if(job & 0x04000000) job_offset += sprintf(&job_list[job_offset], "%sGangsi", (job_offset != 0)?", ":"");
+		if(job & 0x08000000) job_offset += sprintf(&job_list[job_offset], "%sDeath Knight", (job_offset != 0)?", ":"");
+		if(job & 0x10000000) job_offset += sprintf(&job_list[job_offset], "%sDark Collector", (job_offset != 0)?", ":"");
 	}
-
-	*offset += sprintf(&buffer[*offset], "\n");
+	format_field_string(buffer, offset, field, job_list);
 	return CHECK_PASSED;
 }
 
 int format_upper(char * buffer, int * offset, format_field_t * field, int upper, int server_type) {
-	int initial_offset = 0;
+	char tier_list[BUF_SIZE];
+	int tier_offset = 0;
 
 	/* check common groups */
 	if((server_type == MODE_HERCULES || server_type == MODE_RATHENA)) {
 		if(upper == 0x3F) {
-			*offset += sprintf(&buffer[*offset], "%s Every Tier\n", field->text);
+			format_field_string(buffer, offset, field, "Every Tier");
 			return CHECK_PASSED;
 		} else if(upper == 0x1C) {
-			*offset += sprintf(&buffer[*offset], "%s Every Tier except Baby Tier\n", field->text);
+			format_field_string(buffer, offset, field, "Every Tier except Baby Tier");
 			return CHECK_PASSED;
 		}
 	} else if(server_type == MODE_EATHENA) {
 		if(upper == 0x07) {
-			*offset += sprintf(&buffer[*offset], "%s Every Tier\n", field->text);
+			format_field_string(buffer, offset, field, "Every Tier");
 			return CHECK_PASSED;
 		} else if(upper == 0x03) {
-			*offset += sprintf(&buffer[*offset], "%s Every Tier except Baby Tier\n", field->text);
+			format_field_string(buffer, offset, field, "Every Tier except Baby Tier");
 			return CHECK_PASSED;
 		}
 	}
 
-	/* write the text */
-	*offset += sprintf(&buffer[*offset], "%s ", field->text);
-	initial_offset = *offset;
-
-	if(upper & 0x01) *offset += sprintf(&buffer[*offset], "%sFirst & Second Job", (initial_offset < *offset)?", ":"");
-	if(upper & 0x02) *offset += sprintf(&buffer[*offset], "%sRebirth First & Second Job", (initial_offset < *offset)?", ":"");
-	if(upper & 0x08) *offset += sprintf(&buffer[*offset], "%sThird Job", (initial_offset < *offset)?", ":"");
-	if(upper & 0x10) *offset += sprintf(&buffer[*offset], "%sRebirth Third Job", (initial_offset < *offset)?", ":"");
-	if(upper & 0x04) *offset += sprintf(&buffer[*offset], "%sSecond Baby Job", (initial_offset < *offset)?", ":"");
-	if(upper & 0x20) *offset += sprintf(&buffer[*offset], "%sThird Baby Job", (initial_offset < *offset)?", ":"");
-
-	*offset += sprintf(&buffer[*offset], "\n");
+	if(upper & 0x01) tier_offset += sprintf(&tier_list[tier_offset], "%sFirst & Second Job", (tier_offset != 0)?", ":"");
+	if(upper & 0x02) tier_offset += sprintf(&tier_list[tier_offset], "%sRebirth First & Second Job", (tier_offset != 0)?", ":"");
+	if(upper & 0x08) tier_offset += sprintf(&tier_list[tier_offset], "%sThird Job", (tier_offset != 0)?", ":"");
+	if(upper & 0x10) tier_offset += sprintf(&tier_list[tier_offset], "%sRebirth Third Job", (tier_offset != 0)?", ":"");
+	if(upper & 0x04) tier_offset += sprintf(&tier_list[tier_offset], "%sSecond Baby Job", (tier_offset != 0)?", ":"");
+	if(upper & 0x20) tier_offset += sprintf(&tier_list[tier_offset], "%sThird Baby Job", (tier_offset != 0)?", ":"");
+	format_field_string(buffer, offset, field, tier_list);
 	return CHECK_PASSED;
 }
 
 int format_location(char * buffer, int * offset, format_field_t * field, int loc) {
-	int initial_offset = 0;
+	char loc_list[BUF_SIZE];
+	int loc_offset = 0;
 
-	/* write the text */
-	*offset += sprintf(&buffer[*offset], "%s ", field->text);
-	initial_offset = *offset;
 	if(loc & 0x000301) {
-		*offset += sprintf(&buffer[*offset], "%sHeadgear", (initial_offset < *offset)?", ":"");
+		loc_offset += sprintf(&loc_list[loc_offset], "%sHeadgear", (loc_offset != 0)?", ":"");
 	} else {
-		if(loc & 0x000100) *offset += sprintf(&buffer[*offset], "%sUpper Headgear", (initial_offset < *offset)?", ":"");
-		if(loc & 0x000200) *offset += sprintf(&buffer[*offset], "%sMiddle Headgear", (initial_offset < *offset)?", ":"");
-		if(loc & 0x000001) *offset += sprintf(&buffer[*offset], "%sLower Headgear", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000100) loc_offset += sprintf(&loc_list[loc_offset], "%sUpper Headgear", (loc_offset != 0)?", ":"");
+		if(loc & 0x000200) loc_offset += sprintf(&loc_list[loc_offset], "%sMiddle Headgear", (loc_offset != 0)?", ":"");
+		if(loc & 0x000001) loc_offset += sprintf(&loc_list[loc_offset], "%sLower Headgear", (loc_offset != 0)?", ":"");
 	}
-	if(loc & 0x000010) *offset += sprintf(&buffer[*offset], "%sArmor", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000002) *offset += sprintf(&buffer[*offset], "%sWeapon", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000020) *offset += sprintf(&buffer[*offset], "%sShield", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000004) *offset += sprintf(&buffer[*offset], "%sGarment", (initial_offset < *offset)?", ":"");
-	if(loc & 0x000040) *offset += sprintf(&buffer[*offset], "%sShoes", (initial_offset < *offset)?", ":"");
+	if(loc & 0x000010) loc_offset += sprintf(&loc_list[loc_offset], "%sArmor", (loc_offset != 0)?", ":"");
+	if(loc & 0x000002) loc_offset += sprintf(&loc_list[loc_offset], "%sWeapon", (loc_offset != 0)?", ":"");
+	if(loc & 0x000020) loc_offset += sprintf(&loc_list[loc_offset], "%sShield", (loc_offset != 0)?", ":"");
+	if(loc & 0x000004) loc_offset += sprintf(&loc_list[loc_offset], "%sGarment", (loc_offset != 0)?", ":"");
+	if(loc & 0x000040) loc_offset += sprintf(&loc_list[loc_offset], "%sShoes", (loc_offset != 0)?", ":"");
 	if(loc & 0x000088) {
-		*offset += sprintf(&buffer[*offset], "%sAccessory", (initial_offset < *offset)?", ":"");
+		loc_offset += sprintf(&loc_list[loc_offset], "%sAccessory", (loc_offset != 0)?", ":"");
 	} else {
-		if(loc & 0x000008) *offset += sprintf(&buffer[*offset], "%sRight Accessory", (initial_offset < *offset)?", ":"");
-		if(loc & 0x000080) *offset += sprintf(&buffer[*offset], "%sLeft Accessory", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000008) loc_offset += sprintf(&loc_list[loc_offset], "%sRight Accessory", (loc_offset != 0)?", ":"");
+		if(loc & 0x000080) loc_offset += sprintf(&loc_list[loc_offset], "%sLeft Accessory", (loc_offset != 0)?", ":"");
 	}
 	if(loc & 0x001C00) {
-		*offset += sprintf(&buffer[*offset], "%sCostume Headgear", (initial_offset < *offset)?", ":"");
+		loc_offset += sprintf(&loc_list[loc_offset], "%sCostume Headgear", (loc_offset != 0)?", ":"");
 	} else {
-		if(loc & 0x000400) *offset += sprintf(&buffer[*offset], "%sCostume Upper Headgear", (initial_offset < *offset)?", ":"");
-		if(loc & 0x000800) *offset += sprintf(&buffer[*offset], "%sCostume Middle Headgear", (initial_offset < *offset)?", ":"");
-		if(loc & 0x001000) *offset += sprintf(&buffer[*offset], "%sCostume Lower Headgear", (initial_offset < *offset)?", ":"");
+		if(loc & 0x000400) loc_offset += sprintf(&loc_list[loc_offset], "%sCostume Upper Headgear", (loc_offset != 0)?", ":"");
+		if(loc & 0x000800) loc_offset += sprintf(&loc_list[loc_offset], "%sCostume Middle Headgear", (loc_offset != 0)?", ":"");
+		if(loc & 0x001000) loc_offset += sprintf(&loc_list[loc_offset], "%sCostume Lower Headgear", (loc_offset != 0)?", ":"");
 	}
 
-	if(loc & 0x002000) *offset += sprintf(&buffer[*offset], "%sCostume Garment", (initial_offset < *offset)?", ":"");
-	if(loc & 0x008000) *offset += sprintf(&buffer[*offset], "%sAmmo", (initial_offset < *offset)?", ":"");
-	if(loc & 0x010000) *offset += sprintf(&buffer[*offset], "%sShadow Armor", (initial_offset < *offset)?", ":"");
-	if(loc & 0x020000) *offset += sprintf(&buffer[*offset], "%sShadow Weapon", (initial_offset < *offset)?", ":"");
-	if(loc & 0x040000) *offset += sprintf(&buffer[*offset], "%sShadow Shield", (initial_offset < *offset)?", ":"");
-	if(loc & 0x080000) *offset += sprintf(&buffer[*offset], "%sShadow Shoes", (initial_offset < *offset)?", ":"");
+	if(loc & 0x002000) loc_offset += sprintf(&loc_list[loc_offset], "%sCostume Garment", (loc_offset != 0)?", ":"");
+	if(loc & 0x008000) loc_offset += sprintf(&loc_list[loc_offset], "%sAmmo", (loc_offset != 0)?", ":"");
+	if(loc & 0x010000) loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Armor", (loc_offset != 0)?", ":"");
+	if(loc & 0x020000) loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Weapon", (loc_offset != 0)?", ":"");
+	if(loc & 0x040000) loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Shield", (loc_offset != 0)?", ":"");
+	if(loc & 0x080000) loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Shoes", (loc_offset != 0)?", ":"");
 	if(loc & 0x300000) {
-		*offset += sprintf(&buffer[*offset], "%sShadow Accessory", (initial_offset < *offset)?", ":"");
+		loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Accessory", (loc_offset != 0)?", ":"");
 	} else {
-		if(loc & 0x100000) *offset += sprintf(&buffer[*offset], "%sShadow Right Accessory", (initial_offset < *offset)?", ":"");
-		if(loc & 0x200000) *offset += sprintf(&buffer[*offset], "%sShadow Left Accessory", (initial_offset < *offset)?", ":"");
+		if(loc & 0x100000) loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Right Accessory", (loc_offset != 0)?", ":"");
+		if(loc & 0x200000) loc_offset += sprintf(&loc_list[loc_offset], "%sShadow Left Accessory", (loc_offset != 0)?", ":"");
 	}
 
-	*offset += sprintf(&buffer[*offset], "\n");
+	format_field_string(buffer, offset, field, loc_list);
 	return CHECK_PASSED;
 }
 
 int format_weight(char * buffer, int * offset, format_field_t * field, int weight) {
 	if(weight == 0) return CHECK_FAILED;	
 	if(weight / 10 == 0) {
-		*offset += (field->text[0] != '\0') ?
-			sprintf(&buffer[*offset], "%s %.2f\n", field->text, ((double) weight) / 10):
-			sprintf(&buffer[*offset], "%.2f\n", ((double) weight) / 10);
+		format_field_double(buffer, offset, field, ((double) weight) / 10);
 	} else {
 		format_integer(buffer, offset, field, weight / 10);
 	}
@@ -896,45 +874,49 @@ int format_boolean(char * buffer, int * offset, format_field_t * field, int valu
 }
 
 int format_delay(char * buffer, int * offset, format_field_t * field, int delay) {
+	char unit[BUF_SIZE];
+	int unit_offset = 0;
 	if((delay / 1000) == 0) {
-		if(delay > 0)
-			*offset += (field->text[0] != '\0')?
-				sprintf(&buffer[*offset], "%s %d milliseconds\n", field->text, delay):
-				sprintf(&buffer[*offset], "%d milliseconds\n", delay);
+		if(delay > 0) {
+			unit_offset = sprintf(unit, "%d milliseconds", delay);
+			format_field_integer(buffer, offset, field, delay);
+		}
 	} else {
-		*offset += (field->text[0] != '\0')?
-			sprintf(&buffer[*offset], "%s %d seconds\n", field->text, delay / 1000):
-			sprintf(&buffer[*offset], "%d seconds\n", delay / 1000);
+		unit_offset = sprintf(unit, "%d seconds", delay / 1000);
+		format_field_integer(buffer, offset, field, delay);
 	}
 	return CHECK_PASSED;
 }
 
 int format_trade(char * buffer, int * offset, format_field_t * field, int * trade) {
-	int initial_offset = 0;
+	char trade_list[BUF_SIZE];
+	int trade_offset = 0;
+
 	if(trade[TRADE_NODROP] > 0 || trade[TRADE_NOTRADE] > 0 || 
 	   trade[TRADE_NOAUCTION] > 0 || trade[TRADE_NOSELLTONPC] > 0 || 
 	   trade[TRADE_NOMAIL] > 0) {
-		*offset += sprintf(&buffer[*offset], "Item cannot be ");
-		initial_offset = *offset;
-		if(trade[TRADE_NODROP] > 0) 		*offset += sprintf(&buffer[*offset], "%sdropped", (initial_offset < *offset)?", ":"");
-		if(trade[TRADE_NOTRADE] > 0) 		*offset += sprintf(&buffer[*offset], "%straded, vended", (initial_offset < *offset)?", ":"");
-		if(trade[TRADE_NOAUCTION] > 0) 		*offset += sprintf(&buffer[*offset], "%sauctioned", (initial_offset < *offset)?", ":"");
-		if(trade[TRADE_NOSELLTONPC] > 0) 	*offset += sprintf(&buffer[*offset], "%ssold", (initial_offset < *offset)?", ":"");
-		if(trade[TRADE_NOMAIL] > 0) 		*offset += sprintf(&buffer[*offset], "%smailed", (initial_offset < *offset)?", ":"");
-		*offset += sprintf(&buffer[*offset], ".\n");
+		trade_offset = 0;
+		trade_offset += sprintf(&trade_list[trade_offset], "Item cannot be ");
+		if(trade[TRADE_NODROP] > 0) 		trade_offset += sprintf(&trade_list[trade_offset], "%sdropped", (trade_offset != 0)?", ":"");
+		if(trade[TRADE_NOTRADE] > 0) 		trade_offset += sprintf(&trade_list[trade_offset], "%straded, vended", (trade_offset != 0)?", ":"");
+		if(trade[TRADE_NOAUCTION] > 0) 		trade_offset += sprintf(&trade_list[trade_offset], "%sauctioned", (trade_offset != 0)?", ":"");
+		if(trade[TRADE_NOSELLTONPC] > 0) 	trade_offset += sprintf(&trade_list[trade_offset], "%ssold", (trade_offset != 0)?", ":"");
+		if(trade[TRADE_NOMAIL] > 0) 		trade_offset += sprintf(&trade_list[trade_offset], "%smailed", (trade_offset != 0)?", ":"");
+		format_field_string(buffer, offset, field, trade_list);
 	}
 
 
 	if(trade[TRADE_NOCART] > 0 || trade[TRADE_NOSTORAGE] > 0 || trade[TRADE_NOGSTORAGE] > 0) {
-		*offset += sprintf(&buffer[*offset], "Item cannot be stored in ");
-		initial_offset = *offset;
-		if(trade[TRADE_NOCART] > 0) 			*offset += sprintf(&buffer[*offset], "%scart", (initial_offset < *offset)?", ":"");
-		if(trade[TRADE_NOSTORAGE] > 0) 			*offset += sprintf(&buffer[*offset], "%sstorage", (initial_offset < *offset)?", ":"");
-		if(trade[TRADE_NOGSTORAGE] > 0) 		*offset += sprintf(&buffer[*offset], "%sguild storage", (initial_offset < *offset)?", ":"");
-		*offset += sprintf(&buffer[*offset], ".\n");
+		trade_offset = 0;
+		trade_offset += sprintf(&trade_list[trade_offset], "Item cannot be stored in ");
+		if(trade[TRADE_NOCART] > 0) 			trade_offset += sprintf(&trade_list[trade_offset], "%scart", (trade_offset != 0)?", ":"");
+		if(trade[TRADE_NOSTORAGE] > 0) 			trade_offset += sprintf(&trade_list[trade_offset], "%sstorage", (trade_offset != 0)?", ":"");
+		if(trade[TRADE_NOGSTORAGE] > 0) 		trade_offset += sprintf(&trade_list[trade_offset], "%sguild storage", (trade_offset != 0)?", ":"");
+		format_field_string(buffer, offset, field, trade_list);	
 	}
 
-	if(trade[TRADE_PARTNEROVERRIDE] > 0) 	*offset += sprintf(&buffer[*offset], "Item shared between partners.\n");
+	if(trade[TRADE_PARTNEROVERRIDE] > 0)
+		format_field_string(buffer, offset, field, "Item shared between partners.");
 	return CHECK_PASSED;
 }
 
@@ -947,12 +929,56 @@ int format_stack(char * buffer, int * offset, format_field_t * field, int * stac
 	if(amount == 0 || type == 0) return CHECK_FAILED;
 
 	/* write the text */
-	*offset += sprintf(&buffer[*offset], "Stack Restriction: ");
+	*offset += sprintf(&buffer[*offset], "Item Stack Restriction: ");
+	if(field->color[0] != '\0') *offset += sprintf(&buffer[*offset], "^%s", field->color);
 	initial_offset = *offset;
 	if(type & 0x1) *offset += sprintf(&buffer[*offset], "%sinventory", (initial_offset < *offset)?", ":"");
 	if(type & 0x2) *offset += sprintf(&buffer[*offset], "%scart", (initial_offset < *offset)?", ":"");
 	if(type & 0x3) *offset += sprintf(&buffer[*offset], "%sstorage", (initial_offset < *offset)?", ":"");
 	if(type & 0x4) *offset += sprintf(&buffer[*offset], "%sguild storage", (initial_offset < *offset)?", ":"");
-	*offset += sprintf(&buffer[*offset], ".\nStack Limit: %d\n", amount);
+	if(field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], ".^%s\nItem Stack Limit: ^%s%d^%s\n", DEFAULT_COLOR, field->color, amount, DEFAULT_COLOR);
+	} else {
+		*offset += sprintf(&buffer[*offset], ".\nItem Stack Limit: %d\n", amount);
+	}
+	return CHECK_PASSED;
+}
+
+int format_field_string(char * buffer, int * offset, format_field_t * field, char * string) {
+	if(field->text[0] != '\0' && field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "%s^%s%s^%s\n", field->text, field->color, string, DEFAULT_COLOR);
+	} else if(field->text[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "%s%s\n", field->text, string);
+	} else if(field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "^%s%s^%s\n", field->color, string, DEFAULT_COLOR);
+	} else {
+		*offset += sprintf(&buffer[*offset], "%s\n", string);
+	}
+	return CHECK_PASSED;
+}
+
+int format_field_double(char * buffer, int * offset, format_field_t * field, double value) {
+	if(field->text[0] != '\0' && field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "%s^%s%.2f^%s\n", field->text, field->color, value, DEFAULT_COLOR);
+	} else if(field->text[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "%s%.2f\n", field->text, value);
+	} else if(field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "^%s%.2f^%s\n", field->color, value, DEFAULT_COLOR);
+	} else {
+		*offset += sprintf(&buffer[*offset], "%.2f\n", value);
+	}
+	return CHECK_PASSED;
+}
+
+int format_field_integer(char * buffer, int * offset, format_field_t * field, int value) {
+	if(field->text[0] != '\0' && field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "%s^%s%d^%s\n", field->text, field->color, value, DEFAULT_COLOR);
+	} else if(field->text[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "%s%d\n", field->text, value);
+	} else if(field->color[0] != '\0') {
+		*offset += sprintf(&buffer[*offset], "^%s%d^%s\n", field->color, value, DEFAULT_COLOR);
+	} else {
+		*offset += sprintf(&buffer[*offset], "%d\n", value);
+	}
 	return CHECK_PASSED;
 }
