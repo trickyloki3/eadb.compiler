@@ -25,6 +25,8 @@
  	#define status_search_sql 		"SELECT * FROM status_res WHERE scid = ? AND scstr = ? COLLATE NOCASE;"
  	#define var_search_sql 			"SELECT * FROM var_res WHERE id = ? COLLATE NOCASE;"
  	#define block_res_key_sql 		"SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
+ 	#define id_res_id_sql			"SELECT * FROM id_res WHERE id = ?;"
+ 	#define num_id_res_id_sql		"SELECT * FROM numid_res WHERE id = ?;"
 
  	/* constant database */
  	typedef struct const_t {
@@ -172,6 +174,8 @@
  		sqlite3_stmt * status_res_id_name_search;
  		sqlite3_stmt * var_res_id_search;
  		sqlite3_stmt * block_res_key_search;
+ 		sqlite3_stmt * id_res_id_search;
+ 		sqlite3_stmt * num_id_res_id_search;
  		/* athena database search */
  		sqlite3_stmt * item_iterate;
  		sqlite3_stmt * const_db_name_search;
@@ -200,6 +204,8 @@
  	int status_search_id_name(db_search_t * db, status_res * status, int id, const char * name);
  	int var_search_id(db_search_t * db, var_res * var, const char * id);
  	int block_search_name(db_search_t * db, block_res * block, const char * name);
+ 	int id_res_id_search(db_search_t * db, nid_res * nid, int id);
+ 	int num_id_res_id_search(db_search_t * db, nid_res * nid, int id);
 
  	/* athena database querying */
  	int item_iterate(db_search_t * db, item_t * item);

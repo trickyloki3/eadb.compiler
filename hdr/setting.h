@@ -23,10 +23,12 @@
  	#define MAX_INGREDIENT			16			/* maximum pair of item id and amount */
  	#define MAX_BONUS				5			/* maximum number of bonuses */
  	#define MAX_RESNAME_SIZE		256			/* maximum resource file size; approx MAX_PATH in windows */
+ 
  	#define FMT_TEXT_SIZE			64			/* maximum format text size */
  	#define FMT_BUF_SIZE			65536
  	#define FMT_LINE_SIZE			128
  	#define FMT_COLOR_SIZE			7
+
  	/* type definition for database with strings that contain parsable values,
  	 * 1:2:3:4:5 can be parsed into 5 separate values 1, 2, 3, 4, and 5 */
 	typedef union {

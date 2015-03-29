@@ -39,7 +39,9 @@ int init_db(db_search_t * db, int mode, const char * resource_path, const char *
 		sqlite3_prepare_v2(db->resource, bonus_search_sql, 		strlen(bonus_search_sql), 	&db->bonus_res_prefix_name_search, 	NULL) != SQLITE_OK ||
 		sqlite3_prepare_v2(db->resource, status_search_sql, 	strlen(status_search_sql), 	&db->status_res_id_name_search, 	NULL) != SQLITE_OK ||
 		sqlite3_prepare_v2(db->resource, var_search_sql, 		strlen(var_search_sql), 	&db->var_res_id_search, 			NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, block_res_key_sql, 	strlen(block_res_key_sql), 	&db->block_res_key_search, 			NULL)) {
+		sqlite3_prepare_v2(db->resource, block_res_key_sql, 	strlen(block_res_key_sql), 	&db->block_res_key_search, 			NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->resource, id_res_id_sql, 		strlen(id_res_id_sql), 		&db->id_res_id_search, 				NULL) != SQLITE_OK ||
+		sqlite3_prepare_v2(db->resource, num_id_res_id_sql, 	strlen(num_id_res_id_sql), 	&db->num_id_res_id_search, 			NULL) != SQLITE_OK) {
 			/* failed to load resource queries */
 			status = sqlite3_errcode(db->resource);
 			error = sqlite3_errmsg(db->resource);
@@ -147,6 +149,7 @@ int test_db(void) {
 	status_res 		status;
 	var_res 		var;
 	block_res 		block;
+	nid_res 		nid;
 	
 	const_t 		const_search;
 	skill_t 		skill_search;
@@ -168,6 +171,8 @@ int test_db(void) {
 	fprintf(stderr,"[test]: %-25s ... %6s\n", "status_search_id_name", 		(status_search_id_name(&db, &status, 1, "sc_freeze") == CHECK_PASSED) ? "PASSED" : "FAILED");	
 	fprintf(stderr,"[test]: %-25s ... %6s\n", "var_search_id", 				(var_search_id(&db, &var, "getrefine") == CHECK_PASSED) ? "PASSED" : "FAILED");	
 	fprintf(stderr,"[test]: %-25s ... %6s\n", "block_search_name", 			(block_search_name(&db, &block, "if") == CHECK_PASSED) ? "PASSED" : "FAILED");
+	fprintf(stderr,"[test]: %-25s ... %6s\n", "id_res_id_search", 			(id_res_id_search(&db, &nid, 501) == CHECK_PASSED) ? "PASSED" : "FAILED");
+	fprintf(stderr,"[test]: %-25s ... %6s\n", "num_id_res_id_search", 		(num_id_res_id_search(&db, &nid, 501) == CHECK_PASSED) ? "PASSED" : "FAILED");
 	/* rathena query test */	
 	fprintf(stderr,"[test]: %-25s ... %6s\n", "const_db_search_name", 		(const_db_search_name(&db, &const_search, "Job_Gunslinger") == CHECK_PASSED) ? "PASSED" : "FAILED");
 	fprintf(stderr,"[test]: %-25s ... %6s\n", "const_db_search_id", 		(const_db_search_id(&db, &const_search, 24) == CHECK_PASSED) ? "PASSED" : "FAILED");
@@ -431,6 +436,36 @@ int block_search_name(db_search_t * db, block_res * block, const char * name) {
 		block->flag = sqlite3_column_int(db->block_res_key_search, 2);
 	}
 	if(sqlite3_reset(db->block_res_key_search) != SQLITE_OK) 
+		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
+	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+}
+
+int id_res_id_search(db_search_t * db, nid_res * nid, int id) {
+	int status = 0;
+	if(exit_null_safe(2, db, nid)) return CHECK_FAILED;
+	sqlite3_clear_bindings(db->id_res_id_search);
+	sqlite3_bind_int(db->id_res_id_search, 1, id);
+	status = sqlite3_step(db->id_res_id_search);
+	if(status == SQLITE_ROW) {
+		nid->id = sqlite3_column_int(db->id_res_id_search, 0);
+		strncopy(nid->res, MAX_RESNAME_SIZE, sqlite3_column_text(db->id_res_id_search, 1));
+	}
+	if(sqlite3_reset(db->id_res_id_search) != SQLITE_OK) 
+		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
+	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+}
+
+int num_id_res_id_search(db_search_t * db, nid_res * nid, int id) {
+	int status = 0;
+	if(exit_null_safe(2, db, nid)) return CHECK_FAILED;
+	sqlite3_clear_bindings(db->num_id_res_id_search);
+	sqlite3_bind_int(db->num_id_res_id_search, 1, id);
+	status = sqlite3_step(db->num_id_res_id_search);
+	if(status == SQLITE_ROW) {
+		nid->id = sqlite3_column_int(db->num_id_res_id_search, 0);
+		strncopy(nid->res, MAX_RESNAME_SIZE, sqlite3_column_text(db->num_id_res_id_search, 1));
+	}
+	if(sqlite3_reset(db->num_id_res_id_search) != SQLITE_OK) 
 		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
 	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
 }
