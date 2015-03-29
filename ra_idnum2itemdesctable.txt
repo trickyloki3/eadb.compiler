@@ -1,3 +1,4 @@
+// Item Script Translation Project
 501#
 A potion made from grinded Red Herbs.
 Recover HP by 45 ~ 65.
@@ -74557,3 +74558,4 @@ Required Level: ^777777100^000000
 Job: ^777777Novice, Swordsman Class, Magician Class, Archer Class, Merchant Class, Thief Class, Ninja Class, Taekwon Class^000000
 Tier: ^777777First & Second Job, Rebirth First & Second Job, Second Baby Job^000000
 #
+// trickyloki3

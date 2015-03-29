@@ -1,3 +1,4 @@
+// Item Script Translation Project
 501#
 A potion made from grinded Red Herbs.
 Recover HP by 45 ~ 65.
@@ -46580,3 +46581,4 @@ Weight: ^77777710^000000
 ^FF0000Item cannot be , dropped, traded, vended, auctioned, sold, mailed^000000
 ^FF0000Item cannot be stored in , cart, storage, guild storage^000000
 #
+// trickyloki3

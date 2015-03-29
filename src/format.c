@@ -441,6 +441,50 @@ int deit_format(format_t * format) {
 	return CHECK_PASSED;
 }
 
+int write_header(FILE * file, format_t * format, lua_State * lstate) {
+	if(format->file_format == FORMAT_TXT) {
+		lua_getglobal(lstate, "txt_header");
+	} else if(format->file_format == FORMAT_LUA) {
+		lua_getglobal(lstate, "lua_header");
+	} else {
+		exit_func_safe("failed write header on invalid file format %d", format->file_format);
+		return CHECK_FAILED;
+	}
+	/* check header type */
+	if(lua_isnil(lstate, -1)) {
+		exit_func_safe("missing '%s_header' from configuration", (format->file_format == FORMAT_TXT) ? "txt" : "lua");
+	} else if(!lua_isstring(lstate, -1)) {
+		exit_func_safe("missing '%s_header' must be a string value", (format->file_format == FORMAT_TXT) ? "txt" : "lua");
+	} else {
+		fprintf(file, "%s\n", lua_tostring(lstate, -1));
+	}
+
+	lua_pop(lstate, 1);
+	return CHECK_PASSED;
+}
+
+int write_footer(FILE * file, format_t * format, lua_State * lstate) {
+	if(format->file_format == FORMAT_TXT) {
+		lua_getglobal(lstate, "txt_footer");
+	} else if(format->file_format == FORMAT_LUA) {
+		lua_getglobal(lstate, "lua_footer");
+	} else {
+		exit_func_safe("failed write footer on invalid file format %d", format->file_format);
+		return CHECK_FAILED;
+	}
+	/* check footer type */
+	if(lua_isnil(lstate, -1)) {
+		exit_func_safe("missing '%s_footer' from configuration", (format->file_format == FORMAT_TXT) ? "txt" : "lua");
+	} else if(!lua_isstring(lstate, -1)) {
+		exit_func_safe("missing '%s_footer' must be a string value", (format->file_format == FORMAT_TXT) ? "txt" : "lua");
+	} else {
+		fprintf(file, "%s\n", lua_tostring(lstate, -1));
+	}
+
+	lua_pop(lstate, 1);
+	return CHECK_PASSED;
+}
+
 int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 	format_rule_t * item_rule = NULL;
 	format_field_t * item_field = NULL;
@@ -540,6 +584,7 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 }
 
 int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_t * item, char * script) {
+	/* weapon and armor have different unidentified and identified */
 	
 	return CHECK_PASSED;
 }

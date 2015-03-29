@@ -150,6 +150,8 @@
 	int deit_format(format_t *);
 
 	/* write item fields */
+	int write_header(FILE *, format_t *, lua_State *);
+	int write_footer(FILE *, format_t *, lua_State *);
 	int write_item(FILE *, format_t *, item_t *, char *);
 	int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
 	int write_item_lua(FILE *, format_t *, format_field_t *, item_t *, char *);

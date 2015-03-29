@@ -98,7 +98,10 @@ int main(int argc, char * argv[]) {
 		if(init_format(&format, lstate, table_index, file_format_type, script.mode) != CHECK_PASSED)
 			return exit_abt_safe("failed to load item format configuration");
 
-		/* process all items in database */
+		/* write the header */
+		write_header(description_file, &format, lstate);
+
+		/* write the item description */
 		item_status = item_iterate(script.db, &item);
 		if(item_status == SQLITE_ROW) {
 			while(item_status == SQLITE_ROW) {
@@ -134,6 +137,9 @@ int main(int argc, char * argv[]) {
 			exit_abt_safe("failed to query item database");
 		}
 		fprintf(stderr,"[info]: compiled all %d items in %d seconds.\n", item_count, (int) (time(NULL) - start_time));
+
+		/* write the footer */
+		write_footer(description_file, &format, lstate);
 
 		/* free all the resources */
 		deit_format(&format);
