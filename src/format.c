@@ -442,6 +442,8 @@ int deit_format(format_t * format) {
 }
 
 int write_header(FILE * file, format_t * format, lua_State * lstate) {
+	const char * header = NULL;
+	size_t length = 0;
 	if(format->file_format == FORMAT_TXT) {
 		lua_getglobal(lstate, "txt_header");
 	} else if(format->file_format == FORMAT_LUA) {
@@ -456,7 +458,9 @@ int write_header(FILE * file, format_t * format, lua_State * lstate) {
 	} else if(!lua_isstring(lstate, -1)) {
 		exit_func_safe("missing '%s_header' must be a string value", (format->file_format == FORMAT_TXT) ? "txt" : "lua");
 	} else {
-		fprintf(file, "%s\n", lua_tostring(lstate, -1));
+		header = lua_tolstring(lstate, -1, &length);
+		if(length > 0)
+			fprintf(file, "%s\n", header);
 	}
 
 	lua_pop(lstate, 1);
@@ -464,6 +468,8 @@ int write_header(FILE * file, format_t * format, lua_State * lstate) {
 }
 
 int write_footer(FILE * file, format_t * format, lua_State * lstate) {
+	const char * footer = NULL;
+	size_t length = 0;
 	if(format->file_format == FORMAT_TXT) {
 		lua_getglobal(lstate, "txt_footer");
 	} else if(format->file_format == FORMAT_LUA) {
@@ -478,7 +484,9 @@ int write_footer(FILE * file, format_t * format, lua_State * lstate) {
 	} else if(!lua_isstring(lstate, -1)) {
 		exit_func_safe("missing '%s_footer' must be a string value", (format->file_format == FORMAT_TXT) ? "txt" : "lua");
 	} else {
-		fprintf(file, "%s\n", lua_tostring(lstate, -1));
+		footer = lua_tolstring(lstate, -1, &length);
+		if(length > 0)
+			fprintf(file, "%s\n", footer);
 	}
 
 	lua_pop(lstate, 1);
@@ -566,8 +574,11 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 	int desc_offset = 0;
 	char buffer[FMT_BUF_SIZE];
 	int offset = 0;
+	char loc[BUF_SIZE];
+	int loc_offset = 0;
 	desc[0] = '\0';
 	buffer[0] = '\0';
+	loc[0] = '\0';
 
 	/* search for resource file name */
 	if(id_res_id_search(format->server_db, &id_res, item->id) || 
@@ -596,15 +607,51 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 	}
 
 	/* write item header */
-	fprintf(file, "\t[%d] = {\n", item->id);
-	fprintf(file, "\t\tunidentifiedDisplayName = \"%s\",\n", item->name);
-	fprintf(file, "\t\tunidentifiedResourceName = \"%s\",\n", numid_res.res);
-	fprintf(file, "\t\tunidentifiedDescriptionName = {\n%s\t\t},\n", desc);
-	fprintf(file, "\t\tidentifiedDisplayName = \"%s\",\n", item->name);
-	fprintf(file, "\t\tidentifiedResourceName = \"%s\",\n", id_res.res);
-	fprintf(file, "\t\tidentifiedDescriptionName = {\n%s\t\t},\n", desc);
-	fprintf(file, "\t\tslotCount = %d,\n", item->slots);
-	fprintf(file, "\t\tClassNum = %d\n", item->view);
+	if(item->type == ARMOR_ITEM_TYPE) {
+		format_location(loc, &loc_offset, field, item->loc);
+		loc[loc_offset - 1] = '\0';
+		fprintf(file, 
+			"\t[%d] = {\n"
+			"\t\tunidentifiedDisplayName = \"%s\",\n"
+			"\t\tunidentifiedResourceName = \"%s\",\n"
+			"\t\tunidentifiedDescriptionName = {\n\t\t\t[===[Unknown Item, can be identified by ^6A5ACDMagnifier^000000.]===]\n\t\t},\n"
+			"\t\tidentifiedDisplayName = \"%s\",\n"
+			"\t\tidentifiedResourceName = \"%s\",\n"
+			"\t\tidentifiedDescriptionName = {\n%s\t\t},\n"
+			"\t\tslotCount = %d,\n"
+			"\t\tClassNum = %d\n", 
+			item->id, loc, numid_res.res,
+			item->name, id_res.res, desc, 
+			item->slots, item->view);
+	} else if(item->type == WEAPON_ITEM_TYPE) {
+		fprintf(file, 
+			"\t[%d] = {\n"
+			"\t\tunidentifiedDisplayName = \"%s\",\n"
+			"\t\tunidentifiedResourceName = \"%s\",\n"
+			"\t\tunidentifiedDescriptionName = {\n\t\t\t[===[Unknown Item, can be identified by ^6A5ACDMagnifier^000000.]===]\n\t\t},\n"
+			"\t\tidentifiedDisplayName = \"%s\",\n"
+			"\t\tidentifiedResourceName = \"%s\",\n"
+			"\t\tidentifiedDescriptionName = {\n%s\t\t},\n"
+			"\t\tslotCount = %d,\n"
+			"\t\tClassNum = %d\n", 
+			item->id, weapon_tbl(item->view), numid_res.res,
+			item->name, id_res.res, desc, 
+			item->slots, item->view);
+	} else {
+		fprintf(file, 
+			"\t[%d] = {\n"
+			"\t\tunidentifiedDisplayName = \"%s\",\n"
+			"\t\tunidentifiedResourceName = \"%s\",\n"
+			"\t\tunidentifiedDescriptionName = {\n%s\t\t},\n"
+			"\t\tidentifiedDisplayName = \"%s\",\n"
+			"\t\tidentifiedResourceName = \"%s\",\n"
+			"\t\tidentifiedDescriptionName = {\n%s\t\t},\n"
+			"\t\tslotCount = %d,\n"
+			"\t\tClassNum = %d\n", 
+			item->id, item->name, numid_res.res,
+			desc, item->name, id_res.res, desc, 
+			item->slots, item->view);
+	}
 
 	/* write item footer */
 	fprintf(file, "\t},\n");

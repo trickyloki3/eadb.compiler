@@ -1,4 +1,3 @@
-// Item Script Translation Project
 501#
 A potion made from grinded Red Herbs.
 Recover HP by 45 ~ 65.
@@ -63788,4 +63787,3 @@ Location: ^777777Weapon, Shield^000000
 Job: ^777777Gunslinger Class^000000
 Tier: ^777777Every Tier^000000
 #
-// trickyloki3
