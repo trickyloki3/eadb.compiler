@@ -585,7 +585,7 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 		for(i = 0; i < offset; i++) {
 			if(buffer[i] == '\n' || buffer[i] == '\r') {
 				buffer[i] = '\0';
-				desc_offset += sprintf(&desc[desc_offset], "\t\t\t\"%s\",\n", str);
+				desc_offset += sprintf(&desc[desc_offset], "\t\t\t[===[%s]===],\n", str);
 				str = &buffer[i + 1];
 			}
 		}
