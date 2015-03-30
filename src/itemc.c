@@ -98,6 +98,9 @@ int main(int argc, char * argv[]) {
 		if(init_format(&format, lstate, table_index, file_format_type, script.mode) != CHECK_PASSED)
 			return exit_abt_safe("failed to load item format configuration");
 
+		/* format need to borrow resource db reference */
+		format.server_db = &db;
+		
 		/* write the header */
 		write_header(description_file, &format, lstate);
 

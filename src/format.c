@@ -539,41 +539,13 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 int write_item_text(FILE * file, format_t * format, format_field_t * field, item_t * item, char * script) {
 	char buffer[FMT_BUF_SIZE];
 	int offset = 0;
-	flavour_text_t flavour;
 	buffer[0] = '\0';
 
 	/* write text format header */
 	fprintf(file,"%d#\n", item->id);
 	
-	while(field != NULL) {
-		switch(field->field) {
-			case FLAVOUR_ITEM_FIELD: 		format_flavour_text(buffer, &offset, format, field, &flavour, item->id); 			break;
-			case SCRIPT_ITEM_FIELD:			format_script(buffer, &offset, field, script); 										break;
-			case TYPE_ITEM_FIELD:			format_type(buffer, &offset, field, item->type);									break;
-			case BUY_ITEM_FIELD:			format_integer(buffer, &offset, field, item->buy); 									break;
-			case SELL_ITEM_FIELD:			format_integer(buffer, &offset, field, item->sell); 								break;
-			case WEIGHT_ITEM_FIELD: 		format_weight(buffer, &offset, field, item->weight); 								break;
-			case ATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->atk); 									break;
-			case DEF_ITEM_FIELD:			format_integer(buffer, &offset, field, item->def); 									break;
-			case RANGE_ITEM_FIELD:			format_integer(buffer, &offset, field, item->range); 								break;
-			case JOB_ITEM_FIELD:			format_job(buffer, &offset, field, item->job, item->upper, item->gender);			break;
-			case GENDER_ITEM_FIELD:			format_gender(buffer, &offset, field, item->gender);								break;
-			case LOC_ITEM_FIELD:			format_location(buffer, &offset, field, item->loc);									break;
-			case WEAPON_LEVEL_ITEM_FIELD:	format_integer(buffer, &offset, field, item->wlv); 									break;
-			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, &offset, field, item->elv_min); 								break;
-			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, &offset, field, item->refineable, format->server_type);	break;
-			case VIEW_ITEM_FIELD:			format_view(buffer, &offset, field, item->view, item->type);						break;
-			case UPPER_ITEM_FIELD:			format_upper(buffer, &offset, field, item->upper, format->server_type);				break;
-			case MATK_ITEM_FIELD:			format_integer(buffer, &offset, field, item->matk); 								break;
-			case BINDONEQUIP_ITEM_FIELD:	format_boolean(buffer, &offset, field, item->bindonequip); 							break;
-			case BUYINGSTORE_ITEM_FIELD:	format_boolean(buffer, &offset, field, item->buyingstore); 							break;
-			case DELAY_ITEM_FIELD:			format_delay(buffer, &offset, field, item->delay); 									break;
-			case TRADE_ITEM_FIELD:			format_trade(buffer, &offset, field, item->trade);									break;
-			case STACK_ITEM_FIELD:			format_stack(buffer, &offset, field, item->stack);									break;
-			default: break;
-		}
-		field = field->next;
-	}
+	/* get the item description */
+	format_description(format, field, item, script, buffer, &offset);
 
 	/* write the text format content and footer */
 	(offset > 0) ?
@@ -584,8 +556,92 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 }
 
 int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_t * item, char * script) {
-	/* weapon and armor have different unidentified and identified */
+	nid_res id_res;
+	nid_res numid_res;
+
+	/* hold the item description */
+	int i = 0;
+	char * str = 0;
+	char desc[FMT_BUF_SIZE];
+	int desc_offset = 0;
+	char buffer[FMT_BUF_SIZE];
+	int offset = 0;
+	desc[0] = '\0';
+	buffer[0] = '\0';
+
+	/* search for resource file name */
+	if(id_res_id_search(format->server_db, &id_res, item->id) || 
+	   num_id_res_id_search(format->server_db, &numid_res, item->id)) {
+		exit_func_safe("failed to find resource file name; skipping item id %d", item->id);
+		return CHECK_FAILED;
+	}
 	
+	/* get the item description */
+	format_description(format, field, item, script, buffer, &offset);
+
+	if(offset >= 0) {
+		/* format the item description into lua list of strings */
+		str = &buffer[0];
+		for(i = 0; i < offset; i++) {
+			if(buffer[i] == '\n' || buffer[i] == '\r') {
+				buffer[i] = '\0';
+				desc_offset += sprintf(&desc[desc_offset], "\t\t\t\"%s\",\n", str);
+				str = &buffer[i + 1];
+			}
+		}
+		if(desc_offset >= 2) {
+			desc[desc_offset - 2] = '\n';
+			desc[desc_offset - 1] = '\0';
+		}
+	}
+
+	/* write item header */
+	fprintf(file, "\t[%d] = {\n", item->id);
+	fprintf(file, "\t\tunidentifiedDisplayName = \"%s\",\n", item->name);
+	fprintf(file, "\t\tunidentifiedResourceName = \"%s\",\n", numid_res.res);
+	fprintf(file, "\t\tunidentifiedDescriptionName = {\n%s\t\t},\n", desc);
+	fprintf(file, "\t\tidentifiedDisplayName = \"%s\",\n", item->name);
+	fprintf(file, "\t\tidentifiedResourceName = \"%s\",\n", id_res.res);
+	fprintf(file, "\t\tidentifiedDescriptionName = {\n%s\t\t},\n", desc);
+	fprintf(file, "\t\tslotCount = %d,\n", item->slots);
+	fprintf(file, "\t\tClassNum = %d\n", item->view);
+
+	/* write item footer */
+	fprintf(file, "\t},\n");
+	return CHECK_PASSED;
+}
+
+int format_description(format_t * format, format_field_t * field, item_t * item, char * script, char * buffer, int * offset) {
+	flavour_text_t flavour;
+	while(field != NULL) {
+		switch(field->field) {
+			case FLAVOUR_ITEM_FIELD: 		format_flavour_text(buffer, offset, format, field, &flavour, item->id); 			break;
+			case SCRIPT_ITEM_FIELD:			format_script(buffer, offset, field, script); 										break;
+			case TYPE_ITEM_FIELD:			format_type(buffer, offset, field, item->type);										break;
+			case BUY_ITEM_FIELD:			format_integer(buffer, offset, field, item->buy); 									break;
+			case SELL_ITEM_FIELD:			format_integer(buffer, offset, field, item->sell); 									break;
+			case WEIGHT_ITEM_FIELD: 		format_weight(buffer, offset, field, item->weight); 								break;
+			case ATK_ITEM_FIELD:			format_integer(buffer, offset, field, item->atk); 									break;
+			case DEF_ITEM_FIELD:			format_integer(buffer, offset, field, item->def); 									break;
+			case RANGE_ITEM_FIELD:			format_integer(buffer, offset, field, item->range); 								break;
+			case JOB_ITEM_FIELD:			format_job(buffer, offset, field, item->job, item->upper, item->gender);			break;
+			case GENDER_ITEM_FIELD:			format_gender(buffer, offset, field, item->gender);									break;
+			case LOC_ITEM_FIELD:			format_location(buffer, offset, field, item->loc);									break;
+			case WEAPON_LEVEL_ITEM_FIELD:	format_integer(buffer, offset, field, item->wlv); 									break;
+			case LEVEL_REQUIRE_ITEM_FIELD:	format_integer(buffer, offset, field, item->elv_min); 								break;
+			case REFINE_ABILITY_ITEM_FIELD:	format_refinement(buffer, offset, field, item->refineable, format->server_type);	break;
+			case VIEW_ITEM_FIELD:			format_view(buffer, offset, field, item->view, item->type);							break;
+			case UPPER_ITEM_FIELD:			format_upper(buffer, offset, field, item->upper, format->server_type);				break;
+			case MATK_ITEM_FIELD:			format_integer(buffer, offset, field, item->matk); 									break;
+			case BINDONEQUIP_ITEM_FIELD:	format_boolean(buffer, offset, field, item->bindonequip); 							break;
+			case BUYINGSTORE_ITEM_FIELD:	format_boolean(buffer, offset, field, item->buyingstore); 							break;
+			case DELAY_ITEM_FIELD:			format_delay(buffer, offset, field, item->delay); 									break;
+			case TRADE_ITEM_FIELD:			format_trade(buffer, offset, field, item->trade);									break;
+			case STACK_ITEM_FIELD:			format_stack(buffer, offset, field, item->stack);									break;
+			default: break;
+		}
+		field = field->next;
+	}
 	return CHECK_PASSED;
 }
 

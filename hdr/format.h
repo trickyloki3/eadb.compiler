@@ -130,6 +130,7 @@
 		int server_type;									/* eAthena, rAthena, or Hercules */
 		int file_format;									/* idnum2itemdesctabke.txt or itemInfo.lua */
 		format_rule_t * rule_list[ITEM_TYPE_SIZE];			/* format rules for each item type */
+		db_search_t * server_db;
 		sqlite3 * flavour_text;								/* flavour text database */
 		sqlite3_stmt * flavour_text_id_search;				/* search for flavour text by item id */
 	} format_t;
@@ -155,6 +156,7 @@
 	int write_item(FILE *, format_t *, item_t *, char *);
 	int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
 	int write_item_lua(FILE *, format_t *, format_field_t *, item_t *, char *);
+	int format_description(format_t *, format_field_t *, item_t *, char *, char *, int *);
 	int format_flavour_text(char *, int *, format_t *, format_field_t *, flavour_text_t *, int);
 	int format_script(char *, int *, format_field_t *, char *);
 	int format_integer(char *, int *, format_field_t *, int);			/* non-interpreted values */
