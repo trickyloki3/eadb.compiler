@@ -14,13 +14,13 @@
     #include <string.h>
     #include <errno.h>
     #include <ctype.h>
-    #include <stdint.h>
  	#include "setting.h"
 
-	/* error checking and exiting */
- 	#define ENABLE_EXIT 0
- 	#define CHECK_PASSED 0 /* return by exit function for error checking */
+ 	#define ENABLE_EXIT 0	/* set to 1 for debugging */
+ 	#define CHECK_PASSED 0
  	#define CHECK_FAILED 1
+
+	/* error functions */
  	extern char err_buf[BUF_SIZE];
  	#define exit_null_safe(X, ...) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)
  	#define exit_func_safe(X, ...) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, exit_msg(err_buf, (X), __VA_ARGS__))
@@ -29,49 +29,30 @@
 	int exit_null(const char *, const char *, const int, int, ...);
 	int exit_func(const char *, const char *, const int, int, const char *);
 
-	/* string of ASCII character set used for generating random string */
-	#define ASCII_SET "abcdefghijklmnopqrstuvwxyz0123456789"
-	#define ASCII_SZE 36
-	/* Generate a string using the ASCII character set.
-   	   int length - length of the string to generate. */
+	/* array structure */
+	typedef struct {
+		void * array;
+		int size;
+		char delimit;
+	} array_w;
+
+	/* string functions */
 	char * random_string(int);
-
-	/* Improved non-case sensitive string comparsion;
-	 * Skip and adjust for non-digit and non-alpha;
-	 * -1 s1 < s2 | 0 s1 == s2 | 1 s1 > s2 
-	 */
+	void strncopy(char *, int, const unsigned char *);
+	int strnload(char * buf, int size, char * val);
 	int ncs_strcmp(const char *, const char *);
-
-	/* Convert the string into an integer.
-	 * char * str - The string containing the integer.
-	 * int base - The integer notation of the string, i.e
-	 * binary, octal, decimal, hexadecimal, ... (2 - 32) 
-	 */
 	int convert_integer(const char *, int);
+	void convert_integer_delimit(char *, char *, int, ...);
+	int convert_integer_delimit_array(const char *, const char *, array_w *);
+	int convert_integer_delimit_static(const char *, const char *, int *, int);
 	int convert_uinteger(const char *, int);
 	char * convert_string(const char *);
 
-	/* utility array with sub-delimiting functions */
-	typedef struct {  /* array wrapper */
-		void * array;  /* array to int, long, etc  */
-		int size;  /* total number of elements */
-		char delimit;  /* delimiter to separate elements when writing */
-	} array_w;
-	void array_io(array_w, FILE *);
-	void array_unload(array_w);
+	/* string delimit functions */
+	int count_delimit(const char *, const char *);
+	const char * substr_delimit(const char *, char *, const char *);
 
-	/* special string sub-delimiting */
-	void convert_delimit_integer(char *, char, int, ...);
-	char * substr_delimit(char *, char *, char);
-	const char * substr_delimit_list(const char *, char *, const char *);
-	int convert_integer_list(char *, char *, array_w *);
-	int convert_integer_list_static(const char *, const char *, int *, int);
-
-	/* copy upto function */
-	void strncopy(char *, int, const unsigned char *);
-	int strnload(char * buf, int size, char * val);
-
-	/* auxiliary converters */
+	/* array functions */
 	char * array_to_string(char *, int *);
 	char * array_to_string_cnt(char *, int *, int);
 	int array_field_cnt(char *);

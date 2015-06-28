@@ -10,7 +10,6 @@
    #include <stdio.h>
    #include <stdlib.h>
    #include <string.h>
-   #include <limits.h>
    #define SET_DEBUG 0
    #define DONT_CARE 0
    #define INIT_OPERATOR '*'

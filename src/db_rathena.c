@@ -30,7 +30,7 @@ int item_ra_load(void * db, int row, int col, char * val) {
       case 4:   record->buy = convert_integer(val, 10); 								break;
       case 5:   record->sell = convert_integer(val, 10); 								break;
       case 6:   record->weight = convert_integer(val, 10); 								break;
-      case 7:   convert_delimit_integer(val, ':', 2, &record->atk, &record->matk); 		break;
+      case 7:   convert_integer_delimit(val, ":", 2, &record->atk, &record->matk); 		break;
       case 8:   record->def = convert_integer(val, 10); 								break;
       case 9:   record->range = convert_integer(val, 10); 								break;
       case 10:  record->slots = convert_integer(val, 10); 								break;
@@ -39,7 +39,7 @@ int item_ra_load(void * db, int row, int col, char * val) {
       case 13:  record->gender = convert_integer(val, 10); 								break;
       case 14:  record->loc = convert_integer(val, 10); 								break;
       case 15:  record->wlv = convert_integer(val, 10); 								break;
-      case 16:  convert_delimit_integer(val, ':', 2, &record->elv, &record->elv_max);	break;
+      case 16:  convert_integer_delimit(val, ":", 2, &record->elv, &record->elv_max);	break;
       case 17:  record->refineable = convert_integer(val, 10); 							break;
       case 18:  record->view = convert_integer(val, 10); 								break;
       case 19:  strnload(record->script, MAX_SCRIPT_SIZE, val); 						break;
@@ -156,7 +156,7 @@ int produce_ra_load(void * db, int row, int col, char * val) {
 		case 2: record->item_lv = convert_integer(val,10); break;
 		case 3: record->skill_id = convert_integer(val,10); break;
 		case 4: record->skill_lv = convert_integer(val,10); break;
-		default: 
+		default:
 			(!alternate) ?
 				(record->item_id_req[material_cnt] = convert_integer(val,10)):
 				(record->item_amount_req[material_cnt++] = convert_integer(val,10));
@@ -246,7 +246,7 @@ int const_ra_load(void * db, int row, int col, char * val) {
 	const_ra * record = &((const_ra *) db)[row];
 	switch(col) {
 		case 0: strnload(record->name, MAX_NAME_SIZE, val); 							break;
-		case 1:  
+		case 1:
 			/* constant can be represented as hexadecimal or decimal */
 			record->value = (strlen(val) > 2 && val[0] == '0' && val[1] == 'x') ?
 				convert_integer(val, 16):
@@ -288,7 +288,7 @@ int combo_ra_load(void * db, int row, int col, char * val) {
 int create_rathena_database(db_ra_t * db, const char * path) {
 	int status = 0;
 	const char * error = NULL;
-	char * sql_error = NULL;	
+	char * sql_error = NULL;
 	if( /* open database connection specified by path */
 		sqlite3_open(path, &db->db) != SQLITE_OK ||
 		/* execute rathena table creation script */
@@ -783,7 +783,7 @@ int item_package_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_s
 		if(item_ra_name_search(db_search, package_ra_db[i].item_name, &item_name_search) != CHECK_PASSED) {
 			if(item_ra_id_search(db_search, convert_integer(package_ra_db[i].item_name, 10), &item_name_search) != CHECK_PASSED) {
 				exit_func_safe("failed to search for item id from item name %s", package_ra_db[i].item_name);
-				break;	
+				break;
 			}
 		}
 		/* load the package into the item group database */
@@ -831,7 +831,7 @@ int item_combo_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_sea
 		offset = 0;
 		/* convert the item group string into an array of integers */
 		memset(&item_id_list, 0, sizeof(array_w));
-		convert_integer_list(combo_ra_db[i].item_id.str, ":", &item_id_list);
+		convert_integer_delimit_array(combo_ra_db[i].item_id.str, ":", &item_id_list);
 		item_id_array = item_id_list.array;
 
 		/* add the item id and script in the array of integers */

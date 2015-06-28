@@ -8,8 +8,10 @@
  */
 #include "util.h"
 
+/* global error buffer */
 char err_buf[BUF_SIZE];
 
+/* write formatted string into global error buffer */
 char * exit_msg(char * msg, char * format, ...) {
    int offset = 0;
    va_list list;
@@ -20,18 +22,19 @@ char * exit_msg(char * msg, char * format, ...) {
    return msg;
 }
 
+/* check whether variable arguments are NULL */
 int exit_null(const char * file_name, const char * function_name, const int line_number, int argc, ...) {
    int i = 0;
    va_list list;
    va_start(list, argc);
    for(i = 0; i < argc; i++) {
       if(va_arg(list, void *) == NULL) {
-         fprintf(stderr, 
-            "[warn]: %s;%s;%d; null detected in position %d.\n", 
+         fprintf(stderr,
+            "[warn]: %s;%s;%d; null detected in position %d.\n",
             file_name, function_name, line_number, i + 1);
 #if ENABLE_EXIT
          exit(EXIT_FAILURE);
-#else 
+#else
          return CHECK_FAILED;
 #endif
       }
@@ -40,25 +43,94 @@ int exit_null(const char * file_name, const char * function_name, const int line
    return CHECK_PASSED;
 }
 
+/* print error message before exiting */
 int exit_func(const char * file_name, const char * function_name, const int line_number, int exitcode, const char * error) {
    fprintf(stderr, "[warn]: %s;%s;%d; %s.\n", file_name, function_name, line_number, error);
 #if ENABLE_EXIT
    exit(exitcode);
-#else 
+#else
    return CHECK_FAILED;
 #endif
 }
 
-char * random_string(int length) {
+/* generate random alpha-digit string */
+char * random_string(int len) {
+   static const char * alpha = "abcdefghijklmnopqrstuvwxyz0123456789";
+   static int alpha_len = 36;
+
    int i = 0;
-   char * random_string = malloc(sizeof(char) * (length + 1));
-   if(random_string == NULL) return NULL;
-   for(i = 0; i < length; i++)
-      random_string[i] = ASCII_SET[rand() % ASCII_SZE];
-   random_string[i] = '\0';
-   return random_string;
+   char * str = NULL;
+
+   /* length must be greater than 0 */
+   if(len <= 0)
+      return NULL;
+
+   str = calloc(len + 1, sizeof(char));
+   if(str == NULL)
+      return str;
+
+   /* generate random string */
+   for(i = 0; i < len; i++)
+      str[i] = alpha[rand() % alpha_len];
+   str[i] = '\0';
+
+   return str;
 }
 
+void strncopy(char * buf, int size, const unsigned char * str) {
+   int len = 0;
+   const char * src = NULL;
+
+   /* check null */
+   if(exit_null_safe(1, buf) || str == NULL)
+      return;
+
+   if(size <= 0) {
+      exit_abt_safe("invalid buffer size");
+      return;
+   }
+
+   src = (const char *) str;
+   len = strlen(src);
+   if(len <= 0)
+      return;
+
+   /* check buffer size */
+   if(len > size - 1) {
+      exit_abt_safe("insufficient buffer size");
+      len = size - 1;
+   }
+
+   /* copy string into buffer */
+   strncpy(buf, src, len);
+   buf[len] = '\0';
+}
+
+int strnload(char * buf, int size, char * str) {
+   int len = 0;
+
+   /* check null */
+   if(exit_null_safe(2, buf, str))
+      return CHECK_FAILED;
+
+   if(size <= 0)
+      return exit_abt_safe("invalid buffer size");
+
+   len = strlen(str);
+
+   /* check destination is as large as source */
+   if(len > size - 1) {
+      exit_abt_safe("insufficient buffer size");
+      len = size - 1;
+   }
+
+   /* copy string into buffer */
+   strncpy(buf, str, len);
+   buf[len] = '\0';
+   return CHECK_PASSED;
+}
+
+/* non-case-sensitive (ncs) string comparsion (strcmp) */
 int ncs_strcmp(const char * s1, const char * s2) {
    int inx_1 = 0;
    int inx_2 = 0;
@@ -83,289 +155,273 @@ int ncs_strcmp(const char * s1, const char * s2) {
    /* no-mismatch; determine by length */
    s_len_1 -= s_len_adj_1;
    s_len_2 -= s_len_adj_2;
-   if(s_len_1 > s_len_2) 
+   if(s_len_1 > s_len_2)
       return 1;
    else if(s_len_1 < s_len_2)
       return -1;
-   else 
+   else
       return 0;
 }
 
+/* convert a string to a signed integer */
 int convert_integer(const char * str, int base) {
-   int64_t value = 0;
-   char * endptr = NULL;
+   int len = 0;         /* length of str */
+   char * ptr = NULL;   /* pointer to str where strtol stopped */
+   long int val = 0;    /* string converted to integer value */
 
-   if(str == NULL || *str == '\0')    /* check the paramater string */
-      return 0;
+   /* check null */
+   if(exit_null_safe(1, str))
+      return CHECK_FAILED;
 
-   /* override the base for hexadecimal numbers; warning to fix error */
-   if(strlen(str) > 2 && str[0] == '0' && str[1] == 'x' && base != 16) {
-      fprintf(stdout,"warn: convert_integer detected hexadecimal notation, overriding base %d; %s.\n", base, str);
-      base = 16;
-   }
+   /* check empty string */
+   len = strlen(str);
+   if(len <= 0)
+      return exit_abt_safe("empty string");
 
-   value = strtol(str, &endptr, base);
-
-   if(errno == ERANGE)                /* check if value is valid (out of range of the strtol function) */
-      fprintf(stdout,"warn: convert_integer detected out-of-range string conversion to (int) %s.\n", str);
-
-   if(*endptr != '\0' && 0)               /* check if string consume / DISABLE */
-      fprintf(stdout,"warn: convert_integer failed to consume entire string for conversion %s; unconsumed %s; base %d.\n", str, endptr, base);
-
-   if(value > INT32_MAX)            /* check if out of range (although this might not work) */
-      fprintf(stdout,"warn: convert_integer possible out-of-range string conversion to (int) %s.\n", str);
-
-   return (int) value;
-}
-
-int convert_uinteger(const char * str, int base) {
-   uint64_t value = 0;
-   char * endptr = NULL;
-
-   if(str == NULL || *str == '\0')    /* check the paramater string */
-      return 0;
-
-   value = strtoul(str, &endptr, base);
-
-   if(errno == ERANGE)               /* check if value is valid (out of range of the strtoul function) */
-      fprintf(stdout,"warn: convert_integer detected out-of-range string for conversion to long %s.\n", str);
-
-   if(*endptr != '\0' && 0)               /* check if string consume  / DISABLE */
-      fprintf(stdout,"warn: convert_integer failed to consume entire string for conversion %s; unconsumed %s; base %d.\n", str, endptr, base);
-
-   if(value > UINT32_MAX)            /* check if out of range (although this might not work) */
-      fprintf(stdout,"warn: convert_integer possible out-of-range string conversion to (int) %s.\n", str);
-
-   return (int) value;
-}
-
-char * convert_string(const char * str) {
-   char * temp = NULL;
-   if(str != NULL && *str != '\0' && strlen(str) > 0) {  /* check the paramater string */
-      temp = malloc(sizeof(char) * (strlen(str) + 1));   /* allocate space for the string */
-      if(temp != NULL) strcpy(temp, str);                /* check if memory allocated */
-   }
-   return temp;
-}
-
-char * substr_delimit(char * src, char * dest, char delimit) {
-   int i;
-   int src_cnt = strlen(src);
-   for(i = 0; i < src_cnt; i++)
-      if((src[i] == delimit || src[i] == '\0') && i > 0) {
-         strncpy(dest, src, i);
-         dest[i] = '\0';
-         return &src[i];
+   /* check octal or hexidecimal */
+   if(str[0] == '0') {
+      if(len > 2 && str[1] == 'x') {
+         base = 16;  /* hexidecimal */
+      } else {
+         base = 8;   /* octal */
       }
-   /* retrieve the whole string if unmatch delimit */
-   strncpy(dest, src, src_cnt);
-   dest[src_cnt] = '\0';
-   return &src[src_cnt];
-}
-
-const char * substr_delimit_list(const char * src, char * dest, const char * delimit) {
-   int i = 0;
-   int j = 0;
-   int src_cnt = 0;
-   int del_cnt = 0;
-   src_cnt = strlen(src);
-   del_cnt = strlen(delimit);
-
-   for(i = 0; i < src_cnt; i++) {
-      for(j = 0; j < del_cnt; j++)
-         if(src[i] == delimit[j] && i > 0) {
-            strncpy(dest, src, i);
-            dest[i] = '\0';
-            return &src[i];
-         }
    }
 
-   /* retrieve the whole string if unmatch delimit */
-   strncpy(dest, src, src_cnt);
-   dest[src_cnt] = '\0';
-   return &src[src_cnt];
+   /* convert string to number */
+   val = strtol(str, &ptr, base);
+
+   /* check errors */
+   if(errno == EINVAL)
+      return exit_func_safe("invalid integer-base on string %s", str);
+   else if(errno == ERANGE)
+      return exit_func_safe("out-of-range integer on string %s", str);
+
+   /* check if str completely parsed */
+   if(*ptr != '\0')
+      return exit_func_safe("failed to completely parsed string %s", str);
+
+   return (int) val;
 }
 
-void convert_delimit_integer(char * str, char delimit, int argc, ...) {
+/* convert a set of integer separated by delimiters */
+void convert_integer_delimit(char * src, char * delimiters, int argc, ...) {
    int i = 0;
-   int * temp = NULL;     /* current integer variable to fill */
-   char * curptr = str;       /* current string position */
-   char * endptr = str;       /* last string position */
+   const char * ptr = NULL;
+   char buf[BUF_SIZE];
+
+   /* initialize vararg of (int *) pointers */
    va_list argv;
    va_start(argv, argc);
 
-   /* check the paramater string */
-   if(str != NULL && *str != '\0' && strlen(str) > 0) {
-      /* extract the integer from string */
-      for(i = 0; i < argc && *endptr != '\0'; i++) {
-         temp = va_arg(argv, int *);
-         *temp = (int) strtol(curptr, &endptr, 10);
-         curptr = endptr + 1;                        /* skip delimiter */
+   if(!exit_null_safe(2, src, delimiters)) {
+      for(i = 0, ptr = src; i < argc; i++) {
+         /* copy substring from source buffer until delimiter */
+         ptr = substr_delimit(ptr, buf, delimiters);
 
-         if(errno == ERANGE)                         /* check if conversion is valid */
-            fprintf(stdout,"warn: convert_delimit_integer detected out-of-range string for conversion to long.\n");
+         /* convert substring to integer */
+         *va_arg(argv, int *) = convert_integer(buf, 10);
 
-         if(*endptr != delimit && *endptr != '\0')   /* check if delimiter or null */
-            fprintf(stdout,"warn: convert_delimit_integer failed to match delimiter for %s.\n", str);
+         /* check end of source buffer */
+         if(*ptr == '\0') {
+            i++;
+            break;
+         }
+
+         /* skip delimiter */
+         ptr++;
       }
 
-      /* check if the entire string is consumed */
-      if(*endptr != '\0')
-         fprintf(stdout,"warn: convert_delimit_integer failed to match all integers in %s, missing paramaters.\n", str);
+      /* check if entire string is parsed */
+      if(*ptr != '\0')
+         exit_func_safe("failed to completely parsed string %s", src);
    }
 
-   /* set all remaining paramaters to default */
-   for(; i < argc; i++) {
-      temp = va_arg(argv, int *);
-      *temp = 0;
-   }
+   /* default any arguments without value to zero */
+   for(; i < argc; i++)
+      *va_arg(argv, int *) = 0;
+
    va_end(argv);
 }
 
-int convert_integer_list(char * str, char * delimit, array_w * list) {
-   int i, j;
-   int * int_list = NULL;
-   int str_cnt = strlen(str);
-   int del_cnt = strlen(delimit);
-   int fld_cnt = 1;
-   const char * end_ptr = NULL;
-   char fld[BUF_SIZE];
+int convert_integer_delimit_array(const char * str, const char * delimiters, array_w * array) {
+   int i = 0;
+   const char * ptr = NULL;
+   char buf[BUF_SIZE];
 
-   if(exit_null_safe(3, str, delimit, list))
+   int size = 0;
+   int * list = NULL;
+
+   /* check null */
+   if(exit_null_safe(3, str, delimiters, array))
       return CHECK_FAILED;
 
-   /* find the total number of fields */
-   for(i = 0; i < str_cnt; i++)
-      for(j = 0; j < del_cnt; j++)
-         if(str[i] == delimit[j]) {
-            fld_cnt++;
-            break;
-         }
+   /* size of list is the number of delimiters + 1 */
+   size = count_delimit(str, delimiters) + 1;
+   list = calloc(size, sizeof(int));
+   if(list == NULL)
+      return CHECK_FAILED;
 
-   /* allocate memory for the list */
-   int_list = malloc(sizeof(int) * fld_cnt);
-
-   /* extract the fields */
-   end_ptr = substr_delimit_list(str, fld, delimit);
-   if(*str == '0' && *(str+1) == 'x')
-      int_list[0] = convert_integer(fld, 16);
-   else
-      int_list[0] = convert_integer(fld, 10);
-   for(i = 1; end_ptr != NULL && i < fld_cnt; i++) {
-      end_ptr = substr_delimit_list(end_ptr + 1, fld, delimit);
-      if(*str == '0' && *(str+1) == 'x')
-         int_list[i] = convert_integer(fld, 16);
-      else
-         int_list[i] = convert_integer(fld, 10);
+   /* same algorithm as convert_integer_delimit */
+   for(i = 0, ptr = str; i < size; i++) {
+      ptr = substr_delimit(ptr, buf, delimiters);
+      list[i] = convert_integer(buf, 10);
+      if(*ptr == '\0') {
+         i++;
+         break;
+      }
+      ptr++;
    }
+   if(*ptr != '\0')
+      exit_func_safe("failed to completely parsed string %s", str);
 
-   /* set the new array */
-   list->array = (void *) int_list;
-   list->size = fld_cnt;
-   list->delimit = delimit[0];
+   /* set array */
+   array->array = (void *) list;
+   array->size = size;
    return CHECK_PASSED;
 }
 
-int convert_integer_list_static(const char * str, const char * delimit, int * list, int size) {
-   int i, j;
-   int str_cnt = strlen(str);
-   int del_cnt = strlen(delimit);
-   int fld_cnt = 1;
-   const char * end_ptr = NULL;
-   char fld[BUF_SIZE];
+int convert_integer_delimit_static(const char * str, const char * delimiters, int * list, int size) {
+   int i = 0;
+   int * val = NULL;
+   array_w array;
+   memset(&array, 0, sizeof(array_w));
+   convert_integer_delimit_array(str, delimiters, &array);
 
-   if(exit_null_safe(3, str, delimit, list))
+   /* check whether destination buffer can hold elements */
+   if(array.size > size)
+      return exit_func_safe("string %s has more elements than max buffer size of %d", str, size);
+
+   /* copy element into list */
+   val = (int *) array.array;
+   for(i = 0; i < array.size; i++)
+      list[i] = val[i];
+
+   return CHECK_PASSED;
+}
+
+/* convert a string to a unsigned integer */
+int convert_uinteger(const char * str, int base) {
+   int len = 0;                  /* length of str */
+   char * ptr = NULL;            /* pointer to str where strtol stopped */
+   unsigned long int val = 0;    /* string converted to integer value */
+
+   /* check null */
+   if(exit_null_safe(1, str))
       return CHECK_FAILED;
 
-   /* find the total number of fields */
-   for(i = 0; i < str_cnt; i++)
-      for(j = 0; j < del_cnt; j++)
-         if(str[i] == delimit[j]) {
-            fld_cnt++;
-            break;
-         }
+   /* check empty string */
+   len = strlen(str);
+   if(len <= 0)
+      return exit_abt_safe("empty string");
 
-   /* extract the fields */
-   end_ptr = substr_delimit_list(str, fld, delimit);
-   if(*str == '0' && *(str+1) == 'x')
-      list[0] = convert_integer(fld, 16);
-   else
-      list[0] = convert_integer(fld, 10);
-   for(i = 1; end_ptr != NULL && i < fld_cnt && i < size; i++) {
-      end_ptr = substr_delimit_list(end_ptr + 1, fld, delimit);
-      if(*str == '0' && *(str+1) == 'x')
-         list[i] = convert_integer(fld, 16);
-      else
-         list[i] = convert_integer(fld, 10);
+   /* check octal or hexidecimal */
+   if(str[0] == '0') {
+      if(len > 2 && str[1] == 'x') {
+         base = 16;  /* hexidecimal */
+      } else {
+         base = 8;   /* octal */
+      }
    }
 
-   return i;
+   /* convert string to number */
+   val = strtoul(str, &ptr, base);
+
+   /* check errors */
+   if(errno == EINVAL)
+      return exit_func_safe("invalid integer-base on string %s", str);
+   else if(errno == ERANGE)
+      return exit_func_safe("out-of-range integer on string %s", str);
+
+   /* check if str completely parsed */
+   if(*ptr != '\0')
+      return exit_func_safe("failed to completely parsed string %s", str);
+
+   return (int) val;
 }
 
-void array_io(array_w array, FILE * file_stm) {
+/* create a copy of the string on the heap */
+char * convert_string(const char * str) {
+   int len = 0;
+   char * tmp = NULL;   /* copy of str */
+
+   /* check null */
+   if(exit_null_safe(1, str))
+      return NULL;
+
+   len = strlen(str);
+   if(len <= 0)
+      return NULL;
+
+   /* copy the string */
+   tmp = calloc(len + 1, sizeof(char));
+
+   if(tmp != NULL)
+      strncpy(tmp, str, len + 1);
+
+   return tmp;
+}
+
+/* count all the delimters in the source buffer */
+int count_delimit(const char * src, const char * delimiters) {
    int i = 0;
-   int * list = array.array;
-   int size = array.size;
-   for(i = 0; i < size - 1; i++)
-      fprintf(file_stm,"%d%c", list[i], array.delimit);
-   fprintf(file_stm,"%d\n", list[i]);
+   int j = 0;
+   int cnt = 0;
+
+   /* check null */
+   if(exit_null_safe(2, src, delimiters))
+      return cnt;
+
+   /* get a total of all the delimiters */
+   for(i = 0; src[i] != '\0'; i++)
+      for(j = 0; delimiters[j] != '\0'; j++)
+         if(src[i] == delimiters[j])
+            cnt++;
+
+   return cnt;
 }
 
-void array_unload(array_w array) {
-   if(array.array != NULL) free(array.array);
-}
-
-void strncopy(char * buf, int buf_size, const unsigned char * str) {
-   const char * cstr = (const char *) str;
-   if(str == NULL) return;
-   int len = strlen(cstr);
-   /* account for null character; check length */
-   if(len > buf_size - 1) {
-      exit_func_safe("truncated string from %d to %d\n", len, buf_size - 1);
-      len = buf_size - 1;
-   }
-   /* copy the string into the buffer */
-   strncpy(buf, cstr, len);
-   buf[len] = '\0';
-}
-
-/* specialize version of strncopy for native database loaders */
-int strnload(char * buf, int size, char * str) {
+/* copy source buffer into destination buffer until delimiter */
+const char * substr_delimit(const char * src, char * des, const char * delimiters) {
+   int i = 0;
+   int j = 0;
    int len = 0;
 
-   /* check for null paramaters */
-   if(exit_null_safe(2, buf, str)) return CHECK_FAILED;
+   /* check null */
+   if(exit_null_safe(3, src, des, delimiters))
+      return NULL;
 
-   /* check for empty buffers */
-   len = strlen(str);
-   if(size <= 0)
-      return exit_func_safe("invalid buffer size(%d) or string size(%d)", size, len);
-   else if(len <= 0)
-      str = "";
-   
-   /* check destination is as large as source */
-   if(len > size - 1) {
-      exit_func_safe("truncated string from %d to %d", len, size - 1);
-      len = size - 1;
-   }
+   /* check empty source buffer or delimiter */
+   if(*src == '\0' || *delimiters == '\0')
+      exit_abt_safe("source or delimiter is an empty string");
 
-   /* copy the string into the buffer */
-   strncpy(buf, str, len);
-   buf[len] = '\0';
-   return CHECK_PASSED;
+   /* copy the substring from source to destination buffer until delimiter */
+   for(i = 0; src[i] != '\0'; i++)
+      for(j = 0; delimiters[j] != '\0'; j++)
+         if(src[i] == delimiters[j]) {
+            strncpy(des, src, i);
+            des[i] = '\0';
+            return &src[i];
+         }
+
+   /* copy source to destination buffer if source buffer does not contain any delimiters */
+   len = strlen(src);
+   strncpy(des, src, len + 1);
+   return &src[len];
 }
 
 char * array_to_string(char * buffer, int * array) {
+   int i = 0;
    int offset = 0;
-   for(int i = 0; array[i] > 0; i++)
+   for(i = 0; array[i] > 0; i++)
       offset += sprintf(buffer + offset, "%d%s", array[i], (array[i + 1] > 0) ? ":" : "");
    buffer[offset] = '\0';
    return buffer;
 }
 
 char * array_to_string_cnt(char * buffer, int * array, int size) {
+   int i = 0;
    int offset = 0;
-   for(int i = 0; i < size; i++)
+   for(i = 0; i < size; i++)
       offset += sprintf(buffer + offset, "%d%s", array[i], (i + 1 < size) ? ":" : "");
    buffer[offset] = '\0';
    return buffer;

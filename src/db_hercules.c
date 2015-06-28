@@ -31,7 +31,7 @@ int load_he_item(const char * file_name, native_t * native) {
 	config_setting_t * item_db = NULL;
 	config_setting_t * item_row = NULL;
 	config_setting_t * item_sub = NULL;
-	
+
 	/* item_db */
 	item_he * item = NULL;
 	const char * str = NULL;
@@ -124,17 +124,17 @@ int load_he_item(const char * file_name, native_t * native) {
 				item[i].stack[STACK_AMOUNT] = config_setting_get_int_elem(item_sub, STACK_AMOUNT);
 				item[i].stack[STACK_TYPE] = config_setting_get_int_elem(item_sub, STACK_TYPE);
 			}
-			if(config_setting_lookup_string(item_row, "Script", &str) == CONFIG_FALSE) 
+			if(config_setting_lookup_string(item_row, "Script", &str) == CONFIG_FALSE)
 				strnload(item[i].script, MAX_SCRIPT_SIZE, "");
 			else
 				strnload(item[i].script, MAX_SCRIPT_SIZE, (char *) str);
 
-			if(config_setting_lookup_string(item_row, "OnEquipScript", &str) == CONFIG_FALSE) 
+			if(config_setting_lookup_string(item_row, "OnEquipScript", &str) == CONFIG_FALSE)
 				strnload(item[i].onequipscript, MAX_SCRIPT_SIZE, "");
 			else
 				strnload(item[i].onequipscript, MAX_SCRIPT_SIZE, (char *) str);
-			
-			if(config_setting_lookup_string(item_row, "OnUnequipScript", &str) == CONFIG_FALSE) 
+
+			if(config_setting_lookup_string(item_row, "OnUnequipScript", &str) == CONFIG_FALSE)
 				strnload(item[i].onunequipscript, MAX_SCRIPT_SIZE, "");
 			else
 				strnload(item[i].onunequipscript, MAX_SCRIPT_SIZE, (char *) str);
@@ -246,14 +246,14 @@ int produce_he_load(void * db, int row, int col, char * val) {
 	static int alternate = 0;
 	produce_he * record = &((produce_he *) db)[row];
 	switch(col) {
-		case 0: 
+		case 0:
 			material_cnt = 0;
 			alternate = 0;
 			record->item_id = convert_integer(val,10);							break;
 		case 1: record->item_lv = convert_integer(val,10); 						break;
 		case 2: record->skill_id = convert_integer(val,10); 					break;
 		case 3: record->skill_lv = convert_integer(val,10); 					break;
-		default: 
+		default:
 			(!alternate) ?
 				(record->item_id_req[material_cnt] = convert_integer(val,10)):
 				(record->item_amount_req[material_cnt++] = convert_integer(val,10));
@@ -331,7 +331,7 @@ int const_he_load(void * db, int row, int col, char * val) {
 	const_he * record = &((const_he *) db)[row];
 	switch(col) {
 		case 0: strnload(record->name, MAX_NAME_SIZE, val); 							break;
-		case 1:  
+		case 1:
 			/* constant can be represented as hexadecimal or decimal */
 			record->value = (strlen(val) > 2 && val[0] == '0' && val[1] == 'x') ?
 				convert_integer(val, 16):
@@ -355,7 +355,7 @@ int combo_he_load(void * db, int row, int col, char * val) {
 int create_hercules_database(db_he_t * db, const char * path) {
 	int status = 0;
 	const char * error = NULL;
-	char * sql_error = NULL;	
+	char * sql_error = NULL;
 	if( /* open database connection specified by path */
 		sqlite3_open(path, &db->db) != SQLITE_OK ||
 		/* execute hercules table creation script */
@@ -809,7 +809,7 @@ int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_sea
 		offset = 0;
 		/* convert the item group string into an array of integers */
 		memset(&item_id_list, 0, sizeof(array_w));
-		convert_integer_list(combo_he_db[i].item_id.str, ":", &item_id_list);
+		convert_integer_delimit_array(combo_he_db[i].item_id.str, ":", &item_id_list);
 		item_id_array = item_id_list.array;
 
 		/* add the item id and script in the array of integers */
