@@ -19,6 +19,11 @@
  	#define ENABLE_EXIT 0	/* set to 1 for debugging */
  	#define CHECK_PASSED 0
  	#define CHECK_FAILED 1
+	
+	/* msvc's function name macro */
+	#if defined ( WIN32 )
+		#define __func__ __FUNCTION__
+	#endif
 
 	/* error functions */
  	extern char err_buf[BUF_SIZE];
