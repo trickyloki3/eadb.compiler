@@ -175,12 +175,13 @@ int convert_integer(const char * str, int base) {
 
    /* check empty string */
    len = strlen(str);
-   if(len <= 0)
-      return exit_abt_safe("empty string");
+   if (len <= 0)
+	   /*return exit_abt_safe("empty string");*/
+	   return 0;
 
    /* check octal or hexidecimal */
-   if(str[0] == '0') {
-      if(len > 2 && str[1] == 'x') {
+   if(str[0] == '0' && len > 1) {
+	  if (str[1] == 'x' && len > 2) {
          base = 16;  /* hexidecimal */
       } else {
          base = 8;   /* octal */
@@ -188,16 +189,17 @@ int convert_integer(const char * str, int base) {
    }
 
    /* convert string to number */
+   errno = 0;
    val = strtol(str, &ptr, base);
 
    /* check errors */
    if(errno == EINVAL)
-      return exit_func_safe("invalid integer-base on string %s", str);
+      return exit_func_safe("invalid integer-base %d on string %s", base, str);
    else if(errno == ERANGE)
       return exit_func_safe("out-of-range integer on string %s", str);
 
-   /* check if str completely parsed */
-   if(*ptr != '\0')
+   /* check if str completely parsed; allow spaces as end of buffer since resource databases are space aligned */
+   if(*ptr != '\0' && !isspace(*ptr))
       return exit_func_safe("failed to completely parsed string %s", str);
 
    return (int) val;
@@ -206,6 +208,7 @@ int convert_integer(const char * str, int base) {
 /* convert a set of integer separated by delimiters */
 void convert_integer_delimit(char * src, char * delimiters, int argc, ...) {
    int i = 0;
+   int len = 0;
    const char * ptr = NULL;
    char buf[BUF_SIZE];
 
@@ -214,26 +217,30 @@ void convert_integer_delimit(char * src, char * delimiters, int argc, ...) {
    va_start(argv, argc);
 
    if(!exit_null_safe(2, src, delimiters)) {
-      for(i = 0, ptr = src; i < argc; i++) {
-         /* copy substring from source buffer until delimiter */
-         ptr = substr_delimit(ptr, buf, delimiters);
+	   /* check source string is greater than 0 */
+	  len = strlen(src);
+	  if (len > 0) {
+		  for (i = 0, ptr = src; i < argc; i++) {
+			  /* copy substring from source buffer until delimiter */
+			  ptr = substr_delimit(ptr, buf, delimiters);
 
-         /* convert substring to integer */
-         *va_arg(argv, int *) = convert_integer(buf, 10);
+			  /* convert substring to integer */
+			  *va_arg(argv, int *) = convert_integer(buf, 10);
 
-         /* check end of source buffer */
-         if(*ptr == '\0') {
-            i++;
-            break;
-         }
+			  /* check end of source buffer */
+			  if (*ptr == '\0') {
+				  i++;
+				  break;
+			  }
 
-         /* skip delimiter */
-         ptr++;
-      }
+			  /* skip delimiter */
+			  ptr++;
+		  }
 
-      /* check if entire string is parsed */
-      if(*ptr != '\0')
-         exit_func_safe("failed to completely parsed string %s", src);
+		  /* check if entire string is parsed */
+		  if (*ptr != '\0')
+			  exit_func_safe("failed to completely parsed string %s", src);
+	  }
    }
 
    /* default any arguments without value to zero */
@@ -312,7 +319,8 @@ int convert_uinteger(const char * str, int base) {
    /* check empty string */
    len = strlen(str);
    if(len <= 0)
-      return exit_abt_safe("empty string");
+      /*return exit_abt_safe("empty string");*/
+	  return 0;
 
    /* check octal or hexidecimal */
    if(str[0] == '0') {
@@ -391,8 +399,14 @@ const char * substr_delimit(const char * src, char * des, const char * delimiter
       return NULL;
 
    /* check empty source buffer or delimiter */
-   if(*src == '\0' || *delimiters == '\0')
-      exit_abt_safe("source or delimiter is an empty string");
+   if (*src == '\0') {
+	   exit_abt_safe("source is an empty string");
+	   return NULL;
+   }
+   if (*delimiters == '\0') {
+	   exit_abt_safe("delimiter is an empty string");
+	   return NULL;
+   }
 
    /* copy the substring from source to destination buffer until delimiter */
    for(i = 0; src[i] != '\0'; i++)

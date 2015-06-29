@@ -32,7 +32,7 @@ int main(int argc, char * argv[]) {
 	lstate = luaL_newstate();
 	if(lstate == NULL) 
 		exit_abt_safe("failed to allocate lua state");
-	if(luaL_loadfile(lstate, "iteml.cfg"))
+	if(luaL_loadfile(lstate, "C:/Users/jim/Desktop/eadb.compiler/out/iteml.cfg"))
 		return exit_func_safe("item configuration syntax error; %s", lua_tostring(lstate, -1));
 	if(lua_pcall(lstate, 0, 0, 0))
 		return exit_func_safe("item configuration syntax error; %s", lua_tostring(lstate, -1));

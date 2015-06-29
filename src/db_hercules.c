@@ -405,6 +405,7 @@ int item_he_sql_load(db_he_t * db, const char * path) {
 	load_he_item(path, &item_db);
 
 	/* load the native database into the sqlite3 hercules database */
+	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
 	for(i = 0, item_he_db = item_db.db; i < item_db.size; i++) {
 		sqlite3_clear_bindings(db->item_he_sql_insert);
 		sqlite3_bind_int(db->item_he_sql_insert, 	1, 	item_he_db[i].id);
@@ -454,6 +455,7 @@ int item_he_sql_load(db_he_t * db, const char * path) {
 		if(status != SQLITE_DONE) exit_abt_safe("fail to insert hercules item record");
 		sqlite3_reset(db->item_he_sql_insert);
 	}
+	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
 	free(item_db.db);
 	return CHECK_PASSED;
 }
