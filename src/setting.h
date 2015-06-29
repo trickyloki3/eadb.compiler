@@ -9,9 +9,23 @@
 #ifndef SETTING_H
 #define SETTING_H
 	#ifdef ITEML_DLL
-		#define ITEML_API __declspec(dllexport) 
+		#ifdef ITEML_EXPORT
+			#define ITEML_API __declspec(dllexport) 
+		#else
+			#define ITEML_API __declspec(dllimport) 
+		#endif
 	#else
-		#define ITEML_API __declspec(dllimport) 
+		#define ITEML_API
+	#endif
+
+	#ifdef ITEMC_DLL
+		#ifdef ITEMC_EXPORT
+			#define ITEMC_API __declspec(dllexport) 
+		#else
+			#define ITEMC_API __declspec(dllimport) 
+		#endif
+	#else
+		#define ITEML_API
 	#endif
 
  	#define EATHENA_DB_COUNT		8			/* number of native eathena database loaders */

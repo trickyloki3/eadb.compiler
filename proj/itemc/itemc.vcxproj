@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{179594F1-2B9A-4C3D-BE85-63947783C6EB}</ProjectGuid>
+    <ProjectGuid>{299D411D-1A93-47EC-B0F6-221D97AD4E0C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>iteml</RootNamespace>
+    <RootNamespace>itemc</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -43,32 +43,31 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\..\out\</OutDir>
-    <IntDir>$(SolutionDir)..\tmp\iteml\</IntDir>
+    <IntDir>$(SolutionDir)..\tmp\itemc\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\..\out\</OutDir>
-    <IntDir>$(SolutionDir)..\tmp\iteml\</IntDir>
+    <IntDir>$(SolutionDir)..\tmp\itemc\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;ITEML_DLL;ITEML_EXPORT;_DEBUG;_WINDOWS;_USRDLL;ITEML_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ITEMC_DLL;ITEMC_EXPORT;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;_USRDLL;ITEMC_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\sqlite3;$(SolutionDir)..\libconfig;$(SolutionDir)..\lua5;$(SolutionDir)..\..\hdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\lua5;$(SolutionDir)..\sqlite3;$(SolutionDir)..\libconfig;$(SolutionDir)..\..\hdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
   </ItemDefinitionGroup>
@@ -79,13 +78,12 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;ITEML_DLL;ITEML_EXPORT;NDEBUG;_WINDOWS;_USRDLL;ITEML_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ITEMC_DLL;ITEMC_EXPORT;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;_USRDLL;ITEMC_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\sqlite3;$(SolutionDir)..\libconfig;$(SolutionDir)..\lua5;$(SolutionDir)..\..\hdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\lua5;$(SolutionDir)..\sqlite3;$(SolutionDir)..\libconfig;$(SolutionDir)..\..\hdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -94,6 +92,35 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\db_eathena.h" />
+    <ClInclude Include="..\..\src\db_hercules.h" />
+    <ClInclude Include="..\..\src\db_rathena.h" />
+    <ClInclude Include="..\..\src\db_resources.h" />
+    <ClInclude Include="..\..\src\db_search.h" />
+    <ClInclude Include="..\..\src\format.h" />
+    <ClInclude Include="..\..\src\load.h" />
+    <ClInclude Include="..\..\src\name_range.h" />
+    <ClInclude Include="..\..\src\range.h" />
+    <ClInclude Include="..\..\src\script.h" />
+    <ClInclude Include="..\..\src\setting.h" />
+    <ClInclude Include="..\..\src\table.h" />
+    <ClInclude Include="..\..\src\util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\db_eathena.c" />
+    <ClCompile Include="..\..\src\db_hercules.c" />
+    <ClCompile Include="..\..\src\db_rathena.c" />
+    <ClCompile Include="..\..\src\db_resources.c" />
+    <ClCompile Include="..\..\src\db_search.c" />
+    <ClCompile Include="..\..\src\format.c" />
+    <ClCompile Include="..\..\src\load.c" />
+    <ClCompile Include="..\..\src\name_range.c" />
+    <ClCompile Include="..\..\src\range.c" />
+    <ClCompile Include="..\..\src\script.c" />
+    <ClCompile Include="..\..\src\table.c" />
+    <ClCompile Include="..\..\src\util.c" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libconfig\libconfig.vcxproj">
       <Project>{e0084b6a-7dff-476a-80c5-6493a43a41a3}</Project>
@@ -104,25 +131,6 @@
     <ProjectReference Include="..\sqlite3\sqlite3.vcxproj">
       <Project>{574affad-8d0f-48cb-beeb-90b0b17ec208}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\db_eathena.c" />
-    <ClCompile Include="..\..\src\db_hercules.c" />
-    <ClCompile Include="..\..\src\db_rathena.c" />
-    <ClCompile Include="..\..\src\db_resources.c" />
-    <ClCompile Include="..\..\src\db_search.c" />
-    <ClCompile Include="..\..\src\load.c" />
-    <ClCompile Include="..\..\src\util.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\db_eathena.h" />
-    <ClInclude Include="..\..\src\db_hercules.h" />
-    <ClInclude Include="..\..\src\db_rathena.h" />
-    <ClInclude Include="..\..\src\db_resources.h" />
-    <ClInclude Include="..\..\src\db_search.h" />
-    <ClInclude Include="..\..\src\load.h" />
-    <ClInclude Include="..\..\src\setting.h" />
-    <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
