@@ -192,8 +192,8 @@
  		sqlite3_stmt * item_combo_id_search;
  	} db_search_t;
 
-	ITEML_API int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path);
-	ITEML_API int deit_db(db_search_t * db);
+	ITEMC_API ITEML_API int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path);
+	ITEMC_API ITEML_API int deit_db(db_search_t * db);
 	ITEML_API int test_db(void);
 
  	/* resource database querying */
@@ -208,7 +208,7 @@
 	ITEML_API int num_id_res_id_search(db_search_t * db, nid_res * nid, int id);
 
  	/* athena database querying */
-	ITEML_API int item_iterate(db_search_t * db, item_t * item);
+	ITEMC_API ITEML_API int item_iterate(db_search_t * db, item_t * item);
 	ITEML_API int const_db_search_name(db_search_t * db, const_t * search, const char * name);
 	ITEML_API int const_db_search_id(db_search_t * db, const_t * search, int id);
 	ITEML_API int skill_db_search_name(db_search_t * db, skill_t * search, const char * name);

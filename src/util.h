@@ -25,6 +25,8 @@
 		#define __func__ __FUNCTION__
 	#endif
 
+	
+
 	/* error functions */
  	extern char err_buf[BUF_SIZE];
  	#define exit_null_safe(X, ...) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)

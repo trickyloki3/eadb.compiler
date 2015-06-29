@@ -136,26 +136,26 @@
 	} format_t;
 
 	/* flavour text database load and search functions */
-	int init_flavour_db(format_t *, const char *);
-	int flavour_text_id_search(format_t *, flavour_text_t *, int);
+	ITEMC_API int init_flavour_db(format_t *, const char *);
+	ITEMC_API int flavour_text_id_search(format_t *, flavour_text_t *, int);
 
 	/* item format rule functions */
-	int init_format(format_t *, lua_State *, int, int, int);
-	int init_format_type(format_t *, lua_State *, int, int);
+	ITEMC_API int init_format(format_t *, lua_State *, int, int, int);
+	ITEMC_API int init_format_type(format_t *, lua_State *, int, int);
 	int load_item_id(format_rule_t *, lua_State *, int);
 	int load_item_id_re(format_rule_t *, lua_State *, int);
 	int load_item_field(format_rule_t *, lua_State *, int);
 	int load_item_field_re(format_field_t *, lua_State *, int);
 	int load_weapon_type(format_rule_t *, lua_State *, int);
 	int lua_get_field(lua_State *, int, const char *, int);
-	int deit_format(format_t *);
+	ITEMC_API int deit_format(format_t *);
 
 	/* write item fields */
-	int write_header(FILE *, format_t *, lua_State *);
-	int write_footer(FILE *, format_t *, lua_State *);
-	int write_item(FILE *, format_t *, item_t *, char *);
-	int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
-	int write_item_lua(FILE *, format_t *, format_field_t *, item_t *, char *);
+	ITEMC_API int write_header(FILE *, format_t *, lua_State *);
+	ITEMC_API int write_footer(FILE *, format_t *, lua_State *);
+	ITEMC_API int write_item(FILE *, format_t *, item_t *, char *);
+	ITEMC_API int write_item_text(FILE *, format_t *, format_field_t *, item_t *, char *);
+	ITEMC_API int write_item_lua(FILE *, format_t *, format_field_t *, item_t *, char *);
 	int format_description(format_t *, format_field_t *, item_t *, char *, char *, int *);
 	int format_flavour_text(char *, int *, format_t *, format_field_t *, flavour_text_t *, int);
 	int format_script(char *, int *, format_field_t *, char *);

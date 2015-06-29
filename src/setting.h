@@ -25,7 +25,7 @@
 			#define ITEMC_API __declspec(dllimport) 
 		#endif
 	#else
-		#define ITEML_API
+		#define ITEMC_API
 	#endif
 
  	#define EATHENA_DB_COUNT		8			/* number of native eathena database loaders */

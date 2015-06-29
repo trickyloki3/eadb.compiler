@@ -211,11 +211,11 @@
 	static int list_head(block_list_t *, block_r **);
 
     /* block memory management */
-	static int script_block_alloc(script_t *, block_r **);
-	static int script_block_dealloc(script_t *, block_r **);
-	static int script_block_reset(script_t *);
-	static int script_block_release(block_r *);
-	static int script_block_finalize(script_t *);
+	ITEMC_API int script_block_alloc(script_t *, block_r **);
+	ITEMC_API int script_block_dealloc(script_t *, block_r **);
+	ITEMC_API int script_block_reset(script_t *);
+	ITEMC_API int script_block_release(block_r *);
+	ITEMC_API int script_block_finalize(script_t *);
 
     /* auxiliary support */
     static int script_block_dump(script_t *, FILE *);

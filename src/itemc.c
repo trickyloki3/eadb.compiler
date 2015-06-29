@@ -21,7 +21,7 @@ int main(int argc, char * argv[]) {
 	format_t format;							/* contains flavour text database and formatting rules */
 	int item_count = 0;							/* total number of items translated */
 	int item_status = 0;						/* status of sqlite3 item database iteration */
-	int start_time = 0;							/* starting time of the compilation */
+	time_t start_time = 0;						/* starting time of the compilation */
 	char script_translation[BUF_SIZE];			/* hold the script translation */
 	int script_offset = 0;
 	FILE * description_file = NULL;				/* open file descriptor to the lua or txt file to produce */
@@ -40,7 +40,7 @@ int main(int argc, char * argv[]) {
 	/* load the configuration file */
 	if(lstate == NULL) 
 		exit_abt_safe("failed to allocate lua state");
-	if(luaL_loadfile(lstate, "itemc.cfg"))
+	if(luaL_loadfile(lstate, "C:/Users/jim/Desktop/eadb.compiler/out/itemc.cfg"))
 		return exit_func_safe("item configuration syntax error; %s", lua_tostring(lstate, -1));
 	if(lua_pcall(lstate, 0, 0, 0))
 		return exit_func_safe("item configuration syntax error; %s", lua_tostring(lstate, -1));
