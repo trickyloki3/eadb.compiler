@@ -192,38 +192,38 @@
  		sqlite3_stmt * item_combo_id_search;
  	} db_search_t;
 
- 	int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path); 	
- 	int deit_db(db_search_t * db);
- 	int test_db(void);
+	ITEML_API int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path);
+	ITEML_API int deit_db(db_search_t * db);
+	ITEML_API int test_db(void);
 
  	/* resource database querying */
- 	int option_search_name(db_search_t * db, option_res * option, const char * name);
- 	int map_search_name(db_search_t * db, map_res * map, const char * name);
- 	int map_search_id(db_search_t * db, map_res * map, int id);
- 	int bonus_search_name(db_search_t * db, bonus_res * bonus, const char * prefix, const char * name);
- 	int status_search_id_name(db_search_t * db, status_res * status, int id, const char * name);
- 	int var_search_id(db_search_t * db, var_res * var, const char * id);
- 	int block_search_name(db_search_t * db, block_res * block, const char * name);
- 	int id_res_id_search(db_search_t * db, nid_res * nid, int id);
- 	int num_id_res_id_search(db_search_t * db, nid_res * nid, int id);
+	ITEML_API int option_search_name(db_search_t * db, option_res * option, const char * name);
+	ITEML_API int map_search_name(db_search_t * db, map_res * map, const char * name);
+	ITEML_API int map_search_id(db_search_t * db, map_res * map, int id);
+	ITEML_API int bonus_search_name(db_search_t * db, bonus_res * bonus, const char * prefix, const char * name);
+	ITEML_API int status_search_id_name(db_search_t * db, status_res * status, int id, const char * name);
+	ITEML_API int var_search_id(db_search_t * db, var_res * var, const char * id);
+	ITEML_API int block_search_name(db_search_t * db, block_res * block, const char * name);
+	ITEML_API int id_res_id_search(db_search_t * db, nid_res * nid, int id);
+	ITEML_API int num_id_res_id_search(db_search_t * db, nid_res * nid, int id);
 
  	/* athena database querying */
- 	int item_iterate(db_search_t * db, item_t * item);
- 	int const_db_search_name(db_search_t * db, const_t * search, const char * name);
- 	int const_db_search_id(db_search_t * db, const_t * search, int id);
- 	int skill_db_search_name(db_search_t * db, skill_t * search, const char * name);
- 	int skill_db_search_id(db_search_t * db, skill_t * search, int id);
- 	int item_db_search_name(db_search_t * db, item_t * search, const char * name);
- 	int item_db_search_id(db_search_t * db, item_t * search, int id);
- 	int mob_db_search_id(db_search_t * db, mob_t * search, int id);
- 	int merc_db_search_id(db_search_t * db, merc_t * search, int id);
- 	int pet_db_search_id(db_search_t * db, pet_t * search, int id);
- 	int produce_db_search_id(db_search_t * db, produce_t ** search, int id);
- 	void produce_free(produce_t * produce);
- 	int item_group_db_search_id(db_search_t * db, item_group_t * search, int id, char * buffer);
- 	int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id);
- 	void combo_free(combo_t * combo); 	
+	ITEML_API int item_iterate(db_search_t * db, item_t * item);
+	ITEML_API int const_db_search_name(db_search_t * db, const_t * search, const char * name);
+	ITEML_API int const_db_search_id(db_search_t * db, const_t * search, int id);
+	ITEML_API int skill_db_search_name(db_search_t * db, skill_t * search, const char * name);
+	ITEML_API int skill_db_search_id(db_search_t * db, skill_t * search, int id);
+	ITEML_API int item_db_search_name(db_search_t * db, item_t * search, const char * name);
+	ITEML_API int item_db_search_id(db_search_t * db, item_t * search, int id);
+	ITEML_API int mob_db_search_id(db_search_t * db, mob_t * search, int id);
+	ITEML_API int merc_db_search_id(db_search_t * db, merc_t * search, int id);
+	ITEML_API int pet_db_search_id(db_search_t * db, pet_t * search, int id);
+	ITEML_API int produce_db_search_id(db_search_t * db, produce_t ** search, int id);
+	ITEML_API void produce_free(produce_t * produce);
+	ITEML_API int item_group_db_search_id(db_search_t * db, item_group_t * search, int id, char * buffer);
+	ITEML_API int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id);
+	ITEML_API void combo_free(combo_t * combo);
 
  	/* debug */
- 	void print_stmt(void * data,const char * sql);
+	ITEML_API void print_stmt(void * data, const char * sql);
 #endif

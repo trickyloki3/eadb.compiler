@@ -244,19 +244,6 @@
 		struct combo_ra * next;
 	} combo_ra;
 
-	/* rathena native database loading */
-	extern native_config_t load_ra_native[RATHENA_DB_COUNT];
-	int item_ra_load(void * db, int row, int col, char * val);
-	int mob_ra_load(void * db, int row, int col, char * val);
-	int skill_ra_load(void * db, int row, int col, char * val);
-	int produce_ra_load(void * db, int row, int col, char * val);
-	int mercenary_ra_load(void * db, int row, int col, char * val); 
-	int pet_ra_load(void * db, int row, int col, char * val);
-	int item_group_ra_load(void * db, int row, int col, char * val);
-	int const_ra_load(void * db, int row, int col, char * val);
-	int package_ra_load(void * db, int row, int col, char * val);
-	int combo_ra_load(void * db, int row, int col, char * val);
-
 	/* rathena sqlite3 database interface */
 	#define rathena_database_sql	"DROP TABLE IF EXISTS item_ra;"																\
 									"DROP TABLE IF EXISTS mob_ra;"																\
@@ -369,24 +356,37 @@
 		sqlite3_stmt * item_combo_ra_sql_insert;
 	} db_ra_t;
 
+	/* rathena native database loading */
+	/*ITEML_API extern native_config_t load_ra_native[RATHENA_DB_COUNT];*/
+	static int item_ra_load(void * db, int row, int col, char * val);
+	static int mob_ra_load(void * db, int row, int col, char * val);
+	static int skill_ra_load(void * db, int row, int col, char * val);
+	static int produce_ra_load(void * db, int row, int col, char * val);
+	static int mercenary_ra_load(void * db, int row, int col, char * val);
+	static int pet_ra_load(void * db, int row, int col, char * val);
+	static int item_group_ra_load(void * db, int row, int col, char * val);
+	static int const_ra_load(void * db, int row, int col, char * val);
+	static int package_ra_load(void * db, int row, int col, char * val);
+	static int combo_ra_load(void * db, int row, int col, char * val);
+
 	/* database loading depends on the path of the database */
-	int create_rathena_database(db_ra_t * db, const char * path);
-	int finalize_rathena_database(db_ra_t * db);
-	int item_ra_sql_load(db_ra_t * db, const char * path);
-	int mob_ra_sql_load(db_ra_t * db, const char * path);
-	int skill_ra_sql_load(db_ra_t * db, const char * path);
-	int produce_ra_sql_load(db_ra_t * db, const char * path);
-	int mercenary_ra_sql_load(db_ra_t * db, const char * path);
-	int pet_ra_sql_load(db_ra_t * db, const char * path);
-	int const_ra_sql_load(db_ra_t * db, const char * path);
-	int item_group_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
-	int item_package_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
-	int item_combo_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
+	ITEML_API int create_rathena_database(db_ra_t * db, const char * path);
+	ITEML_API int finalize_rathena_database(db_ra_t * db);
+	ITEML_API int item_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int mob_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int skill_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int produce_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int mercenary_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int pet_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int const_ra_sql_load(db_ra_t * db, const char * path);
+	ITEML_API int item_group_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
+	ITEML_API int item_package_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
+	ITEML_API int item_combo_ra_sql_load(db_ra_t * db, const char * path, db_ra_aux_t * db_search);
 
 	/* item group and combo require searching existing database */
-	int init_ra_search(db_ra_t * db, db_ra_aux_t * db_search);
-	int deit_ra_search(db_ra_aux_t * db_search);
-	int const_ra_name_search(db_ra_aux_t * db_search, char * group_name, const_ra * const_name_search);
-	int item_ra_name_search(db_ra_aux_t * db_search, char * item_name, item_ra * item_name_search);
-	int item_ra_id_search(db_ra_aux_t * db_search, int item_id, item_ra * item_name_search);
+	ITEML_API int init_ra_search(db_ra_t * db, db_ra_aux_t * db_search);
+	ITEML_API int deit_ra_search(db_ra_aux_t * db_search);
+	ITEML_API int const_ra_name_search(db_ra_aux_t * db_search, char * group_name, const_ra * const_name_search);
+	ITEML_API int item_ra_name_search(db_ra_aux_t * db_search, char * item_name, item_ra * item_name_search);
+	ITEML_API int item_ra_id_search(db_ra_aux_t * db_search, int item_id, item_ra * item_name_search);
 #endif

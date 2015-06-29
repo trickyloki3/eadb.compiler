@@ -251,20 +251,6 @@
 		struct combo_he * next;
 	} combo_he;
 
-	/* hercules shares the same database format as eathena and rathena
-	 * but who knows what they'll change completely, better keep separate */
-	int load_he_item(const char * file_name, native_t * native);
-
-	/* hercules native database loading */
-	extern native_config_t load_he_native[HERCULES_DB_COUNT];
-	int mob_he_load(void * db, int row, int col, char * val);
-	int skill_he_load(void * db, int row, int col, char * val);
-	int produce_he_load(void * db, int row, int col, char * val);
-	int mercenary_he_load(void * db, int row, int col, char * val);
-	int pet_he_load(void * db, int row, int col, char * val);
-	int const_he_load(void * db, int row, int col, char * val);
-	int combo_he_load(void * db, int row, int col, char * val);
-
 	/* hercules sqlite3 database interface */
 	#define hercules_database_sql 	"DROP TABLE IF EXISTS item_he;"																\
 									"DROP TABLE IF EXISTS mob_he;"																\
@@ -385,20 +371,34 @@
 		sqlite3_stmt * item_combo_he_sql_insert;
 	} db_he_t;
 
+	/* hercules shares the same database format as eathena and rathena
+	 * but who knows what they'll change completely, better keep separate */
+	static int load_he_item(const char * file_name, native_t * native);
+
+	/* hercules native database loading */
+	/*ITEML_API extern native_config_t load_he_native[HERCULES_DB_COUNT];*/
+	static int mob_he_load(void * db, int row, int col, char * val);
+	static int skill_he_load(void * db, int row, int col, char * val);
+	static int produce_he_load(void * db, int row, int col, char * val);
+	static int mercenary_he_load(void * db, int row, int col, char * val);
+	static int pet_he_load(void * db, int row, int col, char * val);
+	static int const_he_load(void * db, int row, int col, char * val);
+	static int combo_he_load(void * db, int row, int col, char * val);
+
 	/* database loading depends on the path of the database */
-	int create_hercules_database(db_he_t * db, const char * path);
-	int finalize_hercules_database(db_he_t * db);
-	int item_he_sql_load(db_he_t * db, const char * path);
-	int mob_he_sql_load(db_he_t * db, const char * path);
-	int skill_he_sql_load(db_he_t * db, const char * path);
-	int produce_he_sql_load(db_he_t * db, const char * path);
-	int mercenary_he_sql_load(db_he_t * db, const char * path);
-	int pet_he_sql_load(db_he_t * db, const char * path);
-	int const_he_sql_load(db_he_t * db, const char * path);
-	int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_search);
+	ITEML_API int create_hercules_database(db_he_t * db, const char * path);
+	ITEML_API int finalize_hercules_database(db_he_t * db);
+	ITEML_API int item_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int mob_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int skill_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int produce_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int mercenary_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int pet_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int const_he_sql_load(db_he_t * db, const char * path);
+	ITEML_API int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_search);
 
 	/* combo require searching existing database */
-	int init_he_search(db_he_t * db, db_he_aux_t * db_search);
-	int deit_he_search(db_he_aux_t * db_search);
-	int item_he_id_search(db_he_aux_t * db_search, int item_id, item_he * item_name_search);
+	ITEML_API int init_he_search(db_he_t * db, db_he_aux_t * db_search);
+	ITEML_API int deit_he_search(db_he_aux_t * db_search);
+	ITEML_API int item_he_id_search(db_he_aux_t * db_search, int item_id, item_he * item_name_search);
 #endif

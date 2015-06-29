@@ -8,6 +8,12 @@
 
 #ifndef SETTING_H
 #define SETTING_H
+	#ifdef ITEML_DLL
+		#define ITEML_API __declspec(dllexport) 
+	#else
+		#define ITEML_API __declspec(dllimport) 
+	#endif
+
  	#define EATHENA_DB_COUNT		8			/* number of native eathena database loaders */
  	#define RATHENA_DB_COUNT		10 			/* number of native rathena database loaders */
  	#define HERCULES_DB_COUNT		7			/* number of native hercules database loaders */

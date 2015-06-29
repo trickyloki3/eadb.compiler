@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{670FA1F3-B4C9-4C93-AA5B-17895A56CC77}</ProjectGuid>
+    <ProjectGuid>{179594F1-2B9A-4C3D-BE85-63947783C6EB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>lua5</RootNamespace>
+    <RootNamespace>iteml</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -43,33 +43,33 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\..\lib\</OutDir>
-    <IntDir>$(SolutionDir)..\..\tmp\lua5\</IntDir>
+    <IntDir>$(SolutionDir)..\..\tmp\iteml\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\..\lib\</OutDir>
-    <IntDir>$(SolutionDir)..\..\tmp\lua5\</IntDir>
+    <IntDir>$(SolutionDir)..\..\tmp\iteml\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MinSpace</Optimization>
-      <PreprocessorDefinitions>LUA_BUILD_AS_DLL;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;ITEML_DLL;_DEBUG;_WINDOWS;_USRDLL;ITEML_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\lua5;$(SolutionDir)..\sqlite3;$(SolutionDir)..\libconfig;$(SolutionDir)..\..\hdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -79,11 +79,12 @@
       <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>LUA_BUILD_AS_DLL;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;ITEML_DLL;NDEBUG;_WINDOWS;_USRDLL;ITEML_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DebugInformationFormat>None</DebugInformationFormat>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\lua5;$(SolutionDir)..\sqlite3;$(SolutionDir)..\libconfig;$(SolutionDir)..\..\hdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -93,65 +94,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="lapi.h" />
-    <ClInclude Include="lauxlib.h" />
-    <ClInclude Include="lcode.h" />
-    <ClInclude Include="lctype.h" />
-    <ClInclude Include="ldebug.h" />
-    <ClInclude Include="ldo.h" />
-    <ClInclude Include="lfunc.h" />
-    <ClInclude Include="lgc.h" />
-    <ClInclude Include="llex.h" />
-    <ClInclude Include="llimits.h" />
-    <ClInclude Include="lmem.h" />
-    <ClInclude Include="lobject.h" />
-    <ClInclude Include="lopcodes.h" />
-    <ClInclude Include="lparser.h" />
-    <ClInclude Include="lprefix.h" />
-    <ClInclude Include="lstate.h" />
-    <ClInclude Include="lstring.h" />
-    <ClInclude Include="ltable.h" />
-    <ClInclude Include="ltm.h" />
-    <ClInclude Include="luaconf.h" />
-    <ClInclude Include="lualib.h" />
-    <ClInclude Include="lundump.h" />
-    <ClInclude Include="lvm.h" />
-    <ClInclude Include="lzio.h" />
+    <ProjectReference Include="..\libconfig\libconfig.vcxproj">
+      <Project>{e0084b6a-7dff-476a-80c5-6493a43a41a3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\lua5\lua5.vcxproj">
+      <Project>{670fa1f3-b4c9-4c93-aa5b-17895a56cc77}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\sqlite3\sqlite3.vcxproj">
+      <Project>{574affad-8d0f-48cb-beeb-90b0b17ec208}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lapi.c" />
-    <ClCompile Include="lauxlib.c" />
-    <ClCompile Include="lbaselib.c" />
-    <ClCompile Include="lbitlib.c" />
-    <ClCompile Include="lcode.c" />
-    <ClCompile Include="lcorolib.c" />
-    <ClCompile Include="lctype.c" />
-    <ClCompile Include="ldblib.c" />
-    <ClCompile Include="ldebug.c" />
-    <ClCompile Include="ldo.c" />
-    <ClCompile Include="ldump.c" />
-    <ClCompile Include="lfunc.c" />
-    <ClCompile Include="lgc.c" />
-    <ClCompile Include="linit.c" />
-    <ClCompile Include="liolib.c" />
-    <ClCompile Include="llex.c" />
-    <ClCompile Include="lmathlib.c" />
-    <ClCompile Include="lmem.c" />
-    <ClCompile Include="loadlib.c" />
-    <ClCompile Include="lobject.c" />
-    <ClCompile Include="lopcodes.c" />
-    <ClCompile Include="loslib.c" />
-    <ClCompile Include="lparser.c" />
-    <ClCompile Include="lstate.c" />
-    <ClCompile Include="lstring.c" />
-    <ClCompile Include="lstrlib.c" />
-    <ClCompile Include="ltable.c" />
-    <ClCompile Include="ltablib.c" />
-    <ClCompile Include="ltm.c" />
-    <ClCompile Include="lundump.c" />
-    <ClCompile Include="lutf8lib.c" />
-    <ClCompile Include="lvm.c" />
-    <ClCompile Include="lzio.c" />
+    <ClCompile Include="..\..\src\db_eathena.c" />
+    <ClCompile Include="..\..\src\db_hercules.c" />
+    <ClCompile Include="..\..\src\db_rathena.c" />
+    <ClCompile Include="..\..\src\db_resources.c" />
+    <ClCompile Include="..\..\src\db_search.c" />
+    <ClCompile Include="..\..\src\load.c" />
+    <ClCompile Include="..\..\src\util.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\db_eathena.h" />
+    <ClInclude Include="..\..\src\db_hercules.h" />
+    <ClInclude Include="..\..\src\db_rathena.h" />
+    <ClInclude Include="..\..\src\db_resources.h" />
+    <ClInclude Include="..\..\src\db_search.h" />
+    <ClInclude Include="..\..\src\load.h" />
+    <ClInclude Include="..\..\src\setting.h" />
+    <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

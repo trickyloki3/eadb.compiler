@@ -216,17 +216,6 @@
 		int type;
 	} const_ea;
 
-	/* eathena native database loading */
-	extern native_config_t load_ea_native[EATHENA_DB_COUNT];
-	int item_ea_load(void * db, int row, int col, char * val);
-	int mob_ea_load(void * db, int row, int col, char * val);
-	int skill_ea_load(void * db, int row, int col, char * val);
-	int produce_ea_load(void * db, int row, int col, char * val);
-	int mercenary_ea_load(void * db, int row, int col, char * val);
-	int pet_ea_load(void * db, int row, int col, char * val);
-	int item_group_ea_load(void * db, int row, int col, char * val);
-	int const_ea_load(void * db, int row, int col, char * val);
-
 	/* eathena sqlite3 database interface */
 	#define eathena_database_sql 	"DROP TABLE IF EXISTS item_ea;"																\
 									"DROP TABLE IF EXISTS mob_ea;"																\
@@ -328,16 +317,27 @@
 		sqlite3_stmt * item_group_ea_sql_insert;
 		sqlite3_stmt * const_ea_sql_insert;
 	} db_ea_t;
+	
+	/* eathena native database loading */
+	/*ITEML_API extern native_config_t load_ea_native[EATHENA_DB_COUNT];*/
+	static int item_ea_load(void * db, int row, int col, char * val);
+	static int mob_ea_load(void * db, int row, int col, char * val);
+	static int skill_ea_load(void * db, int row, int col, char * val);
+	static int produce_ea_load(void * db, int row, int col, char * val);
+	static int mercenary_ea_load(void * db, int row, int col, char * val);
+	static int pet_ea_load(void * db, int row, int col, char * val);
+	static int item_group_ea_load(void * db, int row, int col, char * val);
+	static int const_ea_load(void * db, int row, int col, char * val);
 
 	/* database loading depends on the path of the database */
-	int create_eathena_database(db_ea_t * db, const char * path);
-	int finalize_eathena_database(db_ea_t * db);
-	int item_ea_sql_load(db_ea_t * db, const char * path);
-	int mob_ea_sql_load(db_ea_t * db, const char * path);
-	int skill_ea_sql_load(db_ea_t * db, const char * path);
-	int produce_ea_sql_load(db_ea_t * db, const char * path);
-	int mercenary_ea_sql_load(db_ea_t * db, const char * path);
-	int pet_ea_sql_load(db_ea_t * db, const char * path);
-	int item_group_ea_sql_load(db_ea_t * db, const char * path);
-	int const_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int create_eathena_database(db_ea_t * db, const char * path);
+	ITEML_API int finalize_eathena_database(db_ea_t * db);
+	ITEML_API int item_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int mob_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int skill_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int produce_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int mercenary_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int pet_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int item_group_ea_sql_load(db_ea_t * db, const char * path);
+	ITEML_API int const_ea_sql_load(db_ea_t * db, const char * path);
 #endif

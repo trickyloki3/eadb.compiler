@@ -106,16 +106,6 @@
 		char res[MAX_RESNAME_SIZE];
 	} nid_res;
 
-	/* resource database loading */
-	extern native_config_t load_res_native[RESOURCE_DB_COUNT];
-	int option_res_load(void *, int, int, char *);
-	int map_res_load(void *, int, int, char *);
-	int bonus_res_load(void *, int, int, char *);
-	int status_res_load(void *, int, int, char *);
-	int var_res_load(void *, int, int, char *);
-	int block_res_load(void *, int, int, char *);
-	int nid_res_load(void *, int, int, char *);
-
 	/* resources sqlite3 database interface */
 	#define resource_database_sql 	"DROP TABLE IF EXISTS option_res;"																	\
 									"DROP TABLE IF EXISTS map_res;"																		\
@@ -167,15 +157,25 @@
 		sqlite3_stmt * numid_res_sql_insert;
 	} db_res_t;
 
+	/* resource database loading */
+	/*ITEML_API extern native_config_t load_res_native[RESOURCE_DB_COUNT];*/
+	static int option_res_load(void *, int, int, char *);
+	static int map_res_load(void *, int, int, char *);
+	static int bonus_res_load(void *, int, int, char *);
+	static int status_res_load(void *, int, int, char *);
+	static int var_res_load(void *, int, int, char *);
+	static int block_res_load(void *, int, int, char *);
+	static int nid_res_load(void *, int, int, char *);
+
 	/* database loading depends on the path of the database */
-	int create_resource_database(db_res_t * db, const char * path);
-	int finalize_resource_database(db_res_t * db);
-	int resource_option_sql_load(db_res_t * db, const char * path);
-	int resource_map_sql_load(db_res_t * db, const char * path);
-	int resource_bonus_sql_load(db_res_t * db, const char * path);
-	int resource_status_sql_load(db_res_t * db, const char * path);
-	int resource_var_sql_load(db_res_t * db, const char * path);
-	int resource_block_sql_load(db_res_t * db, const char * path);
-	int resource_id_res_sql_load(db_res_t * db, const char * path);
-	int resource_num_id_res_sql_load(db_res_t * db, const char * path);
+	ITEML_API int create_resource_database(db_res_t * db, const char * path);
+	ITEML_API int finalize_resource_database(db_res_t * db);
+	ITEML_API int resource_option_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_map_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_bonus_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_status_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_var_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_block_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_id_res_sql_load(db_res_t * db, const char * path);
+	ITEML_API int resource_num_id_res_sql_load(db_res_t * db, const char * path);
 #endif
