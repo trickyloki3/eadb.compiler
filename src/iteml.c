@@ -96,6 +96,8 @@ int main(int argc, char * argv[]) {
 		lua_pop(lstate, lua_gettop(lstate) - config_table - 1);
 	}
 
+	printf("[info]: completed item loading.\n");
+
 	/* release all resources */
 	lua_close(lstate);
 	return 0;
