@@ -197,18 +197,18 @@
     FILE * node_dbg;
 
     /* block linked list operations */
-    static int list_forward(block_list_t *);
-	static int list_backward(block_list_t *);
-	static void list_init_head(block_list_t * list);
-	static int list_append_tail(block_list_t * list, block_r * block);
-	static int list_append_head(block_list_t * list, block_r * block);
-	static int list_add(block_list_t *, block_r *, block_r *);
-	static int list_rem(block_list_t *, block_r *);
-	static int list_pop_head(block_list_t *, block_r **);
-	static int list_pop_tail(block_list_t *, block_r **);
-	static int list_check(block_list_t *, block_r *);
-	static int list_tail(block_list_t *, block_r **);
-	static int list_head(block_list_t *, block_r **);
+    int list_forward(block_list_t *);
+	int list_backward(block_list_t *);
+	void list_init_head(block_list_t * list);
+	int list_append_tail(block_list_t * list, block_r * block);
+	int list_append_head(block_list_t * list, block_r * block);
+	int list_add(block_list_t *, block_r *, block_r *);
+	int list_rem(block_list_t *, block_r *);
+	int list_pop_head(block_list_t *, block_r **);
+	int list_pop_tail(block_list_t *, block_r **);
+	int list_check(block_list_t *, block_r *);
+	int list_tail(block_list_t *, block_r **);
+	int list_head(block_list_t *, block_r **);
 
     /* block memory management */
 	ITEMC_API int script_block_alloc(script_t *, block_r **);
@@ -218,11 +218,11 @@
 	ITEMC_API int script_block_finalize(script_t *);
 
     /* auxiliary support */
-    static int script_block_dump(script_t *, FILE *);
-    static int script_block_write(block_r *, char *, ...);
-    static int split_paramater_list(token_r *, int *, char *);
-    static int split_paramater(char **, int, int, int *);
-    static int check_loop_expression(script_t *, char *, char *);
+    int script_block_dump(script_t *, FILE *);
+    int script_block_write(block_r *, char *, ...);
+    int split_paramater_list(token_r *, int *, char *);
+    int split_paramater(char **, int, int, int *);
+    int check_loop_expression(script_t *, char *, char *);
 
     /* compilation processes; exported functions, api functions */
 	ITEMC_API int script_lexical(token_r *, char *);
@@ -238,88 +238,88 @@
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
     /* script translation functions */
-	static int translate_getitem(block_r *, int);
-	static int translate_rentitem(block_r *, int);
-	static int translate_delitem(block_r *, int);
-	static int translate_getrandgroup(block_r *, int);
-	static int translate_bstore(block_r *, int);
-	static int translate_hire_merc(block_r *, int);
-	static int translate_pet_egg(block_r *, int);
-	static int translate_getexp(block_r *, int);
-	static int translate_transform(block_r *);
-	static int translate_skill_block(block_r *, int);
-	static int translate_heal(block_r *, int);
-	static int translate_bonus(block_r *, char *);
-	static int translate_const(block_r *, char *, int);
-	static int translate_skill(block_r *, char *);
-	static int translate_tbl(block_r *, char *, int);
-    static int translate_splash(block_r *, char *);
-    static int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
-    static int translate_time(block_r *, char *);
-    static int translate_id(block_r *, char *, int);
-    static int translate_item(block_r *, char *);
-    static int translate_autobonus(block_r *, int);
-    static int translate_misc(block_r *, char *);
-    static int translate_produce(block_r *, int);
-    static int translate_status(block_r *, int);
-    static int translate_status_end(block_r *);
-    static int translate_bonus_script(block_r *);
-    static int translate_setfalcon(block_r *);
-    static int translate_petloot(block_r *);
-    static int translate_petrecovery(block_r *);
-    static int translate_petskillbonus(block_r *);
-    static int translate_petskillattack(block_r *);
-    static int translate_petskillattack2(block_r *);
-    static int translate_petskillsupport(block_r *);
-    static int translate_petheal(block_r *);
-    static int translate_write(block_r *, char *, int);
-    static int translate_overwrite(block_r *, char *, int);
+	int translate_getitem(block_r *, int);
+	int translate_rentitem(block_r *, int);
+	int translate_delitem(block_r *, int);
+	int translate_getrandgroup(block_r *, int);
+	int translate_bstore(block_r *, int);
+	int translate_hire_merc(block_r *, int);
+	int translate_pet_egg(block_r *, int);
+	int translate_getexp(block_r *, int);
+	int translate_transform(block_r *);
+	int translate_skill_block(block_r *, int);
+	int translate_heal(block_r *, int);
+	int translate_bonus(block_r *, char *);
+	int translate_const(block_r *, char *, int);
+	int translate_skill(block_r *, char *);
+	int translate_tbl(block_r *, char *, int);
+    int translate_splash(block_r *, char *);
+    int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
+    int translate_time(block_r *, char *);
+    int translate_id(block_r *, char *, int);
+    int translate_item(block_r *, char *);
+    int translate_autobonus(block_r *, int);
+    int translate_misc(block_r *, char *);
+    int translate_produce(block_r *, int);
+    int translate_status(block_r *, int);
+    int translate_status_end(block_r *);
+    int translate_bonus_script(block_r *);
+    int translate_setfalcon(block_r *);
+    int translate_petloot(block_r *);
+    int translate_petrecovery(block_r *);
+    int translate_petskillbonus(block_r *);
+    int translate_petskillattack(block_r *);
+    int translate_petskillattack2(block_r *);
+    int translate_petskillsupport(block_r *);
+    int translate_petheal(block_r *);
+    int translate_write(block_r *, char *, int);
+    int translate_overwrite(block_r *, char *, int);
 
     /* writing the formula expressions */
-    static char * formula(char *, char *, node_t *);
-    static int formula_write(block_r *, char *);
-    static char * status_formula(char *, char *, node_t *, int, int);
-    static void id_write(node_t *, char *, ...);
-    static void var_write(node_t *, char *, ...);
-    static void expression_write(node_t *, char *, ...);
+    char * formula(char *, char *, node_t *);
+    int formula_write(block_r *, char *);
+    char * status_formula(char *, char *, node_t *, int, int);
+    void id_write(node_t *, char *, ...);
+    void var_write(node_t *, char *, ...);
+    void expression_write(node_t *, char *, ...);
 
     /* expression evaluation */
-    static node_t * evaluate_argument(block_r *, char *);
-    static node_t * evaluate_expression(block_r *, char *, int, int);
-    static node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
-    static int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
-    static int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
-    static void node_inherit_cond(node_t *);
-    static void node_write_recursive(node_t *, node_t *);
-    static void node_expr_append(node_t *, node_t *, node_t *);
-    static void node_dmp(node_t *, FILE *);
-    static void node_free(node_t *);
+    node_t * evaluate_argument(block_r *, char *);
+    node_t * evaluate_expression(block_r *, char *, int, int);
+    node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
+    int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
+    int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
+    void node_inherit_cond(node_t *);
+    void node_write_recursive(node_t *, node_t *);
+    void node_expr_append(node_t *, node_t *, node_t *);
+    void node_dmp(node_t *, FILE *);
+    void node_free(node_t *);
 
     /* support translation */
-    static int translate_bonus_desc(node_t **, block_r *, bonus_res *);
-    static char * translate_bonus_template(char *, int *, char *, ...);
-    static void translate_bonus_integer(block_r *, node_t *, int *);
-    static void translate_bonus_integer2(block_r *, node_t *, int *, char *, char *, char *);
-    static void translate_bonus_float(block_r *, node_t *, int *, int);
-    static void translate_bonus_float_percentage(block_r *, node_t *, int *, int);
-    static void translate_bonus_percentage(block_r *, node_t *, int *);
-    static void translate_bonus_percentage2(block_r *, node_t *, int *, char *, char *, char *);
-    static void translate_bonus_float_percentage2(block_r *, node_t *, int *, char *, char *, char *, int);
-    static char * check_node_range(node_t *, char *);
-    static char * check_node_range_float(node_t *, char *, int);
-    static char * check_node_range_precentage(node_t *, char *);
-    static char * check_node_range_float_percentage(node_t *, char *, int);
-    static int check_node_affinity(node_t *);
-    static int script_linkage_count(block_r *, int);
+    int translate_bonus_desc(node_t **, block_r *, bonus_res *);
+    char * translate_bonus_template(char *, int *, char *, ...);
+    void translate_bonus_integer(block_r *, node_t *, int *);
+    void translate_bonus_integer2(block_r *, node_t *, int *, char *, char *, char *);
+    void translate_bonus_float(block_r *, node_t *, int *, int);
+    void translate_bonus_float_percentage(block_r *, node_t *, int *, int);
+    void translate_bonus_percentage(block_r *, node_t *, int *);
+    void translate_bonus_percentage2(block_r *, node_t *, int *, char *, char *, char *);
+    void translate_bonus_float_percentage2(block_r *, node_t *, int *, char *, char *, char *, int);
+    char * check_node_range(node_t *, char *);
+    char * check_node_range_float(node_t *, char *, int);
+    char * check_node_range_precentage(node_t *, char *);
+    char * check_node_range_float_percentage(node_t *, char *, int);
+    int check_node_affinity(node_t *);
+    int script_linkage_count(block_r *, int);
 
     /* support generation */
-    static int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *, block_r *);
-    static int script_generate_and_chain(logic_node_t *, char *, int *, block_r *);
-    static int script_generate_cond_node(logic_node_t *, char *, int *, block_r *);
-    static int condition_write_strcharinfo(char *, int *, logic_node_t *, block_r *);
-    static int condition_write_getiteminfo(char *, int *, logic_node_t *);
-    static int condition_write_item(char *, int *, range_t *, block_r *);
-    static int condition_write_class(char *, int *, range_t *, char *);
-    static int condition_write_range(char *, int *, range_t *, char *);
-    static int condition_write_format(char *, int *, char * fmt, ...);
+    int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *, block_r *);
+    int script_generate_and_chain(logic_node_t *, char *, int *, block_r *);
+    int script_generate_cond_node(logic_node_t *, char *, int *, block_r *);
+    int condition_write_strcharinfo(char *, int *, logic_node_t *, block_r *);
+    int condition_write_getiteminfo(char *, int *, logic_node_t *);
+    int condition_write_item(char *, int *, range_t *, block_r *);
+    int condition_write_class(char *, int *, range_t *, char *);
+    int condition_write_range(char *, int *, range_t *, char *);
+    int condition_write_format(char *, int *, char * fmt, ...);
 #endif

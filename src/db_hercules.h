@@ -13,13 +13,13 @@
  	#include "libconfig.h"
  	#include "sqlite3.h"
 
- 	/* hercules database type definitions 
+ 	/* hercules database type definitions
 	 * -----------------------------------------
 	 * type name 	- 	type reference
 	 * -----------------------------------------
 	 * item_he 			- 	hercules item database
-	 * mob_he 			- 	hercules mob database 
-	 * skill_he 		- 	hercules skill database 
+	 * mob_he 			- 	hercules mob database
+	 * skill_he 		- 	hercules skill database
 	 * produce_he		- 	hercules produce database
 	 * mercenary_he 	-	hercules mecenary database
 	 * pet_he			-	hercules pet database
@@ -319,7 +319,7 @@
 									"CREATE TABLE IF NOT EXISTS const_he(name TEXT, value INTEGER, type INTEGER);"				\
 									""																							\
 									"CREATE TABLE IF NOT EXISTS item_combo_he(" 												\
-									"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"						
+									"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"
 
 
 	#define item_he_insert 			"INSERT INTO item_he(" 																		\
@@ -351,7 +351,7 @@
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define pet_he_insert 			"INSERT INTO pet_he VALUES(" 																\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define const_he_insert			"INSERT INTO const_he VALUES(?, ?, ?);"
 	#define item_combo_he_insert 	"INSERT INTO item_combo_he VALUES(?, ?, ?);"
 
@@ -373,17 +373,17 @@
 
 	/* hercules shares the same database format as eathena and rathena
 	 * but who knows what they'll change completely, better keep separate */
-	static int load_he_item(const char * file_name, native_t * native);
+	int load_he_item(const char * file_name, native_t * native);
 
 	/* hercules native database loading */
 	/*ITEML_API extern native_config_t load_he_native[HERCULES_DB_COUNT];*/
-	static int mob_he_load(void * db, int row, int col, char * val);
-	static int skill_he_load(void * db, int row, int col, char * val);
-	static int produce_he_load(void * db, int row, int col, char * val);
-	static int mercenary_he_load(void * db, int row, int col, char * val);
-	static int pet_he_load(void * db, int row, int col, char * val);
-	static int const_he_load(void * db, int row, int col, char * val);
-	static int combo_he_load(void * db, int row, int col, char * val);
+	int mob_he_load(void * db, int row, int col, char * val);
+	int skill_he_load(void * db, int row, int col, char * val);
+	int produce_he_load(void * db, int row, int col, char * val);
+	int mercenary_he_load(void * db, int row, int col, char * val);
+	int pet_he_load(void * db, int row, int col, char * val);
+	int const_he_load(void * db, int row, int col, char * val);
+	int combo_he_load(void * db, int row, int col, char * val);
 
 	/* database loading depends on the path of the database */
 	ITEML_API int create_hercules_database(db_he_t * db, const char * path);

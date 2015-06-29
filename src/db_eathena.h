@@ -12,13 +12,13 @@
 	#include "setting.h"
  	#include "sqlite3.h"
 
-	/* eathena database type definitions 
+	/* eathena database type definitions
 	 * -----------------------------------------
 	 * type name 	- 	type reference
 	 * -----------------------------------------
 	 * item_ea 			- 	eathena item database
-	 * mob_ea 			- 	eathena mob database 
-	 * skill_ea 		- 	eathena skill database 
+	 * mob_ea 			- 	eathena mob database
+	 * skill_ea 		- 	eathena skill database
 	 * produce_ea		- 	eathena produce database
 	 * mercenary_ea 	-	eathena mecenary database
 	 * pet_ea			-	eathena pet database
@@ -284,7 +284,7 @@
 
 	#define item_ea_insert 			"INSERT INTO item_ea VALUES(" 																\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define mob_ea_insert  			"INSERT INTO mob_ea VALUES(" 																\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
@@ -299,13 +299,13 @@
 									" ?, ?, ?, ?, ?);"
 	#define mercenary_ea_insert 	"INSERT INTO mercenary_ea VALUES("															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 													\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define pet_ea_insert 			"INSERT INTO pet_ea VALUES(" 																\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define item_group_ea_insert 	"INSERT INTO item_group_ea VALUES(?, ?, ?);"
 	#define const_ea_ins			"INSERT INTO const_ea VALUES(?, ?, ?);"
-	
+
 	typedef struct db_ea_t {
 		sqlite3 * db;
 		sqlite3_stmt * item_ea_sql_insert;
@@ -317,17 +317,17 @@
 		sqlite3_stmt * item_group_ea_sql_insert;
 		sqlite3_stmt * const_ea_sql_insert;
 	} db_ea_t;
-	
+
 	/* eathena native database loading */
 	/*ITEML_API extern native_config_t load_ea_native[EATHENA_DB_COUNT];*/
-	static int item_ea_load(void * db, int row, int col, char * val);
-	static int mob_ea_load(void * db, int row, int col, char * val);
-	static int skill_ea_load(void * db, int row, int col, char * val);
-	static int produce_ea_load(void * db, int row, int col, char * val);
-	static int mercenary_ea_load(void * db, int row, int col, char * val);
-	static int pet_ea_load(void * db, int row, int col, char * val);
-	static int item_group_ea_load(void * db, int row, int col, char * val);
-	static int const_ea_load(void * db, int row, int col, char * val);
+	int item_ea_load(void * db, int row, int col, char * val);
+	int mob_ea_load(void * db, int row, int col, char * val);
+	int skill_ea_load(void * db, int row, int col, char * val);
+	int produce_ea_load(void * db, int row, int col, char * val);
+	int mercenary_ea_load(void * db, int row, int col, char * val);
+	int pet_ea_load(void * db, int row, int col, char * val);
+	int item_group_ea_load(void * db, int row, int col, char * val);
+	int const_ea_load(void * db, int row, int col, char * val);
 
 	/* database loading depends on the path of the database */
 	ITEML_API int create_eathena_database(db_ea_t * db, const char * path);

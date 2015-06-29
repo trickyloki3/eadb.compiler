@@ -13,7 +13,7 @@
  	#include "libconfig.h"
  	#include "sqlite3.h"
 
- 	/* resource database type definitions 
+ 	/* resource database type definitions
 	 * -----------------------------------------
 	 * type name 	- 	type reference
 	 * -----------------------------------------
@@ -83,7 +83,7 @@
 	#define FUNC_GETSKILLLV 0x10000000  /* getskilllv */
 	#define FUNC_RAND       0x20000000  /* rand */
 	#define FUNC_POW        0x40000000  /* pow */
-	
+
 	typedef struct {
       int tag;         			/* in-house identification */
       char id[MAX_NAME_SIZE]; 	/* identifier string */
@@ -159,13 +159,13 @@
 
 	/* resource database loading */
 	/*ITEML_API extern native_config_t load_res_native[RESOURCE_DB_COUNT];*/
-	static int option_res_load(void *, int, int, char *);
-	static int map_res_load(void *, int, int, char *);
-	static int bonus_res_load(void *, int, int, char *);
-	static int status_res_load(void *, int, int, char *);
-	static int var_res_load(void *, int, int, char *);
-	static int block_res_load(void *, int, int, char *);
-	static int nid_res_load(void *, int, int, char *);
+	int option_res_load(void *, int, int, char *);
+	int map_res_load(void *, int, int, char *);
+	int bonus_res_load(void *, int, int, char *);
+	int status_res_load(void *, int, int, char *);
+	int var_res_load(void *, int, int, char *);
+	int block_res_load(void *, int, int, char *);
+	int nid_res_load(void *, int, int, char *);
 
 	/* database loading depends on the path of the database */
 	ITEML_API int create_resource_database(db_res_t * db, const char * path);

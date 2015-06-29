@@ -12,13 +12,13 @@
 	#include "setting.h"
  	#include "sqlite3.h"
 
- 	/* rathena database type definitions 
+ 	/* rathena database type definitions
 	 * -----------------------------------------
 	 * type name 	- 	type reference
 	 * -----------------------------------------
 	 * item_ra 			- 	rathena item database
-	 * mob_ra 			- 	rathena mob database 
-	 * skill_ra 		- 	rathena skill database 
+	 * mob_ra 			- 	rathena mob database
+	 * skill_ra 		- 	rathena skill database
 	 * produce_ra		- 	rathena produce database
 	 * mercenary_ra 	-	rathena mecenary database
 	 * pet_ra			-	rathena pet database
@@ -311,13 +311,13 @@
 									"CREATE TABLE IF NOT EXISTS const_ra(name TEXT, value INTEGER, type INTEGER);"				\
 									""																							\
 									"CREATE TABLE IF NOT EXISTS item_combo_ra(" 												\
-									"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"						
+									"id INTEGER, script TEXT, combo_group TEXT, PRIMARY KEY(id, script));"
 
 
 
 	#define item_ra_insert 			"INSERT INTO item_ra VALUES(?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define mob_ra_insert 			"INSERT INTO mob_ra VALUES(" 																\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
@@ -329,7 +329,7 @@
 	#define produce_ra_insert 		"INSERT INTO produce_ra VALUES(?, ?, ?, ?, ?, ?, ?);"
 	#define mercenary_ra_insert 	"INSERT INTO mercenary_ra VALUES(" 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 													\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" 
+									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 	#define pet_ra_insert 			"INSERT INTO pet_ra VALUES(" 																\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
 									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
@@ -358,16 +358,16 @@
 
 	/* rathena native database loading */
 	/*ITEML_API extern native_config_t load_ra_native[RATHENA_DB_COUNT];*/
-	static int item_ra_load(void * db, int row, int col, char * val);
-	static int mob_ra_load(void * db, int row, int col, char * val);
-	static int skill_ra_load(void * db, int row, int col, char * val);
-	static int produce_ra_load(void * db, int row, int col, char * val);
-	static int mercenary_ra_load(void * db, int row, int col, char * val);
-	static int pet_ra_load(void * db, int row, int col, char * val);
-	static int item_group_ra_load(void * db, int row, int col, char * val);
-	static int const_ra_load(void * db, int row, int col, char * val);
-	static int package_ra_load(void * db, int row, int col, char * val);
-	static int combo_ra_load(void * db, int row, int col, char * val);
+	int item_ra_load(void * db, int row, int col, char * val);
+	int mob_ra_load(void * db, int row, int col, char * val);
+	int skill_ra_load(void * db, int row, int col, char * val);
+	int produce_ra_load(void * db, int row, int col, char * val);
+	int mercenary_ra_load(void * db, int row, int col, char * val);
+	int pet_ra_load(void * db, int row, int col, char * val);
+	int item_group_ra_load(void * db, int row, int col, char * val);
+	int const_ra_load(void * db, int row, int col, char * val);
+	int package_ra_load(void * db, int row, int col, char * val);
+	int combo_ra_load(void * db, int row, int col, char * val);
 
 	/* database loading depends on the path of the database */
 	ITEML_API int create_rathena_database(db_ra_t * db, const char * path);
