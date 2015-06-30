@@ -276,8 +276,9 @@
     int translate_overwrite(block_r *, char *, int);
 
     /* writing the formula expressions */
-    char * formula(char *, char *, node_t *);
-    int formula_write(block_r *, char *);
+	char * formula(char *, char *, node_t *);							/* deprecated; use write_formula */
+	char * write_formula(block_r * block, int index, node_t * node);
+	int formula_write(block_r *, char *);								/* legacy; not sure */
     char * status_formula(char *, char *, node_t *, int, int);
     void id_write(node_t *, char *, ...);
     void var_write(node_t *, char *, ...);
@@ -286,6 +287,7 @@
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);
+	node_t * evaluate_expression_post(block_r *, node_t *, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
     int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);

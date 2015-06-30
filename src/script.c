@@ -359,8 +359,11 @@ int script_block_dump(script_t * script, FILE * stm) {
     return SCRIPT_PASSED;
 }
 
+
+/* =.= wtf; this only supports (x, y) function  
+ * calls someone was lazy... asdfghjkl;''''''' */
 int split_paramater_list(token_r * token, int * position, char * paramater) {
-    /* perform lexical on paramater */
+    /* tokenize paramater list and set position equal to  comma , */
     return (script_lexical(token, paramater) || split_paramater(
             token->script_ptr, 1, token->script_cnt - 1, position)) ?
             SCRIPT_FAILED : SCRIPT_PASSED;
@@ -402,16 +405,41 @@ int check_loop_expression(script_t * script, char * expr, char * end) {
 }
 
 int script_block_write(block_r * block, char * fmt, ...) {
-    if(exit_null_safe(2, block, fmt)) return SCRIPT_FAILED;
-    va_list expr_list;
-    va_start(expr_list, fmt);
-    int offset = block->arg_cnt;
-    char * temp = &block->arg[offset];
-    offset += vsprintf(temp, fmt, expr_list);
-    block->arg[offset] = '\0';
-    block->arg_cnt += offset + 1;
-    va_end(expr_list);
-    block->ptr[block->ptr_cnt] = temp;
+	int off = 0;
+	int len = 0;
+	int cnt = 0;
+	char * str = NULL;
+	va_list expr_list;
+
+	/* check null */
+	if (exit_null_safe(2, block, fmt))
+		return SCRIPT_FAILED;
+
+	/* get buffer state */
+	off = block->arg_cnt;
+	str = &block->arg[off];
+	cnt = block->ptr_cnt;
+
+	/* check argument string pointer size */
+	if (cnt >= PTR_SIZE)
+		return exit_func_safe("insufficient argument string pointers size exceeding %d in item %d", PTR_SIZE, block->item_id);
+
+	/* check buffer size after format string is written to buffer
+	 * the program could  buffer overflow and crash at this point
+	 * if not, then check overflow and exit program */
+	va_start(expr_list, fmt);
+	len = vsprintf(str, fmt, expr_list);
+	va_end(expr_list);
+
+	if (off + len > BUF_SIZE)
+		return exit_func_safe("buffer overflow with offset %d and length %d exceeding %d size on item %d", off, len, BUF_SIZE, block->item_id);
+
+	/* update buffer state */
+	block->arg[off + len] = '\0';
+	block->arg_cnt += len + 1;
+
+	/* set an argument string pointer to written string */
+	block->ptr[cnt] = str;
     block->ptr_cnt++;
     return SCRIPT_PASSED;
 }
@@ -1394,6 +1422,7 @@ int script_generate_combo(int item_id, char * buffer, int * offset, struct db_se
 }
 
 char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_search_t * db, int mode) {
+	char * str = convert_string(subscript);
     char buffer[BUF_SIZE];
     int offset = 0;
     script_t script;
@@ -1403,121 +1432,155 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_s
     script.item_id = item_id;
     list_init_head(&script.block);
     /* compilation process per script */
-    if(!script_lexical(&script.token, subscript))
+    if(!script_lexical(&script.token, str))
         if(!script_analysis(&script, &script.token, NULL, NULL))
             if(!script_translate(&script))
                 if(!script_bonus(&script))
                     if(!script_generate(&script, buffer, &offset))
                         ;
+	free(str);
     script_block_reset(&script);
     script_block_finalize(&script);
     return (offset <= 0) ? NULL : convert_string(buffer);
 }
 
 int translate_getitem(block_r * block, int handler) {
-    int i = 0;
-    char buf[BUF_SIZE];
-    int offset = 0;
-    token_r token;
-    node_t * item_id = NULL;
-    node_t * item_amount = NULL;
-    range_t * range = NULL;
+	int i = 0;
+	int flag = 0;
+	token_r * token = NULL;
+	node_t * item_id = NULL;
+	node_t * item_amount = NULL;
+	char * prefix = NULL;
+	char * expr = NULL;
+	range_t * iter = NULL;
+
+	char buf[BUF_SIZE];
+	int off = 0;
+	char * item_name = NULL;
+
     /* check null paramater */
-    if(exit_null_safe(1, block))
+	if (exit_null_safe(1, block))
         return SCRIPT_FAILED;
+	
+	/* set the evaluate expression flags */
+	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
 
-    /* support parenthesize getitem =.= */
+	/* getitem has two formats:
+		getitem(x, y);
+		getitem x, y;
+		=.= ... */
     if(block->ptr[0][0] == '(') {
-        if(split_paramater_list(&token, &i, block->ptr[0])) {
-            exit_func_safe("failed to perform lexical analysis "
-                "on %s in item %d", block->ptr[0], block->item_id);
-            return SCRIPT_FAILED;
+		/* allocate token_r on heap otherwise stack
+		   overflow on recursive script translating */
+		token = calloc(1, sizeof(token_r));
+
+		/* tokenize the (x, y) with i set to the index of the comma */
+        if(split_paramater_list(token, &i, block->ptr[0])) {
+			exit_func_safe("failed to tokenize %s in item %d", block->ptr[0], block->item_id);
+			goto failed;
         }
 
-        /* evaluate item_id and item_amount paramater for getitem */
-        item_id = evaluate_expression_recursive(block, token.script_ptr, 1, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        item_amount = evaluate_expression_recursive(block, token.script_ptr, i + 1, token.script_cnt - 1, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
-        if(item_id == NULL || item_amount == NULL) {
-            if(item_id != NULL) node_free(item_id);
-            if(item_amount != NULL) node_free(item_amount);
-            return SCRIPT_FAILED;
-        }
+		/* evaluate expression for item id x in (x, y) */
+        item_id = evaluate_expression_recursive(block, token->script_ptr, 1, i, block->logic_tree, flag);
+		if (item_id == NULL)
+			goto failed;
 
-        /* push the result on the translation stack */
-        if(item_id->range->min == item_id->range->max) {
-            offset = sprintf(buf, "%d", minrange(item_id->range));
-            buf[offset] = '\0';
-            translate_write(block, buf, 1);
-        } else {
-            /* support range of values */
-            block->flag = 0x01;
-            block->offset = block->ptr_cnt;
-            range = item_id->range;
-            /* iterate through the range */
-            while(range != NULL) {
-                for(i = range->min; i <= range->max; i++)
-                    script_block_write(block, "%d", i);
-                range = range->next;
-            }
-        }
+		item_id = evaluate_expression_post(block, item_id, 1, flag);
 
-        offset = sprintf(buf, "%d", minrange(item_amount->range));
-        buf[offset] = '\0';
-        translate_write(block, buf, 1);
+		/* evaluate expression for item amount y in (x, y) */
+        item_amount = evaluate_expression_recursive(block, token->script_ptr, i + 1, token->script_cnt - 1, block->logic_tree, flag);
+		if (item_amount == NULL)
+			goto failed;
+
+		item_amount = evaluate_expression_post(block, item_amount, 1, flag);
+
+		/* free the token list */
+		free(token);
+		token = NULL;
     } else {
-        /* evaulate the expression because callfunc is called for some of the blocks */
-        item_id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA);
-        item_amount = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA);
-        if(item_id == NULL || item_amount == NULL) {
-            if(item_id != NULL) node_free(item_id);
-            if(item_amount != NULL) node_free(item_amount);
-            return SCRIPT_FAILED;
-        }
-        if(item_id->range->min != item_id->range->max) {
-            /* support range of values */
-            block->flag = 0x01;
-            block->offset = block->ptr_cnt;
-            range = item_id->range;
-            /* iterate through the range */
-            while(range != NULL) {
-                for(i = range->min; i <= range->max; i++)
-                    script_block_write(block, "%d", i);
-                range = range->next;
-            }
-        }
+		/* evaluate expression for item id */
+		item_id = evaluate_expression(block, block->ptr[0], 1, flag);
+		if (item_id == NULL) 
+			goto failed;
+
+		/* evaluate expression for item amount */
+		item_amount = evaluate_expression(block, block->ptr[1], 1, flag);
+		if (item_amount == NULL) 
+			goto failed;
     }
-
-    /* special note; first condition is special case handling of values on stack */
-    if(block->flag & 0x01) {
-        offset += sprintf(buf,"%s %s Amount\n",
-            (block->flag & 0x02) ? "Randomly Select" : "Collect Items & Equipment",
-            formula(&item_amount->stack[item_amount->stack_cnt], block->eng[1], item_amount));
-        for(i = block->offset; i < block->ptr_cnt; i++) {
-            if(translate_item(block, block->ptr[i])) {
-                node_free(item_id);
-                node_free(item_amount);
-                return SCRIPT_FAILED;
-            }
-            offset += sprintf(buf + offset,"=> %s\n", block->eng[block->eng_cnt - 1]);
-        }
-    } else {
-        if(translate_item(block, block->eng[0])) {
-            node_free(item_id);
-            node_free(item_amount);
-            return SCRIPT_FAILED;
-        }
-        offset = (block->eng_cnt < 4) ?
-            sprintf(buf, "Receive %s %s.", status_formula(&item_amount->stack[item_amount->stack_cnt], block->eng[1], item_amount, 'n', 1), block->eng[2]):
-            sprintf(buf, "Receive %s %s.", status_formula(&item_amount->stack[item_amount->stack_cnt], block->eng[2], item_amount, 'n', 1), block->eng[3]);
+	
+	/* check whether one or more item id */
+	if (item_id->range->min != item_id->range->max) {
+		/* support more than one item id */
+		block->flag = 0x01;				/* indicate multiple item id */
+		block->offset = block->ptr_cnt;	/* indicate offset to start of item id list in array of argument strings */
+		/* iterate linked list of (x, y) intervals */
+		iter = item_id->range;
+		while (iter != NULL) {
+			for (i = iter->min; i <= iter->max; i++)
+				script_block_write(block, "%d", i);
+			iter = iter->next;
+		}
+	} else {
+		/* one item id; setting flag and offset is redundant FYI */
+		block->flag = 0x00;
+		block->offset = block->ptr_cnt;
+		script_block_write(block, "%d", item_id->range->min);
+	}
 
 
-    }
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);
+	/* write the amount to buffer */
+	prefix = (block->flag & 0x2) ? "Randomly acquire " : "Acquire ";
+	expr = write_formula(block, 1, item_amount);
+	if (expr == NULL) {
+		exit_func_safe("Failed to write formula for item %d\n", block->item_id);
+		goto failed;
+	}
+	off += sprintf(&buf[off], "%s%s ", prefix, expr);
+	
+	/* write the item names to buffer */
+	if (flag & 0x1){
+		off += sprintf(&buf[off], "item%s listed below\n", item_amount->range->max > 1 ? "s" : "");
 
+		for (i = block->offset; i < block->ptr_cnt; i++) {
+			if (translate_item(block, block->ptr[i]))
+				goto failed;
+
+			/* the item name is on the top of the translated string array */
+			item_name = block->eng[block->eng_cnt - 1];
+
+			off += sprintf(&buf[off], " - %s\n", item_name);
+		}
+	} else {
+		/* translate the item id to item name */
+		if (translate_item(block, block->ptr[block->offset]))
+			goto failed;
+
+		/* the item name is on the top of the translated string array */
+		item_name = block->eng[block->eng_cnt - 1];
+		
+		off += sprintf(&buf[off], "%s.", item_name);
+	}
+	
+	/* write the buffer to the block buffer */
+	translate_write(block, buf, 0x1);
+
+	/* release the memory */
+	free(expr);
     node_free(item_id);
     node_free(item_amount);
     return SCRIPT_PASSED;
+
+failed:
+	if (expr != NULL)
+		free(expr);
+	if (token != NULL)
+		free(token);
+	if (item_id != NULL)
+		node_free(item_id);
+	if (item_amount != NULL)
+		node_free(item_amount);
+	return SCRIPT_FAILED;
 }
 
 int translate_rentitem(block_r * block, int handler) {
@@ -2883,9 +2946,9 @@ int translate_write(block_r * block, char * desc, int flag) {
 
 	/* check buffer size */
 	if (off + len > BUF_SIZE)
-		return exit_func_safe("buffer overflow with offset %d and length %d exceeding %d size on item %d", block->arg_cnt, len, BUF_SIZE, block->item_id);
+		return exit_func_safe("buffer overflow with offset %d and length %d exceeding %d size on item %d", off, len, BUF_SIZE, block->item_id);
 
-	/* check string pointer size */
+	/* check string pointer array size */
 	if (cnt >= PTR_SIZE)
 		return exit_func_safe("insufficient string pointers count exceeding %d in item %d", PTR_SIZE, block->item_id);
 
@@ -2927,6 +2990,7 @@ int translate_overwrite(block_r * block, char * desc, int position) {
     return SCRIPT_PASSED;
 }
 
+/* deprecate */
 char * formula(char * buf, char * eng, node_t * result) {
     int len = 0;
     if(buf == NULL || eng == NULL || result == NULL)
@@ -2940,6 +3004,61 @@ char * formula(char * buf, char * eng, node_t * result) {
         return buf;
     }
     return eng;
+}
+
+/* combine a translated string in block->eng with a simplified version of the original expression 
+ * { getrefine() + 1 } stores '0~15' in block->eng[0] and node->formula stores 'Refine Rate + 1'
+ * write_formula(block, 0, node) returns '0 ~ 15 (Refine Rate + 1)' 
+ *
+ * !! caller must free the string !! */
+char * write_formula(block_r * block, int index, node_t * node) {
+	int ret = 0;
+	char * buffer = NULL;
+	char * prefix = NULL;
+	char * formula = NULL;
+	int buffer_size = 0;
+	int prefix_len = 0;
+	int formula_len = 0;
+
+	/* check null */
+	if (exit_null_safe(2, block, node))
+		return NULL;
+
+	/* check index */
+	if (index >= block->eng_cnt) {
+		exit_func_safe("invalid index to translated string array for item %d", block->item_id);
+		return NULL;
+	}
+
+	/* check null */
+	prefix = block->eng[index];
+	if (prefix == NULL)
+		exit_func_safe("invalid translated string at index %d for item %d", index, block->item_id);
+
+	/* check empty string */
+	prefix_len = strlen(prefix);
+	if (prefix_len <= 0)
+		exit_func_safe("empty translated string at index %d for item %d", index, block->item_id);
+
+	formula = node->formula;
+	formula_len = (node->formula != NULL) ? strlen(formula) : 0;
+	if (formula_len <= 0 || node->cond_cnt <= 0) {
+		/* no formula */
+		buffer = convert_string(prefix);
+	/* formula must contain at least one function or variable */
+	} else if(node->cond_cnt > 0) {
+		/* include formula */
+		buffer_size = prefix_len + formula_len + 5; /* pad with 10 bytes for formatting with syntax and '\0' */
+		buffer = calloc(buffer_size, sizeof(char));
+
+		/* check whether formula is wrap in parenthesis */
+		ret = (formula[0] == '(' && formula[formula_len - 1] == ')') ?
+			sprintf(buffer, "%s %s", prefix, formula):
+			sprintf(buffer, "%s (%s)", prefix, formula);
+		buffer[ret] = '\0';
+	}
+
+	return buffer;
 }
 
 int formula_write(block_r * block, char * formula) {
@@ -3019,10 +3138,9 @@ node_t * evaluate_argument(block_r * block, char * expr) {
 }
 
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
-    int length = 0;
     node_t * root_node = NULL;
     token_r expr_token;
-    logic_node_t * temp = NULL;
+    
 
     /* check null paramaters */
     if(exit_null_safe(2, block, expr))
@@ -3052,59 +3170,68 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
         return NULL;
     }
 
-    /* write the integer values on the stack */
-    block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
-    if(root_node->min == root_node->max) {
-        /* single value with adjusting up to 2 decimal places */
-        length = ((root_node->min / modifier) == 0 && root_node->min > 0) ?
-            sprintf(&block->arg[block->arg_cnt],"%.2f",((double)(root_node->min) / modifier)):
-            sprintf(&block->arg[block->arg_cnt],"%d",(root_node->min) / modifier);
-    } else {
-        /* multiple value with adjusting up to 2 decimal places */
-        length = (((root_node->min / modifier) == 0 && root_node->min > 0) || ((root_node->max / modifier) == 0 && root_node->max > 0)) ?
-            sprintf(&block->arg[block->arg_cnt],"%.2f ~ %.2f", ((double)(root_node->min) / modifier), ((double)(root_node->max) / modifier)):
-            sprintf(&block->arg[block->arg_cnt],"%d ~ %d",(root_node->min) / modifier, (root_node->max) / modifier);
-    }
+	/* post expression handling of node */
+	return evaluate_expression_post(block, root_node, modifier, flag);
+}
 
-    /* advance the translation stack */
-    block->arg_cnt += length + 1;
-    block->eng_cnt++;
+node_t * evaluate_expression_post(block_r * block, node_t * root_node, int modifier, int flag) {
+	int length = 0;
+	logic_node_t * temp = NULL;
+	/* write the integer values on the stack */
+	block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
+	if (root_node->min == root_node->max) {
+		/* single value with adjusting up to 2 decimal places */
+		length = ((root_node->min / modifier) == 0 && root_node->min > 0) ?
+			sprintf(&block->arg[block->arg_cnt], "%.2f", ((double)(root_node->min) / modifier)) :
+			sprintf(&block->arg[block->arg_cnt], "%d", (root_node->min) / modifier);
+	}
+	else {
+		/* multiple value with adjusting up to 2 decimal places */
+		length = (((root_node->min / modifier) == 0 && root_node->min > 0) || ((root_node->max / modifier) == 0 && root_node->max > 0)) ?
+			sprintf(&block->arg[block->arg_cnt], "%.2f ~ %.2f", ((double)(root_node->min) / modifier), ((double)(root_node->max) / modifier)) :
+			sprintf(&block->arg[block->arg_cnt], "%d ~ %d", (root_node->min) / modifier, (root_node->max) / modifier);
+	}
 
-    if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->formula == NULL) {
-        fprintf(stderr,"%s\n", expr);
-    }
+	/* advance the translation stack */
+	block->arg_cnt += length + 1;
+	block->eng_cnt++;
 
-    /* write the modifier in the formula expression */
-    /*if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0)
-        expression_write(root_node, "%s / %d", root_node->formula, modifier);*/
+	if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->formula == NULL) {
+		
+	}
 
-    /* write the formula into the block and only write formula if dependencies exist */
-    if(EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
-        formula_write(block, root_node->formula);
-        /* manual debug error spotting */
-        /*fprintf(stderr,"[%d] %s -> %s\n", block->item_id, expr, root_node->formula);*/
-    }
+	/* write the modifier in the formula expression */
+	/*if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0)
+	expression_write(root_node, "%s / %d", root_node->formula, modifier);*/
 
-    /* keep logic tree in node */
-    if(EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
-        if(root_node->cond != NULL) {
-            if(block->logic_tree == NULL) {
-                block->logic_tree = copy_deep_any_tree(root_node->cond);
-            } else {
-                /* new logic trees are stack onto of one another */
-                temp = block->logic_tree;
-                block->logic_tree = copy_deep_any_tree(root_node->cond);
-                block->logic_tree->stack = temp;
-            }
-        }
+	/* write the formula into the block and only write formula if dependencies exist */
+	if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
+		formula_write(block, root_node->formula);
+		/* manual debug error spotting */
+		/*fprintf(stderr,"[%d] %s -> %s\n", block->item_id, expr, root_node->formula);*/
+	}
 
-    /* keep root node */
-    if(!(EVALUATE_FLAG_KEEP_NODE & flag)) {
-        node_free(root_node);
-        root_node = NULL;
-    }
+	/* keep logic tree in node */
+	if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
+		if (root_node->cond != NULL) {
+			if (block->logic_tree == NULL) {
+				block->logic_tree = copy_deep_any_tree(root_node->cond);
+			}
+			else {
+				/* new logic trees are stack onto of one another */
+				temp = block->logic_tree;
+				block->logic_tree = copy_deep_any_tree(root_node->cond);
+				block->logic_tree->stack = temp;
+			}
+		}
 
-    return root_node;
+	/* keep root node */
+	if (!(EVALUATE_FLAG_KEEP_NODE & flag)) {
+		node_free(root_node);
+		root_node = NULL;
+	}
+
+	return root_node;
 }
 
 node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, int flag) {

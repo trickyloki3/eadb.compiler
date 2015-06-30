@@ -63,4 +63,7 @@
 	char * array_to_string(char *, int *);
 	char * array_to_string_cnt(char *, int *, int);
 	int array_field_cnt(char *);
+
+	/* grammer */
+	int add_es_or_s(char *);
 #endif
