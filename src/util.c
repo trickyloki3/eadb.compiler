@@ -303,6 +303,9 @@ int convert_integer_delimit_static(const char * str, const char * delimiters, in
    for(i = 0; i < array.size; i++)
       list[i] = val[i];
 
+   if (val != NULL)
+	   free(val);
+
    return CHECK_PASSED;
 }
 
