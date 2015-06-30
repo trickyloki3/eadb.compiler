@@ -124,6 +124,8 @@ int deit_db(db_search_t * db) {
 	sqlite3_finalize(db->status_res_id_name_search);
 	sqlite3_finalize(db->var_res_id_search);
 	sqlite3_finalize(db->block_res_key_search);
+	sqlite3_finalize(db->id_res_id_search);
+	sqlite3_finalize(db->num_id_res_id_search);
 	sqlite3_finalize(db->const_db_name_search);
 	sqlite3_finalize(db->const_db_id_search);
 	sqlite3_finalize(db->skill_db_name_search);
@@ -136,8 +138,8 @@ int deit_db(db_search_t * db) {
 	sqlite3_finalize(db->produce_db_id_search);
 	sqlite3_finalize(db->item_group_id_search);
 	sqlite3_finalize(db->item_combo_id_search);
-	sqlite3_close(db->resource);
-	sqlite3_close(db->athena);
+	sqlite3_close_v2(db->resource);
+	sqlite3_close_v2(db->athena);
 	return CHECK_PASSED;
 }
 

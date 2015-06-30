@@ -1528,7 +1528,6 @@ int translate_getitem(block_r * block, int handler) {
 		script_block_write(block, "%d", item_id->range->min);
 	}
 
-
 	/* write the amount to buffer */
 	prefix = (block->flag & 0x2) ? "Randomly acquire " : "Acquire ";
 	expr = write_formula(block, 1, item_amount);

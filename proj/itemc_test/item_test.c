@@ -29,9 +29,8 @@ void unittest(db_search_t * db, int mode, char *test[], char * func) {
 
 	for (i = 0; test[i] != NULL; i++) {
 		result = script_compile_raw(test[i], 0, NULL, db, mode);
-		fprintf(stderr, "[unittest]: %s; %s; TEST %d\n", func, result != NULL ? "PASSED" : "FAILED", i);
-		fprintf(stderr, "%s\n%s\n", test[i], result);
-		if (result != NULL)
-			free(result);
+		fprintf(stderr, "[unittest]: %s; %s; TEST %d\n%s\n%s\n", func, 
+			result != NULL ? "PASSED" : "FAILED", i, test[i], result);
+		if (result != NULL) free(result);
 	}
 }
