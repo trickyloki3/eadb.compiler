@@ -2868,23 +2868,43 @@ int translate_petheal(block_r * block) {
 }
 
 int translate_write(block_r * block, char * desc, int flag) {
-    int length = 0;
-    if(exit_null_safe(2, block, desc))
-        return SCRIPT_FAILED;
+	int ret = 0;
+	int len = 0;
+	int off = 0;
+	int cnt = 0;
 
-    /* write the translation on the buffer and assign pointer to the start */
-    block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
-    /* select the proper format to write the argument */
-    if(flag & 0x01) length = sprintf(&block->arg[block->arg_cnt],"%s",desc);
-    block->arg[block->arg_cnt + length] = '\0';
-    /* check that the write was successful */
-    if(length <= 0) {
-        exit_func_safe("failed to write translation (%s) on item %d", desc, block->item_id);
-        return SCRIPT_FAILED;
-    }
-    /* extend the buffer to the next length */
-    block->arg_cnt += length + 1;
-    block->eng_cnt++;
+	/* check null */
+	if (exit_null_safe(2, block, desc))
+		return SCRIPT_FAILED;
+
+	len = strlen(desc);
+	off = block->arg_cnt;
+	cnt = block->eng_cnt;
+
+	/* check buffer size */
+	if (off + len > BUF_SIZE)
+		return exit_func_safe("buffer overflow with offset %d and length %d exceeding %d size on item %d", block->arg_cnt, len, BUF_SIZE, block->item_id);
+
+	/* check string pointer size */
+	if (cnt >= PTR_SIZE)
+		return exit_func_safe("insufficient string pointers count exceeding %d in item %d", PTR_SIZE, block->item_id);
+
+	/* set a string pointer to current buffer offset */
+	block->eng[cnt] = &block->arg[off];
+
+	/* write translation */
+	if (flag & 0x01) {
+		ret = sprintf(&block->arg[off], "%s", desc);
+		if (ret != len)
+			return exit_func_safe("failed to write '%s', only %d of %d bytes written to buffer on item %d", desc, ret, len, block->item_id);
+		block->arg[off + len] = '\0';
+	} else {
+		return exit_abt_safe("invalid flag paramater");
+	}
+
+	/* update buffer state */
+	block->arg_cnt += len + 1;
+	block->eng_cnt++;
     return SCRIPT_PASSED;
 }
 

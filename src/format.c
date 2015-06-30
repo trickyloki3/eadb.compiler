@@ -112,7 +112,7 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 			exit_func_safe("failed to map item type string %s to constant", item_type_name);
 			break;
 		} else {
-			item_type_constant = lua_tonumber(lstate, -1);
+			item_type_constant = (int) lua_tointeger(lstate, -1);
 			lua_pop(lstate, 1);
 		}
 
@@ -219,7 +219,7 @@ int load_item_id_re(format_rule_t * type, lua_State * lstate, int item_id_table)
 					exit_abt_safe("invalid item id value");
 					break;
 				}
-				item_id_start = lua_tonumber(lstate, -1);
+				item_id_start = (int) lua_tointeger(lstate, -1);
 				phase++;
 			}
 		} else {
@@ -228,7 +228,7 @@ int load_item_id_re(format_rule_t * type, lua_State * lstate, int item_id_table)
 				exit_abt_safe("invalid item id value");
 				break;
 			}
-			item_id_final = lua_tonumber(lstate, -1);
+			item_id_final = (int) lua_tointeger(lstate, -1);
 
 			/* default item id range if item id is -1 */
 			if(item_id_start == -1 || item_id_final == -1) {
@@ -323,7 +323,7 @@ int load_item_field_re(format_field_t * field, lua_State * lstate, int field_tab
 		exit_func_safe("failed to map item field string %s to constant", item_field_type);
 		return CHECK_FAILED;
 	}
-	field->field = lua_tointeger(lstate, -1);
+	field->field = (int) lua_tointeger(lstate, -1);
 
 	/* load the text [optional] */
 	if(!lua_get_field(lstate, field_table, "text", LUA_TSTRING)) {
@@ -371,7 +371,7 @@ int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
 			exit_abt_safe("weapon type table must have must be integer value");
 			break;
 		}
-		weapon_type = lua_tointeger(lstate, -1);
+		weapon_type = (int) lua_tointeger(lstate, -1);
 		rule->weapon_type |= weapon_flag(weapon_type);
 		lua_pop(lstate, lua_gettop(lstate) - weapon_type_table - 1);
 	}

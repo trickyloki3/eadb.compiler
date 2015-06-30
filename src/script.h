@@ -148,7 +148,7 @@
         char arg[BUF_SIZE];
         char * ptr[PTR_SIZE];                /* block arguments */
         char * eng[PTR_SIZE];                /* translated arguments */
-        int arg_cnt;
+		int arg_cnt;						 /* current offset in arg buffer */
         int ptr_cnt;
         int eng_cnt;
         /* linked list chaining blocks */
