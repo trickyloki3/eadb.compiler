@@ -115,7 +115,7 @@ int main(int argc, char * argv[]) {
 					if(!script_lexical(&script.token, item.script)) {
 						if(script_analysis(&script, &script.token, NULL, NULL) == SCRIPT_PASSED)
 							if(!script_translate(&script))
-								/*if(!script_bonus(&script))*/
+								if(!script_bonus(&script))
 									if(!script_generate(&script, script_translation, &script_offset))
 										if(!script_generate_combo(script.item_id, script_translation, &script_offset, script.db, script.mode))
 											;
@@ -126,7 +126,7 @@ int main(int argc, char * argv[]) {
 				}
 
 				/* write the item flavour text, attribute, and script per the file format */
-				/*write_item(description_file, &format, &item, script_translation);*/
+				write_item(description_file, &format, &item, script_translation);
 
 				/* reset the script translation buffer */
 				script_translation[0] = '\0';

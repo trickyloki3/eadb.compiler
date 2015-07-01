@@ -146,8 +146,8 @@
         int type;                            /* block id defined in res/block_db.txt */
         /* ptr loaded by parser & eng translated by translator */
         char arg[BUF_SIZE];
-        char * ptr[PTR_SIZE];                /* block arguments */
-        char * eng[PTR_SIZE];                /* translated arguments */
+        char * ptr[PTR_SIZE];                /* argument string array */
+        char * eng[PTR_SIZE];                /* translated string array */
 		int arg_cnt;						 /* current offset in arg buffer */
         int ptr_cnt;
         int eng_cnt;
@@ -216,6 +216,12 @@
 	ITEMC_API int script_block_reset(script_t *);
 	ITEMC_API int script_block_release(block_r *);
 	ITEMC_API int script_block_finalize(script_t *);
+
+	/* block buffer operations */
+	#define TYPE_PTR 1	/* block->ptr */
+	#define TYPE_ENG 2	/* block->eng */
+	int script_buffer_write(block_r *, int, const char *);
+	int script_buffer_unwrite(block_r * block, int type);
 
     /* auxiliary support */
     int script_block_dump(script_t *, FILE *);
@@ -287,7 +293,7 @@
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);
-	node_t * evaluate_expression_post(block_r *, node_t *, int);
+	node_t * evaluate_expression_post(block_r *, node_t *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
     int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);

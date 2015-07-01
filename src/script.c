@@ -305,6 +305,79 @@ int script_block_finalize(script_t * script) {
     return SCRIPT_PASSED;
 }
 
+int script_buffer_write(block_r * block, int type, const char * str) {
+	int ret = 0;
+	int cnt = 0;
+	int off = 0;
+	int len = 0;
+	char * buf = NULL;
+
+	/* check for infidels */
+	if (exit_null_safe(2, block, str))
+		return CHECK_FAILED;
+
+	/* get buffer state */
+	off = block->arg_cnt;
+	buf = &block->arg[off];
+	
+	/* check buffer size */
+	len = strlen(str) + 1;
+	if ((off + len) >= BUF_SIZE)
+		return exit_func_safe("buffer overflow in item %d\n", block->item_id);
+
+	/* get translated or argument string pointer */
+	switch (type) {
+		case TYPE_PTR:
+			cnt = block->ptr_cnt;
+			if (cnt >= PTR_SIZE)
+				exit_func_safe("exceed translated string array "
+				"size %d in item %d\n", PTR_SIZE, block->item_id);
+			block->ptr[cnt] = buf;
+			block->ptr_cnt++;
+			break;
+		case TYPE_ENG:
+			cnt = block->eng_cnt;
+			if (cnt >= PTR_SIZE)
+				exit_func_safe("exceed argument string array "
+				"size %d in item %d\n", PTR_SIZE, block->item_id);
+			block->eng[cnt] = buf;
+			block->eng_cnt++;
+			break;
+		default: 
+			return exit_func_safe("invalid type %d in item %d\n", type, block->item_id);
+	}
+	
+	/* update buffer state */
+	ret = sprintf(buf, "%s", str);
+	if (ret != len)
+		return exit_func_safe("failed to write buffer in item %d\n", block->item_id);
+	block->arg_cnt += (len + 1);
+}
+
+int script_buffer_unwrite(block_r * block, int type) {
+	int cnt = 0;
+	int len = 0;
+	char * buf = NULL;
+	switch (type) {
+		case TYPE_PTR:
+			cnt = --block->ptr_cnt;
+			buf = block->ptr[cnt];
+			block->ptr[cnt] = NULL;
+			break;
+		case TYPE_ENG:
+			cnt = --block->eng_cnt;
+			buf = block->eng[cnt];
+			block->eng[cnt] = NULL;
+			break;
+		default:
+			return exit_func_safe("invalid type %d in item %d\n", type, block->item_id);
+	}
+
+	/* update buffer state */
+	len = strlen(buf) + 1;
+	block->arg_cnt -= (len + 1);
+}
+
 int script_block_dump(script_t * script, FILE * stm) {
     int i = 0;
     int off = 0;
@@ -2149,51 +2222,87 @@ int translate_trigger(block_r * block, char * expr, int type) {
 }
 
 int translate_time(block_r * block, char * expr) {
-    int tick_min = 0;
-    int tick_max = 0;
-    char buf[BUF_SIZE];
-    char aux[BUF_SIZE];
-    int offset = 0;
-    node_t * result = NULL;
-    /* check null paramater */
-    if(exit_null_safe(2, block, expr))
+	int flag = 0;
+	int tick_min = 0;
+	int tick_max = 0;
+    node_t * time = NULL;
+	int time_unit = 0;
+	char * time_suffix = NULL;
+	char * formula = NULL;
+
+	/* maximum 32-bit integer require up to 11 characters plus -
+	 * enough padding room for additional suffix and formatting
+	 * characters. */
+	int len = 0;
+	char buf[64];
+
+    /* check null */
+	if (exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
 
     /* evalute the expression and convert to time string */
-    result = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
-    if(result == NULL) return SCRIPT_FAILED;
+	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
+	time = evaluate_expression(block, expr, 1, flag);
+	if (time == NULL)
+		return SCRIPT_FAILED;
 
-    tick_min = minrange(result->range);
-    tick_max = maxrange(result->range);
-    if((tick_min / 86400000) > 1) {                      /* Convert seconds to days */
-        tick_min /= 86400000;
-        tick_max /= 86400000;
-        offset = (tick_min == tick_max) ?
-                    sprintf(buf,"%d days",tick_min):
-                    sprintf(buf,"%d ~ %d days", tick_min, tick_max);
-    } else if((tick_min / 3600000) > 1) {                /* Convert seconds to hours */
-        tick_min /= 3600000;
-        tick_max /= 3600000;
-        offset = (tick_min == tick_max) ?
-                    sprintf(buf,"%d hours",tick_min):
-                    sprintf(buf,"%d ~ %d hours", tick_min, tick_max);
-    } else if((tick_min / 60000) > 1) {                  /* Convert seconds to minutes */
-        tick_min /= 60000;
-        tick_max /= 60000;
-        offset = (tick_min == tick_max) ?
-                    sprintf(buf,"%d minutes",tick_min):
-                    sprintf(buf,"%d ~ %d minutes", tick_min, tick_max);
-    } else {                                             /* Convert to seconds */
-        tick_min /= 1000;
-        tick_max /= 1000;
-        offset = (tick_min == tick_max) ?
-                    sprintf(buf,"%d seconds",tick_min):
-                    sprintf(buf,"%d ~ %d seconds", tick_min, tick_max);
-    }
-    buf[offset] = '\0';
-    translate_write(block, formula(aux, buf, result), 1);
-    if(result != NULL) node_free(result);
+	/* get the minimum and maximum of the time expression */
+	tick_min = minrange(time->range);
+	tick_max = maxrange(time->range);
+
+	/* get the closest time metric that can divide the total number of milliseconds */
+	if (tick_min / 86400000 > 1) {
+		time_suffix = "day";
+		time_unit = 86400000;
+	} else if (tick_min / 3600000 > 1) {
+		time_suffix = "hour";
+		time_unit = 3600000;
+	} else if (tick_min / 60000 > 1) {
+		time_suffix = "minute";
+		time_unit = 60000;
+	} else {
+		time_suffix = "second";
+		time_unit = 1000;
+	}
+
+	/* convert millisecond to time metric */
+	tick_min /= time_unit;
+	tick_max /= time_unit;
+
+	/* write time string to buffer */
+	len = (tick_min == tick_max) ?
+		sprintf(buf, "%d %s%s", tick_min, time_suffix, tick_min > 1 ? "s" : "") :
+		sprintf(buf, "%d ~ %d %ss", tick_min, tick_max, time_suffix);
+
+	/* check overflow but sprintf can crash in sprintf */
+	if (len > 64) {
+		exit_func_safe("buffer overflow in item %d\n", block->item_id);
+		goto failed;
+	}
+
+	/* unwrite the translated string written by evaluate_expression 
+	 * and write the new translated string into the buffer */
+	script_buffer_unwrite(block, TYPE_ENG);
+	script_buffer_write(block, TYPE_ENG, buf);
+
+	/* get time expression formula */
+	formula = write_formula(block, block->eng_cnt - 1, time);
+	if (formula == NULL)
+		goto failed;
+
+	/* write translated string */
+	if (translate_write(block, formula, 1))
+		goto failed;
+
+	free(formula);
+	node_free(time);
     return SCRIPT_PASSED;
+failed:
+	if (formula != NULL)
+		free(formula);
+	if (time != NULL)
+		node_free(time);
+	return SCRIPT_FAILED;
 }
 
 int translate_id(block_r * block, char * expr, int flag) {
@@ -3005,10 +3114,22 @@ char * formula(char * buf, char * eng, node_t * result) {
     return eng;
 }
 
+int formula_write(block_r * block, char * formula) {
+	int len = 0;
+	if (exit_null_safe(2, block, formula))
+		return SCRIPT_FAILED;
+	len = sprintf(&block->arg[block->arg_cnt], "%s", formula);
+	if (len <= 0) {
+		exit_func_safe("failed to write formula (%s) on item %d", formula, block->item_id);
+		return SCRIPT_FAILED;
+	}
+	block->arg_cnt += len + 1;
+	return SCRIPT_PASSED;
+}
+
 /* combine a translated string in block->eng with a simplified version of the original expression 
  * { getrefine() + 1 } stores '0~15' in block->eng[0] and node->formula stores 'Refine Rate + 1'
  * write_formula(block, 0, node) returns '0 ~ 15 (Refine Rate + 1)' 
- *
  * !! caller must free the string !! */
 char * write_formula(block_r * block, int index, node_t * node) {
 	int ret = 0;
@@ -3058,19 +3179,6 @@ char * write_formula(block_r * block, int index, node_t * node) {
 	}
 
 	return buffer;
-}
-
-int formula_write(block_r * block, char * formula) {
-    int len = 0;
-    if(exit_null_safe(2, block, formula))
-        return SCRIPT_FAILED;
-    len = sprintf(&block->arg[block->arg_cnt],"%s", formula);
-    if(len <= 0) {
-        exit_func_safe("failed to write formula (%s) on item %d", formula, block->item_id);
-        return SCRIPT_FAILED;
-    }
-    block->arg_cnt += len + 1;
-    return SCRIPT_PASSED;
 }
 
 char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
