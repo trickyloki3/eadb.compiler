@@ -25,8 +25,6 @@
 		#define __func__ __FUNCTION__
 	#endif
 
-	
-
 	/* error functions */
  	extern char err_buf[BUF_SIZE];
  	#define exit_null_safe(X, ...) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)
@@ -55,6 +53,9 @@
 	int convert_uinteger(const char *, int);
 	char * convert_string(const char *);
 
+	/* more string functions */
+	char * concatenate_string(char **, int, int, char);
+
 	/* string delimit functions */
 	int count_delimit(const char *, const char *);
 	const char * substr_delimit(const char *, char *, const char *);
@@ -65,5 +66,5 @@
 	int array_field_cnt(char *);
 
 	/* grammer */
-	int add_es_or_s(char *);
+	int aeiou(char letter);
 #endif

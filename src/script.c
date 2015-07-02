@@ -1097,8 +1097,8 @@ int script_translate(script_t * script) {
             case 15: ret = translate_status(iter, iter->type); break;                                               /* sc_start4 */
             case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
             case 17: ret = translate_getitem(iter, iter->type); break;                                              /* getitem */
-            case 18: ret = translate_rentitem(iter, iter->type); break;                                             /* rentitem */
-            case 19: ret = translate_delitem(iter, iter->type); break;                                              /* delitem */
+            case 18: ret = translate_rentitem(iter); break;															/* rentitem */
+            case 19: ret = translate_delitem(iter); break;															/* delitem */
             case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
             case 23: ret = translate_write(iter, "Set new font.", 1); break;                                        /* setfont */
             case 24: ret = translate_bstore(iter, iter->type); break;                                               /* buyingstore */
@@ -1518,6 +1518,7 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_s
                 if(!script_bonus(&script))
                     if(!script_generate(&script, buffer, &offset))
                         ;
+	script_block_dump(&script, stderr);
 	free(str);
     script_block_reset(&script);
     script_block_finalize(&script);
@@ -1662,32 +1663,57 @@ failed:
 	return SCRIPT_FAILED;
 }
 
-int translate_rentitem(block_r * block, int handler) {
-    int offset = 0;
-    char buf[BUF_SIZE];
-    /* check null paramater */
+int translate_rentitem(block_r * block) {
+	int time_len = 0;
+	int item_len = 0;
+	char buf[BUF_SIZE];
+	char * english = NULL;
+    
+	/* check null */
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
+
+	/* translate item and time argument */
     if(translate_item(block, block->ptr[0]) ||
        translate_time(block, block->ptr[1]))
         return SCRIPT_FAILED;
-    offset = sprintf(buf,"Rent %s for %s.", block->eng[0], block->eng[2]);
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);
+
+	/* check buffer size */
+	item_len = strlen(block->eng[0]);
+	time_len = strlen(block->eng[1]);
+	if (item_len + time_len + 20 > BUF_SIZE)
+		return exit_func_safe("buffer overflow in item %d\n", block->item_id);
+
+	/* proper grammar */
+	english = aeiou(block->eng[0][0]) ? "an" : "a";
+
+	sprintf(buf, "Rent %s %s for %s.", english, block->eng[0], block->eng[1]);
+	if (script_buffer_write(block, TYPE_ENG, buf))
+		return SCRIPT_FAILED;
+
     return SCRIPT_PASSED;
 }
 
-int translate_delitem(block_r * block, int handler) {
-    int offset = 0;
+int translate_delitem(block_r * block) {
     char buf[BUF_SIZE];
-    /* check null paramater */
-    if(exit_null_safe(1, block))
+	int item_len = 0;
+    
+	/* check null */
+	if (exit_null_safe(1, block))
         return SCRIPT_FAILED;
+
+	/* translate item argument */
     if(translate_item(block, block->ptr[0]))
         return SCRIPT_FAILED;
-    offset = sprintf(buf,"Remove %s.", block->eng[0]);
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);
+
+	/* check buffer size */
+	item_len = strlen(block->eng[0]);
+	if (item_len + 20 > BUF_SIZE)
+		return exit_func_safe("buffer overflow in item %d\n", block->item_id);
+
+    sprintf(buf,"Remove a %s from inventory.", block->eng[0]);
+	if (script_buffer_write(block, TYPE_ENG, buf))
+		return SCRIPT_FAILED;
     return SCRIPT_PASSED;
 }
 
@@ -2287,20 +2313,20 @@ int translate_time(block_r * block, char * expr) {
 		goto failed;
 	}
 
-	/* unwrite the translated string written by evaluate_expression 
-	 * and write the new translated string into the buffer */
-	script_buffer_unwrite(block, TYPE_ENG);
-	script_buffer_write(block, TYPE_ENG, buf);
-
 	/* get time expression formula */
+	if (script_buffer_write(block, TYPE_ENG, buf))
+		goto failed;
+
 	formula = write_formula(block, block->eng_cnt - 1, time);
 	if (formula == NULL)
 		goto failed;
 
-	/* write translated string */
-	if (translate_write(block, formula, 1))
+	if(	script_buffer_unwrite(block, TYPE_ENG) ||
+		script_buffer_unwrite(block, TYPE_ENG) ||
+		script_buffer_write(block, TYPE_ENG, formula))
 		goto failed;
-
+	
+	/* reap the memory */
 	free(formula);
 	node_free(time);
     return SCRIPT_PASSED;
@@ -2355,8 +2381,8 @@ int translate_id(block_r * block, char * expr, int flag) {
 
 int translate_item(block_r * block, char * expr) {
     item_t item;
-    /* check null paramater */
-    if(exit_null_safe(2, block, expr))
+    /* check null */
+	if (exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
     /* search the item id if literal */
     if(isdigit(expr[0]))
@@ -3047,44 +3073,7 @@ int translate_petheal(block_r * block) {
 }
 
 int translate_write(block_r * block, char * desc, int flag) {
-	int ret = 0;
-	int len = 0;
-	int off = 0;
-	int cnt = 0;
-
-	/* check null */
-	if (exit_null_safe(2, block, desc))
-		return SCRIPT_FAILED;
-
-	len = strlen(desc);
-	off = block->arg_cnt;
-	cnt = block->eng_cnt;
-
-	/* check buffer size */
-	if (off + len > BUF_SIZE)
-		return exit_func_safe("buffer overflow with offset %d and length %d exceeding %d size on item %d", off, len, BUF_SIZE, block->item_id);
-
-	/* check string pointer array size */
-	if (cnt >= PTR_SIZE)
-		return exit_func_safe("insufficient string pointers count exceeding %d in item %d", PTR_SIZE, block->item_id);
-
-	/* set a string pointer to current buffer offset */
-	block->eng[cnt] = &block->arg[off];
-
-	/* write translation */
-	if (flag & 0x01) {
-		ret = sprintf(&block->arg[off], "%s", desc);
-		if (ret != len)
-			return exit_func_safe("failed to write '%s', only %d of %d bytes written to buffer on item %d", desc, ret, len, block->item_id);
-		block->arg[off + len] = '\0';
-	} else {
-		return exit_abt_safe("invalid flag paramater");
-	}
-
-	/* update buffer state */
-	block->arg_cnt += len + 1;
-	block->eng_cnt++;
-    return SCRIPT_PASSED;
+	return script_buffer_write(block, TYPE_ENG, desc);
 }
 
 int translate_overwrite(block_r * block, char * desc, int position) {

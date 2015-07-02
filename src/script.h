@@ -244,9 +244,9 @@
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
     /* script translation functions */
-	int translate_getitem(block_r *, int);
-	int translate_rentitem(block_r *, int);
-	int translate_delitem(block_r *, int);
+	/* unit_tested */ int translate_getitem(block_r *, int);	/* multiple item id supported */
+	/* unit_tested */ int translate_rentitem(block_r *);		/* multiple item id not supported */
+	/* unit_tested */ int translate_delitem(block_r *);			/* multiple item id not supported */
 	int translate_getrandgroup(block_r *, int);
 	int translate_bstore(block_r *, int);
 	int translate_hire_merc(block_r *, int);
@@ -261,7 +261,7 @@
 	int translate_tbl(block_r *, char *, int);
     int translate_splash(block_r *, char *);
     int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
-    int translate_time(block_r *, char *);
+    /* unit_tested */ int translate_time(block_r *, char *);
     int translate_id(block_r *, char *, int);
     int translate_item(block_r *, char *);
     int translate_autobonus(block_r *, int);

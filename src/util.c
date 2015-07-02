@@ -372,6 +372,24 @@ char * convert_string(const char * str) {
    return tmp;
 }
 
+char * concatenate_string(char ** strs, int start, int end, char sep) {
+	int i = 0;
+	int off = 0;
+	char buf[BUF_SIZE];
+
+	/* concatenate string separated by character */
+	for (i = start; i < end; i++)
+		off += sprintf(&buf[off], "%s%c", strs[i], sep);
+
+	/* check empty string */
+	if (off <= 0) {
+		exit_abt_safe("empty string from %d to %d", start, end);
+		return NULL;
+	}
+	/* return string */
+	return convert_string(buf);
+}
+
 /* count all the delimters in the source buffer */
 int count_delimit(const char * src, const char * delimiters) {
    int i = 0;
@@ -451,4 +469,13 @@ int array_field_cnt(char * buf) {
    for(i = 0; i < len; i++)
       if(buf[i] == ':') cnt++;
    return cnt;
+}
+
+int aeiou(char letter) {
+	switch (letter) {
+		case 'a': case 'e': case 'i': case 'o': case 'u':
+			return CHECK_PASSED;
+		default:
+			return CHECK_FAILED;
+	}
 }
