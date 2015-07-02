@@ -2283,7 +2283,7 @@ int translate_time(block_r * block, char * expr) {
 
 	/* check overflow but sprintf can crash in sprintf */
 	if (len > 64) {
-		exit_func_safe("buffer overflow in item %d\n", block->item_id);
+		exit_func_safe("buffer overflow in item %d", block->item_id);
 		goto failed;
 	}
 
@@ -2291,8 +2291,7 @@ int translate_time(block_r * block, char * expr) {
 	 * and write the new translated string into the buffer */
 	script_buffer_unwrite(block, TYPE_ENG);
 	script_buffer_write(block, TYPE_ENG, buf);
-	script_buffer_unwrite(block, TYPE_ENG);
-	script_buffer_write(block, TYPE_ENG, buf);
+
 	/* get time expression formula */
 	formula = write_formula(block, block->eng_cnt - 1, time);
 	if (formula == NULL)
