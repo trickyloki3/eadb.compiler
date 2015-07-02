@@ -17,7 +17,17 @@ int main(int argc, char * argv[]) {
 		"getitem(1101, getrefine());",
 		NULL
 	};
+
+	char * translate_time_test[] = {
+		"rentitem 1101, 86400000 + getrefine();",
+		"rentitem 1101, 3600000 + getrefine();",
+		"rentitem 1101, 60000 + getrefine();",
+		"rentitem 1101, 1000 + getrefine();",
+		NULL
+	};
+
 	unittest(&db, MODE_EATHENA, translate_getitem_test, "translate_getitem");
+	unittest(&db, MODE_EATHENA, translate_time_test, "translate_time");
 
 	deit_db(&db);
 	return 0;

@@ -323,35 +323,37 @@ int script_buffer_write(block_r * block, int type, const char * str) {
 	/* check buffer size */
 	len = strlen(str) + 1;
 	if ((off + len) >= BUF_SIZE)
-		return exit_func_safe("buffer overflow in item %d\n", block->item_id);
+		return exit_func_safe("buffer overflow in item %d", block->item_id);
 
 	/* get translated or argument string pointer */
 	switch (type) {
 		case TYPE_PTR:
 			cnt = block->ptr_cnt;
 			if (cnt >= PTR_SIZE)
-				exit_func_safe("exceed translated string array "
-				"size %d in item %d\n", PTR_SIZE, block->item_id);
+				return exit_func_safe("exceed translated string array"
+				" size %d in item %d", PTR_SIZE, block->item_id);
 			block->ptr[cnt] = buf;
 			block->ptr_cnt++;
 			break;
 		case TYPE_ENG:
 			cnt = block->eng_cnt;
 			if (cnt >= PTR_SIZE)
-				exit_func_safe("exceed argument string array "
-				"size %d in item %d\n", PTR_SIZE, block->item_id);
+				return exit_func_safe("exceed argument string array"
+				" size %d in item %d", PTR_SIZE, block->item_id);
 			block->eng[cnt] = buf;
 			block->eng_cnt++;
 			break;
 		default: 
-			return exit_func_safe("invalid type %d in item %d\n", type, block->item_id);
+			return exit_func_safe("invalid type %d in item %d", type, block->item_id);
 	}
 	
 	/* update buffer state */
 	ret = sprintf(buf, "%s", str);
-	if (ret != len)
-		return exit_func_safe("failed to write buffer in item %d\n", block->item_id);
+	if (ret + 1 != len)
+		return exit_func_safe("failed to write buffer in item %d", block->item_id);
+	/* length of string + null character + 1 to pointer pass the null character */
 	block->arg_cnt += (len + 1);
+	return SCRIPT_PASSED;
 }
 
 int script_buffer_unwrite(block_r * block, int type) {
@@ -361,21 +363,26 @@ int script_buffer_unwrite(block_r * block, int type) {
 	switch (type) {
 		case TYPE_PTR:
 			cnt = --block->ptr_cnt;
+			if (cnt < 0)
+				return exit_func_safe("empty buffer in item %d", block->item_id);
 			buf = block->ptr[cnt];
 			block->ptr[cnt] = NULL;
 			break;
 		case TYPE_ENG:
 			cnt = --block->eng_cnt;
+			if (cnt < 0)
+				return exit_func_safe("empty buffer in item %d", block->item_id);
 			buf = block->eng[cnt];
 			block->eng[cnt] = NULL;
 			break;
 		default:
-			return exit_func_safe("invalid type %d in item %d\n", type, block->item_id);
+			return exit_func_safe("invalid type %d in item %d", type, block->item_id);
 	}
 
 	/* update buffer state */
 	len = strlen(buf) + 1;
 	block->arg_cnt -= (len + 1);
+	return SCRIPT_PASSED;
 }
 
 int script_block_dump(script_t * script, FILE * stm) {
@@ -2223,9 +2230,9 @@ int translate_trigger(block_r * block, char * expr, int type) {
 
 int translate_time(block_r * block, char * expr) {
 	int flag = 0;
+	node_t * time = NULL;
 	int tick_min = 0;
 	int tick_max = 0;
-    node_t * time = NULL;
 	int time_unit = 0;
 	char * time_suffix = NULL;
 	char * formula = NULL;
@@ -2240,7 +2247,7 @@ int translate_time(block_r * block, char * expr) {
 	if (exit_null_safe(2, block, expr))
         return SCRIPT_FAILED;
 
-    /* evalute the expression and convert to time string */
+    /* evaluate the expression and convert to time string */
 	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
 	time = evaluate_expression(block, expr, 1, flag);
 	if (time == NULL)
@@ -2284,7 +2291,8 @@ int translate_time(block_r * block, char * expr) {
 	 * and write the new translated string into the buffer */
 	script_buffer_unwrite(block, TYPE_ENG);
 	script_buffer_write(block, TYPE_ENG, buf);
-
+	script_buffer_unwrite(block, TYPE_ENG);
+	script_buffer_write(block, TYPE_ENG, buf);
 	/* get time expression formula */
 	formula = write_formula(block, block->eng_cnt - 1, time);
 	if (formula == NULL)
@@ -2297,6 +2305,7 @@ int translate_time(block_r * block, char * expr) {
 	free(formula);
 	node_free(time);
     return SCRIPT_PASSED;
+
 failed:
 	if (formula != NULL)
 		free(formula);
