@@ -319,7 +319,7 @@ int script_buffer_write(block_r * block, int type, const char * str) {
 	/* get buffer state */
 	off = block->arg_cnt;
 	buf = &block->arg[off];
-	
+
 	/* check buffer size */
 	len = strlen(str) + 1;
 	if ((off + len) >= BUF_SIZE)
@@ -382,6 +382,11 @@ int script_buffer_unwrite(block_r * block, int type) {
 	/* update buffer state */
 	len = strlen(buf) + 1;
 	block->arg_cnt -= (len + 1);
+
+	/* removing the last string at block->eng[0] or block->ptr[0]
+	 * causes the arg_cnt to be -1, which corrupts the block->type. */
+	if (block->arg_cnt < 0)
+		block->arg_cnt = 0;
 	return SCRIPT_PASSED;
 }
 
@@ -1525,8 +1530,7 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_s
     return (offset <= 0) ? NULL : convert_string(buffer);
 }
 
-/* return the number of item names written on the block->eng stack */
-int translate_item_new(block_r * block, char * expr) {
+int stack_item(block_r * block, char * expr) {
 	int i = 0;
 	int cnt = 0;
 	int len = 0;
@@ -1569,7 +1573,7 @@ int translate_item_new(block_r * block, char * expr) {
 		script_buffer_unwrite(block, TYPE_ENG);
 	}
 
-	/* write an item name for each item id on the eng stack*/
+	/* write an item name for each item id on the eng stack */
 	iter = item_id->range;
 	while (iter != NULL) {
 		for (i = iter->min; i <= iter->max; i++) {

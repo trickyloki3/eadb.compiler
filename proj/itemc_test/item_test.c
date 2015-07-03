@@ -1,6 +1,7 @@
 #include "script.h"
 
-int unit_test(db_search_t * db, int mode, char * test[]);
+#define STACK_ITEM_TEST 1
+int unit_test(db_search_t *, int, char * [], int);
 
 int main(int argc, char * argv[]) {
 	/* load item database */
@@ -11,14 +12,14 @@ int main(int argc, char * argv[]) {
 		"C:/Users/jim/Desktop/eadb.compiler/resources.db",
 		"C:/Users/jim/Desktop/eadb.compiler/eathena.db");
 
-	char * translate_item_new_test[] = { "1101", "sword", "1101 + getrefine()", NULL };
-	unit_test(&db, mode, translate_item_new_test);
+	char * stack_item_test[] = { "1101", "sword", "1101 + getrefine()", NULL };
+	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST);
 
 	deit_db(&db);
 	return 0;
 }
 
-int unit_test(db_search_t * db, int mode, char * test[]) {
+int unit_test(db_search_t * db, int mode, char * test[], int func) {
 	int i = 0;
 	int ret = 0;
 	char * string = NULL;
@@ -40,6 +41,7 @@ int unit_test(db_search_t * db, int mode, char * test[]) {
 		block->type = 0;
 		block->db = script->db;
 		block->mode = script->mode;
+		block->arg_cnt = 0;
 
 		string = convert_string(test[i]);
 		if (string == NULL) {
@@ -48,7 +50,10 @@ int unit_test(db_search_t * db, int mode, char * test[]) {
 		}
 
 		/* test function */
-		ret = translate_item_new(block, string);
+		switch (func) {
+			case STACK_ITEM_TEST: ret = stack_item(block, string); break;
+		}
+
 		(ret) ?
 			fprintf(stderr, "Passed; %s\n", string) :
 			fprintf(stderr, "Failed; %s\n", string);
@@ -57,7 +62,7 @@ int unit_test(db_search_t * db, int mode, char * test[]) {
 
 		if (script_block_dump(script, stderr) ||
 			script_block_release(block) ||
-			script_block_reset(script, &block))
+			script_block_reset(script))
 			goto failed;
 	}
 	script_block_finalize(script);

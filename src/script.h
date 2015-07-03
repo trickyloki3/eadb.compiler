@@ -244,7 +244,7 @@
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
 	/* script new translation functions */
-	int translate_item_new(block_r * block, char *);
+	int stack_item(block_r * block, char *);
 
     /* script translation functions */
 	/* unit_tested */ int translate_getitem(block_r *, int);	/* multiple item id supported */
