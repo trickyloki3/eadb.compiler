@@ -551,7 +551,8 @@ int skill_db_search_id(db_search_t * db, skill_t * search, int id) {
 int item_db_search_name(db_search_t * db, item_t * search, const char * name) {
 	int status = 0;
 	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(4, db, search, name, db->item_db_name_search)) return CHECK_FAILED;
+	if (exit_null_safe(4, db, search, name, db->item_db_name_search)) 
+		return CHECK_FAILED;
 	stmt = db->item_db_name_search;
 	sqlite3_clear_bindings(stmt);
 	sqlite3_bind_text(stmt, 1, name, strlen(name), SQLITE_STATIC);
@@ -563,7 +564,7 @@ int item_db_search_name(db_search_t * db, item_t * search, const char * name) {
     	strncopy(search->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
 	}
 	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
+		return exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
 	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
 }
 

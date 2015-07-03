@@ -159,11 +159,11 @@
         /* set block node for dependency */
         node_t * set_node;
         /* bonus block keep bonus query and integer results for post analysis */
-        bonus_res bonus;                    /* bonus structure contain entry from item_bonus.txt */
+        bonus_res bonus;                     /* bonus structure contain entry from item_bonus.txt */
         node_t * result[BONUS_SIZE];         /* keep until after minimization */
         /* database references; duplicate information from script_t to prevent
          * passing script_t to every translator; read only */
-        db_search_t * db;                   /* sqlite3 database handle to athena */
+        db_search_t * db;                    /* sqlite3 database handle to athena */
         int mode;                            /* multiplexer for rathena, eathena, or hercule tables */
         /* translation information */
         logic_node_t * logic_tree;           /* calculational and dependency information */
@@ -242,6 +242,9 @@
 	ITEMC_API int script_generate_combo(int, char *, int *, db_search_t *, int);
 	ITEMC_API char * script_compile_raw(char *, int, FILE *, db_search_t *, int);
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
+
+	/* script new translation functions */
+	int translate_item_new(block_r * block, char *);
 
     /* script translation functions */
 	/* unit_tested */ int translate_getitem(block_r *, int);	/* multiple item id supported */

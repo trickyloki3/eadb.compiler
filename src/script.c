@@ -1525,6 +1525,78 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_s
     return (offset <= 0) ? NULL : convert_string(buffer);
 }
 
+/* return the number of item names written on the block->eng stack */
+int translate_item_new(block_r * block, char * expr) {
+	int i = 0;
+	int cnt = 0;
+	int len = 0;
+	int flag = 0;
+	item_t * item_sql = NULL;
+	node_t * item_id = NULL;
+	range_t * iter = NULL;
+
+	/* check empty item id or name */
+	len = strlen(expr);
+	if (len <= 0) {
+		exit_func_safe("empty item id or name in item %d", block->item_id);
+		goto failed;
+	}
+
+	/* get item search buffer */
+	item_sql = malloc(sizeof(item_t));
+	if (item_sql == NULL) {
+		exit_func_safe("out of memory in item %d", block->item_id);
+		goto failed;
+	}
+
+	/* if the expression is an item name, then write the item name on the eng stack */
+	if (isalpha(expr[0])) {
+		if (!item_db_search_name(block->db, item_sql, expr)) {
+			if (script_buffer_write(block, TYPE_ENG, item_sql->name))
+				goto failed;
+			free(item_sql);
+			return 1;
+		}
+	}
+
+	/* evaluate the expression for item id values */
+	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
+	item_id = evaluate_expression(block, expr, 1, flag);
+	if (item_id == NULL || item_id->range == NULL) {
+		exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
+		goto failed;
+	} else {
+		script_buffer_unwrite(block, TYPE_ENG);
+	}
+
+	/* write an item name for each item id on the eng stack*/
+	iter = item_id->range;
+	while (iter != NULL) {
+		for (i = iter->min; i <= iter->max; i++) {
+			if (item_db_search_id(block->db, item_sql, i)) {
+				exit_func_safe("item id %d does not exist in item %d", i, block->item_id);
+				goto failed;
+			}
+			if (script_buffer_write(block, TYPE_ENG, item_sql->name))
+				goto failed;
+			cnt++;
+		}
+		iter = iter->next;
+	}
+
+	/* release resources */
+	free(item_sql);
+	node_free(item_id);
+	return cnt;
+
+failed:
+	if (item_sql != NULL)
+		free(item_sql);
+	if (item_id != NULL)
+		node_free(item_id);
+	return -1;
+}
+
 int translate_getitem(block_r * block, int handler) {
 	int i = 0;
 	int flag = 0;

@@ -383,7 +383,7 @@ char * concatenate_string(char ** strs, int start, int end, char sep) {
 
 	/* check empty string */
 	if (off <= 0) {
-		exit_abt_safe("empty string from %d to %d", start, end);
+		exit_func_safe("empty string from %d to %d", start, end);
 		return NULL;
 	}
 	/* return string */
