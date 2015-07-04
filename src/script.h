@@ -221,12 +221,12 @@
 	#define TYPE_PTR 1	/* block->ptr */
 	#define TYPE_ENG 2	/* block->eng */
 	int script_buffer_write(block_r *, int, const char *);
-	int script_buffer_unwrite(block_r * block, int type);
+	int script_buffer_unwrite(block_r *, int);
+	int script_formula_write(block_r *, int, node_t *, char **);
 
-    /* auxiliary support */
+	/* auxiliary script parsing functions */
     int script_block_dump(script_t *, FILE *);
     int script_block_write(block_r *, char *, ...);
-    int split_paramater_list(token_r *, int *, char *);
     int split_paramater(char **, int, int, int *);
     int check_loop_expression(script_t *, char *, char *);
 
@@ -243,13 +243,15 @@
 	ITEMC_API char * script_compile_raw(char *, int, FILE *, db_search_t *, int);
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
-	/* script new translation functions */
-	int stack_item(block_r * block, char *);
+	/* script stack functions */
+	int stack_ptr_call(block_r * block, char *);
+	/* unit tested */ int stack_eng_item(block_r * block, char *);
+	/* unit tested */ int stack_eng_int(block_r * block, char *);
 
     /* script translation functions */
-	/* unit_tested */ int translate_getitem(block_r *, int);	/* multiple item id supported */
-	/* unit_tested */ int translate_rentitem(block_r *);		/* multiple item id not supported */
-	/* unit_tested */ int translate_delitem(block_r *);			/* multiple item id not supported */
+	int translate_getitem(block_r *);
+	int translate_rentitem(block_r *);
+	int translate_delitem(block_r *);
 	int translate_getrandgroup(block_r *, int);
 	int translate_bstore(block_r *, int);
 	int translate_hire_merc(block_r *, int);
@@ -286,7 +288,6 @@
 
     /* writing the formula expressions */
 	char * formula(char *, char *, node_t *);							/* deprecated; use write_formula */
-	char * write_formula(block_r * block, int index, node_t * node);
 	int formula_write(block_r *, char *);								/* legacy; not sure */
     char * status_formula(char *, char *, node_t *, int, int);
     void id_write(node_t *, char *, ...);

@@ -723,11 +723,6 @@ range_t * calcrange(int operator, range_t * range_1, range_t * range_2) {
          calcrangemax(operator, range_1, max_2);
          result = copyrange(range_1);
          break; 
-      /* simply say that one set is not in the other;
-       * zero - indicate that the condition is false
-       * nonzero - indicate the valid range of values
-       * should only use in context of variables / functions
-       * ALL VALUES CALCULATED RELATED TO LEFT!  */
       case '<':
       case '<' + '=':
          temp_1 = mkrange(operator, min_g, max_g, min_2);

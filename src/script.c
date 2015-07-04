@@ -390,14 +390,70 @@ int script_buffer_unwrite(block_r * block, int type) {
 	return SCRIPT_PASSED;
 }
 
+int script_formula_write(block_r * block, int index, node_t * node, char ** out) {
+	int ret = 0;
+	char * buffer = NULL;
+	char * prefix = NULL;
+	char * formula = NULL;
+	int buffer_size = 0;
+	int prefix_len = 0;
+	int formula_len = 0;
+
+	/* check output pointer */
+	if (out == NULL || *out != NULL)
+		return exit_func_safe("unsafe output pointer %p in item %d", (void *)out, block->item_id);
+
+	/* check index */
+	if (index >= block->eng_cnt)
+		return exit_func_safe("invalid index in translate array for item %d", block->item_id);
+
+	/* check null */
+	prefix = block->eng[index];
+	if (prefix == NULL)
+		return exit_func_safe("invalid translated string at index %d for item %d", index, block->item_id);
+
+	/* check empty string */
+	prefix_len = strlen(prefix);
+	if (prefix_len <= 0)
+		return exit_func_safe("empty translated string at index %d for item %d", index, block->item_id);
+
+	formula = node->formula;
+	formula_len = (node->formula != NULL) ? strlen(formula) : 0;
+	if (formula_len <= 0 || node->cond_cnt <= 0) {
+		/* no formula */
+		buffer = convert_string(prefix);
+		/* formula must contain at least one function or variable */
+	} else if (node->cond_cnt > 0) {
+		/* include formula */
+		buffer_size = prefix_len + formula_len + 5; /* pad with 10 bytes for formatting with syntax and '\0' */
+		buffer = calloc(buffer_size, sizeof(char));
+		if (buffer == NULL)
+			return exit_func_safe("out of memory in item %d", block->item_id);
+
+		/* check whether formula is wrap in parenthesis */
+		ret = (formula[0] == '(' && formula[formula_len - 1] == ')') ?
+			sprintf(buffer, "%s %s", prefix, formula) :
+			sprintf(buffer, "%s (%s)", prefix, formula);
+		buffer[ret] = '\0';
+	}
+
+	*out = buffer;
+	return SCRIPT_PASSED;
+}
+
+
 int script_block_dump(script_t * script, FILE * stm) {
     int i = 0;
     int off = 0;
     char buf[BUF_SIZE];
     block_r * iter = NULL;
 
+	/* ignore dump if stream is NULL */
+	if (stm == NULL)
+		return SCRIPT_PASSED;
+
     /* check null paramaters */
-    if(exit_null_safe(2, script, stm))
+    if(exit_null_safe(1, script))
         return SCRIPT_FAILED;
 
     /* print the id of each block */
@@ -444,15 +500,8 @@ int script_block_dump(script_t * script, FILE * stm) {
     return SCRIPT_PASSED;
 }
 
+/* parse function paramater list */
 
-/* =.= wtf; this only supports (x, y) function  
- * calls someone was lazy... asdfghjkl;''''''' */
-int split_paramater_list(token_r * token, int * position, char * paramater) {
-    /* tokenize paramater list and set position equal to  comma , */
-    return (script_lexical(token, paramater) || split_paramater(
-            token->script_ptr, 1, token->script_cnt - 1, position)) ?
-            SCRIPT_FAILED : SCRIPT_PASSED;
-}
 
 int split_paramater(char ** expr, int start, int end, int * pos) {
     int i = 0;
@@ -993,7 +1042,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
 
         /* write the argument */
         len = strlen(script_ptr[i]);
-        for(j = 0; j < len; j++)
+		for (j = 0; j < len; j++)
             arg[arg_cnt++] = script_ptr[i][j];
 
         /* don't add space after athena symbol prefixes */
@@ -1101,7 +1150,7 @@ int script_translate(script_t * script) {
             case 14: ret = translate_status(iter, iter->type); break;                                               /* sc_start */
             case 15: ret = translate_status(iter, iter->type); break;                                               /* sc_start4 */
             case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
-            case 17: ret = translate_getitem(iter, iter->type); break;                                              /* getitem */
+            case 17: ret = translate_getitem(iter); break;															/* getitem */
             case 18: ret = translate_rentitem(iter); break;															/* rentitem */
             case 19: ret = translate_delitem(iter); break;															/* delitem */
             case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
@@ -1523,14 +1572,68 @@ char * script_compile_raw(char * subscript, int item_id, FILE * dbg, struct db_s
                 if(!script_bonus(&script))
                     if(!script_generate(&script, buffer, &offset))
                         ;
-	script_block_dump(&script, stderr);
 	free(str);
     script_block_reset(&script);
     script_block_finalize(&script);
     return (offset <= 0) ? NULL : convert_string(buffer);
 }
 
-int stack_item(block_r * block, char * expr) {
+/* translate function argument list and push arguments onto the stack */
+int stack_ptr_call(block_r * block, char * expr) {
+	int i = 0;
+	int len = 0;
+	int pos = 0;
+	int cnt = 0;
+	token_r * token = NULL;
+
+	/* check empty argument list */
+	len = strlen(expr);
+	if (len <= 0) {
+		exit_func_safe("empty argument list in item %d", block->item_id);
+		goto failed;
+	}
+
+	/* tokenize argument list */
+	token = calloc(1, sizeof(token_r));
+	if (token == NULL) {
+		exit_func_safe("out of memory in item %d", block->item_id);
+		goto failed;
+	}
+	if (script_lexical(token, expr) || token->script_cnt <= 0) {
+		exit_func_safe("failed to tokenize '%s' in item %d", block->item_id);
+		goto failed;
+	}
+
+	/* first token must be a '(' */
+	if (token->script_ptr[0][0] != '(') {
+		exit_func_safe("missing initial '(' in '%s' in item %d", expr, block->item_id);
+		goto failed;
+	}
+
+	/* remove the last ')' from parsing */
+	token->script_cnt--;
+
+	/* script analysis sets up the initial argument pointers for script parse, 
+	 * but we can set it again just in case. redundant, but not much overhead. */
+	cnt = block->ptr_cnt;
+	block->ptr[cnt] = &block->arg[block->arg_cnt];
+	block->ptr_cnt++;
+
+	/* parser will parse and place all results on the argument stack */
+	script_parse(token, &pos, block, ',', '\0', FLAG_PARSE_NORMAL);
+
+	/* release the resources */
+	free(token);
+	return block->ptr_cnt - cnt;
+
+failed:
+	if (token != NULL)
+		free(token);
+	return -1;
+}
+
+/* translate item id or name expression and push item names onto the stack */
+int stack_eng_item(block_r * block, char * expr) {
 	int i = 0;
 	int cnt = 0;
 	int len = 0;
@@ -1601,141 +1704,43 @@ failed:
 	return -1;
 }
 
-int translate_getitem(block_r * block, int handler) {
-	int i = 0;
+/* translate integer expression and push an integer + formula onto the stack */
+int stack_eng_int(block_r * block, char * expr) {
 	int flag = 0;
-	token_r * token = NULL;
-	node_t * item_id = NULL;
-	node_t * item_amount = NULL;
-	char * prefix = NULL;
-	char * expr = NULL;
-	range_t * iter = NULL;
+	node_t * result = NULL;
+	char * formula = NULL;
 
-	char buf[BUF_SIZE];
-	int off = 0;
-	char * item_name = NULL;
-
-    /* check null paramater */
-	if (exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-	
-	/* set the evaluate expression flags */
+	/* push the integer result on the stack */
 	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
-
-	/* getitem has two formats:
-		getitem(x, y);
-		getitem x, y;
-		=.= ... */
-    if(block->ptr[0][0] == '(') {
-		/* allocate token_r on heap otherwise stack
-		   overflow on recursive script translating */
-		token = calloc(1, sizeof(token_r));
-
-		/* tokenize the (x, y) with i set to the index of the comma */
-        if(split_paramater_list(token, &i, block->ptr[0])) {
-			exit_func_safe("failed to tokenize %s in item %d", block->ptr[0], block->item_id);
-			goto failed;
-        }
-
-		/* evaluate expression for item id x in (x, y) */
-        item_id = evaluate_expression_recursive(block, token->script_ptr, 1, i, block->logic_tree, flag);
-		if (item_id == NULL)
-			goto failed;
-
-		item_id = evaluate_expression_post(block, item_id, 1, flag);
-
-		/* evaluate expression for item amount y in (x, y) */
-        item_amount = evaluate_expression_recursive(block, token->script_ptr, i + 1, token->script_cnt - 1, block->logic_tree, flag);
-		if (item_amount == NULL)
-			goto failed;
-
-		item_amount = evaluate_expression_post(block, item_amount, 1, flag);
-
-		/* free the token list */
-		free(token);
-		token = NULL;
-    } else {
-		/* evaluate expression for item id */
-		item_id = evaluate_expression(block, block->ptr[0], 1, flag);
-		if (item_id == NULL) 
-			goto failed;
-
-		/* evaluate expression for item amount */
-		item_amount = evaluate_expression(block, block->ptr[1], 1, flag);
-		if (item_amount == NULL) 
-			goto failed;
-    }
+	result = evaluate_expression(block, expr, 1, flag);
+	if (result == NULL)
+		exit_func_safe("expected an integer result in '%s' in item %d", expr, block->item_id);
 	
-	/* check whether one or more item id */
-	if (item_id->range->min != item_id->range->max) {
-		/* support more than one item id */
-		block->flag = 0x01;				/* indicate multiple item id */
-		block->offset = block->ptr_cnt;	/* indicate offset to start of item id list in array of argument strings */
-		/* iterate linked list of (x, y) intervals */
-		iter = item_id->range;
-		while (iter != NULL) {
-			for (i = iter->min; i <= iter->max; i++)
-				script_block_write(block, "%d", i);
-			iter = iter->next;
-		}
-	} else {
-		/* one item id; setting flag and offset is redundant FYI */
-		block->flag = 0x00;
-		block->offset = block->ptr_cnt;
-		script_block_write(block, "%d", item_id->range->min);
-	}
-
-	/* write the amount to buffer */
-	prefix = (block->flag & 0x2) ? "Randomly acquire " : "Acquire ";
-	expr = write_formula(block, 1, item_amount);
-	if (expr == NULL) {
-		exit_func_safe("Failed to write formula for item %d\n", block->item_id);
+	/* combine integer result and formula from node */
+	if (script_formula_write(block, block->eng_cnt - 1, result, &formula) || formula == NULL)
 		goto failed;
-	}
-	off += sprintf(&buf[off], "%s%s ", prefix, expr);
-	
-	/* write the item names to buffer */
-	if (flag & 0x1){
-		off += sprintf(&buf[off], "item%s listed below\n", item_amount->range->max > 1 ? "s" : "");
 
-		for (i = block->offset; i < block->ptr_cnt; i++) {
-			if (translate_item(block, block->ptr[i]))
-				goto failed;
+	/* remove integer result from stack */
+	script_buffer_unwrite(block, TYPE_ENG);
 
-			/* the item name is on the top of the translated string array */
-			item_name = block->eng[block->eng_cnt - 1];
+	/* push the combined integer result and formula on stack */
+	script_buffer_write(block, TYPE_ENG, formula);
 
-			off += sprintf(&buf[off], " - %s\n", item_name);
-		}
-	} else {
-		/* translate the item id to item name */
-		if (translate_item(block, block->ptr[block->offset]))
-			goto failed;
-
-		/* the item name is on the top of the translated string array */
-		item_name = block->eng[block->eng_cnt - 1];
-		
-		off += sprintf(&buf[off], "%s.", item_name);
-	}
-	
-	/* write the buffer to the block buffer */
-	translate_write(block, buf, 0x1);
-
-	/* release the memory */
-	free(expr);
-    node_free(item_id);
-    node_free(item_amount);
-    return SCRIPT_PASSED;
+	/* release resources */
+	free(formula);
+	node_free(result);
+	return 1;
 
 failed:
-	if (expr != NULL)
-		free(expr);
-	if (token != NULL)
-		free(token);
-	if (item_id != NULL)
-		node_free(item_id);
-	if (item_amount != NULL)
-		node_free(item_amount);
+	if (result != NULL)
+		node_free(result);
+	if (formula != NULL)
+		free(formula);
+	return -1;
+}
+
+int translate_getitem(block_r * block) {
+	
 	return SCRIPT_FAILED;
 }
 
@@ -2393,7 +2398,7 @@ int translate_time(block_r * block, char * expr) {
 	if (script_buffer_write(block, TYPE_ENG, buf))
 		goto failed;
 
-	formula = write_formula(block, block->eng_cnt - 1, time);
+	script_formula_write(block, block->eng_cnt - 1, time, &formula);
 	if (formula == NULL)
 		goto failed;
 
@@ -3198,60 +3203,6 @@ int formula_write(block_r * block, char * formula) {
 	}
 	block->arg_cnt += len + 1;
 	return SCRIPT_PASSED;
-}
-
-/* combine a translated string in block->eng with a simplified version of the original expression 
- * { getrefine() + 1 } stores '0~15' in block->eng[0] and node->formula stores 'Refine Rate + 1'
- * write_formula(block, 0, node) returns '0 ~ 15 (Refine Rate + 1)' 
- * !! caller must free the string !! */
-char * write_formula(block_r * block, int index, node_t * node) {
-	int ret = 0;
-	char * buffer = NULL;
-	char * prefix = NULL;
-	char * formula = NULL;
-	int buffer_size = 0;
-	int prefix_len = 0;
-	int formula_len = 0;
-
-	/* check null */
-	if (exit_null_safe(2, block, node))
-		return NULL;
-
-	/* check index */
-	if (index >= block->eng_cnt) {
-		exit_func_safe("invalid index to translated string array for item %d", block->item_id);
-		return NULL;
-	}
-
-	/* check null */
-	prefix = block->eng[index];
-	if (prefix == NULL)
-		exit_func_safe("invalid translated string at index %d for item %d", index, block->item_id);
-
-	/* check empty string */
-	prefix_len = strlen(prefix);
-	if (prefix_len <= 0)
-		exit_func_safe("empty translated string at index %d for item %d", index, block->item_id);
-
-	formula = node->formula;
-	formula_len = (node->formula != NULL) ? strlen(formula) : 0;
-	if (formula_len <= 0 || node->cond_cnt <= 0) {
-		/* no formula */
-		buffer = convert_string(prefix);
-	/* formula must contain at least one function or variable */
-	} else if(node->cond_cnt > 0) {
-		/* include formula */
-		buffer_size = prefix_len + formula_len + 5; /* pad with 10 bytes for formatting with syntax and '\0' */
-		buffer = calloc(buffer_size, sizeof(char));
-
-		/* check whether formula is wrap in parenthesis */
-		ret = (formula[0] == '(' && formula[formula_len - 1] == ')') ?
-			sprintf(buffer, "%s %s", prefix, formula):
-			sprintf(buffer, "%s (%s)", prefix, formula);
-		buffer[ret] = '\0';
-	}
-
-	return buffer;
 }
 
 char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {

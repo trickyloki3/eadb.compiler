@@ -1,7 +1,14 @@
 #include "script.h"
 
+/* KNOWN BUGS
+ *  stack_item_test - case 4 - calcrange's arithmetic operators ignores negated values (0-9) U (11-15) + 1101 => (1101, 1116)
+ */
+
 #define STACK_ITEM_TEST 1
-int unit_test(db_search_t *, int, char * [], int);
+#define STACK_INT_TEST  2
+#define STACK_CALL_TEST 3
+int unit_test(db_search_t *, int, char * [], int, FILE *);
+int unit_test_2(db_search_t * db, int mode, char * test[]);
 
 int main(int argc, char * argv[]) {
 	/* load item database */
@@ -12,14 +19,39 @@ int main(int argc, char * argv[]) {
 		"C:/Users/jim/Desktop/eadb.compiler/resources.db",
 		"C:/Users/jim/Desktop/eadb.compiler/eathena.db");
 
-	char * stack_item_test[] = { "1101", "sword", "1101 + getrefine()", NULL };
-	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST);
+	char * stack_item_test[] = { 
+		"1101", 
+		"sword", 
+		"1101 + getrefine()", 
+		"(getrefine() != 10)?1101 + getrefine():1101", 
+		NULL 
+	};
+	char * stack_int_test[] = { 
+		"1101", 
+		"1101 + getrefine()", 
+		"(getrefine() != 10)?1101 + getrefine():1101", 
+		NULL 
+	};
+	char * stack_ptr_test[] = { 
+		"(1, getrefine(), (1)?0:1)", 
+		"(getrefine(), getitem(1101,1))", 
+		"((1)?1:getrefine(), 0)",
+		NULL 
+	};
+
+	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, NULL);
+	unit_test(&db, mode, stack_int_test, STACK_INT_TEST, NULL);
+	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, NULL);
+
+	/*char * translate_getitem[] = { "getitem 1101, 1", NULL };
+	unit_test_2(&db, mode, translate_getitem);*/
 
 	deit_db(&db);
 	return 0;
 }
 
-int unit_test(db_search_t * db, int mode, char * test[], int func) {
+/* test script stack functions */
+int unit_test(db_search_t * db, int mode, char * test[], int func, FILE * file) {
 	int i = 0;
 	int ret = 0;
 	char * string = NULL;
@@ -41,7 +73,6 @@ int unit_test(db_search_t * db, int mode, char * test[], int func) {
 		block->type = 0;
 		block->db = script->db;
 		block->mode = script->mode;
-		block->arg_cnt = 0;
 
 		string = convert_string(test[i]);
 		if (string == NULL) {
@@ -51,16 +82,18 @@ int unit_test(db_search_t * db, int mode, char * test[], int func) {
 
 		/* test function */
 		switch (func) {
-			case STACK_ITEM_TEST: ret = stack_item(block, string); break;
+			case STACK_ITEM_TEST: ret = stack_eng_item(block, string); break;
+			case STACK_INT_TEST: ret = stack_eng_int(block, string); break;
+			case STACK_CALL_TEST: ret = stack_ptr_call(block, string); break;
 		}
 
 		(ret) ?
-			fprintf(stderr, "Passed; %s\n", string) :
-			fprintf(stderr, "Failed; %s\n", string);
+			fprintf(stderr, "Passed; %d; %s\n", ret, string) :
+			fprintf(stderr, "Failed; %d; %s\n", ret, string);
 
 		free(string);
 
-		if (script_block_dump(script, stderr) ||
+		if (script_block_dump(script, file) ||
 			script_block_release(block) ||
 			script_block_reset(script))
 			goto failed;
@@ -77,4 +110,46 @@ failed:
 		free(script);
 	}
 	return CHECK_FAILED;
+}
+
+/* test script translate functions */
+int unit_test_2(db_search_t * db, int mode, char * test[]) {
+	int i = 0;
+	int ret = 0;
+	char * script = NULL;
+	script_t * compiler = NULL;
+
+
+	/* initialize script compiler */
+	compiler = calloc(1, sizeof(script_t));
+	compiler->db = db;
+	compiler->mode = mode;
+	compiler->item_id = 0;
+	list_init_head(&compiler->block);
+
+	/* run each test case */
+	for (i = 0; test[i] != NULL; i++) {
+		script = convert_string(test[i]);
+
+		if (!script_lexical(&compiler->token, script)) {
+			if (!script_analysis(compiler, &compiler->token, NULL, NULL)) {
+				if (!script_translate(compiler))
+					fprintf(stderr, "Passed; %s\n", script);
+				else {
+					fprintf(stderr, "Failed; script_translate; %s\n", script);
+				}
+			} else {
+				fprintf(stderr, "Failed; script_analysis; %s\n", script);
+			}
+		} else {
+			fprintf(stderr, "Failed; script_lexical; %s\n", script);
+		}
+		
+		free(script);
+	}
+
+	script_block_reset(compiler);
+	script_block_finalize(compiler);
+	free(compiler);
+	return SCRIPT_PASSED;
 }

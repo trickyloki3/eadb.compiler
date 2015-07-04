@@ -61,6 +61,8 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\..\src;$(SolutionDir)..\libconfig;$(SolutionDir)..\sqlite3;$(SolutionDir)..\lua5;</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
