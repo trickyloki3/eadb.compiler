@@ -211,18 +211,18 @@
 	int list_head(block_list_t *, block_r **);
 
     /* block memory management */
-	ITEMC_API int script_block_alloc(script_t *, block_r **);
-	ITEMC_API int script_block_dealloc(script_t *, block_r **);
-	ITEMC_API int script_block_reset(script_t *);
-	ITEMC_API int script_block_release(block_r *);
-	ITEMC_API int script_block_finalize(script_t *);
+	ITEMC_API int script_block_alloc(script_t *, block_r **);		/* create a new block or get a block from the free list and place on the used list */
+	ITEMC_API int script_block_dealloc(script_t *, block_r **);		/* remove a block from the used list and add the block to the free list */
+	ITEMC_API int script_block_reset(script_t *);					/* remove every block from used list, reset the block, and add to the free list */
+	ITEMC_API int script_block_release(block_r *);					/* reset the block */
+	ITEMC_API int script_block_finalize(script_t *);				/* remove every block from the free list and free the memory of each block */
 
 	/* block buffer operations */
 	#define TYPE_PTR 1	/* block->ptr */
 	#define TYPE_ENG 2	/* block->eng */
-	int script_buffer_write(block_r *, int, const char *);
-	int script_buffer_unwrite(block_r *, int);
-	int script_formula_write(block_r *, int, node_t *, char **);
+	int script_buffer_write(block_r *, int, const char *);			/* push a string to block->ptr or block->eng stack */
+	int script_buffer_unwrite(block_r *, int);						/* pop a string from block->ptr or block->eng stack */
+	int script_formula_write(block_r *, int, node_t *, char **);	/* combine a node's formula with a string in  block->eng */
 
 	/* auxiliary script parsing functions */
     int script_block_dump(script_t *, FILE *);
@@ -244,7 +244,7 @@
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
 	/* script stack functions */
-	int stack_ptr_call(block_r * block, char *);
+	/* unit tested */ int stack_ptr_call(block_r * block, char *);
 	/* unit tested */ int stack_eng_item(block_r * block, char *);
 	/* unit tested */ int stack_eng_int(block_r * block, char *);
 

@@ -20,6 +20,8 @@ int main(int argc, char * argv[]) {
 		"C:/Users/jim/Desktop/eadb.compiler/eathena.db");
 
 	char * stack_item_test[] = { 
+		"1",
+		"1101 + getrefiner()",
 		"1101", 
 		"sword", 
 		"1101 + getrefine()", 
@@ -39,12 +41,17 @@ int main(int argc, char * argv[]) {
 		NULL 
 	};
 
-	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, NULL);
+	/*unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, NULL);
 	unit_test(&db, mode, stack_int_test, STACK_INT_TEST, NULL);
-	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, NULL);
+	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, NULL);*/
 
-	/*char * translate_getitem[] = { "getitem 1101, 1", NULL };
-	unit_test_2(&db, mode, translate_getitem);*/
+	char * translate_getitem[] = { 
+		"getitem(1101, 1);",
+		"getitem(1101 + getrefine(), getrefine());",
+		"getitem(getrefine() + 1101, getrefine());",
+		NULL 
+	};
+	unit_test_2(&db, mode, translate_getitem);
 
 	deit_db(&db);
 	return 0;
@@ -83,8 +90,9 @@ int unit_test(db_search_t * db, int mode, char * test[], int func, FILE * file) 
 		/* test function */
 		switch (func) {
 			case STACK_ITEM_TEST: ret = stack_eng_item(block, string); break;
-			case STACK_INT_TEST: ret = stack_eng_int(block, string); break;
+			case STACK_INT_TEST:  ret = stack_eng_int(block, string);  break;
 			case STACK_CALL_TEST: ret = stack_ptr_call(block, string); break;
+			default: break;
 		}
 
 		(ret) ?
@@ -119,7 +127,6 @@ int unit_test_2(db_search_t * db, int mode, char * test[]) {
 	char * script = NULL;
 	script_t * compiler = NULL;
 
-
 	/* initialize script compiler */
 	compiler = calloc(1, sizeof(script_t));
 	compiler->db = db;
@@ -146,9 +153,11 @@ int unit_test_2(db_search_t * db, int mode, char * test[]) {
 		}
 		
 		free(script);
+
+		/* reset the script compiler */
+		script_block_reset(compiler);
 	}
 
-	script_block_reset(compiler);
 	script_block_finalize(compiler);
 	free(compiler);
 	return SCRIPT_PASSED;

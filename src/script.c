@@ -198,7 +198,7 @@ int list_head(block_list_t * list, block_r ** block) {
 
 int script_block_alloc(script_t * script, block_r ** block) {
     /* check null paramaters */
-    if(exit_null_safe(2, script, block))
+	if (exit_null_safe(2, script, block))
         return SCRIPT_FAILED;
     /* check free list for a block */
     if(list_pop_head(&script->free, block)) {
@@ -381,7 +381,7 @@ int script_buffer_unwrite(block_r * block, int type) {
 
 	/* update buffer state */
 	len = strlen(buf) + 1;
-	block->arg_cnt -= (len + 1);
+	block->arg_cnt -= len;
 
 	/* removing the last string at block->eng[0] or block->ptr[0]
 	 * causes the arg_cnt to be -1, which corrupts the block->type. */
@@ -398,6 +398,9 @@ int script_formula_write(block_r * block, int index, node_t * node, char ** out)
 	int buffer_size = 0;
 	int prefix_len = 0;
 	int formula_len = 0;
+
+	if (exit_null_safe(2, block, node))
+		return SCRIPT_FAILED;
 
 	/* check output pointer */
 	if (out == NULL || *out != NULL)
@@ -1046,8 +1049,8 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
             arg[arg_cnt++] = script_ptr[i][j];
 
         /* don't add space after athena symbol prefixes */
-        if(!ATHENA_SCRIPT_SYMBOL(script_ptr[i][0]) && script_ptr[i][0] != '=')
-            arg[arg_cnt++] = ' ';
+		if (!ATHENA_SCRIPT_SYMBOL(script_ptr[i][0]) && script_ptr[i][0] != '=')
+			arg[arg_cnt++] = ' ';
     }
 
     block->arg_cnt = arg_cnt;
@@ -1622,6 +1625,9 @@ int stack_ptr_call(block_r * block, char * expr) {
 	/* parser will parse and place all results on the argument stack */
 	script_parse(token, &pos, block, ',', '\0', FLAG_PARSE_NORMAL);
 
+	/* BANDAID */
+	block->arg[block->arg_cnt - 1] = '\0';
+
 	/* release the resources */
 	free(token);
 	return block->ptr_cnt - cnt;
@@ -1655,7 +1661,7 @@ int stack_eng_item(block_r * block, char * expr) {
 		exit_func_safe("out of memory in item %d", block->item_id);
 		goto failed;
 	}
-
+	
 	/* if the expression is an item name, then write the item name on the eng stack */
 	if (isalpha(expr[0])) {
 		if (!item_db_search_name(block->db, item_sql, expr)) {
@@ -1665,7 +1671,7 @@ int stack_eng_item(block_r * block, char * expr) {
 			return 1;
 		}
 	}
-
+	
 	/* evaluate the expression for item id values */
 	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
 	item_id = evaluate_expression(block, expr, 1, flag);
@@ -1675,7 +1681,7 @@ int stack_eng_item(block_r * block, char * expr) {
 	} else {
 		script_buffer_unwrite(block, TYPE_ENG);
 	}
-
+	
 	/* write an item name for each item id on the eng stack */
 	iter = item_id->range;
 	while (iter != NULL) {
@@ -1690,7 +1696,7 @@ int stack_eng_item(block_r * block, char * expr) {
 		}
 		iter = iter->next;
 	}
-
+	
 	/* release resources */
 	free(item_sql);
 	node_free(item_id);
@@ -1740,7 +1746,26 @@ failed:
 }
 
 int translate_getitem(block_r * block) {
-	
+	int i = 0;
+	node_t * item = NULL;
+	node_t * amount = NULL;
+
+	if (block->ptr_cnt == 1) {
+		if (stack_ptr_call(block, block->ptr[0]) != 2)
+			return exit_func_safe("missing getitem arguments for item %d", block->item_id);
+		stack_eng_item(block, block->ptr[1]);
+		stack_eng_int(block, block->ptr[2]);
+	} else {
+		if (block->ptr_cnt < 2)
+			exit_func_safe("missing getitem arguments for item %d", block->item_id);
+		stack_eng_item(block, block->ptr[0]);
+		stack_eng_int(block, block->ptr[1]);
+	}
+	for (i = 0; i < block->ptr_cnt; i++)
+		fprintf(stderr, "ARGUMENT %d: %s\n", i, block->ptr[i]);
+	for (i = 0; i < block->eng_cnt; i++)
+		fprintf(stderr, "TRANSLATION %d: %s\n", i, block->eng[i]);
+
 	return SCRIPT_FAILED;
 }
 
@@ -3269,6 +3294,7 @@ node_t * evaluate_argument(block_r * block, char * expr) {
 }
 
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
+	int i = 0;
     node_t * root_node = NULL;
     token_r expr_token;
     
@@ -3420,10 +3446,17 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                     break;
                 }
             }
+
             if(!expr_inx_close || expr_sub_level) {
                 exit_func_safe("unmatch parenthesis in item %d", block->item_id);
                 goto failed_expression;
             }
+
+			/* check for empty sub expressions */
+			if ((expr_inx_close - expr_inx_open) == 1) {
+				exit_func_safe("empty sub expression in item %d", block->item_id);
+				goto failed_expression;
+			}
 
             /* ? operator require setting the EVALUATE_FLAG_EXPR_BOOL to prevent recursive
              * evaluate expression to free the logic tree use by the 2nd and 3rd expression. */
