@@ -352,7 +352,7 @@ int script_buffer_write(block_r * block, int type, const char * str) {
 	if (ret + 1 != len)
 		return exit_func_safe("failed to write buffer in item %d", block->item_id);
 	/* length of string + null character + 1 to pointer pass the null character */
-	block->arg_cnt += (len + 1);
+	block->arg_cnt += len;
 	return SCRIPT_PASSED;
 }
 
@@ -444,7 +444,6 @@ int script_formula_write(block_r * block, int index, node_t * node, char ** out)
 	return SCRIPT_PASSED;
 }
 
-
 int script_block_dump(script_t * script, FILE * stm) {
     int i = 0;
     int off = 0;
@@ -496,6 +495,11 @@ int script_block_dump(script_t * script, FILE * stm) {
                 dmpnamerange(iter->result[i]->cond, stm, 0);
             }
         }
+		/* dump the buffer */
+		for (i = 0; i < iter->arg_cnt; i++)
+			(iter->arg[i] == '\0') ?
+				fprintf(stm, "NULL ") :
+				fprintf(stm, "%c ", iter->arg[i]);
         fprintf(stm, "\n");
         iter = iter->next;
         off = 0;
@@ -1625,7 +1629,10 @@ int stack_ptr_call(block_r * block, char * expr) {
 	/* parser will parse and place all results on the argument stack */
 	script_parse(token, &pos, block, ',', '\0', FLAG_PARSE_NORMAL);
 
-	/* BANDAID */
+	/* BANDAID
+	 * the last argument parsed was not ended on a delimiter, i.e. ',', the
+	 * loop exited on the end of the string, which means that the parser did
+	 * not properly set the next argument pointer to wrote the NULL character */
 	block->arg[block->arg_cnt - 1] = '\0';
 
 	/* release the resources */
@@ -1643,7 +1650,6 @@ int stack_eng_item(block_r * block, char * expr) {
 	int i = 0;
 	int cnt = 0;
 	int len = 0;
-	int flag = 0;
 	item_t * item_sql = NULL;
 	node_t * item_id = NULL;
 	range_t * iter = NULL;
@@ -1673,10 +1679,8 @@ int stack_eng_item(block_r * block, char * expr) {
 	}
 	
 	/* evaluate the expression for item id values */
-	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
-	item_id = evaluate_expression(block, expr, 1, flag);
+	item_id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
 	if (item_id == NULL || item_id->range == NULL) {
-		exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
 		goto failed;
 	} else {
 		script_buffer_unwrite(block, TYPE_ENG);
@@ -1714,59 +1718,85 @@ failed:
 int stack_eng_int(block_r * block, char * expr) {
 	int flag = 0;
 	node_t * result = NULL;
-	char * formula = NULL;
 
 	/* push the integer result on the stack */
 	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
 	result = evaluate_expression(block, expr, 1, flag);
-	if (result == NULL)
+	if (result == NULL) {
 		exit_func_safe("expected an integer result in '%s' in item %d", expr, block->item_id);
-	
-	/* combine integer result and formula from node */
-	if (script_formula_write(block, block->eng_cnt - 1, result, &formula) || formula == NULL)
-		goto failed;
+		return -1;
+	}
 
-	/* remove integer result from stack */
-	script_buffer_unwrite(block, TYPE_ENG);
-
-	/* push the combined integer result and formula on stack */
-	script_buffer_write(block, TYPE_ENG, formula);
-
-	/* release resources */
-	free(formula);
 	node_free(result);
 	return 1;
-
-failed:
-	if (result != NULL)
-		node_free(result);
-	if (formula != NULL)
-		free(formula);
-	return -1;
 }
 
 int translate_getitem(block_r * block) {
 	int i = 0;
-	node_t * item = NULL;
-	node_t * amount = NULL;
+	int off = 0;
+	int size = 0;
 	int item_off = 0;
 	int item_len = 0;
+	char * buf = NULL;
 	if (block->ptr_cnt == 1) {
-		if (stack_ptr_call(block, block->ptr[0]) != 2)
+		if (stack_ptr_call(block, block->ptr[0]) < 2)
 			return exit_func_safe("missing getitem arguments for item %d", block->item_id);
 		item_off = block->eng_cnt;
 		item_len = stack_eng_item(block, block->ptr[1]);
-		stack_eng_int(block, block->ptr[2]);
+		if (item_len < 0)
+			goto failed;
+		if(stack_eng_int(block, block->ptr[2]) < 0)
+			goto failed;
 	} else {
 		if (block->ptr_cnt < 2)
 			exit_func_safe("missing getitem arguments for item %d", block->item_id);
 		item_off = block->ptr_cnt;
 		item_len = stack_eng_item(block, block->ptr[0]);
-		stack_eng_int(block, block->ptr[1]);
+		if (item_len < 0)
+			goto failed;
+		if (stack_eng_int(block, block->ptr[1]) < 0)
+			goto failed;
+	}
+
+	/* item names are push onto the stack in sequence 
+	 * and the translated pointers point to the same
+	 * buffer, therefore the total length of all the 
+	 * items could be can be calculate from the diff
+	 * of the first and last translated pointers. */
+	size = block->eng[item_off + item_len] - block->eng[item_off];
+	if (size <= 0) {
+		exit_func_safe("empty item names for item %d", block->item_id);
+		goto failed;
 	}
 	
-	for (i = item_off; i < item_len; i++)
-		;
+	/* allocate a buffer with enough padding */
+	buf = calloc(size + 128, sizeof(char));
+	if (buf == NULL) {
+		exit_func_safe("out of memory in item %d", block->item_id);
+		goto failed;
+	}
+
+	/* write the getitem format */
+	off += sprintf(&buf[off], "Receive %s %s%s ", 
+		block->eng[item_off + item_len], 
+		block->eng[item_off],
+		(item_len > 1) ? "," : "");
+	for (i = item_off + 1; i < item_len; i++)
+		off += (i + 1 == item_len) ?
+			sprintf(&buf[off], "and %s ", block->eng[i]) :
+			sprintf(&buf[off], "%s, ", block->eng[i]);
+	off += sprintf(&buf[off], "into your inventory.");
+	
+	/* write to the end of the translation */
+	if (script_buffer_write(block, TYPE_ENG, buf))
+		goto failed;
+
+	free(buf);
+	return SCRIPT_PASSED;
+
+failed:
+	if (buf != NULL)
+		free(buf);
 	return SCRIPT_FAILED;
 }
 

@@ -41,9 +41,9 @@ int main(int argc, char * argv[]) {
 		NULL 
 	};
 
-	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, stderr);
-	unit_test(&db, mode, stack_int_test, STACK_INT_TEST, stderr);
-	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, stderr);
+	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, NULL);
+	unit_test(&db, mode, stack_int_test, STACK_INT_TEST, NULL);
+	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, NULL);
 
 	char * translate_getitem[] = { 
 		"getitem(1101, 1);",
@@ -95,7 +95,7 @@ int unit_test(db_search_t * db, int mode, char * test[], int func, FILE * file) 
 			default: break;
 		}
 
-		(ret) ?
+		(ret > 0) ?
 			fprintf(stderr, "Passed; %d; %s\n", ret, string) :
 			fprintf(stderr, "Failed; %d; %s\n", ret, string);
 
@@ -110,7 +110,7 @@ int unit_test(db_search_t * db, int mode, char * test[], int func, FILE * file) 
 	free(script);
 	return CHECK_PASSED;
 
-failed:
+failed: 
 	if (string != NULL)
 		free(script);
 	if (script != NULL) {
@@ -155,6 +155,7 @@ int unit_test_2(db_search_t * db, int mode, char * test[]) {
 		free(script);
 
 		/* reset the script compiler */
+		script_block_dump(compiler, NULL);
 		script_block_reset(compiler);
 	}
 
