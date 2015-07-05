@@ -1749,23 +1749,24 @@ int translate_getitem(block_r * block) {
 	int i = 0;
 	node_t * item = NULL;
 	node_t * amount = NULL;
-
+	int item_off = 0;
+	int item_len = 0;
 	if (block->ptr_cnt == 1) {
 		if (stack_ptr_call(block, block->ptr[0]) != 2)
 			return exit_func_safe("missing getitem arguments for item %d", block->item_id);
-		stack_eng_item(block, block->ptr[1]);
+		item_off = block->eng_cnt;
+		item_len = stack_eng_item(block, block->ptr[1]);
 		stack_eng_int(block, block->ptr[2]);
 	} else {
 		if (block->ptr_cnt < 2)
 			exit_func_safe("missing getitem arguments for item %d", block->item_id);
-		stack_eng_item(block, block->ptr[0]);
+		item_off = block->ptr_cnt;
+		item_len = stack_eng_item(block, block->ptr[0]);
 		stack_eng_int(block, block->ptr[1]);
 	}
-	for (i = 0; i < block->ptr_cnt; i++)
-		fprintf(stderr, "ARGUMENT %d: %s\n", i, block->ptr[i]);
-	for (i = 0; i < block->eng_cnt; i++)
-		fprintf(stderr, "TRANSLATION %d: %s\n", i, block->eng[i]);
-
+	
+	for (i = item_off; i < item_len; i++)
+		;
 	return SCRIPT_FAILED;
 }
 
@@ -3217,19 +3218,6 @@ char * formula(char * buf, char * eng, node_t * result) {
     return eng;
 }
 
-int formula_write(block_r * block, char * formula) {
-	int len = 0;
-	if (exit_null_safe(2, block, formula))
-		return SCRIPT_FAILED;
-	len = sprintf(&block->arg[block->arg_cnt], "%s", formula);
-	if (len <= 0) {
-		exit_func_safe("failed to write formula (%s) on item %d", formula, block->item_id);
-		return SCRIPT_FAILED;
-	}
-	block->arg_cnt += len + 1;
-	return SCRIPT_PASSED;
-}
-
 char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
     int offset = 0;
     if(aux == NULL || eng == NULL || blank < 0)
@@ -3295,77 +3283,86 @@ node_t * evaluate_argument(block_r * block, char * expr) {
 
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
 	int i = 0;
-    node_t * root_node = NULL;
-    token_r expr_token;
-    
+    node_t * result = NULL;
+    token_r tokens;
 
-    /* check null paramaters */
-    if(exit_null_safe(2, block, expr))
+	/* check null */
+	if (exit_null_safe(2, block, expr))
         return NULL;
 
     /* check division by zero */
-    if(modifier == 0) {
-        exit_func_safe("modifier is zero will cause division by zero in item %d", block->item_id);
+	if (modifier == 0) {
+		exit_func_safe("modifier is zero in item %d", block->item_id);
         return NULL;
     }
 
     /* tokenize the expression */
-    if(script_lexical(&expr_token, expr)) {
-        exit_func_safe("failed to lex '%s' in item %d", expr, block->item_id);
-        return NULL;
-    }
-    if(expr_token.script_cnt <= 0) {
-        exit_func_safe("empty token list '%s' in item %d", expr, block->item_id);
+	if (script_lexical(&tokens, expr) || tokens.script_cnt <= 0) {
+		exit_func_safe("failed to tokenize '%s' in item %d", expr, block->item_id);
         return NULL;
     }
 
-    /* evaluate the expression */
-    root_node = evaluate_expression_recursive(block, expr_token.script_ptr,
-                0, expr_token.script_cnt, block->logic_tree, flag);
-    if(root_node == NULL) {
+	/* evaluate expression */
+	result = evaluate_expression_recursive(block, tokens.script_ptr, 0, tokens.script_cnt, block->logic_tree, flag);
+	if (result == NULL) {
         exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
         return NULL;
     }
 
 	/* post expression handling of node */
-	return evaluate_expression_post(block, root_node, modifier, flag);
+	return evaluate_expression_post(block, result, modifier, flag);
 }
 
 node_t * evaluate_expression_post(block_r * block, node_t * root_node, int modifier, int flag) {
-	int length = 0;
+	int min = 0;
+	int max = 0;
+	int len = 0;
+	char buf[64];
+	char * formula = NULL;
 	logic_node_t * temp = NULL;
-	/* write the integer values on the stack */
-	block->eng[block->eng_cnt] = &block->arg[block->arg_cnt];
-	if (root_node->min == root_node->max) {
-		/* single value with adjusting up to 2 decimal places */
-		length = ((root_node->min / modifier) == 0 && root_node->min > 0) ?
-			sprintf(&block->arg[block->arg_cnt], "%.2f", ((double)(root_node->min) / modifier)) :
-			sprintf(&block->arg[block->arg_cnt], "%d", (root_node->min) / modifier);
-	}
-	else {
-		/* multiple value with adjusting up to 2 decimal places */
-		length = (((root_node->min / modifier) == 0 && root_node->min > 0) || ((root_node->max / modifier) == 0 && root_node->max > 0)) ?
-			sprintf(&block->arg[block->arg_cnt], "%.2f ~ %.2f", ((double)(root_node->min) / modifier), ((double)(root_node->max) / modifier)) :
-			sprintf(&block->arg[block->arg_cnt], "%d ~ %d", (root_node->min) / modifier, (root_node->max) / modifier);
+
+	/* check division by zero */
+	if (modifier == 0) {
+		exit_func_safe("modifier is zero in item %d", block->item_id);
+		return NULL;
 	}
 
-	/* advance the translation stack */
-	block->arg_cnt += length + 1;
-	block->eng_cnt++;
+	/* get the min and max value */
+	min = root_node->min;
+	max = root_node->max;
 
-	if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->formula == NULL) {
-		
+	/* check whether min and max can be divided by the modifier */
+	if (min == max) {
+		/* write a single value */
+		len = (min > 0 && (min / modifier) == 0) ?
+			sprintf(buf, "%.2f", (double) min / modifier) :
+			sprintf(buf, "%d", min / modifier);
+	} else {
+		/* write multiple values */
+		len = (min > 0 && (min / modifier) == 0 || max > 0 && (max / modifier) == 0) ?
+			sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
+			sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
 	}
 
-	/* write the modifier in the formula expression */
-	/*if(EVALUATE_FLAG_WRITE_FORMULA & flag && modifier > 1 && root_node->cond_cnt > 0)
-	expression_write(root_node, "%s / %d", root_node->formula, modifier);*/
+	/* push the values on the translation stack */
+	if (script_buffer_write(block, TYPE_ENG, buf))
+		return NULL;
 
-	/* write the formula into the block and only write formula if dependencies exist */
+	/* write formula if dependencies exist and only when flag is set */
 	if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
-		formula_write(block, root_node->formula);
-		/* manual debug error spotting */
-		/*fprintf(stderr,"[%d] %s -> %s\n", block->item_id, expr, root_node->formula);*/
+		if (script_formula_write(block, block->eng_cnt - 1, root_node, &formula) || formula == NULL) {
+			/* unwrite the values and report error */
+			if (script_buffer_unwrite(block, TYPE_ENG))
+				goto failed;
+			exit_func_safe("failed to write formula in item %d", block->item_id);
+			goto failed;
+		}
+		/* unwrite the formula and write the formula */
+		if (script_buffer_unwrite(block, TYPE_ENG) ||
+			script_buffer_write(block, TYPE_ENG, formula))
+			goto failed;
+		free(formula);
+		formula = NULL;
 	}
 
 	/* keep logic tree in node */
@@ -3373,22 +3370,25 @@ node_t * evaluate_expression_post(block_r * block, node_t * root_node, int modif
 		if (root_node->cond != NULL) {
 			if (block->logic_tree == NULL) {
 				block->logic_tree = copy_deep_any_tree(root_node->cond);
-			}
-			else {
-				/* new logic trees are stack onto of one another */
+			} else {
+				/* new logic trees are stack onot the previous logic tree */
 				temp = block->logic_tree;
 				block->logic_tree = copy_deep_any_tree(root_node->cond);
 				block->logic_tree->stack = temp;
 			}
 		}
 
-	/* keep root node */
-	if (!(EVALUATE_FLAG_KEEP_NODE & flag)) {
-		node_free(root_node);
-		root_node = NULL;
-	}
+	/* return the root node */
+	if (EVALUATE_FLAG_KEEP_NODE & flag)
+		return root_node;
 
-	return root_node;
+	node_free(root_node);
+	return NULL;
+
+failed:
+	if (formula != NULL)
+		free(formula);
+	return NULL;
 }
 
 node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, int flag) {

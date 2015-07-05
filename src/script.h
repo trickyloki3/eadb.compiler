@@ -288,7 +288,6 @@
 
     /* writing the formula expressions */
 	char * formula(char *, char *, node_t *);							/* deprecated; use write_formula */
-	int formula_write(block_r *, char *);								/* legacy; not sure */
     char * status_formula(char *, char *, node_t *, int, int);
     void id_write(node_t *, char *, ...);
     void var_write(node_t *, char *, ...);

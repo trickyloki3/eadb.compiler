@@ -41,9 +41,9 @@ int main(int argc, char * argv[]) {
 		NULL 
 	};
 
-	/*unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, NULL);
-	unit_test(&db, mode, stack_int_test, STACK_INT_TEST, NULL);
-	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, NULL);*/
+	unit_test(&db, mode, stack_item_test, STACK_ITEM_TEST, stderr);
+	unit_test(&db, mode, stack_int_test, STACK_INT_TEST, stderr);
+	unit_test(&db, mode, stack_ptr_test, STACK_CALL_TEST, stderr);
 
 	char * translate_getitem[] = { 
 		"getitem(1101, 1);",
