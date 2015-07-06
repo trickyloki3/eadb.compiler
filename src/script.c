@@ -1157,9 +1157,9 @@ int script_translate(script_t * script) {
             case 14: ret = translate_status(iter, iter->type); break;                                               /* sc_start */
             case 15: ret = translate_status(iter, iter->type); break;                                               /* sc_start4 */
             case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
-            case 17: ret = translate_getitem(iter); break;															/* getitem */
-            case 18: ret = translate_rentitem(iter); break;															/* rentitem */
-            case 19: ret = translate_delitem(iter); break;															/* delitem */
+			case 17: ret = translate_verbitem(iter, "Receive"); break;												/* getitem */
+			case 18: ret = translate_rentitem(iter); break;															/* rentitem */
+			case 19: ret = translate_verbitem(iter, "Remove"); break;												/* delitem */
             case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
             case 23: ret = translate_write(iter, "Set new font.", 1); break;                                        /* setfont */
             case 24: ret = translate_bstore(iter, iter->type); break;                                               /* buyingstore */
@@ -1731,7 +1731,92 @@ int stack_eng_int(block_r * block, char * expr) {
 	return 1;
 }
 
-int translate_getitem(block_r * block) {
+int stack_eng_time(block_r * block, char * expr) {
+	node_t * time = NULL;
+	int tick_min = 0;
+	int tick_max = 0;
+	int time_unit = 0;
+	char * time_suffix = NULL;
+	char * formula = NULL;
+
+	/* maximum 32-bit integer require up to 11 characters plus -
+	* enough padding room for additional suffix and formatting
+	* characters. */
+	int len = 0;
+	char buf[64];
+
+	/* check null */
+	if (exit_null_safe(2, block, expr))
+		return SCRIPT_FAILED;
+
+	/* evaluate the expression and convert to time string */
+	time = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+	if (time == NULL)
+		return SCRIPT_FAILED;
+
+	/* get the minimum and maximum of the time expression */
+	tick_min = minrange(time->range);
+	tick_max = maxrange(time->range);
+
+	/* get the closest time metric that can divide the total number of milliseconds */
+	if (tick_min / 86400000 > 1) {
+		time_suffix = "day";
+		time_unit = 86400000;
+	}
+	else if (tick_min / 3600000 > 1) {
+		time_suffix = "hour";
+		time_unit = 3600000;
+	}
+	else if (tick_min / 60000 > 1) {
+		time_suffix = "minute";
+		time_unit = 60000;
+	}
+	else {
+		time_suffix = "second";
+		time_unit = 1000;
+	}
+
+	/* convert millisecond to time metric */
+	tick_min /= time_unit;
+	tick_max /= time_unit;
+
+	/* write time string to buffer */
+	len = (tick_min == tick_max) ?
+		sprintf(buf, "%d %s%s", tick_min, time_suffix, tick_min > 1 ? "s" : "") :
+		sprintf(buf, "%d ~ %d %ss", tick_min, tick_max, time_suffix);
+
+	/* check overflow but sprintf can crash in sprintf */
+	if (len > 64) {
+		exit_func_safe("buffer overflow in item %d", block->item_id);
+		goto failed;
+	}
+
+	/* get time expression formula */
+	if (script_buffer_write(block, TYPE_ENG, buf) ||
+		script_formula_write(block, block->eng_cnt - 1, time, &formula) ||
+		formula == NULL)
+		goto failed;
+
+	/* pop results and write final translated string */
+	if (script_buffer_unwrite(block, TYPE_ENG) ||
+		script_buffer_unwrite(block, TYPE_ENG) ||
+		script_buffer_write(block, TYPE_ENG, formula))
+		goto failed;
+
+	/* reap the memory */
+	free(formula);
+	node_free(time);
+	return 1;
+
+failed:
+	if (formula != NULL)
+		free(formula);
+	if (time != NULL)
+		node_free(time);
+	return -1;
+}
+
+int translate_verbitem(block_r * block, char * action) {
 	int i = 0;
 	int off = 0;
 	int size = 0;
@@ -1750,7 +1835,7 @@ int translate_getitem(block_r * block) {
 	} else {
 		if (block->ptr_cnt < 2)
 			exit_func_safe("missing getitem arguments for item %d", block->item_id);
-		item_off = block->ptr_cnt;
+		item_off = block->eng_cnt;
 		item_len = stack_eng_item(block, block->ptr[0]);
 		if (item_len < 0)
 			goto failed;
@@ -1777,15 +1862,16 @@ int translate_getitem(block_r * block) {
 	}
 
 	/* write the getitem format */
-	off += sprintf(&buf[off], "Receive %s %s%s ", 
+	off += sprintf(&buf[off], "%s %s %s%s", 
+		action,
 		block->eng[item_off + item_len], 
 		block->eng[item_off],
-		(item_len > 1) ? "," : "");
+		(item_len > 1) ? ", " : "");
 	for (i = item_off + 1; i < item_len; i++)
 		off += (i + 1 == item_len) ?
-			sprintf(&buf[off], "and %s ", block->eng[i]) :
+			sprintf(&buf[off], "and %s", block->eng[i]) :
 			sprintf(&buf[off], "%s, ", block->eng[i]);
-	off += sprintf(&buf[off], "into your inventory.");
+	off += sprintf(&buf[off], ".");
 	
 	/* write to the end of the translation */
 	if (script_buffer_write(block, TYPE_ENG, buf))
@@ -1801,57 +1887,71 @@ failed:
 }
 
 int translate_rentitem(block_r * block) {
-	int time_len = 0;
+	int i = 0;
+	int off = 0;
+	int size = 0;
+	int item_off = 0;
 	int item_len = 0;
-	char buf[BUF_SIZE];
-	char * english = NULL;
-    
-	/* check null */
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
+	char * buf = NULL;
+	if (block->ptr_cnt == 1) {
+		if (stack_ptr_call(block, block->ptr[0]) < 2)
+			return exit_func_safe("missing getitem arguments for item %d", block->item_id);
+		item_off = block->eng_cnt;
+		item_len = stack_eng_item(block, block->ptr[1]);
+		if (item_len < 0)
+			goto failed;
+		if (stack_eng_time(block, block->ptr[2]) < 1)
+			goto failed;
+	}
+	else {
+		if (block->ptr_cnt < 2)
+			exit_func_safe("missing getitem arguments for item %d", block->item_id);
+		item_off = block->eng_cnt;
+		item_len = stack_eng_item(block, block->ptr[0]);
+		if (item_len < 0)
+			goto failed;
+		if (stack_eng_time(block, block->ptr[1]) < 1)
+			goto failed;
+	}
 
-	/* translate item and time argument */
-    if(translate_item(block, block->ptr[0]) ||
-       translate_time(block, block->ptr[1]))
-        return SCRIPT_FAILED;
+	/* item names are push onto the stack in sequence
+	 * and the translated pointers point to the same
+	 * buffer, therefore the total length of all the
+	 * items could be can be calculate from the diff
+	 * of the first and last translated pointers. */
+	size = block->eng[item_off + item_len] - block->eng[item_off];
+	if (size <= 0) {
+		exit_func_safe("empty item names for item %d", block->item_id);
+		goto failed;
+	}
 
-	/* check buffer size */
-	item_len = strlen(block->eng[0]);
-	time_len = strlen(block->eng[1]);
-	if (item_len + time_len + 20 > BUF_SIZE)
-		return exit_func_safe("buffer overflow in item %d\n", block->item_id);
+	/* allocate a buffer with enough padding */
+	buf = calloc(size + 128, sizeof(char));
+	if (buf == NULL) {
+		exit_func_safe("out of memory in item %d", block->item_id);
+		goto failed;
+	}
+	
+	/* write the getitem format */
+	off += sprintf(&buf[off], "Temporarily receive %s %s%s",
+		aeiou(block->eng[item_off][0]) ? "a" : "an",
+		block->eng[item_off],
+		(item_len > 1) ? ", " : "");
+	for (i = item_off + 1; i < item_len; i++)
+		off += (i + 1 == item_len) ?
+		sprintf(&buf[off], "and %s", block->eng[i]) :
+		sprintf(&buf[off], "%s, ", block->eng[i]);
+	off += sprintf(&buf[off], " for %s.", block->eng[item_off + item_len]);
 
-	/* proper grammar */
-	english = aeiou(block->eng[0][0]) ? "an" : "a";
-
-	sprintf(buf, "Rent %s %s for %s.", english, block->eng[0], block->eng[1]);
+	/* write to the end of the translation */
 	if (script_buffer_write(block, TYPE_ENG, buf))
-		return SCRIPT_FAILED;
+		goto failed;
 
-    return SCRIPT_PASSED;
-}
+	free(buf);
+	return SCRIPT_PASSED;
 
-int translate_delitem(block_r * block) {
-    char buf[BUF_SIZE];
-	int item_len = 0;
-    
-	/* check null */
-	if (exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-
-	/* translate item argument */
-    if(translate_item(block, block->ptr[0]))
-        return SCRIPT_FAILED;
-
-	/* check buffer size */
-	item_len = strlen(block->eng[0]);
-	if (item_len + 20 > BUF_SIZE)
-		return exit_func_safe("buffer overflow in item %d\n", block->item_id);
-
-    sprintf(buf,"Remove a %s from inventory.", block->eng[0]);
-	if (script_buffer_write(block, TYPE_ENG, buf))
-		return SCRIPT_FAILED;
-    return SCRIPT_PASSED;
+failed:
+	return SCRIPT_FAILED;
 }
 
 int translate_getrandgroup(block_r * block, int handler) {
@@ -1932,7 +2032,7 @@ int translate_hire_merc(block_r * block, int handler) {
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
     if(translate_id(block, block->ptr[0], 0x04) ||
-       translate_time(block, block->ptr[1]))
+		stack_eng_time(block, block->ptr[1]))
         return SCRIPT_FAILED;
     offset = sprintf(buf,"Hire %s for %s.", block->eng[0], block->eng[2]);
     buf[offset] = '\0';
@@ -2058,12 +2158,12 @@ int translate_transform(block_r * block) {
     /* support both mob id and name */
     if(isdigit(block->ptr[0][0])) {
         if(translate_id(block, block->ptr[0], 0x01) ||
-           translate_time(block, block->ptr[1]))
+			stack_eng_time(block, block->ptr[1]))
             return SCRIPT_FAILED;
         offset = sprintf(buf, "Transform into a %s for %s.", block->eng[0], block->eng[2]);
     } else {
         if(translate_write(block, block->ptr[0], 1) ||
-           translate_time(block, block->ptr[1]))
+			stack_eng_time(block, block->ptr[1]))
             return SCRIPT_FAILED;
         offset = sprintf(buf, "Transform into a %s for %s.", block->eng[0], block->eng[2]);
     }
@@ -2391,91 +2491,6 @@ int translate_trigger(block_r * block, char * expr, int type) {
     return SCRIPT_PASSED;
 }
 
-int translate_time(block_r * block, char * expr) {
-	int flag = 0;
-	node_t * time = NULL;
-	int tick_min = 0;
-	int tick_max = 0;
-	int time_unit = 0;
-	char * time_suffix = NULL;
-	char * formula = NULL;
-
-	/* maximum 32-bit integer require up to 11 characters plus -
-	 * enough padding room for additional suffix and formatting
-	 * characters. */
-	int len = 0;
-	char buf[64];
-
-    /* check null */
-	if (exit_null_safe(2, block, expr))
-        return SCRIPT_FAILED;
-
-    /* evaluate the expression and convert to time string */
-	flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
-	time = evaluate_expression(block, expr, 1, flag);
-	if (time == NULL)
-		return SCRIPT_FAILED;
-
-	/* get the minimum and maximum of the time expression */
-	tick_min = minrange(time->range);
-	tick_max = maxrange(time->range);
-
-	/* get the closest time metric that can divide the total number of milliseconds */
-	if (tick_min / 86400000 > 1) {
-		time_suffix = "day";
-		time_unit = 86400000;
-	} else if (tick_min / 3600000 > 1) {
-		time_suffix = "hour";
-		time_unit = 3600000;
-	} else if (tick_min / 60000 > 1) {
-		time_suffix = "minute";
-		time_unit = 60000;
-	} else {
-		time_suffix = "second";
-		time_unit = 1000;
-	}
-
-	/* convert millisecond to time metric */
-	tick_min /= time_unit;
-	tick_max /= time_unit;
-
-	/* write time string to buffer */
-	len = (tick_min == tick_max) ?
-		sprintf(buf, "%d %s%s", tick_min, time_suffix, tick_min > 1 ? "s" : "") :
-		sprintf(buf, "%d ~ %d %ss", tick_min, tick_max, time_suffix);
-
-	/* check overflow but sprintf can crash in sprintf */
-	if (len > 64) {
-		exit_func_safe("buffer overflow in item %d", block->item_id);
-		goto failed;
-	}
-
-	/* get time expression formula */
-	if (script_buffer_write(block, TYPE_ENG, buf))
-		goto failed;
-
-	script_formula_write(block, block->eng_cnt - 1, time, &formula);
-	if (formula == NULL)
-		goto failed;
-
-	if(	script_buffer_unwrite(block, TYPE_ENG) ||
-		script_buffer_unwrite(block, TYPE_ENG) ||
-		script_buffer_write(block, TYPE_ENG, formula))
-		goto failed;
-	
-	/* reap the memory */
-	free(formula);
-	node_free(time);
-    return SCRIPT_PASSED;
-
-failed:
-	if (formula != NULL)
-		free(formula);
-	if (time != NULL)
-		node_free(time);
-	return SCRIPT_FAILED;
-}
-
 int translate_id(block_r * block, char * expr, int flag) {
     int id = 0;
     merc_t merc;
@@ -2548,7 +2563,7 @@ int translate_autobonus(block_r * block, int flag) {
     rate = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
     if(rate == NULL) return SCRIPT_FAILED;
     translate_bonus_float_percentage(block, rate, &offset, 100);
-    if(translate_time(block, block->ptr[2]) == SCRIPT_FAILED)
+	if (stack_eng_time(block, block->ptr[2]) == SCRIPT_FAILED)
         return SCRIPT_FAILED;
     /* translate for autobonus and autobonus2 */
     if(flag & 0x01 || flag & 0x02) {
@@ -2785,7 +2800,7 @@ int translate_status(block_r * block, int handler) {
     }
 
     /* evaluate the duration of the status */
-    if(translate_time(block, block->ptr[1]))
+	if (stack_eng_time(block, block->ptr[1]))
         return SCRIPT_FAILED;
 
     if(ncs_strcmp(status.scstr, "sc_itemscript") != 0) {

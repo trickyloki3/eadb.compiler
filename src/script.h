@@ -247,11 +247,11 @@
 	/* unit tested */ int stack_ptr_call(block_r * block, char *);
 	/* unit tested */ int stack_eng_item(block_r * block, char *);
 	/* unit tested */ int stack_eng_int(block_r * block, char *);
+	/* unit tested */ int stack_eng_time(block_r * block, char *);
 
     /* script translation functions */
-	int translate_getitem(block_r *);
-	int translate_rentitem(block_r *);
-	int translate_delitem(block_r *);
+	/* unit tested */ int translate_verbitem(block_r *, char *);
+	/* unit tested */ int translate_rentitem(block_r *);
 	int translate_getrandgroup(block_r *, int);
 	int translate_bstore(block_r *, int);
 	int translate_hire_merc(block_r *, int);
@@ -266,7 +266,6 @@
 	int translate_tbl(block_r *, char *, int);
     int translate_splash(block_r *, char *);
     int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
-    /* unit_tested */ int translate_time(block_r *, char *);
     int translate_id(block_r *, char *, int);
     int translate_item(block_r *, char *);
     int translate_autobonus(block_r *, int);
