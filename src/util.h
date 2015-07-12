@@ -24,6 +24,8 @@
 	#if defined ( WIN32 )
 		#define __func__ __FUNCTION__
 	#endif
+	
+	#define SAFE_FREE(X) if(NULL != (X)) { free(X); (X) = NULL; }
 
 	/* error functions */
  	extern char err_buf[BUF_SIZE];

@@ -352,115 +352,186 @@ int combo_he_load(void * db, int row, int col, char * val) {
 	return 0;
 }
 
-int create_hercules_database(db_he_t * db, const char * path) {
-	int status = 0;
-	const char * error = NULL;
-	char * sql_error = NULL;
-	if( /* open database connection specified by path */
-		sqlite3_open(path, &db->db) != SQLITE_OK ||
-		/* execute hercules table creation script */
-		sqlite3_exec(db->db, hercules_database_sql, NULL, NULL, &sql_error) != SQLITE_OK ||
-		/* prepare the insertion statements */
-		sqlite3_prepare_v2(db->db, item_he_insert, 	 	 strlen(item_he_insert), 		&db->item_he_sql_insert, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, mob_he_insert, 		 strlen(mob_he_insert), 		&db->mob_he_sql_insert, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, skill_he_insert, 	 strlen(skill_he_insert), 		&db->skill_he_sql_insert, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, produce_he_insert, 	 strlen(produce_he_insert), 	&db->produce_he_sql_insert, 	NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, mercenary_he_insert,  strlen(mercenary_he_insert), 	&db->mercenary_he_sql_insert, 	NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, pet_he_insert, 		 strlen(pet_he_insert), 		&db->pet_he_sql_insert, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, const_he_insert, 	 strlen(const_he_insert), 		&db->const_he_sql_insert, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->db, item_combo_he_insert, strlen(item_combo_he_insert), 	&db->item_combo_he_sql_insert, 	NULL) != SQLITE_OK) {
+int herc_db_init(herc_db_t ** db, const char * path) {
+	char * error = NULL;
+	herc_db_t * herc = NULL;
 
-		/* print sqlite3 error before exiting */
-		status = sqlite3_errcode(db->db);
-		error = sqlite3_errmsg(db->db);
-		exit_func_safe("sqlite3 code %d; %s", status, (sql_error != NULL) ? sql_error : error);
-		/* release the error string and database handle */
-		if(sql_error != NULL) sqlite3_free(sql_error);
-		if(db->db != NULL) sqlite3_close(db->db);
+	if(exit_null_safe(2, db, path))
+		return CHECK_FAILED;
+
+	herc = calloc(1, sizeof(herc_db_t));
+	if(NULL == herc)
+		goto failed;
+
+	/* create database */
+	if( SQLITE_OK != sqlite3_open_v2(path, &herc->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL)) {
+		if(NULL != herc->db)
+			fprintf(stderr, "Failed to create %s; %s.\n", path, sqlite3_errmsg(herc->db));
+		goto failed;
+	}
+
+	/* load database schema */
+	if(SQLITE_OK != sqlite3_exec(herc->db,
+		HERC_ITEM_DELETE
+		HERC_ITEM_CREATE
+		HERC_MOB_DELETE
+		HERC_MOB_CREATE
+		HERC_SKILL_DELETE
+		HERC_SKILL_CREATE
+		HERC_PRODUCE_DELETE
+		HERC_PRODUCE_CREATE
+		HERC_MERC_DELETE
+		HERC_MERC_CREATE
+		HERC_PET_DELETE
+		HERC_PET_CREATE
+		HERC_CONST_DELETE
+		HERC_CONST_CREATE
+		HERC_COMBO_DELETE
+		HERC_COMBO_CREATE,
+		NULL, NULL, &error)) {
+		if(NULL != error) {
+			fprintf(stderr, "Failed to load schema %s; %s.\n", path, error);
+			sqlite3_free(error);
+		}
+		goto failed;
+	}
+
+	/* compile sql statements */
+	if( SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_ITEM_INSERT, strlen(HERC_ITEM_INSERT) + 1, &herc->item_he_sql_insert, NULL)		||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_MOB_INSERT, strlen(HERC_MOB_INSERT) + 1, &herc->mob_he_sql_insert, NULL) 		||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_SKILL_INSERT, strlen(HERC_SKILL_INSERT), &herc->skill_he_sql_insert, NULL)		||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_PRODUCE_INSERT, strlen(HERC_PRODUCE_INSERT), &herc->produce_he_sql_insert, NULL) ||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_MERC_INSERT, strlen(HERC_MERC_INSERT), &herc->mercenary_he_sql_insert, NULL) 	||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_PET_INSERT, strlen(HERC_PET_INSERT), &herc->pet_he_sql_insert, NULL) 			||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_CONST_INSERT, strlen(HERC_CONST_INSERT), &herc->const_he_sql_insert, NULL) 		||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_COMBO_INSERT, strlen(HERC_COMBO_INSERT), &herc->item_combo_he_sql_insert, NULL)	) {
+		fprintf(stderr, "Failed to sql query; %s.\n", sqlite3_errmsg(herc->db));
+		goto failed;
+	}
+
+	*db = herc;
+	return CHECK_PASSED;
+
+failed:
+	if(NULL != herc->db)
+		if(SQLITE_OK != sqlite3_close(herc->db)) {
+			fprintf(stderr, "Failed to close %s; %s.\n", path, sqlite3_errmsg(herc->db));
+			exit(EXIT_FAILURE);
+		}
+	return CHECK_FAILED;
+}
+
+int herc_db_deit(herc_db_t ** db) {
+	herc_db_t * herc = NULL;
+
+	if(exit_null_safe(2, db, *db))
+		return CHECK_FAILED;
+
+	herc = *db;
+	if( SQLITE_OK != sqlite3_finalize(herc->item_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->mob_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->skill_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->produce_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->mercenary_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->pet_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->const_he_sql_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->item_combo_he_sql_insert) ||
+		SQLITE_OK != sqlite3_close(herc->db)) {
+		fprintf(stderr, "Failed to unload database; %s.\n", sqlite3_errmsg(herc->db));
+		exit(EXIT_FAILURE);
+	}
+	*db = NULL;
+	return CHECK_PASSED;
+}
+
+int herc_db_exec(herc_db_t * db, char * sql) {
+	char * error = NULL;
+
+	if (SQLITE_OK != sqlite3_exec(db->db, sql, NULL, NULL, &error)) {
+		if(NULL != error) {
+			fprintf(stderr, "Failed to exec %s; %s.\n", sql, error);
+			sqlite3_free(error);
+		}
 		return CHECK_FAILED;
 	}
+
 	return CHECK_PASSED;
 }
 
-int finalize_hercules_database(db_he_t * db) {
-	if(db->item_he_sql_insert != NULL) 			sqlite3_finalize(db->item_he_sql_insert);
-	if(db->mob_he_sql_insert != NULL) 			sqlite3_finalize(db->mob_he_sql_insert);
-	if(db->skill_he_sql_insert != NULL) 		sqlite3_finalize(db->skill_he_sql_insert);
-	if(db->produce_he_sql_insert != NULL) 		sqlite3_finalize(db->produce_he_sql_insert);
-	if(db->mercenary_he_sql_insert != NULL) 	sqlite3_finalize(db->mercenary_he_sql_insert);
-	if(db->pet_he_sql_insert != NULL) 			sqlite3_finalize(db->pet_he_sql_insert);
-	if(db->const_he_sql_insert != NULL) 		sqlite3_finalize(db->const_he_sql_insert);
-	if(db->item_combo_he_sql_insert != NULL) 	sqlite3_finalize(db->item_combo_he_sql_insert);
-	if(db->db != NULL) 							sqlite3_close(db->db);
+int herc_load_item_db(herc_db_t * db, const char * path) {
+	native_t items;
+	if( load_he_item(path, &items) ||
+		herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
+		herc_load_item_db_insert(items.db, items.size, db->item_he_sql_insert) ||
+		herc_db_exec(db, "COMMIT TRANSACTION;"))
+		return CHECK_FAILED;
+	SAFE_FREE(items.db);
 	return CHECK_PASSED;
 }
 
-int item_he_sql_load(db_he_t * db, const char * path) {
+int herc_load_item_db_insert(item_he * db, int size, sqlite3_stmt * sql) {
 	int i = 0;
-	int status = 0;
-	native_t item_db;
-	item_he * item_he_db = NULL;
-	memset(&item_db, 0, sizeof(native_t));
+	item_he * item = NULL;
 
-	load_he_item(path, &item_db);
-
-	/* load the native database into the sqlite3 hercules database */
-	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
-	for(i = 0, item_he_db = item_db.db; i < item_db.size; i++) {
-		sqlite3_clear_bindings(db->item_he_sql_insert);
-		sqlite3_bind_int(db->item_he_sql_insert, 	1, 	item_he_db[i].id);
-		sqlite3_bind_text(db->item_he_sql_insert, 	2, 	item_he_db[i].aegis, 			strlen(item_he_db[i].aegis), SQLITE_STATIC);
-		sqlite3_bind_text(db->item_he_sql_insert, 	3, 	item_he_db[i].name, 			strlen(item_he_db[i].name), SQLITE_STATIC);
-		sqlite3_bind_int(db->item_he_sql_insert, 	4, 	item_he_db[i].type);
-		sqlite3_bind_int(db->item_he_sql_insert, 	5, 	item_he_db[i].buy);
-		sqlite3_bind_int(db->item_he_sql_insert, 	6, 	item_he_db[i].sell);
-		sqlite3_bind_int(db->item_he_sql_insert, 	7, 	item_he_db[i].weight);
-		sqlite3_bind_int(db->item_he_sql_insert, 	8, 	item_he_db[i].atk);
-		sqlite3_bind_int(db->item_he_sql_insert, 	9, 	item_he_db[i].matk);
-		sqlite3_bind_int(db->item_he_sql_insert, 	10, item_he_db[i].def);
-		sqlite3_bind_int(db->item_he_sql_insert, 	11, item_he_db[i].range);
-		sqlite3_bind_int(db->item_he_sql_insert, 	12, item_he_db[i].slots);
-		sqlite3_bind_int(db->item_he_sql_insert, 	13, item_he_db[i].job);
-		sqlite3_bind_int(db->item_he_sql_insert, 	14, item_he_db[i].upper);
-		sqlite3_bind_int(db->item_he_sql_insert, 	15, item_he_db[i].gender);
-		sqlite3_bind_int(db->item_he_sql_insert, 	16, item_he_db[i].loc);
-		sqlite3_bind_int(db->item_he_sql_insert, 	17, item_he_db[i].weaponlv);
-		sqlite3_bind_int(db->item_he_sql_insert, 	18, item_he_db[i].equiplv[EQUIP_MIN]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	19, item_he_db[i].equiplv[EQUIP_MAX]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	20, item_he_db[i].refine);
-		sqlite3_bind_int(db->item_he_sql_insert, 	21, item_he_db[i].view);
-		sqlite3_bind_int(db->item_he_sql_insert, 	22, item_he_db[i].bindonequip);
-		sqlite3_bind_int(db->item_he_sql_insert, 	23, item_he_db[i].buyingstore);
-		sqlite3_bind_int(db->item_he_sql_insert, 	24, item_he_db[i].delay);
-		sqlite3_bind_int(db->item_he_sql_insert, 	25, item_he_db[i].trade[TRADE_OVERRIDE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	26, item_he_db[i].trade[TRADE_NODROP]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	27, item_he_db[i].trade[TRADE_NOTRADE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	28, item_he_db[i].trade[TRADE_PARTNEROVERRIDE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	29, item_he_db[i].trade[TRADE_NOSELLTONPC]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	30, item_he_db[i].trade[TRADE_NOCART]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	31, item_he_db[i].trade[TRADE_NOSTORAGE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	32, item_he_db[i].trade[TRADE_NOGSTORAGE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	33, item_he_db[i].trade[TRADE_NOMAIL]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	34, item_he_db[i].trade[TRADE_NOAUCTION]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	35, item_he_db[i].nouse[NOUSE_OVERRIDE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	36, item_he_db[i].nouse[NOUSE_SITTING]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	37, item_he_db[i].stack[STACK_AMOUNT]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	38, item_he_db[i].stack[STACK_TYPE]);
-		sqlite3_bind_int(db->item_he_sql_insert, 	39, item_he_db[i].sprite);
-		sqlite3_bind_text(db->item_he_sql_insert, 	40, item_he_db[i].script, 			strlen(item_he_db[i].script), SQLITE_STATIC);
-		sqlite3_bind_text(db->item_he_sql_insert, 	41, item_he_db[i].onequipscript, 	strlen(item_he_db[i].onequipscript), SQLITE_STATIC);
-		sqlite3_bind_text(db->item_he_sql_insert, 	42, item_he_db[i].onunequipscript, 	strlen(item_he_db[i].onunequipscript), SQLITE_STATIC);
-		fprintf(stderr,"[load]: %d/%d\r", i, item_db.size);
-		status = sqlite3_step(db->item_he_sql_insert);
-		if(status != SQLITE_DONE) exit_abt_safe("fail to insert hercules item record");
-		sqlite3_reset(db->item_he_sql_insert);
+	for(i = 0; i < size; i++) {
+		item = &db[i];
+		if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 1, item->id) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 2, item->aegis, strlen(item->aegis), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 3, item->name, strlen(item->name), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 4, item->type) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 5, item->buy) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 6, item->sell) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 7, item->weight) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 8, item->atk) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 9, item->matk) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 10, item->def) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 11, item->range) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 12, item->slots) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 13, item->job) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 14, item->upper) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 15, item->gender) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 16, item->loc) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 17, item->weaponlv) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 18, item->equiplv[EQUIP_MIN]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 19, item->equiplv[EQUIP_MAX]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 20, item->refine) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 21, item->view) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 22, item->bindonequip) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 23, item->buyingstore) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 24, item->delay) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 25, item->trade[TRADE_OVERRIDE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 26, item->trade[TRADE_NODROP]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 27, item->trade[TRADE_NOTRADE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 28, item->trade[TRADE_PARTNEROVERRIDE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 29, item->trade[TRADE_NOSELLTONPC]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 30, item->trade[TRADE_NOCART]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 31, item->trade[TRADE_NOSTORAGE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 32, item->trade[TRADE_NOGSTORAGE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 33, item->trade[TRADE_NOMAIL]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 34, item->trade[TRADE_NOAUCTION]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 35, item->nouse[NOUSE_OVERRIDE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 36, item->nouse[NOUSE_SITTING]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 37, item->stack[STACK_AMOUNT]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 38, item->stack[STACK_TYPE]) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 39, item->sprite) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 40, item->script, strlen(item->script), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 41, item->onequipscript, strlen(item->onequipscript), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 42, item->onunequipscript, strlen(item->onunequipscript), SQLITE_STATIC) ||
+			SQLITE_DONE != sqlite3_step(sql) ||
+			SQLITE_OK != sqlite3_reset(sql)) {
+			/* skip item entry and reset statement */
+			if(SQLITE_OK != sqlite3_reset(sql))
+				return CHECK_FAILED;
+			fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
+		} else {
+			fprintf(stderr,"[load]: %d/%d ... %s\r", i, size, item->aegis);
+		}
 	}
-	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
-	free(item_db.db);
 	return CHECK_PASSED;
 }
 
-int mob_he_sql_load(db_he_t * db, const char * path) {
+int mob_he_sql_load(herc_db_t * db, const char * path) {
 	int i = 0;
 	native_t mob_db;
 	mob_he * mob_he_db = NULL;
@@ -548,7 +619,7 @@ int mob_he_sql_load(db_he_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
-int skill_he_sql_load(db_he_t * db, const char * path) {
+int skill_he_sql_load(herc_db_t * db, const char * path) {
 	int i = 0;
 	native_t skill_db;
 	skill_he * skill_he_db = NULL;
@@ -596,7 +667,7 @@ int skill_he_sql_load(db_he_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
-int produce_he_sql_load(db_he_t * db, const char * path) {
+int produce_he_sql_load(herc_db_t * db, const char * path) {
 	int i = 0;
 	char buf[BUF_SIZE];
 	native_t produce_db;
@@ -636,7 +707,7 @@ int produce_he_sql_load(db_he_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
-int mercenary_he_sql_load(db_he_t * db, const char * path) {
+int mercenary_he_sql_load(herc_db_t * db, const char * path) {
 	int i = 0;
 	native_t mercenary_db;
 	mercenary_he * mercenary_he_db = NULL;
@@ -693,7 +764,7 @@ int mercenary_he_sql_load(db_he_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
-int pet_he_sql_load(db_he_t * db, const char * path) {
+int pet_he_sql_load(herc_db_t * db, const char * path) {
 	int i = 0;
 	native_t pet_db;
 	pet_he * pet_he_db = NULL;
@@ -746,7 +817,7 @@ int pet_he_sql_load(db_he_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
-int const_he_sql_load(db_he_t * db, const char * path) {
+int const_he_sql_load(herc_db_t * db, const char * path) {
 	int i = 0;
 	native_t const_db;
 	const_he * const_he_db = NULL;
@@ -780,7 +851,7 @@ int const_he_sql_load(db_he_t * db, const char * path) {
 	return CHECK_PASSED;
 }
 
-int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_search) {
+int item_combo_he_sql_load(herc_db_t * db, const char * path, db_he_aux_t * db_search) {
 	int i = 0;
 	int j = 0;
 	int offset = 0;
@@ -846,7 +917,7 @@ int item_combo_he_sql_load(db_he_t * db, const char * path, db_he_aux_t * db_sea
 	return CHECK_PASSED;
 }
 
-int init_he_search(db_he_t * db, db_he_aux_t * db_search) {
+int init_he_search(herc_db_t * db, db_he_aux_t * db_search) {
 	static const char * item_id_sql = "SELECT Id, Name, Script FROM item_he WHERE id = ? COLLATE NOCASE;";
 	if(sqlite3_prepare_v2(db->db, item_id_sql, strlen(item_id_sql), &db_search->item_he_id_search, NULL) != SQLITE_OK) {
 		exit_abt_safe("item database must be loaded");
