@@ -96,6 +96,7 @@
 		char onunequipscript[MAX_SCRIPT_SIZE];
 	} item_he;
 
+	#define HERC_ITEM_SEARCH		"SELECT Id, Name, Script FROM item_he WHERE id = ? COLLATE NOCASE;"
 	#define HERC_ITEM_INSERT		"INSERT INTO item_he VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
 	#define HERC_ITEM_DELETE		"DROP TABLE IF EXISTS item_he;"
 	#define HERC_ITEM_CREATE		"CREATE TABLE IF NOT EXISTS item_he("\
@@ -318,7 +319,7 @@
 	#define HERC_PRODUCE_INSERT		"INSERT INTO produce_he VALUES(?, ?, ?, ?, ?, ?);"
 	#define HERC_PRODUCE_DELETE		"DROP TABLE IF EXISTS produce_he;"
 	#define HERC_PRODUCE_CREATE		"CREATE TABLE IF NOT EXISTS produce_he("\
-									"item_id INTEGER PRIMARY KEY,"\
+									"item_id INTEGER,"\
 									"item_lv INTEGER,"\
 									"req_skill INTEGER,"\
 									"req_skill_lv INTEGER,"\
@@ -463,13 +464,8 @@
 	#define HERC_COMBO_CREATE		"CREATE TABLE IF NOT EXISTS item_combo_he("\
 									"id INTEGER,"\
 									"script TEXT,"\
-									"combo_group TEXT,"\
-									"PRIMARY KEY(id, script)"\
+									"combo_group TEXT"\
 									");"
-
-	typedef struct db_he_aux_t {
-		sqlite3_stmt * item_he_id_search;
-	} db_he_aux_t;
 
 	typedef struct herc_db_t {
 		sqlite3 * db;
@@ -481,15 +477,11 @@
 		sqlite3_stmt * pet_he_sql_insert;
 		sqlite3_stmt * const_he_sql_insert;
 		sqlite3_stmt * item_combo_he_sql_insert;
+		sqlite3_stmt * item_he_sql_search;
 	} herc_db_t;
 
-	/* hercules shares the same database format as eathena and rathena
-	 * but who knows what they'll change completely, better keep separate */
 	int item_he_load(const char *, native_t *);
 	int item_he_load_record(config_setting_t *, item_he *);
-
-	/* hercules native database loading */
-	/*ITEML_API extern native_config_t load_he_native[HERCULES_DB_COUNT];*/
 	int mob_he_load(void * db, int row, int col, char * val);
 	int skill_he_load(void * db, int row, int col, char * val);
 	int produce_he_load(void * db, int row, int col, char * val);
@@ -498,24 +490,26 @@
 	int const_he_load(void * db, int row, int col, char * val);
 	int combo_he_load(void * db, int row, int col, char * val);
 
-	ITEML_API int herc_db_init(herc_db_t **, const char *);
-	ITEML_API int herc_db_deit(herc_db_t **);
-	ITEML_API int herc_db_exec(herc_db_t *, char *);
-	ITEML_API int herc_load_item_db(herc_db_t *, const char *);
-	ITEML_API int herc_load_item_db_insert(item_he *, int, sqlite3_stmt *);
-	ITEML_API int herc_load_mob_db(herc_db_t *, const char *);
-	ITEML_API int herc_load_mob_db_insert(mob_he *, int, sqlite3_stmt *);
-
-	ITEML_API int mob_he_sql_load(herc_db_t * db, const char * path);
-	ITEML_API int skill_he_sql_load(herc_db_t * db, const char * path);
-	ITEML_API int produce_he_sql_load(herc_db_t * db, const char * path);
-	ITEML_API int mercenary_he_sql_load(herc_db_t * db, const char * path);
-	ITEML_API int pet_he_sql_load(herc_db_t * db, const char * path);
-	ITEML_API int const_he_sql_load(herc_db_t * db, const char * path);
-	ITEML_API int item_combo_he_sql_load(herc_db_t * db, const char * path, db_he_aux_t * db_search);
-
-	/* combo require searching existing database */
-	ITEML_API int init_he_search(herc_db_t * db, db_he_aux_t * db_search);
-	ITEML_API int deit_he_search(db_he_aux_t * db_search);
-	ITEML_API int item_he_id_search(db_he_aux_t * db_search, int item_id, item_he * item_name_search);
+	/* convert libconfig and csv hercules' databases to sqlite3 */
+	int herc_db_init(herc_db_t **, const char *);
+	int herc_db_deit(herc_db_t **);
+	int herc_db_exec(herc_db_t *, char *);
+	int herc_load_item_db(herc_db_t *, const char *);
+	int herc_load_item_db_insert(item_he *, int, sqlite3_stmt *);
+	int herc_load_mob_db(herc_db_t *, const char *);
+	int herc_load_mob_db_insert(mob_he *, int, sqlite3_stmt *);
+	int herc_load_skill_db(herc_db_t *, const char *);
+	int herc_load_skill_db_insert(skill_he *, int, sqlite3_stmt *);
+	int herc_load_produce_db(herc_db_t *, const char *);
+	int herc_load_produce_db_insert(produce_he *, int, sqlite3_stmt *);
+	int herc_load_merc_db(herc_db_t *, const char *);
+	int herc_load_merc_db_insert(mercenary_he *, int, sqlite3_stmt *);
+	int herc_load_pet_db(herc_db_t *, const char *);
+	int herc_load_pet_db_insert(pet_he *, int, sqlite3_stmt *);
+	int herc_load_const_db(herc_db_t *, const char *);
+	int herc_load_const_db_insert(const_he *, int, sqlite3_stmt *);
+	int herc_search_item(herc_db_t *, int, item_he *);
+	int herc_load_combo_db(herc_db_t *, const char *);
+	int herc_search_item(herc_db_t *, int, item_he *);
+	int herc_load_combo_db_insert(herc_db_t *, combo_he *, int, sqlite3_stmt *);
 #endif
