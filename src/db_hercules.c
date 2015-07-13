@@ -17,138 +17,181 @@ native_config_t load_he_native[HERCULES_DB_COUNT] = {
 	{ combo_he_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_COMBO_HE_FIELD_COUNT, sizeof(combo_he) }
 };
 
-int item_he_load(const char * file_name, native_t * native) {
+int item_he_load(const char * path, native_t * native) {
 	int i = 0;
-	int cnt = 0;
-	int status = 0;
+	int size = 0;
+	item_he * items = NULL;
+	config_t * config = NULL;
+	config_setting_t * db = NULL;
 
-	/* error reporting */
-	int offset = 0;
-	char error[BUF_SIZE];
+	config = calloc(1, sizeof(config_t));
+	if(NULL == config)
+		return CHECK_FAILED;
 
-	/* libconfig */
-	config_t * cfg = calloc(1, sizeof(config_t));
-	config_setting_t * item_db = NULL;
-	config_setting_t * item_row = NULL;
-	config_setting_t * item_sub = NULL;
+	config_init(config);
 
-	/* item_db */
-	item_he * item = NULL;
-	const char * str = NULL;
-
-
-
-	config_init(cfg);
-
-	/* read item_db.conf */
-	status = config_read_file(cfg, file_name);
-	if(status != CONFIG_TRUE) {
-		offset = sprintf(error, "%s;%d;%s",
-			config_error_file(cfg),
-			config_error_line(cfg),
-			config_error_text(cfg));
-		error[offset] = '\0';
-		exit_abt_safe(error);
+	/* read config file */
+	if(CONFIG_TRUE != config_read_file(config, path)) {
+		fprintf(stderr, "[load]: failed to load %s; %s.\n", path, config_error_text(config));
+		goto failed;
 	}
 
-	/* retrieve data */
-	item_db = config_lookup(cfg, "item_db");
-	if(config_setting_is_list(item_db)) {
-		cnt = config_setting_length(item_db);
-		item = calloc(cnt, sizeof(item_he));
-		if(item == NULL) {
-			config_destroy(cfg);
-			free(cfg);
-			exit_func_safe("failed to allocated memory for item database %s file.\n", file_name);
-			return CHECK_FAILED;
-		}
-		for(i = 0; i < cnt; i++) {
-			item_row = config_setting_get_elem(item_db, i);
+	/* search item db list */
+	db = config_lookup(config, "item_db");
+	if(NULL == db) {
+		fprintf(stderr, "[load]: \"item_db\" is not founded.\n");
+		goto failed;
+	} else if(!config_setting_is_list(db)) {
+		fprintf(stderr, "[load]: \"item_db\" is not a invalid item list.\n");
+		goto failed;
+	}
 
-			config_setting_lookup_int(item_row, "Id", &item[i].id);
-			config_setting_lookup_string(item_row, "AegisName", &str);
-			strnload(item[i].aegis, MAX_NAME_SIZE, (char *) str);
-			config_setting_lookup_string(item_row, "Name", &str);
-			strnload(item[i].name, MAX_NAME_SIZE, (char *) str);
-			config_setting_lookup_int(item_row, "Type", &item[i].type);
-			config_setting_lookup_int(item_row, "Buy", &item[i].buy);
-			config_setting_lookup_int(item_row, "Sell", &item[i].sell);
-			config_setting_lookup_int(item_row, "Weight", &item[i].weight);
-			config_setting_lookup_int(item_row, "Atk", &item[i].atk);
-			config_setting_lookup_int(item_row, "Matk", &item[i].matk);
-			config_setting_lookup_int(item_row, "Def", &item[i].def);
-			config_setting_lookup_int(item_row, "Range", &item[i].range);
-			config_setting_lookup_int(item_row, "Slots", &item[i].slots);
-			if(config_setting_lookup_int(item_row, "Job", &item[i].job) == CONFIG_FALSE)
-				item[i].job = 0xFFFFFFFF;	/* all job */
-			if(config_setting_lookup_int(item_row, "Upper", &item[i].upper) == CONFIG_FALSE)
-				item[i].upper = 0x3F;		/* all tier */
-			if(config_setting_lookup_int(item_row, "Gender", &item[i].gender) == CONFIG_FALSE)
-				item[i].gender = 0x2;		/* all sex */
-			config_setting_lookup_int(item_row, "Loc", &item[i].loc);
-			config_setting_lookup_int(item_row, "WeaponLv", &item[i].weaponlv);
-			item_sub = config_setting_get_member(item_row, "EquipLv");
-			if(item_sub != NULL && config_setting_is_list(item_sub) == CONFIG_TRUE) {
-				item[i].equiplv[EQUIP_MIN] = config_setting_get_int_elem(item_sub, EQUIP_MIN);
-				item[i].equiplv[EQUIP_MAX] = config_setting_get_int_elem(item_sub, EQUIP_MAX);
-			} else if(item_sub != NULL) {
-				config_setting_lookup_int(item_sub, "EquipLv", &item[i].equiplv[EQUIP_MIN]);
-				item[i].equiplv[EQUIP_MAX] = item[i].equiplv[EQUIP_MIN];
-			}
-			if(config_setting_lookup_bool(item_row, "Refine", &item[i].refine) == CONFIG_FALSE)
-				item[i].refine = 1;
-			config_setting_lookup_int(item_row, "View", &item[i].view);
-			config_setting_lookup_bool(item_row, "BindOnEquip", &item[i].bindonequip);
-			config_setting_lookup_bool(item_row, "BuyingStore", &item[i].buyingstore);
-			config_setting_lookup_int(item_row, "Delay", &item[i].delay);
-			item_sub = config_setting_get_member(item_row, "Trade");
-			if(item_sub != NULL && config_setting_is_group(item_sub) == CONFIG_TRUE) {
-				if(config_setting_lookup_int(item_sub, "override", &item[i].trade[TRADE_OVERRIDE]) == CONFIG_FALSE)
-					item[i].trade[TRADE_OVERRIDE] = 100; /* every group */
-				config_setting_lookup_bool(item_sub, "nodrop", &item[i].trade[TRADE_NODROP]);
-				config_setting_lookup_bool(item_sub, "notrade", &item[i].trade[TRADE_NOTRADE]);
-				config_setting_lookup_bool(item_sub, "partneroverride", &item[i].trade[TRADE_PARTNEROVERRIDE]);
-				config_setting_lookup_bool(item_sub, "noselltonpc", &item[i].trade[TRADE_NOSELLTONPC]);
-				config_setting_lookup_bool(item_sub, "nocart", &item[i].trade[TRADE_NOCART]);
-				config_setting_lookup_bool(item_sub, "nostorage", &item[i].trade[TRADE_NOSTORAGE]);
-				config_setting_lookup_bool(item_sub, "nogstorage", &item[i].trade[TRADE_NOGSTORAGE]);
-				config_setting_lookup_bool(item_sub, "nomail", &item[i].trade[TRADE_NOMAIL]);
-				config_setting_lookup_bool(item_sub, "noauction", &item[i].trade[TRADE_NOAUCTION]);
-			}
-			item_sub = config_setting_get_member(item_row, "Nouse");
-			if(item_sub != NULL && config_setting_is_group(item_sub) == CONFIG_TRUE) {
-				if(config_setting_lookup_int(item_row, "override", &item[i].trade[NOUSE_OVERRIDE]) == CONFIG_FALSE)
-					item[i].trade[NOUSE_OVERRIDE] = 100; /* every group */
-				config_setting_lookup_bool(item_row, "sitting", &item[i].trade[NOUSE_SITTING]);
-			}
-			item_sub = config_setting_get_member(item_row, "Stack");
-			if(item_sub != NULL && config_setting_is_array(item_sub) == CONFIG_TRUE) {
-				item[i].stack[STACK_AMOUNT] = config_setting_get_int_elem(item_sub, STACK_AMOUNT);
-				item[i].stack[STACK_TYPE] = config_setting_get_int_elem(item_sub, STACK_TYPE);
-			}
-			if(config_setting_lookup_string(item_row, "Script", &str) == CONFIG_FALSE)
-				strnload(item[i].script, MAX_SCRIPT_SIZE, "");
-			else
-				strnload(item[i].script, MAX_SCRIPT_SIZE, (char *) str);
+	/* check item db list is not empty */
+	size = config_setting_length(db);
+	if(0 >= size) {
+		fprintf(stderr, "[load]: \"item_db\" is empty.\n");
+		goto failed;
+	}
 
-			if(config_setting_lookup_string(item_row, "OnEquipScript", &str) == CONFIG_FALSE)
-				strnload(item[i].onequipscript, MAX_SCRIPT_SIZE, "");
-			else
-				strnload(item[i].onequipscript, MAX_SCRIPT_SIZE, (char *) str);
+	/* allocate item db space */
+	items = calloc(size, sizeof(item_he));
+	if(NULL == items)
+		goto failed;
 
-			if(config_setting_lookup_string(item_row, "OnUnequipScript", &str) == CONFIG_FALSE)
-				strnload(item[i].onunequipscript, MAX_SCRIPT_SIZE, "");
-			else
-				strnload(item[i].onunequipscript, MAX_SCRIPT_SIZE, (char *) str);
-		}
+	/* load each item from item db */
+	for(i = 0; i < size; i++)
+		if(item_he_load_record(config_setting_get_elem(db, i), &items[i]))
+			goto failed;
+
+	native->db = items;
+	native->size = size;
+	config_destroy(config);
+	SAFE_FREE(config);
+	return CHECK_PASSED;
+
+failed:
+	SAFE_FREE(items);
+	config_destroy(config);
+	SAFE_FREE(config);
+	return CHECK_FAILED;
+}
+
+int item_he_load_record(config_setting_t * row, item_he * item) {
+	char * aegis = NULL;
+	char * name = NULL;
+	char * script = NULL;
+	char * equip_script = NULL;
+	char * unequip_script = NULL;
+	config_setting_t * equip_lv = NULL;
+	config_setting_t * trade = NULL;
+	config_setting_t * nouse = NULL;
+	config_setting_t * stack = NULL;
+
+	config_setting_lookup_int(row, "Id", &item->id);
+	config_setting_lookup_string(row, "AegisName", &aegis);
+	config_setting_lookup_string(row, "Name", &name);
+
+	strnload(item->aegis, MAX_NAME_SIZE, aegis);
+	strnload(item->name, MAX_NAME_SIZE, name);
+
+	config_setting_lookup_int(row, "Type", &item->type);
+	config_setting_lookup_int(row, "Buy", &item->buy);
+	config_setting_lookup_int(row, "Sell", &item->sell);
+	config_setting_lookup_int(row, "Weight", &item->weight);
+	config_setting_lookup_int(row, "Atk", &item->atk);
+	config_setting_lookup_int(row, "Matk", &item->matk);
+	config_setting_lookup_int(row, "Def", &item->def);
+	config_setting_lookup_int(row, "Range", &item->range);
+	config_setting_lookup_int(row, "Slots", &item->slots);
+
+	/* default buy / sell */
+	if (item->buy <= 0 && item->sell > 0)
+		item->buy = item->sell * 2;
+	else if (item->buy > 0 && item->sell <= 0)
+		item->sell = item->buy / 2;
+
+	/* default all jobs */
+	if(CONFIG_FALSE == config_setting_lookup_int(row, "Job", &item->job))
+		item->job = 0xFFFFFFFF;
+
+	/* default all tier */
+	if(CONFIG_FALSE == config_setting_lookup_int(row, "Upper", &item->upper))
+		item->upper = 0x3F;
+
+	/* default all geneder */
+	if(CONFIG_FALSE == config_setting_lookup_int(row, "Gender", &item->gender))
+		item->gender = 0x2;
+
+	config_setting_lookup_int(row, "Loc", &item->loc);
+	config_setting_lookup_int(row, "WeaponLv", &item->weaponlv);
+
+	/* equiplv is either list or value */
+	equip_lv = config_setting_get_member(row, "EquipLv");
+	if(NULL != equip_lv && CONFIG_TRUE == config_setting_is_list(equip_lv)) {
+		item->equiplv[EQUIP_MIN] = config_setting_get_int_elem(equip_lv, EQUIP_MIN);
+		item->equiplv[EQUIP_MAX] = config_setting_get_int_elem(equip_lv, EQUIP_MAX);
 	} else {
-		exit_abt_safe("failed to find item configuration file root setting.");
+		config_setting_lookup_int(row, "EquipLv", &item->equiplv[EQUIP_MIN]);
+		item->equiplv[EQUIP_MAX] = item->equiplv[EQUIP_MIN];
 	}
-	config_destroy(cfg);
-	free(cfg);
 
-	native->db = item;
-	native->size = cnt;
+	/* default is refinable */
+	if(CONFIG_FALSE == config_setting_lookup_bool(row, "Refine", &item->refine))
+		item->refine = 1;
+
+	config_setting_lookup_int(row, "View", &item->view);
+	config_setting_lookup_bool(row, "BindOnEquip", &item->bindonequip);
+	config_setting_lookup_bool(row, "BuyingStore", &item->buyingstore);
+	config_setting_lookup_int(row, "Delay", &item->delay);
+	config_setting_lookup_bool(row, "KeepAfterUse", &item->keepafteruse);
+
+	trade = config_setting_get_member(row, "Trade");
+	if(NULL == trade) {
+		/* default all false */
+		memset(item->trade, 0, sizeof(int) * TRADE_TOTAL);
+	} else {
+		/* default every group */
+		if(CONFIG_FALSE == config_setting_lookup_int(trade, "override", &item->trade[TRADE_OVERRIDE]))
+			item->trade[TRADE_OVERRIDE] = 100;
+		config_setting_lookup_bool(trade, "nodrop", &item->trade[TRADE_NODROP]);
+		config_setting_lookup_bool(trade, "notrade", &item->trade[TRADE_NOTRADE]);
+		config_setting_lookup_bool(trade, "partneroverride", &item->trade[TRADE_PARTNEROVERRIDE]);
+		config_setting_lookup_bool(trade, "noselltonpc", &item->trade[TRADE_NOSELLTONPC]);
+		config_setting_lookup_bool(trade, "nocart", &item->trade[TRADE_NOCART]);
+		config_setting_lookup_bool(trade, "nostorage", &item->trade[TRADE_NOSTORAGE]);
+		config_setting_lookup_bool(trade, "nogstorage", &item->trade[TRADE_NOGSTORAGE]);
+		config_setting_lookup_bool(trade, "nomail", &item->trade[TRADE_NOMAIL]);
+		config_setting_lookup_bool(trade, "noauction", &item->trade[TRADE_NOAUCTION]);
+	}
+
+	nouse = config_setting_get_member(row, "Nouse");
+	if(NULL != nouse) {
+		/* every group */
+		if(CONFIG_FALSE == config_setting_lookup_int(row, "override", &item->nouse[NOUSE_OVERRIDE]))
+			item->nouse[NOUSE_OVERRIDE] = 100;
+		config_setting_lookup_bool(row, "sitting", &item->nouse[NOUSE_SITTING]);
+	}
+
+	stack = config_setting_get_member(row, "Stack");
+	if(NULL != stack) {
+		item->stack[STACK_AMOUNT] = config_setting_get_int_elem(stack, STACK_AMOUNT);
+		item->stack[STACK_TYPE] = config_setting_get_int_elem(stack, STACK_TYPE);
+	}
+
+	config_setting_lookup_int(row, "Sprite", &item->sprite);
+
+	(CONFIG_FALSE == config_setting_lookup_string(row, "Script", &script))?
+		strnload(item->script, MAX_SCRIPT_SIZE, ""):
+		strnload(item->script, MAX_SCRIPT_SIZE, script);
+
+	(CONFIG_FALSE == config_setting_lookup_string(row, "OnEquipScript", &equip_script))?
+		strnload(item->onequipscript, MAX_SCRIPT_SIZE, ""):
+		strnload(item->onequipscript, MAX_SCRIPT_SIZE, equip_script);
+
+	(CONFIG_FALSE == config_setting_lookup_string(row, "OnUnequipScript", &unequip_script))?
+		strnload(item->onunequipscript, MAX_SCRIPT_SIZE, ""):
+		strnload(item->onunequipscript, MAX_SCRIPT_SIZE, unequip_script);
+
 	return CHECK_PASSED;
 }
 
@@ -442,6 +485,7 @@ int herc_db_deit(herc_db_t ** db) {
 		fprintf(stderr, "Failed to unload database; %s.\n", sqlite3_errmsg(herc->db));
 		exit(EXIT_FAILURE);
 	}
+	SAFE_FREE(herc);
 	*db = NULL;
 	return CHECK_PASSED;
 }

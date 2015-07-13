@@ -86,6 +86,7 @@
 		int bindonequip;
 		int buyingstore;
 		int delay;
+		int keepafteruse;
 		int trade[TRADE_TOTAL];
 		int nouse[NOUSE_TOTAL];
 		int stack[STACK_TOTAL];
@@ -484,7 +485,8 @@
 
 	/* hercules shares the same database format as eathena and rathena
 	 * but who knows what they'll change completely, better keep separate */
-	int item_he_load(const char * file_name, native_t * native);
+	int item_he_load(const char *, native_t *);
+	int item_he_load_record(config_setting_t *, item_he *);
 
 	/* hercules native database loading */
 	/*ITEML_API extern native_config_t load_he_native[HERCULES_DB_COUNT];*/
