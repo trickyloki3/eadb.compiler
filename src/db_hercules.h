@@ -484,7 +484,7 @@
 
 	/* hercules shares the same database format as eathena and rathena
 	 * but who knows what they'll change completely, better keep separate */
-	int load_he_item(const char * file_name, native_t * native);
+	int item_he_load(const char * file_name, native_t * native);
 
 	/* hercules native database loading */
 	/*ITEML_API extern native_config_t load_he_native[HERCULES_DB_COUNT];*/
@@ -501,6 +501,8 @@
 	ITEML_API int herc_db_exec(herc_db_t *, char *);
 	ITEML_API int herc_load_item_db(herc_db_t *, const char *);
 	ITEML_API int herc_load_item_db_insert(item_he *, int, sqlite3_stmt *);
+	ITEML_API int herc_load_mob_db(herc_db_t *, const char *);
+	ITEML_API int herc_load_mob_db_insert(mob_he *, int, sqlite3_stmt *);
 
 	ITEML_API int mob_he_sql_load(herc_db_t * db, const char * path);
 	ITEML_API int skill_he_sql_load(herc_db_t * db, const char * path);

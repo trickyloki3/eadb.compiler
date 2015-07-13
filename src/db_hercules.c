@@ -17,7 +17,7 @@ native_config_t load_he_native[HERCULES_DB_COUNT] = {
 	{ combo_he_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_COMBO_HE_FIELD_COUNT, sizeof(combo_he) }
 };
 
-int load_he_item(const char * file_name, native_t * native) {
+int item_he_load(const char * file_name, native_t * native) {
 	int i = 0;
 	int cnt = 0;
 	int status = 0;
@@ -35,6 +35,8 @@ int load_he_item(const char * file_name, native_t * native) {
 	/* item_db */
 	item_he * item = NULL;
 	const char * str = NULL;
+
+
 
 	config_init(cfg);
 
@@ -460,11 +462,18 @@ int herc_db_exec(herc_db_t * db, char * sql) {
 
 int herc_load_item_db(herc_db_t * db, const char * path) {
 	native_t items;
-	if( load_he_item(path, &items) ||
-		herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
-		herc_load_item_db_insert(items.db, items.size, db->item_he_sql_insert) ||
-		herc_db_exec(db, "COMMIT TRANSACTION;"))
+	if( item_he_load(path, &items) ||
+		NULL == items.db ||
+		0 >= items.size) {
+		fprintf(stderr, "Failed to load item db; %s.\n", path);
 		return CHECK_FAILED;
+	}
+	if( herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
+		herc_load_item_db_insert(items.db, items.size, db->item_he_sql_insert) ||
+		herc_db_exec(db, "COMMIT TRANSACTION;")) {
+		fprintf(stderr, "Failed to load item db; %s.\n", sqlite3_errmsg(db->db));
+		return CHECK_FAILED;
+	}
 	SAFE_FREE(items.db);
 	return CHECK_PASSED;
 }
@@ -520,102 +529,112 @@ int herc_load_item_db_insert(item_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_text(sql, 42, item->onunequipscript, strlen(item->onunequipscript), SQLITE_STATIC) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			/* skip item entry and reset statement */
 			if(SQLITE_OK != sqlite3_reset(sql))
 				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
+			fprintf(stderr, "[load]: failed to add %s to item db; %s.\n");
 		} else {
-			fprintf(stderr,"[load]: %d/%d ... %s\r", i, size, item->aegis);
+			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, item->aegis);
 		}
 	}
 	return CHECK_PASSED;
 }
 
-int mob_he_sql_load(herc_db_t * db, const char * path) {
+int herc_load_mob_db(herc_db_t * db, const char * path) {
+	native_t mobs;
+	if( load_native(path, trim_numeric, load_native_general, &mobs, &load_he_native[0]) ||
+		NULL == mobs.db ||
+		0 >= mobs.size) {
+		fprintf(stderr, "Failed to load mob db; %s.\n", path);
+		return CHECK_FAILED;
+	}
+	if( herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
+		herc_load_mob_db_insert(mobs.db, mobs.size, db->mob_he_sql_insert) ||
+		herc_db_exec(db, "COMMIT TRANSACTION;")) {
+		fprintf(stderr, "Failed to load mob db; %s.\n", sqlite3_errmsg(db->db));
+		return CHECK_FAILED;
+	}
+	SAFE_FREE(mobs.db);
+	return CHECK_PASSED;
+}
+
+int herc_load_mob_db_insert(mob_he * db, int size, sqlite3_stmt * sql) {
 	int i = 0;
-	native_t mob_db;
-	mob_he * mob_he_db = NULL;
-	memset(&mob_db, 0, sizeof(native_t));
+	mob_he * mob = NULL;
 
-	/* load the native database */
-	if(load_native(path, trim_numeric, load_native_general, &mob_db, &load_he_native[0]) == CHECK_FAILED) {
-		exit_func_safe("failed to load hercules mob database at %s; invalid path", path);
+	if(db == NULL || size <= 0) {
+		fprintf(stderr, "Failed to load mob database.\n");
 		return CHECK_FAILED;
 	}
 
-	/* check the native database */
-	if(mob_db.db == NULL || mob_db.size <= 0) {
-		exit_func_safe("failed to load hercules mob database at %s; detected zero entries", path);
-		return CHECK_FAILED;
+	for (i = 0; i < size; i++) {
+		mob = &db[i];
+		if (SQLITE_OK != sqlite3_clear_bindings(sql) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 1, mob->id) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 2, mob->sprite, strlen(mob->sprite), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 3, mob->kro, strlen(mob->kro), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 4, mob->iro, strlen(mob->iro), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 5, mob->lv) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 6, mob->hp) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 7, mob->sp) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 8, mob->exp) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 9, mob->jexp) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 10, mob->range) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 11, mob->atk1) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 12, mob->atk2) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 13, mob->def) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 14, mob->mdef) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 15, mob->str) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 16, mob->agi) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 17, mob->vit) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 18, mob->intr) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 19, mob->dex) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 20, mob->luk) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 21, mob->range2) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 22, mob->range3) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 23, mob->scale) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 24, mob->race) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 25, mob->element) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 26, mob->mode) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 27, mob->speed) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 28, mob->adelay) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 29, mob->amotion) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 30, mob->dmotion) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 31, mob->mexp) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 32, mob->mvp1id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 33, mob->mvp1per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 34, mob->mvp2id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 35, mob->mvp2per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 36, mob->mvp3id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 37, mob->mvp3per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 38, mob->drop1id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 39, mob->drop1per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 40, mob->drop2id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 41, mob->drop2per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 42, mob->drop3id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 43, mob->drop3per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 44, mob->drop4id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 45, mob->drop4per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 46, mob->drop5id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 47, mob->drop5per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 48, mob->drop6id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 49, mob->drop6per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 50, mob->drop7id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 51, mob->drop7per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 52, mob->drop8id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 53, mob->drop8per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 54, mob->drop9id) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 55, mob->drop9per) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 56, mob->dropcardid) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 57, mob->dropcardper) ||
+			SQLITE_DONE != sqlite3_step(sql) ||
+			SQLITE_OK != sqlite3_reset(sql)) {
+			fprintf(stderr, "[load]: failed to add %s (%d) to mob db.\n", mob->iro, mob->id);
+			if (SQLITE_OK != sqlite3_reset(sql))
+				return CHECK_FAILED;
+		} else {
+			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, mob->iro);
+		}
 	}
-
-	/* load the native database into the sqlite3 hercules database */
-	sqlite3_exec(db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL);
-	for(i = 0, mob_he_db = mob_db.db; i < mob_db.size; i++) {
-		sqlite3_clear_bindings(db->mob_he_sql_insert);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	1, mob_he_db[i].id);
-		sqlite3_bind_text(db->mob_he_sql_insert, 	2, mob_he_db[i].sprite, 	strlen(mob_he_db[i].sprite), SQLITE_STATIC);
-		sqlite3_bind_text(db->mob_he_sql_insert, 	3, mob_he_db[i].kro, 		strlen(mob_he_db[i].kro), SQLITE_STATIC);
-		sqlite3_bind_text(db->mob_he_sql_insert, 	4, mob_he_db[i].iro, 		strlen(mob_he_db[i].iro), SQLITE_STATIC);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	5, mob_he_db[i].lv);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	6, mob_he_db[i].hp);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	7, mob_he_db[i].sp);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	8, mob_he_db[i].exp);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	9, mob_he_db[i].jexp);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	10, mob_he_db[i].range);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	11, mob_he_db[i].atk1);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	12, mob_he_db[i].atk2);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	13, mob_he_db[i].def);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	14, mob_he_db[i].mdef);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	15, mob_he_db[i].str);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	16, mob_he_db[i].agi);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	17, mob_he_db[i].vit);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	18, mob_he_db[i].intr);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	19, mob_he_db[i].dex);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	20, mob_he_db[i].luk);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	21, mob_he_db[i].range2);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	22, mob_he_db[i].range3);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	23, mob_he_db[i].scale);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	24, mob_he_db[i].race);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	25, mob_he_db[i].element);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	26, mob_he_db[i].mode);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	27, mob_he_db[i].speed);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	28, mob_he_db[i].adelay);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	29, mob_he_db[i].amotion);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	30, mob_he_db[i].dmotion);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	31, mob_he_db[i].mexp);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	32, mob_he_db[i].mvp1id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	33, mob_he_db[i].mvp1per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	34, mob_he_db[i].mvp2id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	35, mob_he_db[i].mvp2per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	36, mob_he_db[i].mvp3id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	37, mob_he_db[i].mvp3per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	38, mob_he_db[i].drop1id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	39, mob_he_db[i].drop1per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	40, mob_he_db[i].drop2id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	41, mob_he_db[i].drop2per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	42, mob_he_db[i].drop3id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	43, mob_he_db[i].drop3per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	44, mob_he_db[i].drop4id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	45, mob_he_db[i].drop4per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	46, mob_he_db[i].drop5id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	47, mob_he_db[i].drop5per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	48, mob_he_db[i].drop6id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	49, mob_he_db[i].drop6per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	50, mob_he_db[i].drop7id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	51, mob_he_db[i].drop7per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	52, mob_he_db[i].drop8id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	53, mob_he_db[i].drop8per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	54, mob_he_db[i].drop9id);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	55, mob_he_db[i].drop9per);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	56, mob_he_db[i].dropcardid);
-		sqlite3_bind_int(db->mob_he_sql_insert, 	57, mob_he_db[i].dropcardper);
-		sqlite3_step(db->mob_he_sql_insert);
-		sqlite3_reset(db->mob_he_sql_insert);
-		fprintf(stderr,"[load]: %d/%d\r", i, mob_db.size);
-	}
-	sqlite3_exec(db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
-	free(mob_db.db);
 	return CHECK_PASSED;
 }
 
