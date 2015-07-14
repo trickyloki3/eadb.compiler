@@ -53,6 +53,52 @@ int exit_func(const char * file_name, const char * function_name, const int line
 #endif
 }
 
+char * opt[26];
+int getopts(int argc, char ** argv) {
+	int i = 0;
+	int j = 0;
+	int len = 0;
+
+	memset(opt, 0, sizeof(char *) * 26);
+
+	for (i = 1; i < argc; i++) {
+		len = strlen(argv[i]);
+		if (len > 2 && '-' == argv[i][0] && '-' == argv[i][1]) {
+			/* long option matching */
+			if (strcmp(&argv[i][2], "path") == 0) {
+				if (i + 1 >= argc)
+					return CHECK_FAILED;
+				opt['p' % 26] = argv[i + 1];
+			} else if (strcmp(&argv[i][2], "output") == 0) {
+				if (i + 1 >= argc)
+					return CHECK_FAILED;
+				opt['o' % 26] = argv[i + 1];
+			} else {
+				return CHECK_FAILED;
+			}
+		} else if('-' == argv[i][0]) {
+			/* single option matching */
+			for (j = 1; j < len; j++) {
+				switch (argv[i][j]) {
+					case 'p': 
+						if (i + 1 >= argc) 
+							return CHECK_FAILED;
+						opt['p' % 26] = argv[i + 1];
+						break;
+					case 'o': 
+						if (i + 1 >= argc)
+							return CHECK_FAILED;
+						opt['o' % 26] = argv[i + 1]; 
+						break;
+					default: 
+						return CHECK_FAILED;
+				}
+			}
+		}
+	}
+	return CHECK_PASSED;
+}
+
 /* generate random alpha-digit string */
 char * random_string(int len) {
    static const char * alpha = "abcdefghijklmnopqrstuvwxyz0123456789";

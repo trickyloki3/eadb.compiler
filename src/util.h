@@ -19,12 +19,12 @@
  	#define ENABLE_EXIT 0	/* set to 1 for debugging */
  	#define CHECK_PASSED 0
  	#define CHECK_FAILED 1
-	
+
 	/* msvc's function name macro */
 	#if defined ( WIN32 )
 		#define __func__ __FUNCTION__
 	#endif
-	
+
 	#define SAFE_FREE(X) if(NULL != (X)) { free(X); (X) = NULL; }
 
 	/* error functions */
@@ -42,6 +42,10 @@
 		int size;
 		char delimit;
 	} array_w;
+
+	/* options */
+	extern char * opt[26];
+	int getopts(int, char **);
 
 	/* string functions */
 	char * random_string(int);

@@ -508,7 +508,6 @@
 	int herc_load_pet_db_insert(pet_he *, int, sqlite3_stmt *);
 	int herc_load_const_db(herc_db_t *, const char *);
 	int herc_load_const_db_insert(const_he *, int, sqlite3_stmt *);
-	int herc_search_item(herc_db_t *, int, item_he *);
 	int herc_load_combo_db(herc_db_t *, const char *);
 	int herc_search_item(herc_db_t *, int, item_he *);
 	int herc_load_combo_db_insert(herc_db_t *, combo_he *, int, sqlite3_stmt *);
