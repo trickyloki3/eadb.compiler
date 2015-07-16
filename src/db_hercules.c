@@ -17,6 +17,143 @@ native_config_t load_he_native[HERCULES_DB_COUNT] = {
 	{ combo_he_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_COMBO_HE_FIELD_COUNT, sizeof(combo_he) }
 };
 
+int item_group_he_load(const char * path, native_t * native) {
+	int i = 0;
+	int len = 0;
+	config_t * config = NULL;
+	config_setting_t * root = NULL;
+	item_group_he * item_groups = NULL;
+
+	config = calloc(1, sizeof(config_t));
+	if(NULL == config)
+		return CHECK_FAILED;
+
+	config_init(config);
+
+	if(CONFIG_TRUE != config_read_file(config, path)) {
+		fprintf(stderr, "[load]: failed to load %s; %s.\n", path, config_error_text(config));
+		goto failed;
+	}
+
+	/* get the root group */
+	root = config_root_setting(config);
+	len = config_setting_length(root);
+	if(0 >= len) {
+		fprintf(stderr, "[load]: \"item_group\" os empty.\n");
+		goto failed;
+	}
+
+	item_groups = calloc(len, sizeof(item_group_he));
+	if(item_groups == NULL)
+		goto failed;
+
+	/* load each group */
+	for(i = 0; i < len; i++)
+		if(item_group_he_load_record(config_setting_get_elem(root, i), &item_groups[i]))
+			goto failed;
+
+	native->db = item_groups;
+	native->size = len;
+	config_destroy(config);
+	SAFE_FREE(config);
+	return CHECK_PASSED;
+
+failed:
+	config_destroy(config);
+	SAFE_FREE(config);
+	return CHECK_FAILED;
+}
+
+int item_group_he_load_record(config_setting_t * record, item_group_he * item_group) {
+	int i = 0;
+	int len = 0;
+	char * item_group_name = NULL;
+
+	/* fail if item group name is null */
+	item_group_name = config_setting_name(record);
+	item_group->name = convert_string(item_group_name);
+	if(NULL == item_group->name)
+		return CHECK_FAILED;
+
+	/* fail if item group list is empty */
+	len = config_setting_length(record);
+	item_group->size = len;
+	if (0 >= len)
+		goto failed;
+
+	/* fail if out of memory */
+	item_group->records = calloc(len, sizeof(item_group_record_he));
+	if(NULL == item_group->records)
+		goto failed;
+
+	/* fail fail fail! */
+	for (i = 0; i < len; i++)
+		if (item_group_he_load_record_item(config_setting_get_elem(record, i), &item_group->records[i]))
+			goto failed;
+
+	return CHECK_PASSED;
+
+failed:
+	SAFE_FREE(item_group->records);
+	SAFE_FREE(item_group->name);
+	return CHECK_FAILED;
+}
+
+int item_group_he_load_record_item(config_setting_t * record, item_group_record_he * item) {
+	int list_size = 0;
+	const char * item_name = NULL;
+	int item_rcount = 0;
+
+	if(exit_null_safe(2, record, item))
+		return CHECK_FAILED;
+
+	switch(config_setting_type(record)) {
+		case CONFIG_TYPE_STRING:
+			/* extract item name */
+			item_name = config_setting_get_string(record);
+			item_rcount = 0;
+			break;
+		case CONFIG_TYPE_LIST:
+			/* check list size */
+			if(2 != config_setting_length(record))
+				goto failed;
+			/* extract item name and count */
+			item_name = config_setting_get_string_elem(record, 0);
+			item_rcount = config_setting_get_int_elem(record, 1);
+			break;
+		default:
+			fprintf(stderr, "%d\n", config_setting_type(record));
+			goto failed;
+	}
+
+	/* check item name */
+	if(NULL == item_name)
+		goto failed;
+
+	/* load the item */
+	item->name = convert_string(item_name);
+	item->rcount = item_rcount;
+	return CHECK_PASSED;
+
+failed:
+	return CHECK_FAILED;
+}
+
+int item_group_he_free(item_group_he * item_groups, int size) {
+	int i = 0;
+	int j = 0;
+	item_group_he * item_group = NULL;
+	for (i = 0; i < size; i++) {
+		item_group = &item_groups[i];
+		for (j = 0; j < item_group->size; j++)
+			SAFE_FREE(item_group->records[j].name);
+		SAFE_FREE(item_group->records);
+		SAFE_FREE(item_group->name);
+	}
+	SAFE_FREE(item_groups);
+	return CHECK_PASSED;
+}
+
 int item_he_load(const char * path, native_t * native) {
 	int i = 0;
 	int size = 0;
@@ -432,7 +569,11 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 		HERC_CONST_DELETE
 		HERC_CONST_CREATE
 		HERC_COMBO_DELETE
-		HERC_COMBO_CREATE,
+		HERC_COMBO_CREATE
+		ITEM_GROUP_DELETE
+		ITEM_GROUP_CREATE
+		ITEM_GROUP_RECORD_DELETE
+		ITEM_GROUP_RECORD_CREATE,
 		NULL, NULL, &error)) {
 		if(NULL != error) {
 			fprintf(stderr, "Failed to load schema %s; %s.\n", path, error);
@@ -442,15 +583,17 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 	}
 
 	/* compile sql statements */
-	if( SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_ITEM_INSERT, strlen(HERC_ITEM_INSERT) + 1, &herc->item_he_sql_insert, NULL)		||
-		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_MOB_INSERT, strlen(HERC_MOB_INSERT) + 1, &herc->mob_he_sql_insert, NULL) 		||
+	if( SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_ITEM_INSERT, strlen(HERC_ITEM_INSERT), &herc->item_he_sql_insert, NULL)			||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_MOB_INSERT, strlen(HERC_MOB_INSERT), &herc->mob_he_sql_insert, NULL) 			||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_SKILL_INSERT, strlen(HERC_SKILL_INSERT), &herc->skill_he_sql_insert, NULL)		||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_PRODUCE_INSERT, strlen(HERC_PRODUCE_INSERT), &herc->produce_he_sql_insert, NULL) ||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_MERC_INSERT, strlen(HERC_MERC_INSERT), &herc->mercenary_he_sql_insert, NULL) 	||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_PET_INSERT, strlen(HERC_PET_INSERT), &herc->pet_he_sql_insert, NULL) 			||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_CONST_INSERT, strlen(HERC_CONST_INSERT), &herc->const_he_sql_insert, NULL) 		||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_COMBO_INSERT, strlen(HERC_COMBO_INSERT), &herc->item_combo_he_sql_insert, NULL)	||
-		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_ITEM_SEARCH, strlen(HERC_ITEM_SEARCH), &herc->item_he_sql_search, NULL)) {
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, HERC_ITEM_SEARCH, strlen(HERC_ITEM_SEARCH), &herc->item_he_sql_search, NULL)			||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_GROUP_INSERT, strlen(ITEM_GROUP_INSERT), &herc->item_group_he_insert, NULL)		||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_GROUP_RECORD_INSERT, strlen(ITEM_GROUP_RECORD_INSERT), &herc->item_group_record_he_insert, NULL)) {
 		fprintf(stderr, "Failed to sql query; %s.\n", sqlite3_errmsg(herc->db));
 		goto failed;
 	}
@@ -483,6 +626,8 @@ int herc_db_deit(herc_db_t ** db) {
 		SQLITE_OK != sqlite3_finalize(herc->const_he_sql_insert) ||
 		SQLITE_OK != sqlite3_finalize(herc->item_combo_he_sql_insert) ||
 		SQLITE_OK != sqlite3_finalize(herc->item_he_sql_search) ||
+		SQLITE_OK != sqlite3_finalize(herc->item_group_he_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->item_group_record_he_insert) ||
 		SQLITE_OK != sqlite3_close(herc->db)) {
 		fprintf(stderr, "Failed to unload database; %s.\n", sqlite3_errmsg(herc->db));
 		exit(EXIT_FAILURE);
@@ -984,7 +1129,7 @@ int herc_load_combo_db(herc_db_t * db, const char * path) {
 	if( herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
 		herc_load_combo_db_insert(db, combos.db, combos.size, db->item_combo_he_sql_insert) ||
 		herc_db_exec(db, "COMMIT TRANSACTION;")) {
-		fprintf(stderr, "Failed to load mob db; %s.\n", sqlite3_errmsg(db->db));
+		fprintf(stderr, "Failed to load item combo db; %s.\n", sqlite3_errmsg(db->db));
 		return CHECK_FAILED;
 	}
 	fprintf(stdout, "[load]: loaded item combo db; %s\n", path);
@@ -1042,6 +1187,71 @@ int herc_load_combo_db_insert(herc_db_t * db, combo_he * combos, int size, sqlit
 			}
 
 			SAFE_FREE(item_id_array);
+		}
+	}
+
+	return CHECK_PASSED;
+}
+
+int herc_load_item_group_db(herc_db_t * db, const char * path) {
+	native_t item_groups;
+	if (item_group_he_load(path, &item_groups) ||
+		NULL == item_groups.db ||
+		0 >= item_groups.size) {
+		fprintf(stderr, "Failed to load item group db; %s.\n", path);
+		return CHECK_FAILED;
+	}
+	if (herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
+		herc_load_item_group_db_insert(db, item_groups.db, item_groups.size, db->item_group_he_insert) ||
+		herc_db_exec(db, "COMMIT TRANSACTION;")) {
+		fprintf(stderr, "Failed to load item group db; %s.\n", sqlite3_errmsg(db->db));
+		return CHECK_FAILED;
+	}
+	fprintf(stdout, "[load]: loaded item group db; %s\n", path);
+
+	item_group_he_free(item_groups.db, item_groups.size);
+	return CHECK_PASSED;
+}
+
+int herc_load_item_group_db_insert(herc_db_t * db, item_group_he * item_groups, int size, sqlite3_stmt * sql) {
+	int i = 0;
+	item_group_he * item_group = NULL;
+
+	for (i = 0; i < size; i++) {
+		item_group = &item_groups[i];
+		if (SQLITE_OK != sqlite3_clear_bindings(sql) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 1, item_group->name, strlen(item_group->name), SQLITE_STATIC) ||
+			SQLITE_DONE != sqlite3_step(sql) ||
+			SQLITE_OK != sqlite3_reset(sql) ||
+			herc_load_item_group_record_db_insert(item_group->records, item_group->size, db->item_group_record_he_insert)) {
+			fprintf(stderr, "[load]: failed to add %s to item group db.\n", item_group->name);
+			if (SQLITE_OK != sqlite3_reset(sql))
+				return CHECK_FAILED;
+		} else {
+			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item_group->name);
+		}
+	}
+
+	return CHECK_PASSED;
+}
+
+int herc_load_item_group_record_db_insert(item_group_record_he * items, int size, sqlite3_stmt * sql) {
+	int i = 0;
+	item_group_record_he * item = NULL;
+
+	for (i = 0; i < size; i++) {
+		item = &items[i];
+		if (SQLITE_OK != sqlite3_clear_bindings(sql) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 1, item->name, strlen(item->name), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 2, item->rcount) ||
+			SQLITE_DONE != sqlite3_step(sql) ||
+			SQLITE_OK != sqlite3_reset(sql)) {
+			fprintf(stderr, "[load]: failed to add %s to item group record db.\n", item->name);
+			if (SQLITE_OK != sqlite3_reset(sql))
+				return CHECK_FAILED;
+		}
+		else {
+			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item->name);
 		}
 	}
 

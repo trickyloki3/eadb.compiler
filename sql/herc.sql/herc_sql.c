@@ -12,6 +12,7 @@
 #define PET_DB_PATH			"db"DIR_SEP"pet_db.txt"
 #define CONST_PATH			"db"DIR_SEP"const.txt"
 #define ITEM_COMBO_PATH		"db"DIR_SEP"re"DIR_SEP"item_combo_db.txt"
+#define ITEM_GROUP_PATH		"db"DIR_SEP"re"DIR_SEP"item_group.conf"
 
 int GetErrorMessage() {
 	LPSTR szError = NULL;
@@ -29,7 +30,7 @@ int main(int argc, char * argv[]) {
 	LPSTR out = NULL;
 	LPSTR path = NULL;
 	CHAR db_path[MAX_PATH];
-    herc_db_t * herc = NULL;
+	herc_db_t * herc = NULL;
 
 	/* get herc server path */
 	if (1 >= argc || getopts(argc, argv) || !(path = opt['p' % 26])) {
@@ -64,6 +65,8 @@ int main(int argc, char * argv[]) {
 	herc_load_const_db(herc, db_path);
 	PathCombine(db_path, path, ITEM_COMBO_PATH);
 	herc_load_combo_db(herc, db_path);
-    herc_db_deit(&herc);
+	PathCombine(db_path, path, ITEM_GROUP_PATH);
+	herc_load_item_group_db(herc, db_path);
+	herc_db_deit(&herc);
     return 0;
 }

@@ -467,6 +467,25 @@
 									"combo_group TEXT"\
 									");"
 
+	typedef struct item_group_record_he {
+		char * name;	/* item name */
+		int rcount;		/* item rcount */
+	} item_group_record_he;
+
+	#define ITEM_GROUP_RECORD_INSERT	"INSERT INTO item_group_record_he VALUES(?,?)"
+	#define ITEM_GROUP_RECORD_DELETE	"DROP TABLE IF EXISTS item_group_record_he;"
+	#define ITEM_GROUP_RECORD_CREATE	"CREATE TABLE IF NOT EXISTS item_group_record_he(name TEXT, rcount INTEGER);"
+
+	typedef struct item_group_he {
+		char * name;
+		item_group_record_he * records;
+		int size;
+	} item_group_he;
+
+	#define ITEM_GROUP_INSERT		"INSERT INTO item_group_he VALUES(?);"
+	#define ITEM_GROUP_DELETE		"DROP TABLE IF EXISTS item_group_he;"
+	#define ITEM_GROUP_CREATE		"CREATE TABLE IF NOT EXISTS item_group_he(name TEXT);"
+
 	typedef struct herc_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * item_he_sql_insert;
@@ -478,8 +497,14 @@
 		sqlite3_stmt * const_he_sql_insert;
 		sqlite3_stmt * item_combo_he_sql_insert;
 		sqlite3_stmt * item_he_sql_search;
+		sqlite3_stmt * item_group_he_insert;
+		sqlite3_stmt * item_group_record_he_insert;
 	} herc_db_t;
 
+	int item_group_he_load(const char *, native_t *);
+	int item_group_he_load_record(config_setting_t *, item_group_he *);
+	int item_group_he_load_record_item(config_setting_t *, item_group_record_he *);
+	int item_group_he_free(item_group_he *, int);
 	int item_he_load(const char *, native_t *);
 	int item_he_load_record(config_setting_t *, item_he *);
 	int mob_he_load(void * db, int row, int col, char * val);
@@ -511,4 +536,7 @@
 	int herc_load_combo_db(herc_db_t *, const char *);
 	int herc_search_item(herc_db_t *, int, item_he *);
 	int herc_load_combo_db_insert(herc_db_t *, combo_he *, int, sqlite3_stmt *);
+	int herc_load_item_group_db(herc_db_t *, const char *);
+	int herc_load_item_group_db_insert(herc_db_t *, item_group_he *, int, sqlite3_stmt *);
+	int herc_load_item_group_record_db_insert(item_group_record_he *, int, sqlite3_stmt *);
 #endif
