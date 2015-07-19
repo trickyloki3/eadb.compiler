@@ -13,6 +13,7 @@
 #define CONST_PATH			"db"DIR_SEP"const.txt"
 #define ITEM_COMBO_PATH		"db"DIR_SEP"re"DIR_SEP"item_combo_db.txt"
 #define ITEM_GROUP_PATH		"db"DIR_SEP"re"DIR_SEP"item_group.conf"
+#define ITEM_CHAIN_PATH		"db"DIR_SEP"re"DIR_SEP"item_chain.conf"
 
 int GetErrorMessage() {
 	LPSTR szError = NULL;
@@ -49,7 +50,7 @@ int main(int argc, char * argv[]) {
 
 	/* load the herc db */
 	herc_db_init(&herc, HERCULES_DB_NAME);
-	PathCombine(db_path, path, ITEM_DB_PATH);
+	/*PathCombine(db_path, path, ITEM_DB_PATH);
 	herc_load_item_db(herc, db_path);
 	PathCombine(db_path, path, MOB_DB_PATH);
 	herc_load_mob_db(herc, db_path);
@@ -66,7 +67,9 @@ int main(int argc, char * argv[]) {
 	PathCombine(db_path, path, ITEM_COMBO_PATH);
 	herc_load_combo_db(herc, db_path);
 	PathCombine(db_path, path, ITEM_GROUP_PATH);
-	herc_load_item_group_db(herc, db_path);
+	herc_load_item_group_db(herc, db_path);*/
+	PathCombine(db_path, path, ITEM_CHAIN_PATH);
+	herc_load_item_chain_db(herc, db_path);
 	herc_db_deit(&herc);
     return 0;
 }

@@ -472,9 +472,9 @@
 		int rcount;		/* item rcount */
 	} item_group_record_he;
 
-	#define ITEM_GROUP_RECORD_INSERT	"INSERT INTO item_group_record_he VALUES(?,?)"
+	#define ITEM_GROUP_RECORD_INSERT	"INSERT INTO item_group_record_he VALUES(?,?,?);"
 	#define ITEM_GROUP_RECORD_DELETE	"DROP TABLE IF EXISTS item_group_record_he;"
-	#define ITEM_GROUP_RECORD_CREATE	"CREATE TABLE IF NOT EXISTS item_group_record_he(name TEXT, rcount INTEGER);"
+	#define ITEM_GROUP_RECORD_CREATE	"CREATE TABLE IF NOT EXISTS item_group_record_he(name TEXT, rcount INTEGER, groupid INTEGER, FOREIGN KEY(groupid) REFERENCES item_group_he(rowid));"
 
 	typedef struct item_group_he {
 		char * name;
@@ -482,9 +482,28 @@
 		int size;
 	} item_group_he;
 
-	#define ITEM_GROUP_INSERT		"INSERT INTO item_group_he VALUES(?);"
-	#define ITEM_GROUP_DELETE		"DROP TABLE IF EXISTS item_group_he;"
-	#define ITEM_GROUP_CREATE		"CREATE TABLE IF NOT EXISTS item_group_he(name TEXT);"
+	#define ITEM_GROUP_INSERT			"INSERT INTO item_group_he VALUES(?);"
+	#define ITEM_GROUP_DELETE			"DROP TABLE IF EXISTS item_group_he;"
+	#define ITEM_GROUP_CREATE			"CREATE TABLE IF NOT EXISTS item_group_he(name TEXT);"
+
+	typedef struct item_chain_record_he {
+		char * name;
+		int chance;
+	} item_chain_record_he;
+
+	#define ITEM_CHAIN_RECORD_INSERT	"INSERT INTO item_chain_record_he VALUES(?,?,?);"
+	#define ITEM_CHAIN_RECORD_DELETE	"DROP TABLE IF EXISTS item_chain_record_he;"
+	#define ITEM_CHAIN_RECORD_CREATE	"CREATE TABLE IF NOT EXISTS item_chain_record_he(name TEXT, chance INTEGER, chainid INTEGER, FOREIGN KEY(chainid) REFERENCES item_chain_he(rowid));"
+
+	typedef struct item_chain_he {
+		char * name;
+		item_chain_record_he * items;
+		int size;
+	} item_chain_he;
+
+	#define ITEM_CHAIN_INSERT			"INSERT INTO item_chain_he VALUES(?);"
+	#define ITEM_CHAIN_DELETE			"DROP TABLE IF EXISTS item_chain_he;"
+	#define ITEM_CHAIN_CREATE			"CREATE TABLE IF NOT EXISTS item_chain_he(name TEXT);"
 
 	typedef struct herc_db_t {
 		sqlite3 * db;
@@ -499,8 +518,14 @@
 		sqlite3_stmt * item_he_sql_search;
 		sqlite3_stmt * item_group_he_insert;
 		sqlite3_stmt * item_group_record_he_insert;
+		sqlite3_stmt * item_chain_he_insert;
+		sqlite3_stmt * item_chain_record_he_insert;
 	} herc_db_t;
 
+	int item_chain_he_load(const char *, native_t *);
+	int item_chain_he_load_record(config_setting_t *, item_chain_he *);
+	int item_chain_he_load_record_item(config_setting_t *, item_chain_record_he *);
+	int item_chain_he_free(item_chain_he *, int);
 	int item_group_he_load(const char *, native_t *);
 	int item_group_he_load_record(config_setting_t *, item_group_he *);
 	int item_group_he_load_record_item(config_setting_t *, item_group_record_he *);
@@ -538,5 +563,8 @@
 	int herc_load_combo_db_insert(herc_db_t *, combo_he *, int, sqlite3_stmt *);
 	int herc_load_item_group_db(herc_db_t *, const char *);
 	int herc_load_item_group_db_insert(herc_db_t *, item_group_he *, int, sqlite3_stmt *);
-	int herc_load_item_group_record_db_insert(item_group_record_he *, int, sqlite3_stmt *);
+	int herc_load_item_group_record_db_insert(item_group_record_he *, int, sqlite3_stmt *, int);
+	int herc_load_item_chain_db(herc_db_t *, const char *);
+	int herc_load_item_chain_db_insert(herc_db_t *, item_chain_he *, int, sqlite3_stmt *);
+	int herc_load_item_chain_record_db_insert(item_chain_record_he *, int, sqlite3_stmt *, int);
 #endif
