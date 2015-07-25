@@ -17,6 +17,131 @@ native_config_t load_he_native[HERCULES_DB_COUNT] = {
 	{ combo_he_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_COMBO_HE_FIELD_COUNT, sizeof(combo_he) }
 };
 
+int item_package_he_load(const char * path, native_t * native) {
+	int i = 0;
+	int len = 0;
+	config_t * config = NULL;
+	config_setting_t * root = NULL;
+	item_package_he * item_packages = NULL;
+
+	config = calloc(1, sizeof(config_t));
+	if (NULL == config)
+		return CHECK_FAILED;
+
+	config_init(config);
+
+	if (CONFIG_TRUE != config_read_file(config, path)) {
+		fprintf(stderr, "[load]: failed to load %s; %s.\n", path, config_error_text(config));
+		goto failed;
+	}
+
+	root = config_root_setting(config);
+	if (NULL == root)
+		goto failed;
+
+	len = config_setting_length(root);
+	if (0 >= len) {
+		fprintf(stderr, "[load]: \"item_package\" is empty.\n");
+		goto failed;
+	}
+
+	item_packages = calloc(len, sizeof(item_package_he));
+	if (NULL == item_packages)
+		goto failed;
+
+	for (i = 0; i < len; i++)
+		if (item_package_he_load_record(config_setting_get_elem(root, i), &item_packages[i]))
+			goto failed;
+
+	native->db = item_packages;
+	native->size = len;
+	config_destroy(config);
+	SAFE_FREE(config);
+	return CHECK_PASSED;
+
+failed:
+	SAFE_FREE(item_packages);
+	config_destroy(config);
+	SAFE_FREE(config);
+	return CHECK_FAILED;
+}
+
+int item_package_he_load_record(config_setting_t * record, item_package_he * item_package) {
+	int i = 0;
+	int len = 0;
+	char * name = NULL;
+
+	name = config_setting_name(record);
+	if (NULL == name)
+		return CHECK_FAILED;
+
+	item_package->name = convert_string(name);
+	if (NULL == item_package->name)
+		return CHECK_FAILED;
+
+	len = config_setting_length(record);
+	if (0 >= len)
+		goto failed;
+
+	item_package->items = calloc(len, sizeof(item_package_record_he));
+	if (NULL == item_package->items)
+		goto failed;
+
+	for (i = 0; i < len; i++)
+		if (item_package_he_load_record_item(config_setting_get_elem(record, i), &item_package->items[i]))
+			goto failed;
+
+	item_package->size = len;
+	return CHECK_PASSED;
+
+failed:
+	SAFE_FREE(item_package->items);
+	SAFE_FREE(item_package->name);
+	return CHECK_FAILED;
+}
+
+int item_package_he_load_record_item(config_setting_t * record, item_package_record_he * item) {
+	char * name = NULL;
+
+	name = config_setting_name(record);
+	if(NULL == name)
+		return CHECK_FAILED;
+
+	item->name = convert_string(name);
+	if(NULL == item->name)
+		return CHECK_FAILED;
+
+	if(CONFIG_TRUE != config_setting_lookup_int(record, "Random", &item->random))
+		item->random = 0;
+	if(CONFIG_TRUE != config_setting_lookup_int(record, "Count", &item->count))
+		item->count = 0;
+	if(CONFIG_TRUE != config_setting_lookup_int(record, "Expire", &item->expire))
+		item->expire = 0;
+	if(CONFIG_TRUE != config_setting_lookup_bool(record, "Announce", &item->announce))
+		item->announce = 0;
+	if(CONFIG_TRUE != config_setting_lookup_int(record, "Rate", &item->rate))
+		item->rate = 0;
+	if(CONFIG_TRUE != config_setting_lookup_bool(record, "Named", &item->named))
+		item->named = 0;
+
+	return CHECK_PASSED;
+}
+
+int item_package_he_free(item_package_he * item_packages, int size) {
+	int i = 0;
+	int j = 0;
+	if (NULL == item_packages || 0 >= size)
+		return CHECK_FAILED;
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < item_packages[i].size; j++)
+			SAFE_FREE(item_packages[i].items[j].name);
+		SAFE_FREE(item_packages[i].items);
+		SAFE_FREE(item_packages[i].name);
+	}
+	SAFE_FREE(item_packages);
+	return CHECK_PASSED;
+}
+
 int item_chain_he_load(const char * path, native_t * native) {
 	int i = 0;
 	int len = 0;
@@ -60,7 +185,7 @@ int item_chain_he_load(const char * path, native_t * native) {
 	return CHECK_PASSED;
 
 failed:
-	SAFE_FREE(item_chains);
+	item_chain_he_free(item_chains, len);
 	config_destroy(config);
 	SAFE_FREE(config);
 	return CHECK_FAILED;
@@ -176,6 +301,7 @@ int item_group_he_load(const char * path, native_t * native) {
 	return CHECK_PASSED;
 
 failed:
+	item_group_he_free(item_groups, len);
 	config_destroy(config);
 	SAFE_FREE(config);
 	return CHECK_FAILED;
@@ -696,7 +822,11 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 		ITEM_CHAIN_DELETE
 		ITEM_CHAIN_CREATE
 		ITEM_CHAIN_RECORD_DELETE
-		ITEM_CHAIN_RECORD_CREATE,
+		ITEM_CHAIN_RECORD_CREATE
+		ITEM_PACKAGE_DELETE
+		ITEM_PACKAGE_CREATE
+		ITEM_PACKAGE_RECORD_DELETE
+		ITEM_PACKAGE_RECORD_CREATE,
 		NULL, NULL, &error)) {
 		if(NULL != error) {
 			fprintf(stderr, "Failed to load schema %s; %s.\n", path, error);
@@ -718,7 +848,9 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_GROUP_INSERT, strlen(ITEM_GROUP_INSERT), &herc->item_group_he_insert, NULL)		||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_GROUP_RECORD_INSERT, strlen(ITEM_GROUP_RECORD_INSERT), &herc->item_group_record_he_insert, NULL) ||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_CHAIN_INSERT, strlen(ITEM_CHAIN_INSERT), &herc->item_chain_he_insert, NULL)		||
-		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_CHAIN_RECORD_INSERT, strlen(ITEM_CHAIN_RECORD_INSERT), &herc->item_chain_record_he_insert, NULL)) {
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_CHAIN_RECORD_INSERT, strlen(ITEM_CHAIN_RECORD_INSERT), &herc->item_chain_record_he_insert, NULL) ||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_PACKAGE_INSERT, strlen(ITEM_PACKAGE_INSERT), &herc->item_package_he_insert, NULL) ||
+		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_PACKAGE_RECORD_INSERT, strlen(ITEM_PACKAGE_RECORD_INSERT), &herc->item_package_record_he_insert, NULL)) {
 		fprintf(stderr, "Failed to sql query; %s.\n", sqlite3_errmsg(herc->db));
 		goto failed;
 	}
@@ -727,11 +859,7 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 	return CHECK_PASSED;
 
 failed:
-	if(NULL != herc->db)
-		if(SQLITE_OK != sqlite3_close(herc->db)) {
-			fprintf(stderr, "Failed to close %s; %s.\n", path, sqlite3_errmsg(herc->db));
-			exit(EXIT_FAILURE);
-		}
+	herc_db_deit(&herc);
 	return CHECK_FAILED;
 }
 
@@ -755,6 +883,8 @@ int herc_db_deit(herc_db_t ** db) {
 		SQLITE_OK != sqlite3_finalize(herc->item_group_record_he_insert) ||
 		SQLITE_OK != sqlite3_finalize(herc->item_chain_he_insert) ||
 		SQLITE_OK != sqlite3_finalize(herc->item_chain_record_he_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->item_package_he_insert) ||
+		SQLITE_OK != sqlite3_finalize(herc->item_package_record_he_insert) ||
 		SQLITE_OK != sqlite3_close(herc->db)) {
 		fprintf(stderr, "Failed to unload database; %s.\n", sqlite3_errmsg(herc->db));
 		exit(EXIT_FAILURE);
@@ -1335,7 +1465,7 @@ int herc_load_item_group_db(herc_db_t * db, const char * path) {
 		herc_load_item_group_db_insert(db, item_groups.db, item_groups.size, db->item_group_he_insert) ||
 		herc_db_exec(db, "COMMIT TRANSACTION;")) {
 		fprintf(stderr, "Failed to load item group db; %s.\n", sqlite3_errmsg(db->db));
-		return CHECK_FAILED;
+		goto failed;
 	}
 	fprintf(stdout, "[load]: loaded item group db; %s\n", path);
 
@@ -1412,7 +1542,7 @@ int herc_load_item_chain_db(herc_db_t * db, const char * path) {
 		herc_load_item_chain_db_insert(db, item_chains.db, item_chains.size, db->item_chain_he_insert) ||
 		herc_db_exec(db, "COMMIT TRANSACTION;")) {
 		fprintf(stderr, "Failed to load item group db; %s.\n", sqlite3_errmsg(db->db));
-		return CHECK_FAILED;
+		goto failed;
 	}
 	fprintf(stdout, "[load]: loaded item chain db; %s\n", path);
 
@@ -1466,6 +1596,87 @@ int herc_load_item_chain_record_db_insert(item_chain_record_he * items, int size
 			if (SQLITE_OK != sqlite3_reset(sql))
 				return CHECK_FAILED;
 		} else {
+			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item->name);
+		}
+	}
+
+	return CHECK_PASSED;
+}
+
+int herc_load_item_package_db(herc_db_t * db, const char * path) {
+	native_t item_packages;
+	item_packages.db = NULL;
+	item_packages.size = 0;
+
+	if (item_package_he_load(path, &item_packages) ||
+		NULL == item_packages.db ||
+		0 >= item_packages.size) {
+		fprintf(stderr, "[load]: failed to load item package db; %s.\n", path);
+		goto failed;
+	}
+	if (herc_db_exec(db, "BEGIN IMMEDIATE TRANSACTION;") ||
+		herc_load_item_package_db_insert(db, item_packages.db, item_packages.size, db->item_package_he_insert) ||
+		herc_db_exec(db, "COMMIT TRANSACTION;")) {
+		fprintf(stderr, "Failed to load item package db.\n");
+		goto failed;
+	}
+	fprintf(stdout, "[load]: loaded item package db; %s\n", path);
+
+	item_package_he_free(item_packages.db, item_packages.size);
+	return CHECK_PASSED;
+
+failed:
+	item_package_he_free(item_packages.db, item_packages.size);
+	return CHECK_FAILED;
+}
+
+int herc_load_item_package_db_insert(herc_db_t * db, item_package_he * item_packages, int size, sqlite3_stmt * sql) {
+	int i = 0;
+	int id = 0;
+	item_package_he * item_package = NULL;
+
+	for (i = 0; i < size; i++) {
+		item_package = &item_packages[i];
+		if (SQLITE_OK != sqlite3_clear_bindings(sql) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 1, item_package->name, strlen(item_package->name), SQLITE_STATIC) ||
+			SQLITE_DONE != sqlite3_step(sql) ||
+			SQLITE_OK != sqlite3_reset(sql)) {
+			fprintf(stderr, "[load]: failed to add %s to item package db.\n", item_package->name);
+			if (SQLITE_OK != sqlite3_reset(sql))
+				return CHECK_FAILED;
+		} else {
+			id = (int)sqlite3_last_insert_rowid(db->db);
+			if (herc_load_item_package_record_db_insert(item_package->items, item_package->size, db->item_package_record_he_insert, id))
+				return CHECK_FAILED;
+
+			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item_package->name);
+		}
+	}
+
+	return CHECK_PASSED;
+}
+
+int herc_load_item_package_record_db_insert(item_package_record_he * items, int size, sqlite3_stmt * sql, int package_id) {
+	int i = 0;
+	item_package_record_he * item = NULL;
+
+	for (i = 0; i < size; i++) {
+		item = &items[i];
+		if (SQLITE_OK != sqlite3_clear_bindings(sql) ||
+			SQLITE_OK != sqlite3_bind_text(sql, 1, item->name, strlen(item->name), SQLITE_STATIC) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 2, item->random) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 3, item->count) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 4, item->expire) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 5, item->announce) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 6, item->rate) ||
+			SQLITE_OK != sqlite3_bind_int(sql, 7, item->named) ||
+			SQLITE_DONE != sqlite3_step(sql) ||
+			SQLITE_OK != sqlite3_reset(sql)) {
+			fprintf(stderr, "[load]: failed to add %s to item package record db.\n", item->name);
+			if (SQLITE_OK != sqlite3_reset(sql))
+				return CHECK_FAILED;
+		}
+		else {
 			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item->name);
 		}
 	}

@@ -13,20 +13,6 @@
  	#include "libconfig.h"
  	#include "sqlite3.h"
 
- 	/* hercules database type definitions
-	 * -----------------------------------------
-	 * type name 	- 	type reference
-	 * -----------------------------------------
-	 * item_he 			- 	hercules item database
-	 * mob_he 			- 	hercules mob database
-	 * skill_he 		- 	hercules skill database
-	 * produce_he		- 	hercules produce database
-	 * mercenary_he 	-	hercules mecenary database
-	 * pet_he			-	hercules pet database
-	 * const_he 		- 	hercules constant database
-	 * combo_he 		- 	hercules item combo database
-	 */
-
  	/* database record counts */
  	#define MOB_HE_FIELD_COUNT				57
 	#define SKILL_HE_FIELD_COUNT 			17
@@ -505,6 +491,39 @@
 	#define ITEM_CHAIN_DELETE			"DROP TABLE IF EXISTS item_chain_he;"
 	#define ITEM_CHAIN_CREATE			"CREATE TABLE IF NOT EXISTS item_chain_he(name TEXT);"
 
+	typedef struct item_package_record_he {
+		char * name;
+		int random;
+		int count;
+		int expire;
+		int announce;
+		int rate;
+		int named;
+	} item_package_record_he;
+
+	#define ITEM_PACKAGE_RECORD_INSERT	"INSERT INTO item_package_record_he VALUES(?,?,?,?,?,?,?,?);"
+	#define ITEM_PACKAGE_RECORD_DELETE	"DROP TABLE IF EXISTS item_package_record_he;"
+	#define ITEM_PACKAGE_RECORD_CREATE	"CREATE TABLE IF NOT EXISTS item_package_record_he("\
+										"name TEXT,"\
+										"random INTEGER,"\
+										"count INTEGER,"\
+										"expire INTEGER,"\
+										"announce BOOLEAN,"\
+										"rate INTEGER,"\
+										"named BOOLEAN,"\
+										"packageid INTEGER,"\
+										"FOREIGN KEY(packageid) REFERENCES item_package_he(rowid));"
+
+	typedef struct item_package_he {
+		char * name;
+		item_package_record_he * items;
+		int size;
+	} item_package_he;
+
+	#define ITEM_PACKAGE_INSERT			"INSERT INTO item_package_he VALUES(?);"
+	#define ITEM_PACKAGE_DELETE			"DROP TABLE IF EXISTS item_package_he;"
+	#define ITEM_PACKAGE_CREATE			"CREATE TABLE IF NOT EXISTS item_package_he(name TEXT);"
+
 	typedef struct herc_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * item_he_sql_insert;
@@ -520,8 +539,15 @@
 		sqlite3_stmt * item_group_record_he_insert;
 		sqlite3_stmt * item_chain_he_insert;
 		sqlite3_stmt * item_chain_record_he_insert;
+		sqlite3_stmt * item_package_he_insert;
+		sqlite3_stmt * item_package_record_he_insert;
 	} herc_db_t;
 
+	/* load libconfig or csv style databases */
+	int item_package_he_load(const char *, native_t *);
+	int item_package_he_load_record(config_setting_t *, item_package_he *);
+	int item_package_he_load_record_item(config_setting_t *, item_package_record_he *);
+	int item_package_he_free(item_package_he *, int);
 	int item_chain_he_load(const char *, native_t *);
 	int item_chain_he_load_record(config_setting_t *, item_chain_he *);
 	int item_chain_he_load_record_item(config_setting_t *, item_chain_record_he *);
@@ -540,7 +566,7 @@
 	int const_he_load(void * db, int row, int col, char * val);
 	int combo_he_load(void * db, int row, int col, char * val);
 
-	/* convert libconfig and csv hercules' databases to sqlite3 */
+	/* convert libconfig and csv databases to sqlite3 */
 	int herc_db_init(herc_db_t **, const char *);
 	int herc_db_deit(herc_db_t **);
 	int herc_db_exec(herc_db_t *, char *);
@@ -567,4 +593,7 @@
 	int herc_load_item_chain_db(herc_db_t *, const char *);
 	int herc_load_item_chain_db_insert(herc_db_t *, item_chain_he *, int, sqlite3_stmt *);
 	int herc_load_item_chain_record_db_insert(item_chain_record_he *, int, sqlite3_stmt *, int);
+	int herc_load_item_package_db(herc_db_t *, const char *);
+	int herc_load_item_package_db_insert(herc_db_t *, item_package_he *, int, sqlite3_stmt *);
+	int herc_load_item_package_record_db_insert(item_package_record_he *, int, sqlite3_stmt *, int);
 #endif
