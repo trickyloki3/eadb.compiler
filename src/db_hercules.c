@@ -793,12 +793,12 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 	/* create database */
 	if( SQLITE_OK != sqlite3_open_v2(path, &herc->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL)) {
 		if(NULL != herc->db)
-			fprintf(stderr, "Failed to create %s; %s.\n", path, sqlite3_errmsg(herc->db));
+			fprintf(stderr, "[load]: failed to create %s; %s.\n", path, sqlite3_errmsg(herc->db));
 		goto failed;
 	}
 
 	/* load database schema */
-	if(SQLITE_OK != sqlite3_exec(herc->db,
+	if(	SQLITE_OK != sqlite3_exec(herc->db,
 		HERC_ITEM_DELETE
 		HERC_ITEM_CREATE
 		HERC_MOB_DELETE
@@ -829,7 +829,7 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 		ITEM_PACKAGE_RECORD_CREATE,
 		NULL, NULL, &error)) {
 		if(NULL != error) {
-			fprintf(stderr, "Failed to load schema %s; %s.\n", path, error);
+			fprintf(stderr, "[load]: failed to load schema %s; %s.\n", path, error);
 			sqlite3_free(error);
 		}
 		goto failed;
@@ -851,7 +851,7 @@ int herc_db_init(herc_db_t ** db, const char * path) {
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_CHAIN_RECORD_INSERT, strlen(ITEM_CHAIN_RECORD_INSERT), &herc->item_chain_record_he_insert, NULL) ||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_PACKAGE_INSERT, strlen(ITEM_PACKAGE_INSERT), &herc->item_package_he_insert, NULL) ||
 		SQLITE_OK != sqlite3_prepare_v2(herc->db, ITEM_PACKAGE_RECORD_INSERT, strlen(ITEM_PACKAGE_RECORD_INSERT), &herc->item_package_record_he_insert, NULL)) {
-		fprintf(stderr, "Failed to sql query; %s.\n", sqlite3_errmsg(herc->db));
+		fprintf(stderr, "[load]: failed to sql query; %s.\n", sqlite3_errmsg(herc->db));
 		goto failed;
 	}
 
@@ -899,7 +899,7 @@ int herc_db_exec(herc_db_t * db, char * sql) {
 
 	if (SQLITE_OK != sqlite3_exec(db->db, sql, NULL, NULL, &error)) {
 		if(NULL != error) {
-			fprintf(stderr, "Failed to exec %s; %s.\n", sql, error);
+			fprintf(stderr, "[load]: failed to exec %s; %s.\n", sql, error);
 			sqlite3_free(error);
 		}
 		return CHECK_FAILED;
@@ -980,7 +980,7 @@ int herc_load_item_db_insert(item_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_reset(sql)) {
 			if(SQLITE_OK != sqlite3_reset(sql))
 				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to item db; %s.\n");
+			fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, item->aegis);
 		}

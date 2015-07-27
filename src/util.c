@@ -81,17 +81,17 @@ int getopts(int argc, char ** argv) {
 			/* single option matching */
 			for (j = 1; j < len; j++) {
 				switch (argv[i][j]) {
-					case 'p': 
-						if (i + 1 >= argc) 
+					case 'p':
+						if (i + 1 >= argc)
 							return CHECK_FAILED;
 						opt['p' % 26] = argv[i + 1];
 						break;
-					case 'o': 
+					case 'o':
 						if (i + 1 >= argc)
 							return CHECK_FAILED;
-						opt['o' % 26] = argv[i + 1]; 
+						opt['o' % 26] = argv[i + 1];
 						break;
-					default: 
+					default:
 						return CHECK_FAILED;
 				}
 			}
@@ -247,7 +247,8 @@ int convert_integer(const char * str, int base) {
 
    /* check if str completely parsed; allow spaces as end of buffer since resource databases are space aligned */
    if(*ptr != '\0' && !isspace(*ptr))
-      return exit_func_safe("failed to completely parsed string %s", str);
+      /*return exit_func_safe("failed to completely parsed string %s", str);*/
+      return CHECK_FAILED;
 
    return (int) val;
 }
