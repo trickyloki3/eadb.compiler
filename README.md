@@ -5,3 +5,7 @@ herc.sql.exe
 ra.sql.exe
 -p, --path <server-path>
 -o, --output <output-path>
+
+ea.sql.exe
+-p, --path <server-path>
+-o, --output <output-path>

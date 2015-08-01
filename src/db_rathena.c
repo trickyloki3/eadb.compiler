@@ -344,7 +344,7 @@ int ra_db_init(ra_db_t ** ra, const char * path) {
 		SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_NAME, strlen(RA_ITEM_SEARCH_NAME), &_ra->item_ra_name_search, NULL) ||
 		SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_ID, strlen(RA_ITEM_SEARCH_ID), &_ra->item_ra_id_search, NULL) ||
 		SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_INSERT, strlen(RA_ITEM_PACKAGE_INSERT), &_ra->item_package_ra_sql_insert, NULL)) {
-		fprintf(stderr, "[load]: failed to sql query; %s.\n", sqlite3_errmsg(_ra->db));
+		fprintf(stderr, "[load]: failed prepare sql statments; %s.\n", sqlite3_errmsg(_ra->db));
 		goto failed;
 	}
 
@@ -388,7 +388,7 @@ int ra_db_exec(ra_db_t * db, char * sql) {
 
 	if (SQLITE_OK != sqlite3_exec(db->db, sql, NULL, NULL, &error)) {
 		if(NULL != error) {
-			fprintf(stderr, "[load]: failed to exec %s; %s.\n", sql, error);
+			fprintf(stderr, "[load]: failed to execute sql query %s; %s.\n", sql, error);
 			sqlite3_free(error);
 		}
 		return CHECK_FAILED;

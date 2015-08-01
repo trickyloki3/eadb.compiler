@@ -25,7 +25,7 @@ int main(int argc, char * argv[]) {
 	LPSTR path = NULL;
 	CHAR db_path[MAX_PATH];
 	ra_db_t * ra = NULL;
-	
+
 	if (1 >= argc || getopts(argc, argv) || !(path = opt['p' % 26])) {
 		fprintf(stderr, "ra.sql.exe -p <rathena path> -o <output path>\n");
 		exit(EXIT_FAILURE);
@@ -39,38 +39,40 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
-	ra_db_init(&ra, RA_DB_NAME);
-	PathCombine(db_path, path, ITEM_DB_PATH);
-	ra_db_item_load(ra, db_path);
-	PathCombine(db_path, path, MOB_DB_PATH);
-	ra_db_mob_load(ra, db_path);
-	PathCombine(db_path, path, SKILL_DB_PATH);
-	ra_db_skill_load(ra, db_path);
-	PathCombine(db_path, path, PRODUCE_DB_PATH);
-	ra_db_produce_load(ra, db_path);
-	PathCombine(db_path, path, MERCENARY_DB_PATH);
-	ra_db_merc_load(ra, db_path);
-	PathCombine(db_path, path, PET_DB_PATH);
-	ra_db_pet_load(ra, db_path);
-	PathCombine(db_path, path, CONST_PATH);
-	ra_db_const_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_BLUEBOX_PATH);
-	ra_db_item_group_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_CARDALBUM_PATH);
-	ra_db_item_group_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_FINDIGNORE_PATH);
-	ra_db_item_group_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_GIFTBOX_PATH);
-	ra_db_item_group_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_MISC_PATH);
-	ra_db_item_group_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_VIOLETBOX_PATH);
-	ra_db_item_group_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_PACKAGE_PATH);
-	ra_db_item_pacakage_load(ra, db_path);
-	PathCombine(db_path, path, ITEM_COMBO_PATH);
-	ra_db_item_combo_load(ra, db_path);
+	if(	ra_db_init(&ra, RA_DB_NAME) ||
+		NULL == PathCombine(db_path, path, ITEM_DB_PATH) ||
+		ra_db_item_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, MOB_DB_PATH) ||
+		ra_db_mob_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, SKILL_DB_PATH) ||
+		ra_db_skill_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, PRODUCE_DB_PATH) ||
+		ra_db_produce_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, MERCENARY_DB_PATH) ||
+		ra_db_merc_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, PET_DB_PATH) ||
+		ra_db_pet_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, CONST_PATH) ||
+		ra_db_const_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_BLUEBOX_PATH) ||
+		ra_db_item_group_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_CARDALBUM_PATH) ||
+		ra_db_item_group_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_FINDIGNORE_PATH) ||
+		ra_db_item_group_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_GIFTBOX_PATH) ||
+		ra_db_item_group_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_MISC_PATH) ||
+		ra_db_item_group_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_VIOLETBOX_PATH) ||
+		ra_db_item_group_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_PACKAGE_PATH) ||
+		ra_db_item_pacakage_load(ra, db_path) ||
+		NULL == PathCombine(db_path, path, ITEM_COMBO_PATH) ||
+		ra_db_item_combo_load(ra, db_path)) {
+		ra_db_deit(&ra);
+		exit(EXIT_FAILURE);
+	}
 	ra_db_deit(&ra);
-	
 	exit(EXIT_SUCCESS);
 }

@@ -343,10 +343,10 @@ int script_buffer_write(block_r * block, int type, const char * str) {
 			block->eng[cnt] = buf;
 			block->eng_cnt++;
 			break;
-		default: 
+		default:
 			return exit_func_safe("invalid type %d in item %d", type, block->item_id);
 	}
-	
+
 	/* update buffer state */
 	ret = sprintf(buf, "%s", str);
 	if (ret + 1 != len)
@@ -743,7 +743,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             /* parser does not set the first pointer */
             block->ptr[0] = block->arg;
             block->ptr_cnt++;
-
+#3E3E3E
             /* retrieve all the arguments of the block */
             switch(block->type) {
                 case 26: /* parse if blocks */
@@ -1478,8 +1478,10 @@ int script_generate(script_t * script, char * buffer, int * offset) {
             buf[k] = '\0';
         }
         switch(iter->type) {
-            case BLOCK_NULLIFIED: break; /* nullified block mean they're deleted */
-            case 16: /* merge all sc_end into one block */
+            /* nullified block mean they're deleted */
+            case BLOCK_NULLIFIED: break;
+            /* merge all sc_end into one block */
+            case 16:
                 /* figure out how many sc_end blocks there are */
                 iter_sub = iter;
                 for(; iter_sub != script->block.head; iter_sub = iter_sub->next)
@@ -1620,7 +1622,7 @@ int stack_ptr_call(block_r * block, char * expr) {
 	/* remove the last ')' from parsing */
 	token->script_cnt--;
 
-	/* script analysis sets up the initial argument pointers for script parse, 
+	/* script analysis sets up the initial argument pointers for script parse,
 	 * but we can set it again just in case. redundant, but not much overhead. */
 	cnt = block->ptr_cnt;
 	block->ptr[cnt] = &block->arg[block->arg_cnt];
@@ -1667,7 +1669,7 @@ int stack_eng_item(block_r * block, char * expr) {
 		exit_func_safe("out of memory in item %d", block->item_id);
 		goto failed;
 	}
-	
+
 	/* if the expression is an item name, then write the item name on the eng stack */
 	if (isalpha(expr[0])) {
 		if (!item_db_search_name(block->db, item_sql, expr)) {
@@ -1677,7 +1679,7 @@ int stack_eng_item(block_r * block, char * expr) {
 			return 1;
 		}
 	}
-	
+
 	/* evaluate the expression for item id values */
 	item_id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
 	if (item_id == NULL || item_id->range == NULL) {
@@ -1685,7 +1687,7 @@ int stack_eng_item(block_r * block, char * expr) {
 	} else {
 		script_buffer_unwrite(block, TYPE_ENG);
 	}
-	
+
 	/* write an item name for each item id on the eng stack */
 	iter = item_id->range;
 	while (iter != NULL) {
@@ -1700,7 +1702,7 @@ int stack_eng_item(block_r * block, char * expr) {
 		}
 		iter = iter->next;
 	}
-	
+
 	/* release resources */
 	free(item_sql);
 	node_free(item_id);
@@ -1843,9 +1845,9 @@ int translate_verbitem(block_r * block, char * action) {
 			goto failed;
 	}
 
-	/* item names are push onto the stack in sequence 
+	/* item names are push onto the stack in sequence
 	 * and the translated pointers point to the same
-	 * buffer, therefore the total length of all the 
+	 * buffer, therefore the total length of all the
 	 * items could be can be calculate from the diff
 	 * of the first and last translated pointers. */
 	size = block->eng[item_off + item_len] - block->eng[item_off];
@@ -1853,7 +1855,7 @@ int translate_verbitem(block_r * block, char * action) {
 		exit_func_safe("empty item names for item %d", block->item_id);
 		goto failed;
 	}
-	
+
 	/* allocate a buffer with enough padding */
 	buf = calloc(size + 128, sizeof(char));
 	if (buf == NULL) {
@@ -1862,9 +1864,9 @@ int translate_verbitem(block_r * block, char * action) {
 	}
 
 	/* write the getitem format */
-	off += sprintf(&buf[off], "%s %s %s%s", 
+	off += sprintf(&buf[off], "%s %s %s%s",
 		action,
-		block->eng[item_off + item_len], 
+		block->eng[item_off + item_len],
 		block->eng[item_off],
 		(item_len > 1) ? ", " : "");
 	for (i = item_off + 1; i < item_len; i++)
@@ -1872,7 +1874,7 @@ int translate_verbitem(block_r * block, char * action) {
 			sprintf(&buf[off], "and %s", block->eng[i]) :
 			sprintf(&buf[off], "%s, ", block->eng[i]);
 	off += sprintf(&buf[off], ".");
-	
+
 	/* write to the end of the translation */
 	if (script_buffer_write(block, TYPE_ENG, buf))
 		goto failed;
@@ -1931,7 +1933,7 @@ int translate_rentitem(block_r * block) {
 		exit_func_safe("out of memory in item %d", block->item_id);
 		goto failed;
 	}
-	
+
 	/* write the getitem format */
 	off += sprintf(&buf[off], "Temporarily receive %s %s%s",
 		aeiou(block->eng[item_off][0]) ? "a" : "an",

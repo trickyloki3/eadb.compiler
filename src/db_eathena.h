@@ -12,20 +12,6 @@
 	#include "setting.h"
  	#include "sqlite3.h"
 
-	/* eathena database type definitions
-	 * -----------------------------------------
-	 * type name 	- 	type reference
-	 * -----------------------------------------
-	 * item_ea 			- 	eathena item database
-	 * mob_ea 			- 	eathena mob database
-	 * skill_ea 		- 	eathena skill database
-	 * produce_ea		- 	eathena produce database
-	 * mercenary_ea 	-	eathena mecenary database
-	 * pet_ea			-	eathena pet database
-	 * item_group_ea 	-	eathena item group database
-	 * const_ea 		- 	eathena const database
-	 */
-
 	/* database record counts */
 	#define ITEM_EA_FIELD_COUNT 			22
 	#define MOB_EA_FIELD_COUNT 				58
@@ -58,6 +44,33 @@
 		char onequip[MAX_SCRIPT_SIZE];
 		char onunequip[MAX_SCRIPT_SIZE];
 	} item_ea;
+
+	#define EA_ITEM_DELETE			"DROP TABLE IF EXISTS item_ea;"
+	#define EA_ITEM_INSERT			"INSERT INTO item_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define EA_ITEM_CREATE			"CREATE TABLE IF NOT EXISTS item_ea("\
+									"	id INTEGER PRIMARY KEY,"\
+									"	aegis TEXT,"\
+									"	eathena TEXT,"\
+									"	type INTEGER,"\
+									"	buy INTEGER,"\
+									"	sell INTEGER,"\
+									"	weight INTEGER,"\
+									"	atk INTEGER,"\
+									"	def INTEGER,"\
+									"	range INTEGER,"\
+									"	slots INTEGER,"\
+									"	job INTEGER,"\
+									"	upper INTEGER,"\
+									"	gender INTEGER,"\
+									"	loc INTEGER,"\
+									"	wlv INTEGER,"\
+									"	elv INTEGER,"\
+									"	refineable INTEGER,"\
+									"	view INTEGER,"\
+									"	script TEXT,"\
+									"	onequip TEXT,"\
+									"	onunequip TEXT"\
+									");"
 
 	typedef struct {
 		int id;
@@ -120,6 +133,69 @@
 		int dropcardper;
 	} mob_ea;
 
+	#define EA_MOB_DELETE			"DROP TABLE IF EXISTS mob_ea;"
+	#define EA_MOB_INSERT			"INSERT INTO mob_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define EA_MOB_CREATE			"CREATE TABLE IF NOT EXISTS mob_ea("\
+									"	id INTEGER PRIMARY KEY,"\
+									"	sprite TEXT,"\
+									"	kro TEXT,"\
+									"	iro TEXT,"\
+									"	lv INTEGER,"\
+									"	hp INTEGER,"\
+									"	sp INTEGER,"\
+									"	exp INTEGER,"\
+									"	jexp INTEGER,"\
+									"	range INTEGER,"\
+									"	atk1 INTEGER,"\
+									"	atk2 INTEGER,"\
+									"	def INTEGER,"\
+									"	mdef INTEGER,"\
+									"	str INTEGER,"\
+									"	agi INTEGER,"\
+									"	vit INTEGER,"\
+									"	intr INTEGER,"\
+									"	dex INTEGER,"\
+									"	luk INTEGER,"\
+									"	range2 INTEGER,"\
+									"	range3 INTEGER,"\
+									"	scale INTEGER,"\
+									"	race INTEGER,"\
+									"	element INTEGER,"\
+									"	mode INTEGER,"\
+									"	speed INTEGER,"\
+									"	adelay INTEGER,"\
+									"	amotion INTEGER,"\
+									"	dmotion INTEGER,"\
+									"	mexp INTEGER,"\
+									"	expper INTEGER,"\
+									"	mvp1id INTEGER,"\
+									"	mvp1per INTEGER,"\
+									"	mvp2id INTEGER,"\
+									"	mvp2per INTEGER,"\
+									"	mvp3id INTEGER,"\
+									"	mvp3per INTEGER,"\
+									"	drop1id INTEGER,"\
+									"	drop1per INTEGER,"\
+									"	drop2id INTEGER,"\
+									"	drop2per INTEGER,"\
+									"	drop3id INTEGER,"\
+									"	drop3per INTEGER,"\
+									"	drop4id INTEGER,"\
+									"	drop4per INTEGER,"\
+									"	drop5id INTEGER,"\
+									"	drop5per INTEGER,"\
+									"	drop6id INTEGER,"\
+									"	drop6per INTEGER,"\
+									"	drop7id INTEGER,"\
+									"	drop7per INTEGER,"\
+									"	drop8id INTEGER,"\
+									"	drop8per INTEGER,"\
+									"	drop9id INTEGER,"\
+									"	drop9per INTEGER,"\
+									"	dropcardid INTEGER,"\
+									"	dropcardper INTEGER"\
+									");"
+
 	typedef struct {
 		int id;
 		varlist range;
@@ -134,11 +210,34 @@
 		int cast_def_reduce_rate;
 		int inf2;
 		varlist maxcount;
-		char type[MAX_NAME_SIZE];				/* 'none', 'weapon', 'magic', 'misc' */
+		char type[MAX_NAME_SIZE];				/* 'none',"
+		"'weapon', 'magic', 'misc' */
 		varlist blow_count;
 		char name[MAX_NAME_SIZE];
 		char desc[MAX_NAME_SIZE];
 	} skill_ea;
+
+	#define EA_SKILL_DELETE			"DROP TABLE IF EXISTS skill_ea;"
+	#define EA_SKILL_INSERT			"INSERT INTO skill_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define EA_SKILL_CREATE			"CREATE TABLE IF NOT EXISTS skill_ea("\
+						 			"	id INTEGER PRIMARY KEY,"\
+						 			"	range TEXT,"\
+						 			"	hit INTEGER,"\
+						 			"	inf INTEGER,"\
+						 			"	element TEXT,"\
+						 			"	nk INTEGER,"\
+						 			"	splash TEXT,"\
+						 			"	max INTEGER,"\
+						 			"	hit_amount INTEGER,"\
+						 			"	cast_cancel TEXT,"\
+						 			"	cast_def_reduce_rate INTEGER,"\
+						 			"	inf2 INTEGER,"\
+						 			"	maxcount TEXT,"\
+						 			"	type TEXT,"\
+						 			"	blow_count TEXT,"\
+						 			"	name TEXT,"\
+						 			"	desc TEXT"\
+						 			");"
 
 	typedef struct  {
 		int item_id;
@@ -149,6 +248,17 @@
 		int item_amount_req[MAX_INGREDIENT];
 		int ingredient_count;
 	} produce_ea;
+
+	#define EA_PRODUCE_DELETE		"DROP TABLE IF EXISTS produce_ea;"
+	#define EA_PRODUCE_INSERT		"INSERT INTO produce_ea VALUES(?, ?, ?, ?, ?, ?);"
+	#define EA_PRODUCE_CREATE		"CREATE TABLE IF NOT EXISTS produce_ea("\
+									"	item_id INTEGER PRIMARY KEY,"\
+									"	item_lv INTEGER,"\
+									"	req_skill INTEGER,"\
+									"	req_skill_lv INTEGER,"\
+									"	material TEXT,"\
+									"	amount TEXT"\
+									");"
 
 	typedef struct {
 		int id;
@@ -179,6 +289,37 @@
 		int dmotion;
 	} mercenary_ea;
 
+	#define EA_MERC_DELETE			"DROP TABLE IF EXISTS mercenary_ea;"
+	#define EA_MERC_INSERT			"INSERT INTO mercenary_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define EA_MERC_CREATE			"CREATE TABLE IF NOT EXISTS mercenary_ea("\
+									"	id INTEGER PRIMARY KEY,"\
+									"	sprite TEXT,"\
+									"	name TEXT,"\
+									"	lv INTEGER,"\
+									"	hp INTEGER,"\
+									"	sp INTEGER,"\
+									"	range1 INTEGER,"\
+									"	atk1 INTEGER,"\
+									"	atk2 INTEGER,"\
+									"	def INTEGER,"\
+									"	mdef INTEGER,"\
+									"	str INTEGER,"\
+									"	agi INTEGER,"\
+									"	vit INTEGER,"\
+									"	intr INTEGER,"\
+									"	dex INTEGER,"\
+									"	luk INTEGER,"\
+									"	range2 INTEGER,"\
+									"	range3 INTEGER,"\
+									"	scale INTEGER,"\
+									"	race INTEGER,"\
+									"	element INTEGER,"\
+									"	speed INTEGER,"\
+									"	adelay INTEGER,"\
+									"	amotion INTEGER,"\
+									"	dmotion INTEGER"\
+									");"
+
 	typedef struct {
 		int mob_id;
 		char name[MAX_NAME_SIZE];
@@ -204,11 +345,47 @@
 		char loyal_script[MAX_SCRIPT_SIZE];
 	} pet_ea;
 
+	#define EA_PET_DELETE			"DROP TABLE IF EXISTS pet_ea;"
+	#define EA_PET_INSERT			"INSERT INTO pet_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	#define EA_PET_CREATE			"CREATE TABLE IF NOT EXISTS pet_ea("\
+									"	mob_id INTEGER PRIMARY KEY,"\
+									"	pet_name TEXT,"\
+									"	pet_jname TEXT,"\
+									"	lure_id INTEGER,"\
+									"	egg_id INTEGER,"\
+									"	equip_id INTEGER,"\
+									"	food_id INTEGER,"\
+									"	fullness INTEGER,"\
+									"	hungry_delay INTEGER,"\
+									"	r_hungry INTEGER,"\
+									"	r_full INTEGER,"\
+									"	intimate INTEGER,"\
+									"	die INTEGER,"\
+									"	capture INTEGER,"\
+									"	speed INTEGER,"\
+									"	s_performance INTEGER,"\
+									"	talk_convert INTEGER,"\
+									"	attack_rate INTEGER,"\
+									"	defence_attack_rate INTEGER,"\
+									"	change_target_rate INTEGER,"\
+									"	pet_script TEXT,"\
+									"	loyal_script TEXT"\
+									");"
+
 	typedef struct {
 		int group_id;
 		int item_id;
 		int rate;
 	} item_group_ea;
+
+	#define EA_ITEM_GROUP_DELETE	"DROP TABLE IF EXISTS item_group_ea;"
+	#define EA_ITEM_GROUP_INSERT	"INSERT INTO item_group_ea VALUES(?, ?, ?);"
+	#define EA_ITEM_GROUP_CREATE	"CREATE TABLE IF NOT EXISTS item_group_ea("\
+									"	group_id INTEGER,"\
+									"	item_id INTEGER,"\
+									"	rate INTEGER,"\
+									"	PRIMARY KEY(group_id, item_id)"\
+									");"
 
 	typedef struct {
 		char name[MAX_NAME_SIZE];
@@ -216,97 +393,11 @@
 		int type;
 	} const_ea;
 
-	/* eathena sqlite3 database interface */
-	#define eathena_database_sql 	"DROP TABLE IF EXISTS item_ea;"																\
-									"DROP TABLE IF EXISTS mob_ea;"																\
-									"DROP TABLE IF EXISTS skill_ea;"															\
-									"DROP TABLE IF EXISTS produce_ea;"															\
-									"DROP TABLE IF EXISTS mercenary_ea;"														\
-									"DROP TABLE IF EXISTS pet_ea;"																\
-									"DROP TABLE IF EXISTS item_group_ea;"														\
-									"DROP TABLE IF EXISTS const_ea;"															\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS item_ea(" 														\
-									"id INTEGER PRIMARY KEY, aegis TEXT, eathena TEXT," 										\
-									"type INTEGER, buy INTEGER, sell INTEGER, weight INTEGER, " 								\
-									"atk INTEGER, def INTEGER, range INTEGER, slots INTEGER, " 									\
-									"job INTEGER, upper INTEGER, gender INTEGER, loc INTEGER, " 								\
-									"wlv INTEGER, elv INTEGER, refineable INTEGER, view INTEGER, " 								\
-									"script TEXT, onequip TEXT, onunequip TEXT);"												\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS mob_ea(" 														\
-									"id INTEGER PRIMARY KEY, sprite TEXT, kro TEXT, iro TEXT, " 								\
-									"lv INTEGER, hp INTEGER, sp INTEGER, exp INTEGER, jexp INTEGER, " 							\
-									"range INTEGER, atk1 INTEGER, atk2 INTEGER, def INTEGER, mdef INTEGER, " 					\
-									"str INTEGER, agi INTEGER, vit INTEGER, intr INTEGER, dex INTEGER, " 						\
-									"luk INTEGER, range2 INTEGER, range3 INTEGER, scale INTEGER, race INTEGER, " 				\
-									"element INTEGER, mode INTEGER, speed INTEGER, adelay INTEGER, amotion INTEGER, " 			\
-									"dmotion INTEGER, mexp INTEGER, expper INTEGER, mvp1id INTEGER, mvp1per INTEGER, " 			\
-									"mvp2id INTEGER, mvp2per INTEGER, mvp3id INTEGER, mvp3per INTEGER, drop1id INTEGER, " 		\
-									"drop1per INTEGER, drop2id INTEGER, drop2per INTEGER, drop3id INTEGER, drop3per INTEGER, " 	\
-									"drop4id INTEGER, drop4per INTEGER, drop5id INTEGER, drop5per INTEGER, drop6id INTEGER, " 	\
-									"drop6per INTEGER, drop7id INTEGER, drop7per INTEGER, drop8id INTEGER, drop8per INTEGER, " 	\
-									"drop9id INTEGER, drop9per INTEGER, dropcardid INTEGER, dropcardper INTEGER); "				\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS skill_ea(" 														\
-						 			"id INTEGER PRIMARY KEY, range TEXT, hit INTEGER, inf INTEGER, " 							\
-						 			"element TEXT, nk INTEGER, splash TEXT, max INTEGER, hit_amount INTEGER, " 					\
-						 			"cast_cancel TEXT, cast_def_reduce_rate INTEGER, inf2 INTEGER, " 							\
-						 			"maxcount TEXT, type TEXT, blow_count TEXT, name TEXT, desc TEXT);"							\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS produce_ea(" 													\
-									"item_id INTEGER PRIMARY KEY, item_lv INTEGER, " 											\
-									"req_skill INTEGER, req_skill_lv INTEGER, material TEXT, amount TEXT);"						\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS mercenary_ea(" 													\
-									"id INTEGER PRIMARY KEY, sprite TEXT, name TEXT, " 											\
-									"lv INTEGER, hp INTEGER, sp INTEGER, range1 INTEGER, " 										\
-									"atk1 INTEGER, atk2 INTEGER, def INTEGER, mdef INTEGER, " 									\
-									"str INTEGER, agi INTEGER, vit INTEGER, intr INTEGER, " 									\
-									"dex INTEGER, luk INTEGER, range2 INTEGER, range3 INTEGER, " 								\
-									"scale INTEGER, race INTEGER, element INTEGER, speed INTEGER, " 							\
-									"adelay INTEGER, amotion INTEGER, dmotion INTEGER);"										\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS pet_ea(" 														\
-									"mob_id INTEGER PRIMARY KEY, pet_name TEXT, pet_jname TEXT, " 								\
-									"lure_id INTEGER, egg_id INTEGER, equip_id INTEGER, " 										\
-									"food_id INTEGER, fullness INTEGER, hungry_delay INTEGER, " 								\
-									"r_hungry INTEGER, r_full INTEGER, intimate INTEGER, " 										\
-									"die INTEGER, capture INTEGER, speed INTEGER, " 											\
-									"s_performance INTEGER, talk_convert INTEGER, attack_rate INTEGER, " 						\
-									"defence_attack_rate INTEGER, change_target_rate INTEGER, pet_script TEXT, "				\
-									"loyal_script TEXT);"																		\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS item_group_ea(group_id INTEGER, item_id INTEGER, "				\
-									"rate INTEGER, PRIMARY KEY(group_id, item_id));"											\
-									""																							\
-									"CREATE TABLE IF NOT EXISTS const_ea(name TEXT, value INTEGER, type INTEGER);"
+	#define EA_CONST_DELETE			"DROP TABLE IF EXISTS const_ea;"
+	#define EA_CONST_INSERT			"INSERT INTO const_ea VALUES(?, ?, ?);"
+	#define EA_CONST_CREATE			"CREATE TABLE IF NOT EXISTS const_ea(name TEXT, value INTEGER, type INTEGER);"
 
-	#define item_ea_insert 			"INSERT INTO item_ea VALUES(" 																\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
-	#define mob_ea_insert  			"INSERT INTO mob_ea VALUES(" 																\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?);"
-	#define skill_ea_insert 		"INSERT INTO skill_ea VALUES(?, ?,"															\
-									" ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"															\
-									" ?, ?, ?, ?);"
-	#define produce_ea_insert 		"INSERT INTO produce_ea VALUES(?,"															\
-									" ?, ?, ?, ?, ?);"
-	#define mercenary_ea_insert 	"INSERT INTO mercenary_ea VALUES("															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 													\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
-	#define pet_ea_insert 			"INSERT INTO pet_ea VALUES(" 																\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," 															\
-									"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
-	#define item_group_ea_insert 	"INSERT INTO item_group_ea VALUES(?, ?, ?);"
-	#define const_ea_ins			"INSERT INTO const_ea VALUES(?, ?, ?);"
-
-	typedef struct db_ea_t {
+	typedef struct ea_db_t {
 		sqlite3 * db;
 		sqlite3_stmt * item_ea_sql_insert;
 		sqlite3_stmt * mob_ea_sql_insert;
@@ -316,10 +407,9 @@
 		sqlite3_stmt * pet_ea_sql_insert;
 		sqlite3_stmt * item_group_ea_sql_insert;
 		sqlite3_stmt * const_ea_sql_insert;
-	} db_ea_t;
+	} ea_db_t;
 
 	/* eathena native database loading */
-	/*ITEML_API extern native_config_t load_ea_native[EATHENA_DB_COUNT];*/
 	int item_ea_load(void * db, int row, int col, char * val);
 	int mob_ea_load(void * db, int row, int col, char * val);
 	int skill_ea_load(void * db, int row, int col, char * val);
@@ -329,15 +419,24 @@
 	int item_group_ea_load(void * db, int row, int col, char * val);
 	int const_ea_load(void * db, int row, int col, char * val);
 
-	/* database loading depends on the path of the database */
-	ITEML_API int create_eathena_database(db_ea_t * db, const char * path);
-	ITEML_API int finalize_eathena_database(db_ea_t * db);
-	ITEML_API int item_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int mob_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int skill_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int produce_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int mercenary_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int pet_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int item_group_ea_sql_load(db_ea_t * db, const char * path);
-	ITEML_API int const_ea_sql_load(db_ea_t * db, const char * path);
+	/* convert csv databases to sqlite3 */
+	int ea_db_init(ea_db_t **, const char *);
+	int ea_db_deit(ea_db_t **);
+	int ea_db_exec(ea_db_t *, char *);
+	int ea_db_item_load(ea_db_t *, const char *);
+	int ea_db_item_load_record(item_ea *, int, sqlite3_stmt *);
+	int ea_db_mob_load(ea_db_t *, const char *);
+	int ea_db_mob_load_record(mob_ea *, int, sqlite3_stmt *);
+	int ea_db_skill_load(ea_db_t *, const char *);
+	int ea_db_skill_load_record(skill_ea *, int, sqlite3_stmt *);
+	int ea_db_produce_load(ea_db_t *, const char *);
+	int ea_db_produce_load_record(produce_ea *, int, sqlite3_stmt *);
+	int ea_db_merc_load(ea_db_t *, const char *);
+	int ea_db_merc_load_record(mercenary_ea *, int, sqlite3_stmt *);
+	int ea_db_pet_load(ea_db_t *, const char *);
+	int ea_db_pet_load_record(pet_ea *, int, sqlite3_stmt *);
+	int ea_db_item_group_load(ea_db_t *, const char *);
+	int ea_db_item_group_load_record(item_group_ea *, int, sqlite3_stmt *);
+	int ea_db_const_load(ea_db_t *, const char *);
+	int ea_db_const_load_record(const_ea *, int, sqlite3_stmt *);
 #endif
