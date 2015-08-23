@@ -544,6 +544,7 @@
 	} herc_db_t;
 
 	/* load libconfig or csv style databases */
+	extern native_config_t load_he_native[HERCULES_DB_COUNT];
 	int item_package_he_load(const char *, native_t *);
 	int item_package_he_load_record(config_setting_t *, item_package_he *);
 	int item_package_he_load_record_item(config_setting_t *, item_package_record_he *);

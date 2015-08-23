@@ -453,9 +453,12 @@ int ra_db_item_load_record(item_ra * items, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_text(sql, 24, item->onunequip, strlen(item->onunequip), SQLITE_STATIC) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
+            fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
+			
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, item->aegis);
 		}
@@ -552,9 +555,11 @@ int ra_db_mob_load_record(mob_ra * mobs, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_int(sql, 57, mob->dropcardper) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to mob db.\n", mob->iro);
+            fprintf(stderr, "[load]: failed to add %s to mob db.\n", mob->iro);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, mob->iro);
 		}
@@ -613,9 +618,11 @@ int ra_db_skill_load_record(skill_ra * skills, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_text(sql, 18, skill->desc, strlen(skill->desc), SQLITE_STATIC) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to skill db.\n", skill->name);
+            fprintf(stderr, "[load]: failed to add %s to skill db.\n", skill->name);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, skill->name);
 		}
@@ -666,9 +673,11 @@ int ra_db_produce_load_record(produce_ra * produces, int size, sqlite3_stmt * sq
 			SQLITE_OK != sqlite3_bind_text(sql, 7, buf, strlen(buf), SQLITE_TRANSIENT) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %d to produce db.\n", produce->id);
+            fprintf(stderr, "[load]: failed to add %d to produce db.\n", produce->id);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, produce->id);
 		}
@@ -735,9 +744,11 @@ int ra_db_merc_load_record(mercenary_ra * mercs, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_int(sql, 26, merc->dmotion) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to mercenary db.\n", merc->name);
+            fprintf(stderr, "[load]: failed to add %s to mercenary db.\n", merc->name);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, merc->name);
 		}
@@ -800,9 +811,11 @@ int ra_db_pet_load_record(pet_ra * pets, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_text(sql, 22, pet->loyal_script, strlen(pet->loyal_script), SQLITE_STATIC) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to pet db.\n", pet->name);
+            fprintf(stderr, "[load]: failed to add %s to pet db.\n", pet->name);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, pet->name);
 		}
@@ -845,9 +858,11 @@ int ra_db_const_load_record(const_ra * constants, int size, sqlite3_stmt * sql) 
 			SQLITE_OK != sqlite3_bind_int(sql, 3, constant->type) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to constant db.\n", constant->name);
+            fprintf(stderr, "[load]: failed to add %s to constant db.\n", constant->name);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, constant->name);
 		}
@@ -946,9 +961,11 @@ int ra_db_item_group_load_record(item_group_ra * item_groups, int size, sqlite3_
 			SQLITE_OK != sqlite3_bind_int(sql, 3, item_group->rate) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to item group db.\n", item_group->name);
+            fprintf(stderr, "[load]: failed to add %s to item group db.\n", item_group->name);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item_group->name);
 		}
@@ -1006,9 +1023,11 @@ int ra_db_item_group_package_record(ra_db_t * ra, package_ra * packages, int siz
 			SQLITE_OK != sqlite3_bind_int(ra->item_package_ra_sql_insert, 10, package->named) ||
 			SQLITE_DONE != sqlite3_step(ra->item_package_ra_sql_insert) ||
 			SQLITE_OK != sqlite3_reset(ra->item_package_ra_sql_insert)) {
-			if(SQLITE_OK != sqlite3_reset(ra->item_package_ra_sql_insert))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to %s in item package db.\n", package->item_name, package->group_name);
+            fprintf(stderr, "[load]: failed to add %s to %s in item package db.\n", package->item_name, package->group_name);
+            if (SQLITE_OK != sqlite3_reset(ra->item_package_ra_sql_insert)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, package->item_name);
 		}
@@ -1081,8 +1100,11 @@ int ra_db_item_combo_load_record(ra_db_t * ra, combo_ra * combos, int size) {
 					SQLITE_OK != sqlite3_bind_text(ra->item_combo_ra_sql_insert, 3, buf, off, SQLITE_STATIC) ||
 					SQLITE_DONE != sqlite3_step(ra->item_combo_ra_sql_insert) ||
 					SQLITE_OK != sqlite3_reset(ra->item_combo_ra_sql_insert)) {
-					if(SQLITE_OK != sqlite3_reset(ra->item_combo_ra_sql_insert))
-						return CHECK_FAILED;
+                    if (SQLITE_OK != sqlite3_reset(ra->item_combo_ra_sql_insert)) {
+                        fprintf(stderr, "[load]: failed to add item id combo %d to item combo db.\n", item_list[j]);
+                        fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                        return CHECK_FAILED;
+                    }
 				}
 			}
 			fprintf(stderr,"[load]: %d/%d\r", i, size);

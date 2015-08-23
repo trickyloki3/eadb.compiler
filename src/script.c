@@ -1157,9 +1157,9 @@ int script_translate(script_t * script) {
             case 14: ret = translate_status(iter, iter->type); break;                                               /* sc_start */
             case 15: ret = translate_status(iter, iter->type); break;                                               /* sc_start4 */
             case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
-			case 17: ret = translate_verbitem(iter, "Receive"); break;												/* getitem */
-			case 18: ret = translate_rentitem(iter); break;															/* rentitem */
-			case 19: ret = translate_verbitem(iter, "Remove"); break;												/* delitem */
+            case 17: ret = translate_verbitem(iter, "Receive"); break;                                              /* getitem */
+            case 18: ret = translate_rentitem(iter); break;                                                         /* rentitem */
+            case 19: ret = translate_verbitem(iter, "Remove"); break;                                               /* delitem */
             case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
             case 23: ret = translate_write(iter, "Set new font.", 1); break;                                        /* setfont */
             case 24: ret = translate_bstore(iter, iter->type); break;                                               /* buyingstore */

@@ -474,6 +474,7 @@
 	} ra_db_t;
 
 	/* rathena native database loading */
+	extern native_config_t load_ra_native[RATHENA_DB_COUNT];
 	int item_ra_load(void * db, int row, int col, char * val);
 	int mob_ra_load(void * db, int row, int col, char * val);
 	int skill_ra_load(void * db, int row, int col, char * val);

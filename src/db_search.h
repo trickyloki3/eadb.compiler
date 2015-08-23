@@ -7,223 +7,291 @@
  */
 #ifndef DB_SEARCH_H
 #define DB_SEARCH_H
- 	#include "db_eathena.h"
-	#include "db_rathena.h"
-	#include "db_hercules.h"
-	#include "db_resources.h"
+    #define DEV_MODE 1
 
- 	/* database modes */
- 	#define MODE_EATHENA 	0x1
-	#define MODE_RATHENA 	0x2
-	#define MODE_HERCULES 	0x4
+    #include "util.h"
+    #include "setting.h"
+    #include "sqlite3.h"
 
- 	/* resource database */
- 	#define option_res_name_sql		"SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
- 	#define map_res_name_sql 		"SELECT * FROM map_res WHERE map = ?;"
-	#define map_res_id_sql 			"SELECT * FROM map_res WHERE id = ?;"
- 	#define bonus_search_sql 		"SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
- 	#define status_search_sql 		"SELECT * FROM status_res WHERE scid = ? AND scstr = ? COLLATE NOCASE;"
- 	#define var_search_sql 			"SELECT * FROM var_res WHERE id = ? COLLATE NOCASE;"
- 	#define block_res_key_sql 		"SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
- 	#define id_res_id_sql			"SELECT * FROM id_res WHERE id = ?;"
- 	#define num_id_res_id_sql		"SELECT * FROM numid_res WHERE id = ?;"
+#if DEV_MODE
+    #include "db_resources.h"
+#endif
 
- 	/* constant database */
- 	typedef struct const_t {
- 		char name[MAX_NAME_SIZE];
-		int value;
-		int type;
- 	} const_t;
- 	#define	const_ea_name_search	"SELECT * FROM const_ea WHERE name = ? COLLATE NOCASE;"
- 	#define	const_ra_name_search	"SELECT * FROM const_ra WHERE name = ? COLLATE NOCASE;"
- 	#define	const_he_name_search	"SELECT * FROM const_he WHERE name = ? COLLATE NOCASE;"
- 	#define	const_ea_id_search		"SELECT * FROM const_ea WHERE value = ?;"
- 	#define	const_ra_id_search		"SELECT * FROM const_ra WHERE value = ?;"
- 	#define	const_he_id_search		"SELECT * FROM const_he WHERE value = ?;"
+    /* database modes */
+    #define EATHENA    0x1
+    #define RATHENA    0x2
+    #define HERCULE    0x4
 
- 	/* skill database */
- 	typedef struct skill_t {
- 		int id;
- 		int maxlv;
- 		char name[MAX_NAME_SIZE];
- 		char desc[MAX_NAME_SIZE];
- 	} skill_t;
- 	#define skill_ea_name_search 	"SELECT id, max, name, desc FROM skill_ea WHERE name = ? COLLATE NOCASE;"
- 	#define skill_ra_name_search 	"SELECT id, max, name, desc FROM skill_ra WHERE name = ? COLLATE NOCASE;"
- 	#define skill_he_name_search 	"SELECT id, max, name, desc FROM skill_he WHERE name = ? COLLATE NOCASE;"
- 	#define skill_ea_id_search 		"SELECT id, max, name, desc FROM skill_ea WHERE id = ?;"
-	#define skill_ra_id_search 		"SELECT id, max, name, desc FROM skill_ra WHERE id = ?;"
-	#define skill_he_id_search 		"SELECT id, max, name, desc FROM skill_he WHERE id = ?;"
+#ifndef DEV_MODE
+    typedef struct option_res {
+        char option[MAX_NAME_SIZE];
+        char name[MAX_NAME_SIZE];
+    } option_res;
 
- 	/* item database */
- 	typedef struct item_t {
- 		int id;
- 		char name[MAX_NAME_SIZE];
- 		int type;
-		int buy;
-		int sell;
-		int weight;
-		int atk;
-		int def;
-		int range;
-		int slots;
-		int job;
-		int upper;
-		int gender;
-		int loc;
-		int wlv;
-		int elv_min;
-		int elv_max;
-		int refineable;
-		int view;
-		char script[MAX_SCRIPT_SIZE];
-		/* rathena and hercules only */
-		int matk;
-		/* hercules only */
-		int bindonequip;
-		int buyingstore;
-		int delay;
-		int trade[TRADE_TOTAL];
-		int stack[STACK_TOTAL];
- 	} item_t;
- 	
-	#define item_ea_iterate			"SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
- 	#define item_ra_iterate			"SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
- 	#define item_he_iterate			"SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
- 									"BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
- 									"StackAmount, StackType from item_he;"
- 	#define item_ea_name_search 	"SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
-	#define item_ra_name_search 	"SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
-	#define item_he_name_search 	"SELECT Id, Name, Script FROM item_he WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"
-	#define item_ea_id_search 		"SELECT id, eathena, script FROM item_ea WHERE id = ?;"
-	#define item_ra_id_search 		"SELECT id, eathena, script FROM item_ra WHERE id = ?;"
-	#define item_he_id_search 		"SELECT Id, Name, Script FROM item_he WHERE id = ?;"
+    typedef struct map_res {
+        int id;
+        char map[MAX_NAME_SIZE];
+        char name[MAX_NAME_SIZE];
+    } map_res;
 
-	/* mob database */
-	typedef struct mob_t {
-		int id;
-		char name[MAX_NAME_SIZE];
-	} mob_t;
-	#define mob_ea_id_search 		"SELECT id, iro FROM mob_ea WHERE id = ?;"
-	#define mob_ra_id_search 		"SELECT id, iro FROM mob_ra WHERE id = ?;"
-	#define mob_he_id_search 		"SELECT id, iro FROM mob_he WHERE id = ?;"
+    typedef struct {
+        int scid;                       /* status id */
+        char scstr[MAX_NAME_SIZE];      /* status string identifer */
+        int type;
+        char scfmt[MAX_FORMAT_SIZE];    /* format of status string */
+        char scend[MAX_FORMAT_SIZE];    /* format of status end string */
+        int vcnt;                       /* value count */
+        int vmod[4];                    /* modifer for value */
+        int voff[4];                    /* offset translation stack */
+    } status_res;
 
-	/* mercenary database */
-	typedef struct merc_t {
-		int id;
-		char name[MAX_NAME_SIZE];
-	} merc_t;
-	#define merc_ea_id_search 		"SELECT id, name FROM mercenary_ea WHERE id = ?;"
-	#define merc_ra_id_search 		"SELECT id, name FROM mercenary_ra WHERE id = ?;"
-	#define merc_he_id_search 		"SELECT id, name FROM mercenary_he WHERE id = ?;"
+    typedef struct {
+      int tag;                          /* in-house identification */
+      char id[MAX_NAME_SIZE];           /* identifier string */
+      int type;                         /* type of identifer and flags */
+      int vflag;
+      int fflag;
+      int min;                          /* help calculations */
+      int max;
+      char str[MAX_NAME_SIZE];
+   } var_res;
 
-	/* pet database */
-	typedef struct pet_t {
-		int mob_id;
-		char pet_script[MAX_SCRIPT_SIZE];
-		char loyal_script[MAX_SCRIPT_SIZE];
-	} pet_t;
-	#define pet_ea_id_search 		"SELECT pet_script, loyal_script FROM pet_ea WHERE mob_id = ?;"
-	#define pet_ra_id_search 		"SELECT pet_script, loyal_script FROM pet_ra WHERE mob_id = ?;"
-	#define pet_he_id_search 		"SELECT pet_script, loyal_script FROM pet_he WHERE mob_id = ?;"
-	
-	/* produce database */
-	typedef struct produce_t {
-		int id;
-		int item_id;
-		int item_lv;
-		int skill_id;
-		int skill_lv;
-		int item_id_req[MAX_INGREDIENT];
-		int item_amount_req[MAX_INGREDIENT];
-		int ingredient_count;
-		struct produce_t * next;
-	} produce_t;
-	#define produce_ea_id_search 	"SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
-	#define produce_ra_id_search 	"SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
-	#define produce_he_id_search 	"SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
+   typedef struct block_res {
+        int id;
+        char name[MAX_NAME_SIZE];
+        int flag;
+    } block_res;
 
-	/* item group databases */
-	typedef struct item_group_t {
-		int group_id;
-		int item_id;
-		int rate;
-	} item_group_t;
-	#define ea_item_group_search 	"SELECT group_id, item_id, rate FROM item_group_ea WHERE group_id = ?;"
-	#define ra_item_group_search 	"SELECT group_id, item_id, rate FROM item_group_ra WHERE group_id = ?;"
+    typedef struct nid_res {
+        int id;
+        char res[MAX_RESNAME_SIZE];
+    } nid_res;
+#endif
 
-	/* item combo database */
-	typedef struct combo_t {
-		char script[MAX_SCRIPT_SIZE];
-		char group[MAX_SCRIPT_SIZE];
-		struct combo_t * next;
-	} combo_t;
-	#define item_combo_ra_id_search "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
-	#define item_combo_he_id_search "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
+    typedef struct const_t {
+        char name[MAX_NAME_SIZE];
+        int value;
+        int type;
+    } const_t;
 
- 	typedef struct db_search_t {
- 		sqlite3 * athena;
- 		sqlite3 * resource;
- 		/* eathena, rathena, or hercules */
- 		int mode;
- 		/* resource database search */
- 		sqlite3_stmt * option_res_name_search;
- 		sqlite3_stmt * map_res_name_search;
- 		sqlite3_stmt * map_res_id_search;
- 		sqlite3_stmt * bonus_res_prefix_name_search;
- 		sqlite3_stmt * status_res_id_name_search;
- 		sqlite3_stmt * var_res_id_search;
- 		sqlite3_stmt * block_res_key_search;
- 		sqlite3_stmt * id_res_id_search;
- 		sqlite3_stmt * num_id_res_id_search;
- 		/* athena database search */
- 		sqlite3_stmt * item_iterate;
- 		sqlite3_stmt * const_db_name_search;
- 		sqlite3_stmt * const_db_id_search;
- 		sqlite3_stmt * skill_db_name_search;
- 		sqlite3_stmt * skill_db_id_search;
- 		sqlite3_stmt * item_db_name_search;
- 		sqlite3_stmt * item_db_id_search;
- 		sqlite3_stmt * mob_db_id_search;
- 		sqlite3_stmt * merc_db_id_search;
- 		sqlite3_stmt * pet_db_id_search;
- 		sqlite3_stmt * produce_db_id_search;
- 		sqlite3_stmt * item_group_id_search;
- 		sqlite3_stmt * item_combo_id_search;
- 	} db_search_t;
+    typedef struct skill_t {
+        int id;
+        int maxlv;
+        char name[MAX_NAME_SIZE];
+        char desc[MAX_NAME_SIZE];
+    } skill_t;
 
-	ITEMC_API ITEML_API int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path);
-	ITEMC_API ITEML_API int deit_db(db_search_t * db);
-	ITEML_API int test_db(void);
+    typedef struct item_t {
+        int id;
+        char name[MAX_NAME_SIZE];
+        int type;
+        int buy;
+        int sell;
+        int weight;
+        int atk;
+        int def;
+        int range;
+        int slots;
+        int job;
+        int upper;
+        int gender;
+        int loc;
+        int wlv;
+        int elv_min;
+        int elv_max;
+        int refineable;
+        int view;
+        char script[MAX_SCRIPT_SIZE];
+        /* rathena and hercules only */
+        int matk;
+        /* hercules only */
+        int bindonequip;
+        int buyingstore;
+        int delay;
+        int trade[10];
+        int stack[2];
+    } item_t;
 
- 	/* resource database querying */
-	ITEML_API int option_search_name(db_search_t * db, option_res * option, const char * name);
-	ITEML_API int map_search_name(db_search_t * db, map_res * map, const char * name);
-	ITEML_API int map_search_id(db_search_t * db, map_res * map, int id);
-	ITEML_API int bonus_search_name(db_search_t * db, bonus_res * bonus, const char * prefix, const char * name);
-	ITEML_API int status_search_id_name(db_search_t * db, status_res * status, int id, const char * name);
-	ITEML_API int var_search_id(db_search_t * db, var_res * var, const char * id);
-	ITEML_API int block_search_name(db_search_t * db, block_res * block, const char * name);
-	ITEML_API int id_res_id_search(db_search_t * db, nid_res * nid, int id);
-	ITEML_API int num_id_res_id_search(db_search_t * db, nid_res * nid, int id);
+    typedef struct mob_t {
+        int id;
+        char name[MAX_NAME_SIZE];
+    } mob_t;
 
- 	/* athena database querying */
-	ITEMC_API ITEML_API int item_iterate(db_search_t * db, item_t * item);
-	ITEML_API int const_db_search_name(db_search_t * db, const_t * search, const char * name);
-	ITEML_API int const_db_search_id(db_search_t * db, const_t * search, int id);
-	ITEML_API int skill_db_search_name(db_search_t * db, skill_t * search, const char * name);
-	ITEML_API int skill_db_search_id(db_search_t * db, skill_t * search, int id);
-	ITEML_API int item_db_search_name(db_search_t * db, item_t * search, const char * name);
-	ITEML_API int item_db_search_id(db_search_t * db, item_t * search, int id);
-	ITEML_API int mob_db_search_id(db_search_t * db, mob_t * search, int id);
-	ITEML_API int merc_db_search_id(db_search_t * db, merc_t * search, int id);
-	ITEML_API int pet_db_search_id(db_search_t * db, pet_t * search, int id);
-	ITEML_API int produce_db_search_id(db_search_t * db, produce_t ** search, int id);
-	ITEML_API void produce_free(produce_t * produce);
-	ITEML_API int item_group_db_search_id(db_search_t * db, item_group_t * search, int id, char * buffer);
-	ITEML_API int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id);
-	ITEML_API void combo_free(combo_t * combo);
+    typedef struct merc_t {
+        int id;
+        char name[MAX_NAME_SIZE];
+    } merc_t;
 
- 	/* debug */
-	ITEML_API void print_stmt(void * data, const char * sql);
+    typedef struct pet_t {
+        int mob_id;
+        char pet_script[MAX_SCRIPT_SIZE];
+        char loyal_script[MAX_SCRIPT_SIZE];
+    } pet_t;
+
+    typedef struct produce_t {
+        int id;
+        int item_id;
+        int item_lv;
+        int skill_id;
+        int skill_lv;
+        int item_id_req[MAX_INGREDIENT];
+        int item_amount_req[MAX_INGREDIENT];
+        int ingredient_count;
+        struct produce_t * next;
+    } produce_t;
+
+    typedef struct item_group_t {
+        int group_id;
+        int item_id;
+        int rate;
+    } item_group_t;
+
+    typedef struct combo_t {
+        char script[MAX_SCRIPT_SIZE];
+        char group[MAX_SCRIPT_SIZE];
+        struct combo_t * next;
+    } combo_t;
+
+    /* resource database queries */
+    #define RE_OPT_NAME_SEARCH      "SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
+    #define RE_MAP_NAME_SEARCH      "SELECT * FROM map_res WHERE map = ?;"
+    #define RE_MAP_ID_SEARCH        "SELECT * FROM map_res WHERE id = ?;"
+    #define RE_BONUS_NAME_SEARCH    "SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
+    #define RE_STATUS_NAME_SEARCH   "SELECT * FROM status_res WHERE scid = ? AND scstr = ? COLLATE NOCASE;"
+    #define RE_VAR_NAME_SEARCH      "SELECT * FROM var_res WHERE id = ? COLLATE NOCASE;"
+    #define RE_BLOCK_NAME_SEARCH    "SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
+    #define RE_SPR_ID_SEARCH        "SELECT * FROM id_res WHERE id = ?;"
+    #define RE_NSPR_ID_SEARCH       "SELECT * FROM numid_res WHERE id = ?;"
+
+    /* server item database queries */
+    #define EA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
+    #define RA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
+    #define HE_ITEM_ITERATE         "SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
+                                    "BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
+                                    "StackAmount, StackType from item_he;"
+
+    /* server database queries */
+    #define EA_CONST_NAME_SEARCH    "SELECT * FROM const_ea WHERE name = ? COLLATE NOCASE;"
+    #define RA_CONST_NAME_SEARCH    "SELECT * FROM const_ra WHERE name = ? COLLATE NOCASE;"
+    #define HE_CONST_NAME_SEARCH    "SELECT * FROM const_he WHERE name = ? COLLATE NOCASE;"
+    #define EA_CONST_ID_SEARCH      "SELECT * FROM const_ea WHERE value = ?;"
+    #define RA_CONST_ID_SEARCH      "SELECT * FROM const_ra WHERE value = ?;"
+    #define HE_CONST_ID_SEARCH      "SELECT * FROM const_he WHERE value = ?;"
+    #define EA_SKILL_NAME_SEARCH    "SELECT id, max, name, desc FROM skill_ea WHERE name = ? COLLATE NOCASE;"
+    #define RA_SKILL_NAME_SEARCH    "SELECT id, max, name, desc FROM skill_ra WHERE name = ? COLLATE NOCASE;"
+    #define HE_SKILL_NAME_SEARCH    "SELECT id, max, name, desc FROM skill_he WHERE name = ? COLLATE NOCASE;"
+    #define EA_SKILL_ID_SEARCH      "SELECT id, max, name, desc FROM skill_ea WHERE id = ?;"
+    #define RA_SKILL_ID_SEARCH      "SELECT id, max, name, desc FROM skill_ra WHERE id = ?;"
+    #define HE_SKILL_ID_SEARCH      "SELECT id, max, name, desc FROM skill_he WHERE id = ?;"
+    #define EA_ITEM_NAME_SEARCH     "SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
+    #define RA_ITEM_NAME_SEARCH     "SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
+    #define HE_ITEM_NAME_SEARCH     "SELECT Id, Name, Script FROM item_he WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"
+    #define EA_ITEM_ID_SEARCH       "SELECT id, eathena, script FROM item_ea WHERE id = ?;"
+    #define RA_ITEM_ID_SEARCH       "SELECT id, eathena, script FROM item_ra WHERE id = ?;"
+    #define HE_ITEM_ID_SEARCH       "SELECT Id, Name, Script FROM item_he WHERE id = ?;"
+    #define EA_MOB_ID_SEARCH        "SELECT id, iro FROM mob_ea WHERE id = ?;"
+    #define RA_MOB_ID_SEARCH        "SELECT id, iro FROM mob_ra WHERE id = ?;"
+    #define HE_MOB_ID_SEARCH        "SELECT id, iro FROM mob_he WHERE id = ?;"
+    #define EA_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_ea WHERE id = ?;"
+    #define RA_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_ra WHERE id = ?;"
+    #define HE_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_he WHERE id = ?;"
+    #define EA_PET_ID_SEARCH        "SELECT mob_id, pet_script, loyal_script FROM pet_ea WHERE mob_id = ?;"
+    #define RA_PET_ID_SEARCH        "SELECT mob_id, pet_script, loyal_script FROM pet_ra WHERE mob_id = ?;"
+    #define HE_PET_ID_SEARCH        "SELECT mob_id, pet_script, loyal_script FROM pet_he WHERE mob_id = ?;"
+    #define EA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
+    #define RA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
+    #define HE_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
+    #define EA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate FROM item_group_ea WHERE group_id = ?;"
+    #define RA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate FROM item_group_ra WHERE group_id = ?;"
+    #define RA_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
+    #define HE_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
+
+    typedef struct sql_t {
+        char * query;
+        sqlite3_stmt * stmt;
+    } sql_t;
+
+    typedef struct db_t {
+        int server_type;
+        sqlite3 * re;
+        sqlite3 * db;
+        /* resource database search */
+        sql_t * opt_name;
+        sql_t * map_name;
+        sql_t * map_id;
+        sql_t * bonus_name;
+        sql_t * status_name;
+        sql_t * var_name;
+        sql_t * block_name;
+        sql_t * sprite_id;
+        sql_t * usprite_id;
+        /* server database search */
+        sql_t * const_name;
+        sql_t * const_id;
+        sql_t * skill_name;
+        sql_t * skill_id;
+        sql_t * item_name;
+        sql_t * item_id;
+        sql_t * mob_id;
+        sql_t * merc_id;
+        sql_t * pet_id;
+        sql_t * produce_id;
+        sql_t * item_group_id;
+        sql_t * item_combo;
+        /* server item database iterate */
+        sql_t * item_db;
+    } db_t;
+
+    /* load resource and server sqlite3 databases */
+    int init_db_load(db_t **, const char *, const char *, int);
+    int deit_db_load(db_t **);
+
+    /* load sqlite3 databases */
+    int init_db(sqlite3 **, const char *);
+    int deit_db(sqlite3 **);
+
+    /* prepare sqlite3 statements */
+    int init_db_prep_sql(sqlite3 *, sql_t **, const char *);
+    int deit_db_prep_sql(sqlite3 *, sql_t **);
+
+    /* reset, bind, and execute sqlite3 statements */
+    #define BIND_STRING 0x1
+    #define BIND_NUMBER 0x2
+    int exec_db_query(sqlite3 *, sql_t *, ...);
+    int bind_db_query(sqlite3 *, sqlite3_stmt *, va_list);
+    int bind_db_string(sqlite3 *, sqlite3_stmt *, int, va_list *);
+    int bind_db_number(sqlite3 *, sqlite3_stmt *, int, va_list *);
+
+    /* resource sqlite3 database queries */
+    int opt_name(db_t *, option_res *, const char *, int);
+    int map_name(db_t *, map_res *, const char *, int);
+    int map_id(db_t *, map_res *, int);
+    int bonus_name(db_t *, bonus_res *, const char *, int, const char *, int);
+    int status_name(db_t *, status_res *, int, const char *, int);
+    int var_name(db_t *, var_res *, const char *, int);
+    int block_name(db_t *, block_res *, const char *, int);
+    int sprite_id(db_t *, nid_res *, int);
+    int usprite_id(db_t *, nid_res *, int);
+
+    /* server item database */
+    int item_iterate(db_t *, item_t *);
+    int item_eathena(sqlite3_stmt *, item_t *);
+    int item_rathena(sqlite3_stmt *, item_t *);
+    int item_hercule(sqlite3_stmt *, item_t *);
+
+    /* server databse search functions */
+    int const_name(db_t *, const_t *, const char *, int);
+    int const_id(db_t *, const_t *, int);
+    int skill_name(db_t *, skill_t *, const char *, int);
+    int skill_id(db_t *, skill_t *, int);
+    int item_name(db_t *, item_t *, const char *, int);
+    int item_id(db_t *, item_t *, int);
+    int mob_id(db_t *, mob_t *, int);
+    int merc_id(db_t *, merc_t *, int);
+    int pet_id(db_t *, pet_t *, int);
+    int produce_id(db_t *, produce_t **, int);
+    int produce_free(produce_t **);
+    int item_group_id(db_t *, item_group_t *, int);
+    int item_combo_id(db_t *, combo_t **, int);
+    int item_combo_free(combo_t **);
 #endif

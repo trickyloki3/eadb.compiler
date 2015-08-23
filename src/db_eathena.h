@@ -410,6 +410,7 @@
 	} ea_db_t;
 
 	/* eathena native database loading */
+	extern native_config_t load_ea_native[EATHENA_DB_COUNT];
 	int item_ea_load(void * db, int row, int col, char * val);
 	int mob_ea_load(void * db, int row, int col, char * val);
 	int skill_ea_load(void * db, int row, int col, char * val);

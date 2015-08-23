@@ -978,9 +978,11 @@ int herc_load_item_db_insert(item_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_OK != sqlite3_bind_text(sql, 42, item->onunequipscript, strlen(item->onunequipscript), SQLITE_STATIC) ||
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
-			if(SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
-			fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
+            fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, item->aegis);
 		}
@@ -1074,8 +1076,10 @@ int herc_load_mob_db_insert(mob_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s (%d) to mob db.\n", mob->iro, mob->id);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, mob->iro);
 		}
@@ -1129,8 +1133,10 @@ int herc_load_skill_db_insert(skill_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %d to skill db.\n", skill->id);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, skill->id);
 		}
@@ -1177,8 +1183,10 @@ int herc_load_produce_db_insert(produce_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %d to produce db.\n", produce->item_id);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, produce->item_id);
 		}
@@ -1242,8 +1250,10 @@ int herc_load_merc_db_insert(mercenary_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %d to mercenary db.\n", merc->id);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, merc->id);
 		}
@@ -1303,8 +1313,10 @@ int herc_load_pet_db_insert(pet_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %d to pet db.\n", pet->mob_id);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, pet->mob_id);
 		}
@@ -1345,8 +1357,10 @@ int herc_load_const_db_insert(const_he * db, int size, sqlite3_stmt * sql) {
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s to constant db.\n", constant->name);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, constant->name);
 		}
@@ -1437,8 +1451,10 @@ int herc_load_combo_db_insert(herc_db_t * db, combo_he * combos, int size, sqlit
 					SQLITE_DONE != sqlite3_step(sql) ||
 					SQLITE_OK != sqlite3_reset(sql)) {
 					fprintf(stderr, "Failed to load item combo %s.\n", buffer);
-					if (SQLITE_OK != sqlite3_reset(sql))
-						return CHECK_FAILED;
+                    if (SQLITE_OK != sqlite3_reset(sql)) {
+                        fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                        return CHECK_FAILED;
+                    }
 				}
 				fprintf(stderr,"[load]: %d/%d\r", i, size);
 			}
@@ -1489,8 +1505,10 @@ int herc_load_item_group_db_insert(herc_db_t * db, item_group_he * item_groups, 
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s to item group db.\n", item_group->name);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			id = (int) sqlite3_last_insert_rowid(db->db);
 			if (herc_load_item_group_record_db_insert(item_group->records, item_group->size, db->item_group_record_he_insert, id))
@@ -1566,8 +1584,10 @@ int herc_load_item_chain_db_insert(herc_db_t * db, item_chain_he * item_chains, 
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s to item group db.\n", item_chain->name);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			id = (int)sqlite3_last_insert_rowid(db->db);
 			if (herc_load_item_chain_record_db_insert(item_chains->items, item_chains->size, db->item_chain_record_he_insert, id))
@@ -1593,8 +1613,10 @@ int herc_load_item_chain_record_db_insert(item_chain_record_he * items, int size
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s to item chain record db.\n", item->name);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item->name);
 		}
@@ -1642,8 +1664,10 @@ int herc_load_item_package_db_insert(herc_db_t * db, item_package_he * item_pack
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s to item package db.\n", item_package->name);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		} else {
 			id = (int)sqlite3_last_insert_rowid(db->db);
 			if (herc_load_item_package_record_db_insert(item_package->items, item_package->size, db->item_package_record_he_insert, id))
@@ -1673,8 +1697,10 @@ int herc_load_item_package_record_db_insert(item_package_record_he * items, int 
 			SQLITE_DONE != sqlite3_step(sql) ||
 			SQLITE_OK != sqlite3_reset(sql)) {
 			fprintf(stderr, "[load]: failed to add %s to item package record db.\n", item->name);
-			if (SQLITE_OK != sqlite3_reset(sql))
-				return CHECK_FAILED;
+            if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+            }
 		}
 		else {
 			fprintf(stderr, "[load]: %d/%d ... %-100s\r", i, size, item->name);

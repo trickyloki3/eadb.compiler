@@ -7,774 +7,839 @@
  */
 #include "db_search.h"
 
-int init_db(db_search_t * db, int mode, const char * resource_path, const char * database_path) {
-	int status = 0;
-	const char * error = NULL;
-	memset(db, 0, sizeof(db_search_t));
+int init_db(sqlite3 ** db, const char * path) {
+    sqlite3 * _db = NULL;
 
-	/* open database connection to resource database */
-	if(sqlite3_open(resource_path, &db->resource) != SQLITE_OK) {
-		/* print sqlite3 error before exiting */
-		status = sqlite3_errcode(db->resource);
-		error = sqlite3_errmsg(db->resource);
-		exit_func_safe("sqlite3 code %d; %s", status, error);
-		if(db->resource != NULL) sqlite3_close(db->resource);
-		return CHECK_FAILED;
-	}
+    if(exit_null_safe(2, db, path))
+        return CHECK_FAILED;
 
-	/* open connection to athena database */
-	if(sqlite3_open(database_path, &db->athena) != SQLITE_OK) {
-		/* print sqlite3 error before exiting */
-		status = sqlite3_errcode(db->athena);
-		error = sqlite3_errmsg(db->athena);
-		exit_func_safe("sqlite3 code %d; %s", status, error);
-		if(db->athena != NULL) sqlite3_close(db->athena);
-		return CHECK_FAILED;
-	}
-
-	/* build all resource search queries */
-	if( sqlite3_prepare_v2(db->resource, option_res_name_sql, 	strlen(option_res_name_sql),&db->option_res_name_search, 		NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, map_res_name_sql, 		strlen(map_res_name_sql), 	&db->map_res_name_search, 			NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, map_res_id_sql, 		strlen(map_res_id_sql), 	&db->map_res_id_search, 			NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, bonus_search_sql, 		strlen(bonus_search_sql), 	&db->bonus_res_prefix_name_search, 	NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, status_search_sql, 	strlen(status_search_sql), 	&db->status_res_id_name_search, 	NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, var_search_sql, 		strlen(var_search_sql), 	&db->var_res_id_search, 			NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, block_res_key_sql, 	strlen(block_res_key_sql), 	&db->block_res_key_search, 			NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, id_res_id_sql, 		strlen(id_res_id_sql), 		&db->id_res_id_search, 				NULL) != SQLITE_OK ||
-		sqlite3_prepare_v2(db->resource, num_id_res_id_sql, 	strlen(num_id_res_id_sql), 	&db->num_id_res_id_search, 			NULL) != SQLITE_OK) {
-			/* failed to load resource queries */
-			status = sqlite3_errcode(db->resource);
-			error = sqlite3_errmsg(db->resource);
-			exit_func_safe("sqlite3 code %d; %s", status, error);
-			if(db->resource != NULL) sqlite3_close(db->resource);
-			if(db->athena != NULL) sqlite3_close(db->athena);
-			return CHECK_FAILED;
-		}
-
-	/* build all athena search queries */
-	db->mode = mode;
-	switch(mode) {
-		case MODE_EATHENA:
-			if(sqlite3_prepare_v2(db->athena, item_ea_iterate, strlen(item_ea_iterate), &db->item_iterate, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, const_ea_name_search, strlen(const_ea_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, const_ea_id_search, strlen(const_ea_id_search), &db->const_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, skill_ea_name_search, strlen(skill_ea_name_search), &db->skill_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, skill_ea_id_search, strlen(skill_ea_id_search), &db->skill_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_ea_name_search, strlen(item_ea_name_search), &db->item_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_ea_id_search, strlen(item_ea_id_search), &db->item_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, mob_ea_id_search, strlen(mob_ea_id_search), &db->mob_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, merc_ea_id_search, strlen(merc_ea_id_search), &db->merc_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, pet_ea_id_search, strlen(pet_ea_id_search), &db->pet_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, produce_ea_id_search, strlen(produce_ea_id_search), &db->produce_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, ea_item_group_search, strlen(ea_item_group_search), &db->item_group_id_search, NULL) != SQLITE_OK)
-				goto abort;
-			break;
-		case MODE_RATHENA:
-			if(sqlite3_prepare_v2(db->athena, item_ra_iterate, strlen(item_ra_iterate), &db->item_iterate, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, const_ra_name_search, strlen(const_ra_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, const_ra_id_search, strlen(const_ra_id_search), &db->const_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, skill_ra_name_search, strlen(skill_ra_name_search), &db->skill_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, skill_ra_id_search, strlen(skill_ra_id_search), &db->skill_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_ra_name_search, strlen(item_ra_name_search), &db->item_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_ra_id_search, strlen(item_ra_id_search), &db->item_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, mob_ra_id_search, strlen(mob_ra_id_search), &db->mob_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, merc_ra_id_search, strlen(merc_ra_id_search), &db->merc_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, pet_ra_id_search, strlen(pet_ra_id_search), &db->pet_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, produce_ra_id_search, strlen(produce_ra_id_search), &db->produce_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, ra_item_group_search, strlen(ra_item_group_search), &db->item_group_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_combo_ra_id_search, strlen(item_combo_ra_id_search), &db->item_combo_id_search, NULL) != SQLITE_OK)
-				goto abort;
-			break;
-		case MODE_HERCULES:
-			if(sqlite3_prepare_v2(db->athena, item_he_iterate, strlen(item_he_iterate), &db->item_iterate, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, const_he_name_search, strlen(const_he_name_search), &db->const_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, const_he_id_search, strlen(const_he_id_search), &db->const_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, skill_he_name_search, strlen(skill_he_name_search), &db->skill_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, skill_he_id_search, strlen(skill_he_id_search), &db->skill_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_he_name_search, strlen(item_he_name_search), &db->item_db_name_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_he_id_search, strlen(item_he_id_search), &db->item_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, mob_he_id_search, strlen(mob_he_id_search), &db->mob_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, merc_he_id_search, strlen(merc_he_id_search), &db->merc_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, pet_he_id_search, strlen(pet_he_id_search), &db->pet_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, produce_he_id_search, strlen(produce_he_id_search), &db->produce_db_id_search, NULL) != SQLITE_OK ||
-			   sqlite3_prepare_v2(db->athena, item_combo_he_id_search, strlen(item_combo_he_id_search), &db->item_combo_id_search, NULL) != SQLITE_OK)
-				goto abort;
-			break;
-		default:
-			break;
-	}
-	return CHECK_PASSED;
-
-	abort:
-		/* failed to load resource queries */
-		status = sqlite3_errcode(db->resource);
-		error = sqlite3_errmsg(db->resource);
-		exit_func_safe("sqlite3 code %d; %s", status, error);
-		if(db->resource != NULL) sqlite3_close(db->resource);
-		if(db->athena != NULL) sqlite3_close(db->athena);
-		return CHECK_FAILED;
-}
-
-int deit_db(db_search_t * db) {
-	sqlite3_finalize(db->item_iterate);
-	sqlite3_finalize(db->option_res_name_search);
-	sqlite3_finalize(db->map_res_name_search);
-	sqlite3_finalize(db->map_res_id_search);
-	sqlite3_finalize(db->bonus_res_prefix_name_search);
-	sqlite3_finalize(db->status_res_id_name_search);
-	sqlite3_finalize(db->var_res_id_search);
-	sqlite3_finalize(db->block_res_key_search);
-	sqlite3_finalize(db->id_res_id_search);
-	sqlite3_finalize(db->num_id_res_id_search);
-	sqlite3_finalize(db->const_db_name_search);
-	sqlite3_finalize(db->const_db_id_search);
-	sqlite3_finalize(db->skill_db_name_search);
-	sqlite3_finalize(db->skill_db_id_search);
-	sqlite3_finalize(db->item_db_name_search);
-	sqlite3_finalize(db->item_db_id_search);
-	sqlite3_finalize(db->mob_db_id_search);
-	sqlite3_finalize(db->merc_db_id_search);
-	sqlite3_finalize(db->pet_db_id_search);
-	sqlite3_finalize(db->produce_db_id_search);
-	sqlite3_finalize(db->item_group_id_search);
-	sqlite3_finalize(db->item_combo_id_search);
-	sqlite3_close_v2(db->resource);
-	sqlite3_close_v2(db->athena);
-	return CHECK_PASSED;
-}
-
-int test_db(void) {
-	db_search_t 	db;
-	option_res 		option;
-	map_res 		map;
-	bonus_res 		bonus;
-	status_res 		status;
-	var_res 		var;
-	block_res 		block;
-	nid_res 		nid;
-
-	const_t 		const_search;
-	skill_t 		skill_search;
-	item_t 			item_search;
-	mob_t 			mob_search;
-	merc_t 			merc_search;
-	pet_t 			pet_search;
-	produce_t *		produce_search = NULL;
-	item_group_t	item_group_search;
-	combo_t * 		combo_search;
-	char buffer[BUF_SIZE];
-
-	init_db(&db, MODE_RATHENA, "/root/Desktop/dev/eAdb.Compiler3/resources.db", "/root/Desktop/dev/eAdb.Compiler3/rathena.db");
-	/* resource query test */
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "option_search_name", 		(option_search_name(&db, &option, "Option_Nothing") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "map_search_name",  			(map_search_name(&db, &map, "moro_vol") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "map_search_id", 				(map_search_id(&db, &map, 3) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "bonus_search_name", 			(bonus_search_name(&db, &bonus, "bonus3", "bSPVanishRate") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "status_search_id_name", 		(status_search_id_name(&db, &status, 1, "sc_freeze") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "var_search_id", 				(var_search_id(&db, &var, "getrefine") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "block_search_name", 			(block_search_name(&db, &block, "if") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "id_res_id_search", 			(id_res_id_search(&db, &nid, 501) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "num_id_res_id_search", 		(num_id_res_id_search(&db, &nid, 501) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	/* rathena query test */
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "const_db_search_name", 		(const_db_search_name(&db, &const_search, "Job_Gunslinger") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "const_db_search_id", 		(const_db_search_id(&db, &const_search, 24) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "skill_db_search_name", 		(skill_db_search_name(&db, &skill_search, "SM_SWORD") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "skill_db_search_id", 		(skill_db_search_id(&db, &skill_search, 2) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "item_db_search_name", 		(item_db_search_name(&db, &item_search, "Red_Potion") == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "item_db_search_id", 			(item_db_search_id(&db, &item_search, 501) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "mob_db_search_id", 			(mob_db_search_id(&db, &mob_search, 1001) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "merc_db_search_id", 			(merc_db_search_id(&db, &merc_search, 1191) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "pet_db_search_id", 			(pet_db_search_id(&db, &pet_search, 1002) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "produce_db_search_id", 		(produce_db_search_id(&db, &produce_search, 1) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	produce_free(produce_search);
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "item_group_db_search_id", 	(item_group_db_search_id(&db, &item_group_search, 1, buffer) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	fprintf(stderr,"[test]: %-25s ... %6s\n", "item_combo_db_search_id", 	(item_combo_db_search_id(&db, &combo_search, 1166) == CHECK_PASSED) ? "PASSED" : "FAILED");
-	combo_free(combo_search);
-	deit_db(&db);
-	return 0;
-}
-
-int item_iterate(db_search_t * db, item_t * item) {
-	int status = 0;
-	status = sqlite3_step(db->item_iterate);
-	memset(item, 0, sizeof(item_t));
-    switch(db->mode) {
-        case MODE_EATHENA:
-            if(status == SQLITE_ROW) {
-            	item->id = sqlite3_column_int(db->item_iterate, 0);
-                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 1));
-                item->type = sqlite3_column_int(db->item_iterate, 2);
-                item->buy = sqlite3_column_int(db->item_iterate, 3);
-                item->sell = sqlite3_column_int(db->item_iterate, 4);
-                if(item->sell <= 0) item->sell = item->buy / 2;
-                if(item->buy <= 0) item->buy = item->sell * 2;
-                item->weight = sqlite3_column_int(db->item_iterate, 5);
-                item->atk = sqlite3_column_int(db->item_iterate, 6);
-                item->matk = -1;
-                item->def = sqlite3_column_int(db->item_iterate, 7);
-                item->range = sqlite3_column_int(db->item_iterate, 8);
-                item->slots = sqlite3_column_int(db->item_iterate, 9);
-                item->job = sqlite3_column_int(db->item_iterate, 10);
-                item->upper = sqlite3_column_int(db->item_iterate, 11);
-                item->gender = sqlite3_column_int(db->item_iterate, 12);
-                item->loc = sqlite3_column_int(db->item_iterate, 13);
-                item->wlv = sqlite3_column_int(db->item_iterate, 14);
-                item->elv_min = sqlite3_column_int(db->item_iterate, 15);
-                item->elv_max = item->elv_min;
-                item->refineable = sqlite3_column_int(db->item_iterate, 16);
-                item->view = sqlite3_column_int(db->item_iterate, 17);
-                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 18));
-                /* zero out hercules only */
-                item->bindonequip = -1;
-                item->buyingstore = -1;
-                item->delay = -1;
-                memset(item->trade, 0, sizeof(int) * TRADE_TOTAL);
-                memset(item->stack, 0, sizeof(int) * STACK_TOTAL);
-            }
-            break;
-        case MODE_RATHENA:
-            if(status == SQLITE_ROW) {
-                item->id = sqlite3_column_int(db->item_iterate, 0);
-                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 1));
-                item->type = sqlite3_column_int(db->item_iterate, 2);
-                item->buy = sqlite3_column_int(db->item_iterate, 3);
-                item->sell = sqlite3_column_int(db->item_iterate, 4);
-                if(item->sell <= 0) item->sell = item->buy / 2;
-                if(item->buy <= 0) item->buy = item->sell * 2;
-                item->weight = sqlite3_column_int(db->item_iterate, 5);
-                item->matk = sqlite3_column_int(db->item_iterate, 6);
-                item->atk = sqlite3_column_int(db->item_iterate, 7);
-                item->def = sqlite3_column_int(db->item_iterate, 8);
-                item->range = sqlite3_column_int(db->item_iterate, 9);
-                item->slots = sqlite3_column_int(db->item_iterate, 10);
-                item->job = sqlite3_column_int(db->item_iterate, 11);
-                item->upper = sqlite3_column_int(db->item_iterate, 12);
-                item->gender = sqlite3_column_int(db->item_iterate, 13);
-                item->loc = sqlite3_column_int(db->item_iterate, 14);
-                item->wlv = sqlite3_column_int(db->item_iterate, 15);
-                item->elv_min = sqlite3_column_int(db->item_iterate, 16);
-                item->elv_max = item->elv_min;
-                item->refineable = sqlite3_column_int(db->item_iterate, 17);
-                item->view = sqlite3_column_int(db->item_iterate, 18);
-                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 19));
-                /* zero out hercules only */
-                item->bindonequip = -1;
-                item->buyingstore = -1;
-                item->delay = -1;
-                memset(item->trade, 0, sizeof(int) * TRADE_TOTAL);
-                memset(item->stack, 0, sizeof(int) * STACK_TOTAL);
-            }
-            break;
-        case MODE_HERCULES:
-            if(status == SQLITE_ROW) {
-                item->id = sqlite3_column_int(db->item_iterate, 0);
-                strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(db->item_iterate, 1));
-                item->type = sqlite3_column_int(db->item_iterate, 2);
-                item->buy = sqlite3_column_int(db->item_iterate, 3);
-                item->sell = sqlite3_column_int(db->item_iterate, 4);
-                if(item->sell <= 0) item->sell = item->buy / 2;
-                if(item->buy <= 0) item->buy = item->sell * 2;
-                item->weight = sqlite3_column_int(db->item_iterate, 5);
-                item->matk = sqlite3_column_int(db->item_iterate, 6);
-                item->atk = sqlite3_column_int(db->item_iterate, 7);
-                item->def = sqlite3_column_int(db->item_iterate, 8);
-                item->range = sqlite3_column_int(db->item_iterate, 9);
-                item->slots = sqlite3_column_int(db->item_iterate, 10);
-                item->job = sqlite3_column_int(db->item_iterate, 11);
-                item->upper = sqlite3_column_int(db->item_iterate, 12);
-                item->gender = sqlite3_column_int(db->item_iterate, 13);
-                item->loc = sqlite3_column_int(db->item_iterate, 14);
-                item->wlv = sqlite3_column_int(db->item_iterate, 15);
-                item->elv_min = sqlite3_column_int(db->item_iterate, 16);
-                item->elv_max = item->elv_min;
-                item->refineable = sqlite3_column_int(db->item_iterate, 17);
-                item->view = sqlite3_column_int(db->item_iterate, 18);
-                strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(db->item_iterate, 19));
-                /* hercules only */
-                item->bindonequip = sqlite3_column_int(db->item_iterate, 20);
-                item->buyingstore = sqlite3_column_int(db->item_iterate, 21);
-                item->delay = sqlite3_column_int(db->item_iterate, 22);
-                item->trade[TRADE_OVERRIDE] = sqlite3_column_int(db->item_iterate, 23);
-                item->trade[TRADE_NODROP] = sqlite3_column_int(db->item_iterate, 24);
-                item->trade[TRADE_NOTRADE] = sqlite3_column_int(db->item_iterate, 25);
-                item->trade[TRADE_PARTNEROVERRIDE] = sqlite3_column_int(db->item_iterate, 26);
-                item->trade[TRADE_NOSELLTONPC] = sqlite3_column_int(db->item_iterate, 27);
-                item->trade[TRADE_NOCART] = sqlite3_column_int(db->item_iterate, 28);
-                item->trade[TRADE_NOSTORAGE] = sqlite3_column_int(db->item_iterate, 29);
-                item->trade[TRADE_NOGSTORAGE] = sqlite3_column_int(db->item_iterate, 30);
-                item->trade[TRADE_NOMAIL] = sqlite3_column_int(db->item_iterate, 31);
-                item->trade[TRADE_NOAUCTION] = sqlite3_column_int(db->item_iterate, 32);
-                item->stack[STACK_AMOUNT] = sqlite3_column_int(db->item_iterate, 33);
-                item->stack[STACK_TYPE] = sqlite3_column_int(db->item_iterate, 34);
-            }
-            break;
+    if(SQLITE_OK != sqlite3_open_v2(path, &_db, SQLITE_OPEN_READONLY, NULL)) {
+        if(NULL != _db) {
+            fprintf(stderr, "[load]: failed to load %s; %s.\n", path, sqlite3_errmsg(_db));
+            sqlite3_close(_db);
+        } else {
+            fprintf(stderr, "[load]: failed to load %s.\n", path);
+        }
     }
-    return status;
+
+    *db = _db;
+    return CHECK_PASSED;
 }
 
-int option_search_name(db_search_t * db, option_res * option, const char * name) {
-	int status = 0;
-	if(exit_null_safe(3, db, option, name)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->option_res_name_search);
-	sqlite3_bind_text(db->option_res_name_search, 1, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(db->option_res_name_search);
-	if(status == SQLITE_ROW) {
-		strncopy(option->option, 	MAX_NAME_SIZE, sqlite3_column_text(db->option_res_name_search, 0));
-		strncopy(option->name, 		MAX_NAME_SIZE, sqlite3_column_text(db->option_res_name_search, 1));
-	}
-	if(sqlite3_reset(db->option_res_name_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+
+int deit_db(sqlite3 ** db) {
+    sqlite3 * _db = NULL;
+
+    if(exit_null_safe(2, db, *db))
+        return CHECK_PASSED;
+
+    _db = *db;
+    if(sqlite3_close(_db)) {
+        fprintf(stderr, "[load]: failed to unload database; %s.\n", sqlite3_errmsg(_db));
+        return CHECK_FAILED;
+    }
+
+    *db = NULL;
+    return CHECK_PASSED;
 }
 
-int map_search_name(db_search_t * db, map_res * map, const char * name) {
-	int status = 0;
-	if(exit_null_safe(3, db, map, name)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->map_res_name_search);
-	sqlite3_bind_text(db->map_res_name_search, 1, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(db->map_res_name_search);
-	if(status == SQLITE_ROW) {
-		map->id = sqlite3_column_int(db->map_res_name_search, 0);
-		strncopy(map->map, 	MAX_NAME_SIZE, sqlite3_column_text(db->map_res_name_search, 1));
-		strncopy(map->name, MAX_NAME_SIZE, sqlite3_column_text(db->map_res_name_search, 2));
-	}
-	if(sqlite3_reset(db->map_res_name_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int init_db_load(db_t ** db, const char * re_path, const char * db_path, int server_type) {
+    db_t * _db = NULL;
+
+    if(exit_null_safe(3, db, re_path, db_path))
+        return CHECK_FAILED;
+
+    _db = calloc(1, sizeof(db_t));
+    if(NULL == _db)
+        return CHECK_FAILED;
+
+    _db->server_type = server_type;
+
+    if(/* open resource and server databases */
+       init_db(&_db->re, re_path) ||
+       init_db(&_db->db, db_path) ||
+       /* prepare resource database queries */
+       init_db_prep_sql(_db->re, &_db->opt_name, RE_OPT_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->map_name, RE_MAP_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->map_id, RE_MAP_ID_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->bonus_name, RE_BONUS_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->status_name, RE_STATUS_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->var_name, RE_VAR_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->block_name, RE_BLOCK_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->sprite_id, RE_SPR_ID_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->usprite_id, RE_NSPR_ID_SEARCH))
+        goto failed;
+
+    /* prepare server database queries */
+    switch(server_type) {
+        case EATHENA:
+            if(init_db_prep_sql(_db->db, &_db->item_db, EA_ITEM_ITERATE) ||
+               init_db_prep_sql(_db->db, &_db->const_name, EA_CONST_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->const_id, EA_CONST_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->skill_name, EA_SKILL_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->skill_id, EA_SKILL_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_name, EA_ITEM_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_id, EA_ITEM_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->mob_id, EA_MOB_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->merc_id, EA_MERC_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->pet_id, EA_PET_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->produce_id, EA_PRODUCE_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_id, EA_ITEM_GROUP_ID_SEARCH))
+                goto failed;
+            break;
+        case RATHENA:
+            if(init_db_prep_sql(_db->db, &_db->item_db, RA_ITEM_ITERATE) ||
+               init_db_prep_sql(_db->db, &_db->const_name, RA_CONST_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->const_id, RA_CONST_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->skill_name, RA_SKILL_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->skill_id, RA_SKILL_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_name, RA_ITEM_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_id, RA_ITEM_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->mob_id, RA_MOB_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->merc_id, RA_MERC_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->pet_id, RA_PET_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->produce_id, RA_PRODUCE_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_id, RA_ITEM_GROUP_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH))
+                goto failed;
+            break;
+        case HERCULE:
+            if(init_db_prep_sql(_db->db, &_db->item_db, HE_ITEM_ITERATE) ||
+               init_db_prep_sql(_db->db, &_db->const_name, HE_CONST_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->const_id, HE_CONST_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->skill_name, HE_SKILL_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->skill_id, HE_SKILL_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_name, HE_ITEM_NAME_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_id, HE_ITEM_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->mob_id, HE_MOB_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->merc_id, HE_MERC_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->pet_id, HE_PET_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->produce_id, HE_PRODUCE_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_combo, HE_ITEM_COMBO_ID_SEARCH))
+                goto failed;
+            break;
+        default:
+            fprintf(stderr, "[fail]: server type (%d) is unidentified.\n", server_type);
+            return CHECK_FAILED;
+    }
+
+    *db = _db;
+    return CHECK_PASSED;
+
+failed:
+    deit_db_load(&_db);
+    return CHECK_FAILED;
 }
 
-int map_search_id(db_search_t * db, map_res * map, int id) {
-	int status = 0;
-	if(exit_null_safe(2, db, map)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->map_res_id_search);
-	sqlite3_bind_int(db->map_res_id_search, 1, id);
-	status = sqlite3_step(db->map_res_id_search);
-	if(status == SQLITE_ROW) {
-		map->id = sqlite3_column_int(db->map_res_id_search, 0);
-		strncopy(map->map, 	MAX_NAME_SIZE, sqlite3_column_text(db->map_res_id_search, 1));
-		strncopy(map->name, MAX_NAME_SIZE, sqlite3_column_text(db->map_res_id_search, 2));
-	}
-	if(sqlite3_reset(db->map_res_id_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int deit_db_load(db_t ** db) {
+    db_t * _db = NULL;
+
+    if(exit_null_safe(2, db, *db))
+        return CHECK_FAILED;
+
+    _db = *db;
+    if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
+       (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
+       (_db->produce_id && deit_db_prep_sql(_db->db, &_db->produce_id)) ||
+       (_db->pet_id && deit_db_prep_sql(_db->db, &_db->pet_id)) ||
+       (_db->merc_id && deit_db_prep_sql(_db->db, &_db->merc_id)) ||
+       (_db->mob_id && deit_db_prep_sql(_db->db, &_db->mob_id)) ||
+       (_db->item_id && deit_db_prep_sql(_db->db, &_db->item_id)) ||
+       (_db->item_name && deit_db_prep_sql(_db->db, &_db->item_name)) ||
+       (_db->skill_id && deit_db_prep_sql(_db->db, &_db->skill_id)) ||
+       (_db->skill_name && deit_db_prep_sql(_db->db, &_db->skill_name)) ||
+       (_db->const_id && deit_db_prep_sql(_db->db, &_db->const_id)) ||
+       (_db->const_name && deit_db_prep_sql(_db->db, &_db->const_name)) ||
+       (_db->item_db && deit_db_prep_sql(_db->db, &_db->item_db)) ||
+       (_db->usprite_id && deit_db_prep_sql(_db->re, &_db->usprite_id)) ||
+       (_db->sprite_id && deit_db_prep_sql(_db->re, &_db->sprite_id)) ||
+       (_db->block_name && deit_db_prep_sql(_db->re, &_db->block_name)) ||
+       (_db->var_name && deit_db_prep_sql(_db->re, &_db->var_name)) ||
+       (_db->status_name && deit_db_prep_sql(_db->re, &_db->status_name)) ||
+       (_db->bonus_name && deit_db_prep_sql(_db->re, &_db->bonus_name)) ||
+       (_db->map_id && deit_db_prep_sql(_db->re, &_db->map_id)) ||
+       (_db->map_name && deit_db_prep_sql(_db->re, &_db->map_name)) ||
+       (_db->opt_name && deit_db_prep_sql(_db->re, &_db->opt_name)) ||
+       deit_db(&_db->re) ||
+       deit_db(&_db->db))
+        return CHECK_FAILED;
+
+    SAFE_FREE(_db);
+    *db = NULL;
+    return CHECK_PASSED;
 }
 
-int bonus_search_name(db_search_t * db, bonus_res * bonus, const char * prefix, const char * name) {
-	int status = 0;
-	if(exit_null_safe(4, db, bonus, prefix, name)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->bonus_res_prefix_name_search);
-	sqlite3_bind_text(db->bonus_res_prefix_name_search, 1, prefix, strlen(prefix), SQLITE_STATIC);
-	sqlite3_bind_text(db->bonus_res_prefix_name_search, 2, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(db->bonus_res_prefix_name_search);
-	if(status == SQLITE_ROW) {
-		bonus->id = sqlite3_column_int(db->bonus_res_prefix_name_search, 0);
-		bonus->flag = sqlite3_column_int(db->bonus_res_prefix_name_search, 1);
-		bonus->attr = sqlite3_column_int(db->bonus_res_prefix_name_search, 2);
-		strncopy(bonus->prefix, MAX_NAME_SIZE, sqlite3_column_text(db->bonus_res_prefix_name_search, 3));
-		strncopy(bonus->bonus, MAX_NAME_SIZE, sqlite3_column_text(db->bonus_res_prefix_name_search, 4));
-		strncopy(bonus->format, MAX_NAME_SIZE, sqlite3_column_text(db->bonus_res_prefix_name_search, 5));
-		bonus->type_cnt = sqlite3_column_int(db->bonus_res_prefix_name_search, 6);
-		convert_integer_delimit_static((const char *) sqlite3_column_text(db->bonus_res_prefix_name_search, 7), ":", bonus->type, MAX_BONUS);
-		bonus->order_cnt = sqlite3_column_int(db->bonus_res_prefix_name_search, 8);
-		convert_integer_delimit_static((const char *) sqlite3_column_text(db->bonus_res_prefix_name_search, 9), ":", bonus->order, MAX_BONUS);
-	}
-	if(sqlite3_reset(db->bonus_res_prefix_name_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int init_db_prep_sql(sqlite3 * db, sql_t ** sql, const char * query) {
+    int len = 0;
+    sql_t * _sql = NULL;
+    const char * tail = NULL;
+
+    if(exit_null_safe(3, db, sql, query))
+        return CHECK_FAILED;
+
+    _sql = calloc(1, sizeof(sql_t));
+    if(NULL == _sql)
+        goto failed;
+
+    _sql->query = convert_stringn(query, &len);
+    if(NULL == _sql->query)
+        goto failed;
+
+    if(SQLITE_OK != sqlite3_prepare_v2(db, _sql->query, len + 1, &_sql->stmt, &tail))
+        goto failed;
+
+    *sql = _sql;
+    return CHECK_PASSED;
+
+failed:
+    fprintf(stderr, "[load]: failed to compile sqlite3 query; %s.\n", query);
+
+    if(NULL != tail)
+        fprintf(stderr, "[load]: error occurred near; %s.\n", tail);
+
+    if(NULL != _sql)
+        deit_db_prep_sql(db, &_sql);
+
+    return CHECK_FAILED;
 }
 
-int status_search_id_name(db_search_t * db, status_res * status, int id, const char * name) {
-	int code = 0;
-	if(exit_null_safe(3, db, status, name)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->status_res_id_name_search);
-	sqlite3_bind_int(db->status_res_id_name_search, 1, id);
-	sqlite3_bind_text(db->status_res_id_name_search, 2, name, strlen(name), SQLITE_STATIC);
-	code = sqlite3_step(db->status_res_id_name_search);
-	if(code == SQLITE_ROW) {
-		status->scid = sqlite3_column_int(db->status_res_id_name_search, 0);
-		strncopy(status->scstr, MAX_NAME_SIZE, sqlite3_column_text(db->status_res_id_name_search, 1));
-		status->type = sqlite3_column_int(db->status_res_id_name_search, 2);
-		strncopy(status->scfmt, MAX_FORMAT_SIZE, sqlite3_column_text(db->status_res_id_name_search, 3));
-		strncopy(status->scend, MAX_FORMAT_SIZE, sqlite3_column_text(db->status_res_id_name_search, 4));
-		status->vcnt = sqlite3_column_int(db->status_res_id_name_search, 5);
-		convert_integer_delimit_static((const char *) sqlite3_column_text(db->status_res_id_name_search, 6), ":", status->vmod, 4);
-		convert_integer_delimit_static((const char *) sqlite3_column_text(db->status_res_id_name_search, 7), ":", status->voff, 4);
-	}
-	if(sqlite3_reset(db->status_res_id_name_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (code == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+
+int deit_db_prep_sql(sqlite3 * db, sql_t ** sql) {
+    sql_t * _sql = NULL;
+
+    if(exit_null_safe(3, db, sql, *sql))
+        return CHECK_PASSED;
+
+    _sql = *sql;
+    if(NULL != _sql->stmt)
+        if(SQLITE_OK != sqlite3_finalize(_sql->stmt))
+            fprintf(stderr, "[load]: failed to finalize sqlite3 quer"
+            "y; %s.\n[load]: %s.\n", _sql->query, sqlite3_errmsg(db));
+    SAFE_FREE(_sql->query);
+    SAFE_FREE(_sql);
+    *sql = NULL;
+    return CHECK_PASSED;
 }
 
-int var_search_id(db_search_t * db, var_res * var, const char * id) {
-	int status = 0;
-	if(exit_null_safe(3, db, var, id)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->var_res_id_search);
-	sqlite3_bind_text(db->var_res_id_search, 1, id, strlen(id), SQLITE_STATIC);
-	status = sqlite3_step(db->var_res_id_search);
-	if(status == SQLITE_ROW) {
-		var->tag = sqlite3_column_int(db->var_res_id_search, 0);
-		strncopy(var->id, MAX_NAME_SIZE, sqlite3_column_text(db->var_res_id_search, 1));
-		var->type = sqlite3_column_int(db->var_res_id_search, 2);
-		var->vflag = sqlite3_column_int(db->var_res_id_search, 3);
-		var->fflag = sqlite3_column_int(db->var_res_id_search, 4);
-		var->min = sqlite3_column_int(db->var_res_id_search, 5);
-		var->max = sqlite3_column_int(db->var_res_id_search, 6);
-		strncopy(var->str, MAX_NAME_SIZE, sqlite3_column_text(db->var_res_id_search, 7));
-	}
-	if(sqlite3_reset(db->var_res_id_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int exec_db_query(sqlite3 * db, sql_t * sql, ...) {
+    char * query = NULL;
+    sqlite3_stmt * stmt = NULL;
+    va_list args;
+
+    if(exit_null_safe(2, db, sql))
+        return CHECK_FAILED;
+
+    query = sql->query;
+    stmt = sql->stmt;
+
+    /* reset the statement and bind the string */
+    if(SQLITE_OK != sqlite3_reset(stmt) ||
+       SQLITE_OK != sqlite3_clear_bindings(stmt)) {
+       fprintf(stderr, "[fail]: failed to reset statement; %s"
+        ".\n[fail]: %s query.\n", sqlite3_errmsg(db), query);
+    }
+
+
+    /* bind the statements */
+    va_start(args, sql);
+    if(bind_db_query(db, stmt, args)) {
+        fprintf(stderr, "[fail]: failed to bind %s.\n", query);
+        va_end(args);
+        return CHECK_FAILED;
+    }
+    va_end(args);
+
+    /* execute the sql statement */
+    switch(sqlite3_step(stmt)) {
+        case SQLITE_DONE:
+            /* query returned no results */
+            return CHECK_FAILED;
+        case SQLITE_ROW:
+            /* query returned one or many results */
+            return CHECK_PASSED;
+        default:
+            fprintf(stderr, "[fail]: failed to execute sql statement"
+            "; %s.\n[fail]: %s query.\n", sqlite3_errmsg(db), query);
+            return CHECK_FAILED;
+    }
 }
 
-int block_search_name(db_search_t * db, block_res * block, const char * name) {
-	int status = 0;
-	if(exit_null_safe(3, db, block, name)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->block_res_key_search);
-	sqlite3_bind_text(db->block_res_key_search, 1, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(db->block_res_key_search);
-	if(status == SQLITE_ROW) {
-		block->id = sqlite3_column_int(db->block_res_key_search, 0);
-		strncopy(block->name, MAX_NAME_SIZE, sqlite3_column_text(db->block_res_key_search, 1));
-		block->flag = sqlite3_column_int(db->block_res_key_search, 2);
-	}
-	if(sqlite3_reset(db->block_res_key_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int bind_db_query(sqlite3 * db, sqlite3_stmt * stmt, va_list args) {
+    int i = 0;
+    int type = 0;
+    int count = 0;
+
+    /* get the total number of arguments;
+     * adjusted by one because bind args
+     * for sqlite3 start at 1 not 0. */
+    count = va_arg(args, int) + 1;
+
+    /* bind all the arguments */
+    for(int i = 1; i < count; i++) {
+        /* get the type of argument */
+        type = va_arg(args, int);
+        switch(type) {
+            case BIND_STRING:
+                if(bind_db_string(db, stmt, i, &args))
+                    return CHECK_FAILED;
+                break;
+            case BIND_NUMBER:
+                if(bind_db_number(db, stmt, i, &args))
+                    return CHECK_FAILED;
+                break;
+            default:
+                return CHECK_FAILED;
+        }
+    }
+
+    return CHECK_PASSED;
 }
 
-int id_res_id_search(db_search_t * db, nid_res * nid, int id) {
-	int status = 0;
-	if(exit_null_safe(2, db, nid)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->id_res_id_search);
-	sqlite3_bind_int(db->id_res_id_search, 1, id);
-	status = sqlite3_step(db->id_res_id_search);
-	if(status == SQLITE_ROW) {
-		nid->id = sqlite3_column_int(db->id_res_id_search, 0);
-		strncopy(nid->res, MAX_RESNAME_SIZE, sqlite3_column_text(db->id_res_id_search, 1));
-	}
-	if(sqlite3_reset(db->id_res_id_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int bind_db_string(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) {
+    int len = 0;
+    const char * name = NULL;
+    va_list _args = *args;
+
+    name = va_arg(_args, const char *);
+    len = va_arg(_args, int);
+
+    if(SQLITE_OK != sqlite3_bind_text(stmt, bind, name, len, SQLITE_STATIC)) {
+        fprintf(stderr, "[fail]: failed to bind the name '%s' "
+        "of length '%d'; %s.\n", name, len, sqlite3_errmsg(db));
+        return CHECK_FAILED;
+    }
+
+    *args = _args;
+    return CHECK_PASSED;
 }
 
-int num_id_res_id_search(db_search_t * db, nid_res * nid, int id) {
-	int status = 0;
-	if(exit_null_safe(2, db, nid)) return CHECK_FAILED;
-	sqlite3_clear_bindings(db->num_id_res_id_search);
-	sqlite3_bind_int(db->num_id_res_id_search, 1, id);
-	status = sqlite3_step(db->num_id_res_id_search);
-	if(status == SQLITE_ROW) {
-		nid->id = sqlite3_column_int(db->num_id_res_id_search, 0);
-		strncopy(nid->res, MAX_RESNAME_SIZE, sqlite3_column_text(db->num_id_res_id_search, 1));
-	}
-	if(sqlite3_reset(db->num_id_res_id_search) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->resource), sqlite3_errmsg(db->resource));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int bind_db_number(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) {
+    int id = 0;
+    va_list _args = *args;
+
+    id = va_arg(_args, int);
+
+    if(SQLITE_OK != sqlite3_bind_int(stmt, bind, id)) {
+        fprintf(stderr, "[fail]: failed to bind the "
+        "integer '%d'; %s.\n", id, sqlite3_errmsg(db));
+        return CHECK_FAILED;
+    }
+
+    *args = _args;
+    return CHECK_PASSED;
 }
 
-int const_db_search_name(db_search_t * db, const_t * search, const char * name) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(4, db, search, name, db->const_db_name_search)) return CHECK_FAILED;
+int opt_name(db_t * db, option_res * opt, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
 
-	stmt = db->const_db_name_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_text(stmt, 1, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
-		search->value = sqlite3_column_int(stmt, 1);
-		search->type = sqlite3_column_int(stmt, 2);
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+    if(exit_null_safe(3, db, opt, name) ||
+       exec_db_query(db->re, db->opt_name, 1, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->opt_name->stmt;
+    strncopy(opt->option, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
+    strncopy(opt->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    return CHECK_PASSED;
 }
 
-int const_db_search_id(db_search_t * db, const_t * search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(3, db, search, db->const_db_id_search)) return CHECK_FAILED;
+int map_name(db_t * db, map_res * map, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
 
-	stmt = db->const_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
-		search->value = sqlite3_column_int(stmt, 1);
-		search->type = sqlite3_column_int(stmt, 2);
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+    if(exit_null_safe(3, db, map, name) ||
+       exec_db_query(db->re, db->map_name, 1, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->map_name->stmt;
+    map->id = sqlite3_column_int(stmt, 0);
+    strncopy(map->map, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    strncopy(map->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
+    return CHECK_PASSED;
 }
 
-int skill_db_search_name(db_search_t * db, skill_t * search, const char * name) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(4, db, search, name, db->skill_db_name_search)) return CHECK_FAILED;
-	stmt = db->skill_db_name_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_text(stmt, 1, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->id = sqlite3_column_int(stmt, 0);
-		search->maxlv = sqlite3_column_int(stmt, 1);
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
-		strncopy(search->desc, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int map_id(db_t * db, map_res * map, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, map) ||
+       exec_db_query(db->re, db->map_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->map_id->stmt;
+    map->id = sqlite3_column_int(stmt, 0);
+    strncopy(map->map, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    strncopy(map->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
+    return CHECK_PASSED;
 }
 
-int skill_db_search_id(db_search_t * db, skill_t * search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(3, db, search, db->skill_db_id_search)) return CHECK_FAILED;
-	stmt = db->skill_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->id = sqlite3_column_int(stmt, 0);
-		search->maxlv = sqlite3_column_int(stmt, 1);
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
-		strncopy(search->desc, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int bonus_name(db_t * db, bonus_res * bonus, const char * prefix, int plen, const char * name, int nlen) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(4, db, bonus, prefix, name) ||
+       exec_db_query(db->re, db->bonus_name, 2, BIND_STRING, prefix, plen, BIND_STRING, name, nlen))
+        return CHECK_FAILED;
+
+    stmt = db->bonus_name->stmt;
+    bonus->id = sqlite3_column_int(stmt, 0);
+    bonus->flag = sqlite3_column_int(stmt, 1);
+    bonus->attr = sqlite3_column_int(stmt, 2);
+    strncopy(bonus->prefix, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
+    strncopy(bonus->bonus, MAX_NAME_SIZE, sqlite3_column_text(stmt, 4));
+    strncopy(bonus->format, MAX_NAME_SIZE, sqlite3_column_text(stmt, 5));
+    bonus->type_cnt = sqlite3_column_int(stmt, 6);
+    convert_integer_delimit_static((const char *) sqlite3_column_text(stmt, 7), ":", bonus->type, MAX_BONUS);
+    bonus->order_cnt = sqlite3_column_int(stmt, 8);
+    convert_integer_delimit_static((const char *) sqlite3_column_text(stmt, 9), ":", bonus->order, MAX_BONUS);
+    return CHECK_PASSED;
 }
 
-int item_db_search_name(db_search_t * db, item_t * search, const char * name) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if (exit_null_safe(4, db, search, name, db->item_db_name_search)) 
-		return CHECK_FAILED;
-	stmt = db->item_db_name_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_text(stmt, 1, name, strlen(name), SQLITE_STATIC);
-	sqlite3_bind_text(stmt, 2, name, strlen(name), SQLITE_STATIC);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->id = sqlite3_column_int(stmt, 0);
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
-    	strncopy(search->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		return exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int status_name(db_t * db, status_res * status, int id, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(3, db, status, name) ||
+       exec_db_query(db->re, db->status_name, 2, BIND_NUMBER, id, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->status_name->stmt;
+    status->scid = sqlite3_column_int(stmt, 0);
+    strncopy(status->scstr, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    status->type = sqlite3_column_int(stmt, 2);
+    strncopy(status->scfmt, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 3));
+    strncopy(status->scend, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 4));
+    status->vcnt = sqlite3_column_int(stmt, 5);
+    convert_integer_delimit_static(sqlite3_column_text(stmt, 6), ":", status->vmod, 4);
+    convert_integer_delimit_static(sqlite3_column_text(stmt, 7), ":", status->voff, 4);
+    return CHECK_PASSED;
 }
 
-int item_db_search_id(db_search_t * db, item_t * search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(3, db, search, db->item_db_id_search)) return CHECK_FAILED;
-	stmt = db->item_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->id = sqlite3_column_int(stmt, 0);
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
-    	strncopy(search->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int var_name(db_t * db, var_res * var, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(3, db, var, name) ||
+       exec_db_query(db->re, db->var_name, 1, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->var_name->stmt;
+    var->tag = sqlite3_column_int(stmt, 0);
+    strncopy(var->id, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    var->type = sqlite3_column_int(stmt, 2);
+    var->vflag = sqlite3_column_int(stmt, 3);
+    var->fflag = sqlite3_column_int(stmt, 4);
+    var->min = sqlite3_column_int(stmt, 5);
+    var->max = sqlite3_column_int(stmt, 6);
+    strncopy(var->str, MAX_NAME_SIZE, sqlite3_column_text(stmt, 7));
+    return CHECK_PASSED;
 }
 
-int mob_db_search_id(db_search_t * db, mob_t * search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(3, db, search, db->mob_db_id_search)) return CHECK_FAILED;
-	stmt = db->mob_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->id = sqlite3_column_int(stmt, 0);
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int block_name(db_t * db, block_res * block, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(3, db, block, name) ||
+       exec_db_query(db->re, db->block_name, 1, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->block_name->stmt;
+    block->id = sqlite3_column_int(stmt, 0);
+    strncopy(block->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    block->flag = sqlite3_column_int(stmt, 2);
+    return CHECK_PASSED;
 }
 
-int merc_db_search_id(db_search_t * db, merc_t * search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(3, db, search, db->merc_db_id_search)) return CHECK_FAILED;
-	stmt = db->merc_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->id = sqlite3_column_int(stmt, 0);
-		strncopy(search->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int sprite_id(db_t * db, nid_res * sprite, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, sprite) ||
+       exec_db_query(db->re, db->sprite_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->sprite_id->stmt;
+    sprite->id = sqlite3_column_int(stmt, 0);
+    strncopy(sprite->res, MAX_RESNAME_SIZE, sqlite3_column_text(stmt, 1));
+    return CHECK_PASSED;
 }
 
-int pet_db_search_id(db_search_t * db, pet_t * search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(3, db, search, db->pet_db_id_search)) return CHECK_FAILED;
-	stmt = db->pet_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_ROW) {
-		search->mob_id = sqlite3_column_int(stmt, 0);
-		strncopy(search->pet_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 1));
-		strncopy(search->loyal_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (status == SQLITE_ROW) ? CHECK_PASSED : CHECK_FAILED;
+int usprite_id(db_t * db, nid_res * usprite, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, usprite) ||
+       exec_db_query(db->re, db->usprite_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->usprite_id->stmt;
+    usprite->id = sqlite3_column_int(stmt, 0);
+    strncopy(usprite->res, MAX_RESNAME_SIZE, sqlite3_column_text(stmt, 1));
+    return CHECK_PASSED;
 }
 
-int produce_db_search_id(db_search_t * db, produce_t ** search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	produce_t * temp = NULL;
-	produce_t * root = NULL;
-	produce_t * iter = NULL;
-	if(exit_null_safe(3, db, search, db->produce_db_id_search)) return CHECK_FAILED;
-	stmt = db->produce_db_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_DONE) {
-		if(sqlite3_reset(stmt) != SQLITE_OK)
-			exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-		return CHECK_FAILED;
-	} else {
-		while(status != SQLITE_DONE) {
-			temp = calloc(1, sizeof(produce_t));
-			temp->item_id = sqlite3_column_int(stmt, 0);
-			temp->item_lv = sqlite3_column_int(stmt, 1);
-			temp->skill_id = sqlite3_column_int(stmt, 2);
-			temp->skill_lv = sqlite3_column_int(stmt, 3);
-			temp->ingredient_count = convert_integer_delimit_static((const char *)
-			sqlite3_column_text(stmt, 4), ":", temp->item_id_req, MAX_INGREDIENT);
-			temp->ingredient_count = convert_integer_delimit_static((const char *)
-			sqlite3_column_text(stmt, 5), ":", temp->item_amount_req, MAX_INGREDIENT);
-			temp->next = NULL;
-			(root == NULL) ?
-				(root = iter = temp) :
-				(iter = iter->next = temp);
-			status = sqlite3_step(stmt);
-		}
-		*search = root;
-	}
+int item_iterate(db_t * db, item_t * item) {
+    sqlite3_stmt * stmt = NULL;
 
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (*search != NULL) ? CHECK_PASSED : CHECK_FAILED;
+    if(exit_null_safe(2, db, item))
+        return CHECK_FAILED;
+
+    /* reset the item struct */
+    memset(item, 0, sizeof(item_t));
+
+    stmt = db->item_db->stmt;
+    switch(sqlite3_step(stmt)) {
+        case SQLITE_ROW:
+            /* read the next item */
+            switch(db->server_type) {
+                case EATHENA:
+                    return item_eathena(stmt, item);
+                case RATHENA:
+                    return item_rathena(stmt, item);
+                case HERCULE:
+                    return item_hercule(stmt, item);
+                default:
+                    /* invalid server type */
+                    fprintf(stderr, "[fail]: server type (%d) is unidentified.\n", db->server_type);
+                    return CHECK_FAILED;
+            }
+        case SQLITE_DONE:
+            /* read the last item */
+            return CHECK_FAILED;
+        default:
+            /* failed to read items */
+            fprintf(stderr, "[fail]: failed to execute "
+            "item query; %s.\n", sqlite3_errmsg(db->db));
+            return CHECK_FAILED;
+    }
 }
 
-void produce_free(produce_t * produce) {
-	produce_t * temp = NULL;
-	while(produce != NULL) {
-		temp = produce;
-		produce = produce->next;
-		free(temp);
-	}
+int item_eathena(sqlite3_stmt * stmt, item_t * item) {
+    item->id = sqlite3_column_int(stmt, 0);
+    strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    item->type = sqlite3_column_int(stmt, 2);
+    item->buy = sqlite3_column_int(stmt, 3);
+    item->sell = sqlite3_column_int(stmt, 4);
+    if(item->sell <= 0) item->sell = item->buy / 2;
+    if(item->buy <= 0) item->buy = item->sell * 2;
+    item->weight = sqlite3_column_int(stmt, 5);
+    item->atk = sqlite3_column_int(stmt, 6);
+    item->matk = -1;
+    item->def = sqlite3_column_int(stmt, 7);
+    item->range = sqlite3_column_int(stmt, 8);
+    item->slots = sqlite3_column_int(stmt, 9);
+    item->job = sqlite3_column_int(stmt, 10);
+    item->upper = sqlite3_column_int(stmt, 11);
+    item->gender = sqlite3_column_int(stmt, 12);
+    item->loc = sqlite3_column_int(stmt, 13);
+    item->wlv = sqlite3_column_int(stmt, 14);
+    item->elv_min = sqlite3_column_int(stmt, 15);
+    item->elv_max = item->elv_min;
+    item->refineable = sqlite3_column_int(stmt, 16);
+    item->view = sqlite3_column_int(stmt, 17);
+    strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 18));
+    /* zero out hercules only */
+    item->bindonequip = -1;
+    item->buyingstore = -1;
+    item->delay = -1;
+    memset(item->trade, 0, sizeof(int) * 10);
+    memset(item->stack, 0, sizeof(int) * 2);
+    return CHECK_PASSED;
 }
 
-int item_group_db_search_id(db_search_t * db, item_group_t * search, int id, char * buffer) {
-	int status = 0;
-	int offset = 0;
-	int count = 0;		/* allow up to a certain amount of items */
-	item_t item;
-	sqlite3_stmt * stmt = NULL;
-	if(exit_null_safe(4, db, search, db->item_group_id_search, buffer)) return CHECK_FAILED;
-	stmt = db->item_group_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_DONE) {
-		if(sqlite3_reset(stmt) != SQLITE_OK)
-			exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-		return CHECK_FAILED;
-	} else {
-		while(status == SQLITE_ROW) {
-			search->group_id = sqlite3_column_int(stmt, 0);
-			search->item_id = sqlite3_column_int(stmt, 1);
-			search->rate = sqlite3_column_int(stmt, 2);
-			/* map the item id to item name */
-			item_db_search_id(db, &item, search->item_id);
-
-			if(item.name != NULL && count < 5) {
-				offset += sprintf(buffer + offset,"%s, ", item.name);
-				count++;
-			}
-			status = sqlite3_step(stmt);
-		}
-
-		/* make a shorten list or report error */
-		if(offset > 2) {
-			if(count < 5) {
-				buffer[offset - 2] = '\0';
-			} else {
-				offset += sprintf(buffer + offset, "..., %s", item.name);
-				buffer[offset] = '\0';
-			}
-		} else {
-			offset += sprintf(buffer + offset, "error");
-			buffer[offset] = '\0';
-		}
-
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (offset > 0) ? CHECK_PASSED : CHECK_FAILED;
+int item_rathena(sqlite3_stmt * stmt, item_t * item) {
+    item->id = sqlite3_column_int(stmt, 0);
+    strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    item->type = sqlite3_column_int(stmt, 2);
+    item->buy = sqlite3_column_int(stmt, 3);
+    item->sell = sqlite3_column_int(stmt, 4);
+    if(item->sell <= 0) item->sell = item->buy / 2;
+    if(item->buy <= 0) item->buy = item->sell * 2;
+    item->weight = sqlite3_column_int(stmt, 5);
+    item->matk = sqlite3_column_int(stmt, 6);
+    item->atk = sqlite3_column_int(stmt, 7);
+    item->def = sqlite3_column_int(stmt, 8);
+    item->range = sqlite3_column_int(stmt, 9);
+    item->slots = sqlite3_column_int(stmt, 10);
+    item->job = sqlite3_column_int(stmt, 11);
+    item->upper = sqlite3_column_int(stmt, 12);
+    item->gender = sqlite3_column_int(stmt, 13);
+    item->loc = sqlite3_column_int(stmt, 14);
+    item->wlv = sqlite3_column_int(stmt, 15);
+    item->elv_min = sqlite3_column_int(stmt, 16);
+    item->elv_max = item->elv_min;
+    item->refineable = sqlite3_column_int(stmt, 17);
+    item->view = sqlite3_column_int(stmt, 18);
+    strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 19));
+    /* zero out hercules only */
+    item->bindonequip = -1;
+    item->buyingstore = -1;
+    item->delay = -1;
+    memset(item->trade, 0, sizeof(int) * 10);
+    memset(item->stack, 0, sizeof(int) * 2);
+    return CHECK_PASSED;
 }
 
-int item_combo_db_search_id(db_search_t * db, combo_t ** search, int id) {
-	int status = 0;
-	sqlite3_stmt * stmt = NULL;
-	combo_t * temp = NULL;
-	combo_t * root = NULL;
-	combo_t * iter = NULL;
-	/* eathena has not support item combo databases */
-	if(db->mode == MODE_EATHENA) return CHECK_FAILED;
-	if(exit_null_safe(3, db, search, db->item_combo_id_search)) return CHECK_FAILED;
-	stmt = db->item_combo_id_search;
-	sqlite3_clear_bindings(stmt);
-	sqlite3_bind_int(stmt, 1, id);
-	status = sqlite3_step(stmt);
-	if(status == SQLITE_DONE) {
-		if(sqlite3_reset(stmt) != SQLITE_OK)
-			exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-		return CHECK_FAILED;
-	} else {
-		while(status == SQLITE_ROW) {
-			temp = calloc(1, sizeof(combo_t));
-			strncopy(temp->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 0));
-			strncopy(temp->group, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 1));
-			(root == NULL)?
-				(root = iter = temp) :
-				(iter = iter->next = temp);
-			status = sqlite3_step(stmt);
-		}
-		*search = root;
-	}
-	if(sqlite3_reset(stmt) != SQLITE_OK)
-		exit_func_safe("sqlite3 code %d; %s", sqlite3_errcode(db->athena), sqlite3_errmsg(db->athena));
-	return (*search != NULL) ? CHECK_PASSED : CHECK_FAILED;
+int item_hercule(sqlite3_stmt * stmt, item_t * item) {
+    item->id = sqlite3_column_int(stmt, 0);
+    strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    item->type = sqlite3_column_int(stmt, 2);
+    item->buy = sqlite3_column_int(stmt, 3);
+    item->sell = sqlite3_column_int(stmt, 4);
+    if(item->sell <= 0) item->sell = item->buy / 2;
+    if(item->buy <= 0) item->buy = item->sell * 2;
+    item->weight = sqlite3_column_int(stmt, 5);
+    item->matk = sqlite3_column_int(stmt, 6);
+    item->atk = sqlite3_column_int(stmt, 7);
+    item->def = sqlite3_column_int(stmt, 8);
+    item->range = sqlite3_column_int(stmt, 9);
+    item->slots = sqlite3_column_int(stmt, 10);
+    item->job = sqlite3_column_int(stmt, 11);
+    item->upper = sqlite3_column_int(stmt, 12);
+    item->gender = sqlite3_column_int(stmt, 13);
+    item->loc = sqlite3_column_int(stmt, 14);
+    item->wlv = sqlite3_column_int(stmt, 15);
+    item->elv_min = sqlite3_column_int(stmt, 16);
+    item->elv_max = item->elv_min;
+    item->refineable = sqlite3_column_int(stmt, 17);
+    item->view = sqlite3_column_int(stmt, 18);
+    strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 19));
+    /* hercules only */
+    item->bindonequip = sqlite3_column_int(stmt, 20);
+    item->buyingstore = sqlite3_column_int(stmt, 21);
+    item->delay = sqlite3_column_int(stmt, 22);
+    item->trade[0] = sqlite3_column_int(stmt, 23);
+    item->trade[1] = sqlite3_column_int(stmt, 24);
+    item->trade[2] = sqlite3_column_int(stmt, 25);
+    item->trade[3] = sqlite3_column_int(stmt, 26);
+    item->trade[4] = sqlite3_column_int(stmt, 27);
+    item->trade[5] = sqlite3_column_int(stmt, 28);
+    item->trade[6] = sqlite3_column_int(stmt, 29);
+    item->trade[7] = sqlite3_column_int(stmt, 30);
+    item->trade[8] = sqlite3_column_int(stmt, 31);
+    item->trade[9] = sqlite3_column_int(stmt, 32);
+    item->stack[0] = sqlite3_column_int(stmt, 33);
+    item->stack[1] = sqlite3_column_int(stmt, 34);
+    return CHECK_PASSED;
 }
 
-void combo_free(combo_t * combo) {
-	combo_t * temp = NULL;
-	while(combo != NULL) {
-		temp = combo;
-		combo = combo->next;
-		free(temp);
-	}
+int const_name(db_t * db, const_t * constant, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(3, db, constant, name) ||
+       exec_db_query(db->db, db->const_name, 1, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->const_name->stmt;
+    strncopy(constant->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
+    constant->value = sqlite3_column_int(stmt, 1);
+    constant->type = sqlite3_column_int(stmt, 2);
+    return CHECK_PASSED;
+}
+
+int const_id(db_t * db, const_t * constant, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, constant) ||
+       exec_db_query(db->db, db->const_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->const_id->stmt;
+    strncopy(constant->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
+    constant->value = sqlite3_column_int(stmt, 1);
+    constant->type = sqlite3_column_int(stmt, 2);
+    return CHECK_PASSED;
+}
+
+int skill_name(db_t * db, skill_t * skill, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(3, db, skill, name) ||
+       exec_db_query(db->db, db->skill_name, 1, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->skill_name->stmt;
+    skill->id = sqlite3_column_int(stmt, 0);
+    skill->maxlv = sqlite3_column_int(stmt, 1);
+    strncopy(skill->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
+    strncopy(skill->desc, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
+    return CHECK_PASSED;
+}
+
+int skill_id(db_t * db, skill_t * skill, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, skill) ||
+       exec_db_query(db->db, db->skill_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->skill_id->stmt;
+    skill->id = sqlite3_column_int(stmt, 0);
+    skill->maxlv = sqlite3_column_int(stmt, 1);
+    strncopy(skill->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
+    strncopy(skill->desc, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
+    return CHECK_PASSED;
+}
+
+int item_name(db_t * db, item_t * item, const char * name, int len) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(3, db, item, name) ||
+       exec_db_query(db->db, db->item_name, 2, BIND_STRING, name, len, BIND_STRING, name, len))
+        return CHECK_FAILED;
+
+    stmt = db->item_name->stmt;
+    item->id = sqlite3_column_int(stmt, 0);
+    strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
+    return CHECK_PASSED;
+}
+
+int item_id(db_t * db, item_t * item, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, item) ||
+       exec_db_query(db->db, db->item_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->item_id->stmt;
+    item->id = sqlite3_column_int(stmt, 0);
+    strncopy(item->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
+    return CHECK_PASSED;
+}
+
+int mob_id(db_t * db, mob_t * mob, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, mob) ||
+       exec_db_query(db->db, db->mob_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->mob_id->stmt;
+    mob->id = sqlite3_column_int(stmt, 0);
+    strncopy(mob->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    return CHECK_PASSED;
+}
+
+int merc_id(db_t * db, merc_t * merc, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, merc) ||
+       exec_db_query(db->db, db->merc_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->merc_id->stmt;
+    merc->id = sqlite3_column_int(stmt, 0);
+    strncopy(merc->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    return CHECK_PASSED;
+}
+
+int pet_id(db_t * db, pet_t * pet, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, pet) ||
+       exec_db_query(db->db, db->pet_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->pet_id->stmt;
+    pet->mob_id = sqlite3_column_int(stmt, 0);
+    strncopy(pet->pet_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 1));
+    strncopy(pet->loyal_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
+    return CHECK_PASSED;
+}
+
+int produce_id(db_t * db, produce_t ** produces, int item_level) {
+    sqlite3_stmt * stmt = NULL;
+    produce_t * temp = NULL;
+    produce_t * root = NULL;
+    produce_t * iter = NULL;
+
+    if(exit_null_safe(2, db, produces) ||
+       exec_db_query(db->db, db->produce_id, 1, BIND_NUMBER, item_level))
+        return CHECK_FAILED;
+
+    stmt = db->produce_id->stmt;
+    do {
+        temp = calloc(1, sizeof(produce_t));
+
+        temp->item_id = sqlite3_column_int(stmt, 0);
+        temp->item_lv = sqlite3_column_int(stmt, 1);
+        temp->skill_id = sqlite3_column_int(stmt, 2);
+        temp->skill_lv = sqlite3_column_int(stmt, 3);
+        temp->ingredient_count = convert_integer_delimit_static((const char *)
+        sqlite3_column_text(stmt, 4), ":", temp->item_id_req, MAX_INGREDIENT);
+        temp->ingredient_count = convert_integer_delimit_static((const char *)
+        sqlite3_column_text(stmt, 5), ":", temp->item_amount_req, MAX_INGREDIENT);
+        temp->next = NULL;
+        (root == NULL) ?
+            (root = iter = temp) :
+            (iter = iter->next = temp);
+    } while(SQLITE_DONE != sqlite3_step(stmt));
+
+    *produces = root;
+    return CHECK_PASSED;
+}
+
+int produce_free(produce_t ** produces) {
+    produce_t * temporary = NULL;
+    produce_t * _produces = NULL;
+
+    if(exit_null_safe(2, produces, *produces))
+        return CHECK_FAILED;
+
+    _produces = *produces;
+    while(_produces != NULL) {
+        temporary = _produces;
+        _produces = _produces->next;
+        free(temporary);
+    }
+    *produces = NULL;
+    return CHECK_PASSED;
+}
+
+int item_group_id(db_t * db, item_group_t * item_group, int id) {
+    sqlite3_stmt * stmt = NULL;
+
+    if(exit_null_safe(2, db, item_group) ||
+       exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    /* PENDING DECISION ON HOW TO DISPLAY FULL ITEM GROUP LIST */
+
+    return CHECK_PASSED;
+}
+
+int item_combo_id(db_t * db, combo_t ** item_combos, int id) {
+    sqlite3_stmt * stmt = NULL;
+    combo_t * temp = NULL;
+    combo_t * root = NULL;
+    combo_t * iter = NULL;
+
+    if(exit_null_safe(2, db, item_combos) ||
+       exec_db_query(db->db, db->item_combo, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->item_combo->stmt;
+
+    do {
+        temp = calloc(1, sizeof(combo_t));
+        strncopy(temp->script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 0));
+        strncopy(temp->group, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 1));
+        (root == NULL)?
+            (root = iter = temp) :
+            (iter = iter->next = temp);
+    } while(SQLITE_DONE != sqlite3_step(stmt));
+
+    *item_combos = root;
+    return CHECK_PASSED;
+}
+
+int item_combo_free(combo_t ** item_combos) {
+    combo_t * temporary = NULL;
+    combo_t * _item_combos = NULL;
+
+    if(exit_null_safe(2, item_combos, *item_combos))
+        return CHECK_FAILED;
+
+    _item_combos = *item_combos;
+    while(_item_combos != NULL) {
+        temporary = _item_combos;
+        _item_combos = _item_combos->next;
+        free(temporary);
+    }
+
+    *item_combos = NULL;
+    return CHECK_PASSED;
 }

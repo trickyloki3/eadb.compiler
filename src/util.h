@@ -58,6 +58,7 @@
 	int convert_integer_delimit_static(const char *, const char *, int *, int);
 	int convert_uinteger(const char *, int);
 	char * convert_string(const char *);
+	char * convert_stringn(const char *, int *);
 
 	/* more string functions */
 	char * concatenate_string(char **, int, int, char);

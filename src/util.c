@@ -340,11 +340,13 @@ int convert_integer_delimit_static(const char * str, const char * delimiters, in
    int * val = NULL;
    array_w array;
    memset(&array, 0, sizeof(array_w));
-   convert_integer_delimit_array(str, delimiters, &array);
 
    /* check whether destination buffer can hold elements */
-   if(array.size > size)
+   if(convert_integer_delimit_array(str, delimiters, &array) ||
+      array.size > size) {
+      SAFE_FREE(array.array);
       return exit_func_safe("string %s has more elements than max buffer size of %d", str, size);
+   }
 
    /* copy element into list */
    val = (int *) array.array;
@@ -417,6 +419,28 @@ char * convert_string(const char * str) {
    if(tmp != NULL)
       strncpy(tmp, str, len + 1);
 
+   return tmp;
+}
+
+char * convert_stringn(const char * str, int * size) {
+   int len = 0;
+   char * tmp = NULL;   /* copy of str */
+
+   /* check null */
+   if(exit_null_safe(1, str))
+      return NULL;
+
+   len = strlen(str);
+   if(len <= 0)
+      return NULL;
+
+   /* copy the string */
+   tmp = calloc(len + 1, sizeof(char));
+
+   if(tmp != NULL)
+      strncpy(tmp, str, len + 1);
+
+   *size = len;
    return tmp;
 }
 

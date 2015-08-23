@@ -189,6 +189,7 @@
 	} opt_db_t;
 
 	/* resource database loading */
+    extern native_config_t load_res_native[RESOURCE_DB_COUNT];
 	int option_res_load(void *, int, int, char *);
 	int map_res_load(void *, int, int, char *);
 	int bonus_res_load(void *, int, int, char *);

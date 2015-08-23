@@ -272,9 +272,11 @@ int opt_db_res_load_record(option_res * options, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_text(sql, 2, option->name, strlen(option->name), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to option db.\n", option->option);
+          fprintf(stderr, "[load]: failed to add %s to option db.\n", option->option);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, option->option);
       }
@@ -287,7 +289,7 @@ int opt_db_map_load(opt_db_t * opt, const char * path) {
    maps.db = NULL;
    maps.size = 0;
 
-   if(load_native(path, trim_alpha, load_native_general, &maps, &load_res_native[1]) ||
+   if(load_native(path, trim_general, load_native_general, &maps, &load_res_native[1]) ||
       NULL == maps.db ||
       0 >= maps.size ||
       opt_db_exec(opt, "BEGIN IMMEDIATE TRANSACTION;") ||
@@ -315,9 +317,11 @@ int opt_db_map_load_record(map_res * maps, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_text(sql, 3, map->name, strlen(map->name), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to map db.\n", map->map);
+          fprintf(stderr, "[load]: failed to add %s to map db.\n", map->map);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+                fprintf(stderr, "[load]: failed to reset sql statement.\n");
+                return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, map->map);
       }
@@ -369,9 +373,11 @@ int opt_db_bns_load_record(bonus_res * bonuses, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_text(sql, 10, buf, strlen(buf), SQLITE_TRANSIENT) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to bonus db.\n", bonus->bonus);
+          fprintf(stderr, "[load]: failed to add %s to bonus db.\n", bonus->bonus);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, bonus->bonus);
       }
@@ -422,9 +428,11 @@ int opt_db_sta_load_record(status_res * statuses, int size, sqlite3_stmt * sql) 
          SQLITE_OK != sqlite3_bind_text(sql, 8, buf, strlen(buf), SQLITE_TRANSIENT) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to status db.\n", status->scstr);
+          fprintf(stderr, "[load]: failed to add %s to status db.\n", status->scstr);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, status->scstr);
       }
@@ -472,9 +480,11 @@ int opt_db_var_load_record(var_res * vars, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_text(sql, 8, var->str, strlen(var->str), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to variable db.\n", var->str);
+          fprintf(stderr, "[load]: failed to add %s to variable db.\n", var->str);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, var->str);
       }
@@ -516,9 +526,11 @@ int opt_db_blk_load_record(block_res * blocks, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_int(sql, 3, block->flag) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to block db.\n", block->name);
+          fprintf(stderr, "[load]: failed to add %s to block db.\n", block->name);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, block->name);
       }
@@ -558,9 +570,11 @@ int opt_db_rid_load_record(nid_res * rids, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_text(sql, 2, rid->res, strlen(rid->res), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to rid db.\n", rid->res);
+          fprintf(stderr, "[load]: failed to add %s to rid db.\n", rid->res);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, rid->res);
       }
@@ -601,9 +615,11 @@ int opt_db_nid_load_record(nid_res * nids, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_text(sql,2,nid->res,strlen(nid->res),SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-         if(SQLITE_OK != sqlite3_reset(sql))
-            return CHECK_FAILED;
-         fprintf(stderr, "[load]: failed to add %s to nid db.\n", nid->res);
+          fprintf(stderr, "[load]: failed to add %s to nid db.\n", nid->res);
+          if (SQLITE_OK != sqlite3_reset(sql)) {
+              fprintf(stderr, "[load]: failed to reset sql statement.\n");
+              return CHECK_FAILED;
+          }
       } else {
          fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, nid->res);
       }
