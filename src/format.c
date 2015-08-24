@@ -499,7 +499,7 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 
 	/* rathena uses weapon(5) and armor(4), but eathena and hercules
 	 * uses weapon(4) and  armor(5), normalize to one item type set */
-	if(format->server_type == MODE_RATHENA) {
+	if(format->server_type == RATHENA) {
 		if(item->type == WEAPON_ITEM_TYPE)
 			item->type = ARMOR_ITEM_TYPE;
 		else if(item->type == ARMOR_ITEM_TYPE)
@@ -581,8 +581,8 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 	loc[0] = '\0';
 
 	/* search for resource file name */
-	if(id_res_id_search(format->server_db, &id_res, item->id) || 
-	   num_id_res_id_search(format->server_db, &numid_res, item->id)) {
+	if( sprite_id(format->server_db, &id_res, item->id) ||
+        usprite_id(format->server_db, &numid_res, item->id)) {
 		exit_func_safe("failed to find resource file name; skipping item id %d", item->id);
 		return CHECK_FAILED;
 	}
@@ -761,7 +761,7 @@ int format_integer(char * buffer, int * offset, format_field_t * field, int valu
 }
 
 int format_refinement(char * buffer, int * offset, format_field_t * field, int value, int server_type) {
-	if(server_type != MODE_HERCULES) {
+	if(server_type != HERCULE) {
 		if(value == 0)
 			if(field->text[0] != '\0')
 				*offset += sprintf(&buffer[*offset], "%s\n", field->text);
@@ -937,7 +937,7 @@ int format_upper(char * buffer, int * offset, format_field_t * field, int upper,
 	tier_list[0] = '\0';
 
 	/* check common groups */
-	if((server_type == MODE_HERCULES || server_type == MODE_RATHENA)) {
+	if((server_type == HERCULE || server_type == RATHENA)) {
 		if(upper == 0x3F) {
 			format_field_string(buffer, offset, field, "Every Tier");
 			return CHECK_PASSED;
@@ -945,7 +945,7 @@ int format_upper(char * buffer, int * offset, format_field_t * field, int upper,
 			format_field_string(buffer, offset, field, "Every Tier except Baby Tier");
 			return CHECK_PASSED;
 		}
-	} else if(server_type == MODE_EATHENA) {
+	} else if(server_type == EATHENA) {
 		if(upper == 0x07) {
 			format_field_string(buffer, offset, field, "Every Tier");
 			return CHECK_PASSED;

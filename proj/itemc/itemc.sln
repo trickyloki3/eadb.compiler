@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "itemc", "itemc.vcxproj", "{299D411D-1A93-47EC-B0F6-221D97AD4E0C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua5", "..\lua5\lua5.vcxproj", "{670FA1F3-B4C9-4C93-AA5B-17895A56CC77}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libconfig", "..\libconfig\libconfig.vcxproj", "{E0084B6A-7DFF-476A-80C5-6493A43A41A3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3", "..\sqlite3\sqlite3.vcxproj", "{574AFFAD-8D0F-48CB-BEEB-90B0B17EC208}"
 EndProject
@@ -29,10 +27,6 @@ Global
 		{670FA1F3-B4C9-4C93-AA5B-17895A56CC77}.Debug|Win32.Build.0 = Debug|Win32
 		{670FA1F3-B4C9-4C93-AA5B-17895A56CC77}.Release|Win32.ActiveCfg = Release|Win32
 		{670FA1F3-B4C9-4C93-AA5B-17895A56CC77}.Release|Win32.Build.0 = Release|Win32
-		{E0084B6A-7DFF-476A-80C5-6493A43A41A3}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E0084B6A-7DFF-476A-80C5-6493A43A41A3}.Debug|Win32.Build.0 = Debug|Win32
-		{E0084B6A-7DFF-476A-80C5-6493A43A41A3}.Release|Win32.ActiveCfg = Release|Win32
-		{E0084B6A-7DFF-476A-80C5-6493A43A41A3}.Release|Win32.Build.0 = Release|Win32
 		{574AFFAD-8D0F-48CB-BEEB-90B0B17EC208}.Debug|Win32.ActiveCfg = Debug|Win32
 		{574AFFAD-8D0F-48CB-BEEB-90B0B17EC208}.Debug|Win32.Build.0 = Debug|Win32
 		{574AFFAD-8D0F-48CB-BEEB-90B0B17EC208}.Release|Win32.ActiveCfg = Release|Win32

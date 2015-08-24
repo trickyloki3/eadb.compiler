@@ -8,17 +8,18 @@
 #define STACK_INT_TEST  2
 #define STACK_CALL_TEST 3
 #define STACK_TIME_TEST 4
-int unit_test(db_search_t *, int, char * [], int, FILE *);
-int unit_test_2(db_search_t * db, int mode, char * test[]);
+int unit_test(db_t *, int, char * [], int, FILE *);
+int unit_test_2(db_t * db, int mode, char * test[]);
 
 int main(int argc, char * argv[]) {
 	/* load item database */
-	db_search_t db;
-	int mode = MODE_EATHENA;
-	memset(&db, 0, sizeof(db_search_t));
-	init_db(&db, MODE_EATHENA,
+	db_t * db;
+	int mode = EATHENA;
+	memset(&db, 0, sizeof(db_t));
+	init_db_load(&db,
 		"C:/Users/jim/Desktop/eadb.compiler/resources.db",
-		"C:/Users/jim/Desktop/eadb.compiler/eathena.db");
+		"C:/Users/jim/Desktop/eadb.compiler/eathena.db",
+        EATHENA);
 
 	char * stack_item_test[] = { 
 		"1",
@@ -72,16 +73,16 @@ int main(int argc, char * argv[]) {
 		"rentitem(getrefine() + 1101, 10000);",
 		NULL
 	};
-	/*unit_test_2(&db, mode, translate_getitem);
-	unit_test_2(&db, mode, translate_delitem);*/
-	unit_test_2(&db, mode, translate_rentitem);
+	/*unit_test_2(db, mode, translate_getitem);
+	unit_test_2(db, mode, translate_delitem);*/
+	unit_test_2(db, mode, translate_rentitem);
 
-	deit_db(&db);
+    deit_db_load(&db);
 	return 0;
 }
 
 /* test script stack functions */
-int unit_test(db_search_t * db, int mode, char * test[], int func, FILE * file) {
+int unit_test(db_t * db, int mode, char * test[], int func, FILE * file) {
 	int i = 0;
 	int ret = 0;
 	char * string = NULL;
@@ -145,7 +146,7 @@ failed:
 }
 
 /* test script translate functions */
-int unit_test_2(db_search_t * db, int mode, char * test[]) {
+int unit_test_2(db_t * db, int mode, char * test[]) {
 	int i = 0;
 	int ret = 0;
 	char * script = NULL;

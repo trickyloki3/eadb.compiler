@@ -7,22 +7,15 @@
  */
 #ifndef DB_SEARCH_H
 #define DB_SEARCH_H
-    #define DEV_MODE 1
-
     #include "util.h"
     #include "setting.h"
     #include "sqlite3.h"
-
-#if DEV_MODE
-    #include "db_resources.h"
-#endif
 
     /* database modes */
     #define EATHENA    0x1
     #define RATHENA    0x2
     #define HERCULE    0x4
 
-#ifndef DEV_MODE
     typedef struct option_res {
         char option[MAX_NAME_SIZE];
         char name[MAX_NAME_SIZE];
@@ -35,6 +28,19 @@
     } map_res;
 
     typedef struct {
+        int id;
+        int flag;
+        int attr;
+        char prefix[MAX_NAME_SIZE];
+        char bonus[MAX_NAME_SIZE];
+        char format[MAX_NAME_SIZE];
+        int type[MAX_BONUS];
+        int type_cnt;
+        int order[MAX_BONUS];
+        int order_cnt;
+    } bonus_res;
+
+    typedef struct {
         int scid;                       /* status id */
         char scstr[MAX_NAME_SIZE];      /* status string identifer */
         int type;
@@ -44,6 +50,15 @@
         int vmod[4];                    /* modifer for value */
         int voff[4];                    /* offset translation stack */
     } status_res;
+
+    #define TYPE_FUNC               0x00000001
+    #define TYPE_VARI               0x00000002
+    #define VARI_DIRECT             0x00000001
+    #define FUNC_DIRECT             0x00000001  /* retrieve min and max directly */
+    #define FUNC_PARAMS             0x00000002  /* retrieve min and max from handler */
+    #define FUNC_GETSKILLLV         0x10000000  /* getskilllv */
+    #define FUNC_RAND               0x20000000  /* rand */
+    #define FUNC_POW                0x40000000  /* pow */
 
     typedef struct {
       int tag;                          /* in-house identification */
@@ -66,7 +81,6 @@
         int id;
         char res[MAX_RESNAME_SIZE];
     } nid_res;
-#endif
 
     typedef struct const_t {
         char name[MAX_NAME_SIZE];
@@ -80,6 +94,34 @@
         char name[MAX_NAME_SIZE];
         char desc[MAX_NAME_SIZE];
     } skill_t;
+
+    /* constant to index equip array */
+    #define EQUIP_MIN                   0
+    #define EQUIP_MAX                   1
+    #define EQUIP_TOTAL                 2
+
+    /* constant to index trade array */
+    #define TRADE_OVERRIDE              0
+    #define TRADE_NODROP                1
+    #define TRADE_NOTRADE               2
+    #define TRADE_PARTNEROVERRIDE       3
+    #define TRADE_NOSELLTONPC           4
+    #define TRADE_NOCART                5
+    #define TRADE_NOSTORAGE             6
+    #define TRADE_NOGSTORAGE            7
+    #define TRADE_NOMAIL                8
+    #define TRADE_NOAUCTION             9
+    #define TRADE_TOTAL                 10
+
+    /* constant to index nouse array */
+    #define NOUSE_OVERRIDE              0
+    #define NOUSE_SITTING               1
+    #define NOUSE_TOTAL                 2
+
+    /* constant to index stack array */
+    #define STACK_AMOUNT                0
+    #define STACK_TYPE                  1
+    #define STACK_TOTAL                 2
 
     typedef struct item_t {
         int id;

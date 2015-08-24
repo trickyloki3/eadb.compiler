@@ -148,7 +148,7 @@
         char arg[BUF_SIZE];
         char * ptr[PTR_SIZE];                /* argument string array */
         char * eng[PTR_SIZE];                /* translated string array */
-		int arg_cnt;						 /* current offset in arg buffer */
+        int arg_cnt;                         /* current offset in arg buffer */
         int ptr_cnt;
         int eng_cnt;
         /* linked list chaining blocks */
@@ -163,7 +163,7 @@
         node_t * result[BONUS_SIZE];         /* keep until after minimization */
         /* database references; duplicate information from script_t to prevent
          * passing script_t to every translator; read only */
-        db_search_t * db;                    /* sqlite3 database handle to athena */
+        db_t * db;                           /* sqlite3 database handle to athena */
         int mode;                            /* multiplexer for rathena, eathena, or hercule tables */
         /* translation information */
         logic_node_t * logic_tree;           /* calculational and dependency information */
@@ -188,7 +188,7 @@
         block_list_t block;     /* linked list of allocated blocks */
         block_list_t free;      /* linked list of deallocated blocks */
         token_r token;          /* tokenize script */
-        db_search_t * db;       /* sqlite3 database handle to athena */
+        db_t * db;       /* sqlite3 database handle to athena */
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
     } script_t;
 
@@ -198,72 +198,72 @@
 
     /* block linked list operations */
     int list_forward(block_list_t *);
-	int list_backward(block_list_t *);
-	void list_init_head(block_list_t * list);
-	int list_append_tail(block_list_t * list, block_r * block);
-	int list_append_head(block_list_t * list, block_r * block);
-	int list_add(block_list_t *, block_r *, block_r *);
-	int list_rem(block_list_t *, block_r *);
-	int list_pop_head(block_list_t *, block_r **);
-	int list_pop_tail(block_list_t *, block_r **);
-	int list_check(block_list_t *, block_r *);
-	int list_tail(block_list_t *, block_r **);
-	int list_head(block_list_t *, block_r **);
+    int list_backward(block_list_t *);
+    void list_init_head(block_list_t * list);
+    int list_append_tail(block_list_t * list, block_r * block);
+    int list_append_head(block_list_t * list, block_r * block);
+    int list_add(block_list_t *, block_r *, block_r *);
+    int list_rem(block_list_t *, block_r *);
+    int list_pop_head(block_list_t *, block_r **);
+    int list_pop_tail(block_list_t *, block_r **);
+    int list_check(block_list_t *, block_r *);
+    int list_tail(block_list_t *, block_r **);
+    int list_head(block_list_t *, block_r **);
 
     /* block memory management */
-	ITEMC_API int script_block_alloc(script_t *, block_r **);		/* create a new block or get a block from the free list and place on the used list */
-	ITEMC_API int script_block_dealloc(script_t *, block_r **);		/* remove a block from the used list and add the block to the free list */
-	ITEMC_API int script_block_reset(script_t *);					/* remove every block from used list, reset the block, and add to the free list */
-	ITEMC_API int script_block_release(block_r *);					/* reset the block */
-	ITEMC_API int script_block_finalize(script_t *);				/* remove every block from the free list and free the memory of each block */
+    int script_block_alloc(script_t *, block_r **);         /* create a new block or get a block from the free list and place on the used list */
+    int script_block_dealloc(script_t *, block_r **);       /* remove a block from the used list and add the block to the free list */
+    int script_block_reset(script_t *);                     /* remove every block from used list, reset the block, and add to the free list */
+    int script_block_release(block_r *);                    /* reset the block */
+    int script_block_finalize(script_t *);                  /* remove every block from the free list and free the memory of each block */
 
-	/* block buffer operations */
-	#define TYPE_PTR 1	/* block->ptr */
-	#define TYPE_ENG 2	/* block->eng */
-	int script_buffer_write(block_r *, int, const char *);			/* push a string to block->ptr or block->eng stack */
-	int script_buffer_unwrite(block_r *, int);						/* pop a string from block->ptr or block->eng stack */
-	int script_formula_write(block_r *, int, node_t *, char **);	/* combine a node's formula with a string in  block->eng */
+    /* block buffer operations */
+    #define TYPE_PTR 1    /* block->ptr */
+    #define TYPE_ENG 2    /* block->eng */
+    int script_buffer_write(block_r *, int, const char *);              /* push a string to block->ptr or block->eng stack */
+    int script_buffer_unwrite(block_r *, int);                          /* pop a string from block->ptr or block->eng stack */
+    int script_formula_write(block_r *, int, node_t *, char **);        /* combine a node's formula with a string in  block->eng */
 
-	/* auxiliary script parsing functions */
+    /* auxiliary script parsing functions */
     int script_block_dump(script_t *, FILE *);
     int script_block_write(block_r *, char *, ...);
     int split_paramater(char **, int, int, int *);
     int check_loop_expression(script_t *, char *, char *);
 
     /* compilation processes; exported functions, api functions */
-	ITEMC_API int script_lexical(token_r *, char *);
-	ITEMC_API int script_analysis(script_t *, token_r *, block_r *, block_r **);
-	ITEMC_API int script_parse(token_r *, int *, block_r *, char, char, int);
-	ITEMC_API int script_extend_block(script_t *, char *, block_r *, block_r **);
-	ITEMC_API int script_extend_paramater(block_r *, char *);
-	ITEMC_API int script_translate(script_t *);
-	ITEMC_API int script_bonus(script_t *);
-	ITEMC_API int script_generate(script_t *, char *, int *);
-	ITEMC_API int script_generate_combo(int, char *, int *, db_search_t *, int);
-	ITEMC_API char * script_compile_raw(char *, int, FILE *, db_search_t *, int);
+    int script_lexical(token_r *, char *);
+    int script_analysis(script_t *, token_r *, block_r *, block_r **);
+    int script_parse(token_r *, int *, block_r *, char, char, int);
+    int script_extend_block(script_t *, char *, block_r *, block_r **);
+    int script_extend_paramater(block_r *, char *);
+    int script_translate(script_t *);
+    int script_bonus(script_t *);
+    int script_generate(script_t *, char *, int *);
+    int script_generate_combo(int, char *, int *, db_t *, int);
+    char * script_compile_raw(char *, int, FILE *, db_t *, int);
     #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
-	/* script stack functions */
-	/* unit tested */ int stack_ptr_call(block_r * block, char *);
-	/* unit tested */ int stack_eng_item(block_r * block, char *);
-	/* unit tested */ int stack_eng_int(block_r * block, char *);
-	/* unit tested */ int stack_eng_time(block_r * block, char *);
+    /* script stack functions */
+    /* unit tested */ int stack_ptr_call(block_r * block, char *);
+    /* unit tested */ int stack_eng_item(block_r * block, char *);
+    /* unit tested */ int stack_eng_int(block_r * block, char *);
+    /* unit tested */ int stack_eng_time(block_r * block, char *);
 
     /* script translation functions */
-	/* unit tested */ int translate_verbitem(block_r *, char *);
-	/* unit tested */ int translate_rentitem(block_r *);
-	int translate_getrandgroup(block_r *, int);
-	int translate_bstore(block_r *, int);
-	int translate_hire_merc(block_r *, int);
-	int translate_pet_egg(block_r *, int);
-	int translate_getexp(block_r *, int);
-	int translate_transform(block_r *);
-	int translate_skill_block(block_r *, int);
-	int translate_heal(block_r *, int);
-	int translate_bonus(block_r *, char *);
-	int translate_const(block_r *, char *, int);
-	int translate_skill(block_r *, char *);
-	int translate_tbl(block_r *, char *, int);
+    /* unit tested */ int translate_verbitem(block_r *, char *);
+    /* unit tested */ int translate_rentitem(block_r *);
+    int translate_getrandgroup(block_r *, int);
+    int translate_bstore(block_r *, int);
+    int translate_hire_merc(block_r *, int);
+    int translate_pet_egg(block_r *, int);
+    int translate_getexp(block_r *, int);
+    int translate_transform(block_r *);
+    int translate_skill_block(block_r *, int);
+    int translate_heal(block_r *, int);
+    int translate_bonus(block_r *, char *);
+    int translate_const(block_r *, char *, int);
+    int translate_skill(block_r *, char *);
+    int translate_tbl(block_r *, char *, int);
     int translate_splash(block_r *, char *);
     int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
     int translate_id(block_r *, char *, int);
@@ -286,7 +286,7 @@
     int translate_overwrite(block_r *, char *, int);
 
     /* writing the formula expressions */
-	char * formula(char *, char *, node_t *);							/* deprecated; use write_formula */
+    char * formula(char *, char *, node_t *);                            /* deprecated; use write_formula */
     char * status_formula(char *, char *, node_t *, int, int);
     void id_write(node_t *, char *, ...);
     void var_write(node_t *, char *, ...);
@@ -295,7 +295,7 @@
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
     node_t * evaluate_expression(block_r *, char *, int, int);
-	node_t * evaluate_expression_post(block_r *, node_t *, int, int);
+    node_t * evaluate_expression_post(block_r *, node_t *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
     int evaluate_function(block_r *, char **, char *, int, int, int *, int *, node_t *);
     int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
