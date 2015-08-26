@@ -211,11 +211,11 @@
     int list_head(block_list_t *, block_r **);
 
     /* block memory management */
-    int script_block_alloc(script_t *, block_r **);         /* create a new block or get a block from the free list and place on the used list */
-    int script_block_dealloc(script_t *, block_r **);       /* remove a block from the used list and add the block to the free list */
-    int script_block_reset(script_t *);                     /* remove every block from used list, reset the block, and add to the free list */
-    int script_block_release(block_r *);                    /* reset the block */
-    int script_block_finalize(script_t *);                  /* remove every block from the free list and free the memory of each block */
+    int script_block_alloc(script_t *, block_r **);                     /* create a new block or get a block from the free list and place on the used list */
+    int script_block_dealloc(script_t *, block_r **);                   /* remove a block from the used list and add the block to the free list */
+    int script_block_reset(script_t *);                                 /* remove every block from used list, reset the block, and add to the free list */
+    int script_block_release(block_r *);                                /* reset the block */
+    int script_block_finalize(script_t *);                              /* remove every block from the free list and free the memory of each block */
 
     /* block buffer operations */
     #define TYPE_PTR 1    /* block->ptr */

@@ -415,7 +415,7 @@ int deit_format(format_t * format) {
 	format_field_t * format_field_temp = NULL;
 	format_field_t * format_field_iter = NULL;
 
-	for(i = 0; i < ITEM_TYPE_SIZE;i++) {
+	for(i = 0; i < ITEM_TYPE_SIZE; i++) {
 		format_type_iter = format->rule_list[i];
 		while(format_type_iter != NULL) {
 			format_rule_temp = format_type_iter;

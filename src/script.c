@@ -1639,7 +1639,7 @@ int stack_ptr_call(block_r * block, char * expr) {
 	/* BANDAID
 	 * the last argument parsed was not ended on a delimiter, i.e. ',', the
 	 * loop exited on the end of the string, which means that the parser did
-	 * not properly set the next argument pointer to wrote the NULL character */
+	 * not properly set the next argument pointer to write the NULL character */
 	block->arg[block->arg_cnt - 1] = '\0';
 
 	/* release the resources */
@@ -1832,7 +1832,7 @@ int translate_verbitem(block_r * block, char * action) {
 	char * buf = NULL;
 	if (block->ptr_cnt == 1) {
 		if (stack_ptr_call(block, block->ptr[0]) < 2)
-			return exit_func_safe("missing getitem arguments for item %d", block->item_id);
+			return exit_func_safe("missing getitem or delitem arguments for item %d", block->item_id);
 		item_off = block->eng_cnt;
 		item_len = stack_eng_item(block, block->ptr[1]);
 		if (item_len < 0)
@@ -1841,7 +1841,7 @@ int translate_verbitem(block_r * block, char * action) {
 			goto failed;
 	} else {
 		if (block->ptr_cnt < 2)
-			exit_func_safe("missing getitem arguments for item %d", block->item_id);
+			exit_func_safe("missing getitem or delitem arguments for item %d", block->item_id);
 		item_off = block->eng_cnt;
 		item_len = stack_eng_item(block, block->ptr[0]);
 		if (item_len < 0)
@@ -1902,7 +1902,7 @@ int translate_rentitem(block_r * block) {
 	char * buf = NULL;
 	if (block->ptr_cnt == 1) {
 		if (stack_ptr_call(block, block->ptr[0]) < 2)
-			return exit_func_safe("missing getitem arguments for item %d", block->item_id);
+			return exit_func_safe("missing rentitem arguments for item %d", block->item_id);
 		item_off = block->eng_cnt;
 		item_len = stack_eng_item(block, block->ptr[1]);
 		if (item_len < 0)
@@ -1912,7 +1912,7 @@ int translate_rentitem(block_r * block) {
 	}
 	else {
 		if (block->ptr_cnt < 2)
-			exit_func_safe("missing getitem arguments for item %d", block->item_id);
+			exit_func_safe("missing rentitem arguments for item %d", block->item_id);
 		item_off = block->eng_cnt;
 		item_len = stack_eng_item(block, block->ptr[0]);
 		if (item_len < 0)
@@ -1940,7 +1940,7 @@ int translate_rentitem(block_r * block) {
 	}
 
 	/* write the getitem format */
-	off += sprintf(&buf[off], "Temporarily receive %s %s%s",
+	off += sprintf(&buf[off], "Rent a %s %s%s",
 		aeiou(block->eng[item_off][0]) ? "a" : "an",
 		block->eng[item_off],
 		(item_len > 1) ? ", " : "");
