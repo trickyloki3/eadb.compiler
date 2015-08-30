@@ -32,6 +32,7 @@ int exit_null(const char * file_name, const char * function_name, const int line
          fprintf(stderr,
             "[warn]: %s;%s;%d; null detected in position %d.\n",
             file_name, function_name, line_number, i + 1);
+         va_end(list);
 #if ENABLE_EXIT
          exit(EXIT_FAILURE);
 #else
@@ -550,4 +551,217 @@ int aeiou(char letter) {
 		default:
 			return CHECK_FAILED;
 	}
+}
+
+void sift_down(void * list, size_t start, size_t end, swap_t * cb) {
+    size_t swap = 0;
+    size_t root = start;
+    size_t child = 0;
+
+    /* left child node index is computed by (root node index * 2) + 1,
+    * but if left child node index > array size then the root node is
+    * a leaf node with no child nodes. */
+    while (root * 2 + 1 <= end) {
+        /* set the left child node */
+        child = root * 2 + 1;
+
+        /* set the initial max node */
+        swap = root;
+
+        /* check if left child node is max node */
+        if (cb->less(list, swap, child))
+            swap = child;
+        /* check if right child node is max node */
+        if (child + 1 <= end && cb->less(list, swap, child + 1))
+            swap = child + 1;
+        /* if neither left or right child is greater than the root,
+        * then that means the root does not need to be swap */
+        if (swap == root) {
+            return;
+        }
+        else {
+            cb->swap(list, swap, root);
+            root = swap;
+        }
+    }
+}
+
+int heap_sort(void * list, size_t size, swap_t * cb) {
+    size_t end = 0;
+    size_t start = (size - 2) / 2;
+
+    /* convert to the max heap */
+    while (start >= 0) {
+        sift_down(list, start, size - 1, cb);
+        if (start == 0)
+            break;
+        start--;
+    }
+
+    /* sort by using sift down as selection */
+    end = size - 1;
+    while (end > 0) {
+        cb->swap(list, end, 0);
+
+        end--;
+
+        sift_down(list, 0, end, cb);
+    }
+    return 0;
+}
+
+int insertion_sort(void * list, size_t min, size_t max, swap_t * cb) {
+    size_t i = 0;
+    size_t j = 0;
+
+    for (i = min; i <= max; i++)
+        for (j = i; j > min && cb->less(list, j, j - 1); j--)
+            cb->swap(list, j, j + 1);
+
+    return 0;
+}
+
+size_t mof3(void * list, size_t min, size_t mid, size_t max, swap_t * cb) {
+    return (cb->less(list, min, mid) ?
+        cb->less(list, mid, max) ? mid :
+        cb->less(list, min, max) ? max : min :
+        cb->less(list, max, mid) ? mid :
+        cb->less(list, max, min) ? max : min);
+}
+
+
+void pivot_sedgwick(void * list, size_t min, size_t max, swap_t * cb) {
+    size_t mid = 0;
+
+    /* (min + max) / 2 can cause integer overflow for large
+    * min and max; https://en.wikipedia.org/wiki/Quicksort */
+    mid = min + (max - min) / 2;
+    mid = mof3(list, min, mid, max, cb);
+    cb->swap(list, mid, min);
+}
+
+void pivot_ninther(void * list, size_t min, size_t max, size_t size, swap_t * cb) {
+    size_t dif = 0;
+    size_t mid = 0;
+
+    /* divide the region from min to max into eight regions, then
+    * calculate the three mof3 over the lower, middle, and upper
+    * regions separate by the nine existing boundary points, and
+    * then calculate the mof3 of the three mof3 */
+    dif = size / 8;
+    mid = min + size / 2;
+    mid = mof3(list,
+        mof3(list, min, min + dif, min + dif + dif, cb),
+        mof3(list, mid - dif, mid, mid + dif, cb),
+        mof3(list, max - dif - dif, max - dif, max, cb),
+        cb);
+    cb->swap(list, mid, min);
+}
+
+void partition_3way(void * list, size_t min, size_t max, size_t * _min, size_t * _max, swap_t * cb) {
+    size_t k = 0;
+    size_t i = 0;
+    size_t j = 0;
+    size_t p = 0;
+    size_t q = 0;
+
+    i = p = min;
+    j = q = max + 1;
+
+    while (1) {
+        /* find an element from the  left that is greater than
+        * or equal to the median starting from (i + 1) to max */
+        while (cb->less(list, ++i, min))
+            if (i == max)
+                break;
+
+        /* find an element from the right that is less than or
+        * equal to the median starting from (j - 1) to min */
+        while (cb->less(list, min, --j))
+            if (j == min)
+                break;
+
+        /* copy the median in the middle to [equal-left] */
+        if (i == j && cb->same(list, min, i)) {
+            ++p;
+            cb->swap(list, p, i);
+        }
+
+        if (i >= j) break;
+
+        cb->swap(list, i, j);
+
+        /* swap median from i to equal-left */
+        if (cb->same(list, min, i)) {
+            if (i < max) ++p;
+            cb->swap(list, p, i);
+        }
+        /* swap median from j to equal-right */
+        if (cb->same(list, min, j)) {
+            if (j > min) --q;
+            cb->swap(list, q, j);
+        }
+    }
+
+    /*   [equal-left] [< median] [> median] [equal-right]
+    * min----------p----------j-i----------q-----------max */
+    i = j + 1;
+
+    /* [< median] [equal-left] [> median] [equal-right]  */
+    for (k = min; k <= p; k++) {
+        cb->swap(list, k, j);
+        if (j > min) j--;
+    }
+
+    /* [< median] [equal-left] [equal-right] [> median] */
+    for (k = max; k >= q; k--) {
+        cb->swap(list, k, i);
+        if (i < max) i++;
+    }
+
+    *_min = j;
+    *_max = i;
+}
+
+int _quick_sort(void * list, size_t min, size_t max, size_t max_depth, swap_t * cb) {
+    int size = 0;
+    int _min = 0;
+    int _max = 0;
+    size = max - min + 1;
+
+    /* heap sort
+    * asymptotic time complexity is O(nlg(n))
+    * heap sort  is used as a fallback for  quick sort
+    * to guarantee a time complexity of O(nlg(n)) when
+    * quick's depth is greater than lg(n) * 2.
+    */
+    if (max_depth == 0)
+        return heap_sort(list, size, cb);
+
+    if (size < 8)
+        /* insertion sort
+        * asymptotic time complexity is O(n^2)
+        * 1. efficient for n < 8 due to less overhead
+        * 2. efficient for sorted list O(n)
+        * 3. keep original order for equal elements
+        * used in quicksort as an optimization for n < 8 to
+        * eliminate the overhead and provide O(n) asymptotic
+        * time complexity since partitions are nearly sorted
+        */
+        return insertion_sort(list, min, max, cb);
+    else if (size <= 40)
+        pivot_sedgwick(list, min, max, cb);
+    else
+        pivot_ninther(list, min, max, size, cb);
+
+    partition_3way(list, min, max, &_min, &_max, cb);   /* 3way [< median] [= median] [> median] */
+    _quick_sort(list, min, _min, max_depth - 1, cb);    /* sort [< median] */
+    _quick_sort(list, _max, max, max_depth - 1, cb);    /* sort [> median] */
+    return 0;
+}
+
+int quick_sort(void * list, size_t size, swap_t * cb) {
+    size_t max_depth = (size_t)log(size) * 2;
+    _quick_sort(list, 0, size - 1, max_depth, cb);
+    return 0;
 }

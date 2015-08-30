@@ -184,8 +184,8 @@
 
     typedef struct item_group_t {
         int group_id;
-        int item_id;
-        int rate;
+        int * item_id;
+        int * rate;
     } item_group_t;
 
     typedef struct combo_t {
@@ -334,6 +334,7 @@
     int produce_id(db_t *, produce_t **, int);
     int produce_free(produce_t **);
     int item_group_id(db_t *, item_group_t *, int);
+    int item_group_free(db_t *, item_group_t *, int);
     int item_combo_id(db_t *, combo_t **, int);
     int item_combo_free(combo_t **);
 #endif

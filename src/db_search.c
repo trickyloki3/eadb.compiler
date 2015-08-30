@@ -796,9 +796,18 @@ int item_group_id(db_t * db, item_group_t * item_group, int id) {
        exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
-    /* PENDING DECISION ON HOW TO DISPLAY FULL ITEM GROUP LIST */
+    item_group->group_id = id;
+
+    stmt = db->item_group_id->stmt;
+    do {
+
+    } while(SQLITE_DONE != sqlite3_step(stmt));
 
     return CHECK_PASSED;
+}
+
+int item_group_free(item_group_t * item_group) {
+
 }
 
 int item_combo_id(db_t * db, combo_t ** item_combos, int id) {

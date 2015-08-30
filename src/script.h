@@ -305,6 +305,9 @@
     void node_dmp(node_t *, FILE *);
     void node_free(node_t *);
 
+    /* script function */
+    int groupranditem();
+
     /* support translation */
     int translate_bonus_desc(node_t **, block_r *, bonus_res *);
     char * translate_bonus_template(char *, int *, char *, ...);
