@@ -56,6 +56,11 @@ int exit_func(const char * file_name, const char * function_name, const int line
 
 /* collect -o, --output and -p, --path options */
 char * opt[26];
+
+char * getopt(char c) {
+    return opt[c % 26];
+}
+
 int getopts(int argc, char ** argv) {
 	int i = 0;
 	int j = 0;

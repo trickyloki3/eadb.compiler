@@ -45,6 +45,7 @@
 
 	/* options */
 	extern char * opt[26];
+    char * getopt(char c);
 	int getopts(int, char **);
 
 	/* string functions */
