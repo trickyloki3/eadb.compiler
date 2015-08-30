@@ -18,6 +18,36 @@ native_config_t load_ea_native[EATHENA_DB_COUNT] = {
 	{ const_ea_load, sentinel_newline, delimit_cvs_whitespace, SKIP_NEXT_WS, 0, sizeof(const_ea) }
 };
 
+int less_item_group(void * list, size_t i, size_t j) {
+    return ((item_group_ea *) list)[i].group_id < ((item_group_ea *) list)[j].group_id;
+}
+
+int same_item_group(void * list, size_t i, size_t j) {
+    return ((item_group_ea *) list)[i].group_id == ((item_group_ea *) list)[j].group_id;
+}
+
+void swap_item_group(void * list, size_t i, size_t j) {
+    item_group_ea * _list = list;
+    item_group_ea _temp;
+
+    _temp = _list[i];
+    _list[i] = _list[j];
+    _list[j] = _temp;
+}
+
+void read_item_group(void * list, size_t i) {
+    item_group_ea * _list = list;
+    printf("%d ", _list[i].group_id);
+}
+
+
+swap_t qsort_item_group = {
+    less_item_group,
+    same_item_group,
+    swap_item_group,
+    read_item_group
+};
+
 int item_ea_load(void * db, int row, int col, char * val) {
 	item_ea * record = &((item_ea *) db)[row];
 	switch(col) {
@@ -768,6 +798,7 @@ int ea_db_item_group_load(ea_db_t * ea, const char * path) {
 		NULL == item_groups.db ||
 		0 >= item_groups.size ||
 		ea_db_exec(ea, "BEGIN IMMEDIATE TRANSACTION;") ||
+		quick_sort(item_groups.db, item_groups.size, &qsort_item_group) ||
 		ea_db_item_group_load_record(item_groups.db, item_groups.size, ea->item_group_ea_sql_insert) ||
 		ea_db_exec(ea, "COMMIT TRANSACTION;")) {
 		ea_db_exec(ea, "ROLLBACK TRANSACTION;");
@@ -785,7 +816,7 @@ int ea_db_item_group_load_record(item_group_ea * item_groups, int size, sqlite3_
 	item_group_ea * item_group = NULL;
 	for(i = 0; i < size; i++) {
 		item_group = &item_groups[i];
-		if(	SQLITE_OK != sqlite3_clear_bindings(sql) ||
+		/*if(	SQLITE_OK != sqlite3_clear_bindings(sql) ||
 			SQLITE_OK != sqlite3_bind_int(sql, 1, item_group->group_id) ||
 			SQLITE_OK != sqlite3_bind_int(sql, 2, item_group->item_id) ||
 			SQLITE_OK != sqlite3_bind_int(sql, 3, item_group->rate) ||
@@ -798,7 +829,7 @@ int ea_db_item_group_load_record(item_group_ea * item_groups, int size, sqlite3_
             }
 		} else {
 			fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, item_group->item_id);
-		}
+		}*/
 	}
 	return CHECK_PASSED;
 }

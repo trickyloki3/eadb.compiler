@@ -81,6 +81,7 @@
         int(*less)(void *, size_t, size_t);
         int(*same)(void *, size_t, size_t);
         void(*swap)(void *, size_t, size_t);
+        void(*read)(void *, size_t);
     } swap_t;
 
     void sift_down(void *, size_t, size_t, swap_t *);

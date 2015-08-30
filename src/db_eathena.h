@@ -387,6 +387,12 @@
 									"	PRIMARY KEY(group_id, item_id)"\
 									");"
 
+	void swap_item_group(void *, size_t, size_t);
+	int less_item_group(void *, size_t, size_t);
+	int same_item_group(void *, size_t, size_t);
+    void read_item_group(void *, size_t);
+    extern swap_t qsort_item_group;
+
 	typedef struct {
 		char name[MAX_NAME_SIZE];
 		int value;

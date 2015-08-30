@@ -618,10 +618,13 @@ int heap_sort(void * list, size_t size, swap_t * cb) {
 int insertion_sort(void * list, size_t min, size_t max, swap_t * cb) {
     size_t i = 0;
     size_t j = 0;
+    
+    if (min == max)
+        return 0;
 
     for (i = min; i <= max; i++)
         for (j = i; j > min && cb->less(list, j, j - 1); j--)
-            cb->swap(list, j, j + 1);
+            cb->swap(list, j, j - 1);
 
     return 0;
 }
@@ -675,13 +678,13 @@ void partition_3way(void * list, size_t min, size_t max, size_t * _min, size_t *
 
     while (1) {
         /* find an element from the  left that is greater than
-        * or equal to the median starting from (i + 1) to max */
+         * or equal to the median starting from (i + 1) to max */
         while (cb->less(list, ++i, min))
             if (i == max)
                 break;
 
         /* find an element from the right that is less than or
-        * equal to the median starting from (j - 1) to min */
+         * equal to the median starting from (j - 1) to min */
         while (cb->less(list, min, --j))
             if (j == min)
                 break;
@@ -709,7 +712,7 @@ void partition_3way(void * list, size_t min, size_t max, size_t * _min, size_t *
     }
 
     /*   [equal-left] [< median] [> median] [equal-right]
-    * min----------p----------j-i----------q-----------max */
+     * min----------p----------j-i----------q-----------max */
     i = j + 1;
 
     /* [< median] [equal-left] [> median] [equal-right]  */
@@ -729,9 +732,9 @@ void partition_3way(void * list, size_t min, size_t max, size_t * _min, size_t *
 }
 
 int _quick_sort(void * list, size_t min, size_t max, size_t max_depth, swap_t * cb) {
-    int size = 0;
-    int _min = 0;
-    int _max = 0;
+    size_t size = 0;
+    size_t _min = 0;
+    size_t _max = 0;
     size = max - min + 1;
 
     /* heap sort
@@ -766,6 +769,7 @@ int _quick_sort(void * list, size_t min, size_t max, size_t max_depth, swap_t * 
 }
 
 int quick_sort(void * list, size_t size, swap_t * cb) {
+    if (size == 1) return 0;
     size_t max_depth = (size_t)log(size) * 2;
     _quick_sort(list, 0, size - 1, max_depth, cb);
     return 0;
