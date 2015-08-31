@@ -84,7 +84,8 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
                init_db_prep_sql(_db->db, &_db->merc_id, EA_MERC_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->pet_id, EA_PET_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->produce_id, EA_PRODUCE_ID_SEARCH) ||
-               init_db_prep_sql(_db->db, &_db->item_group_id, EA_ITEM_GROUP_ID_SEARCH))
+               init_db_prep_sql(_db->db, &_db->item_group_id, EA_ITEM_GROUP_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_record, EA_ITEM_GROUP_ID_RECORD))
                 goto failed;
             break;
         case RATHENA:
@@ -139,6 +140,7 @@ int deit_db_load(db_t ** db) {
 
     _db = *db;
     if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
+       (_db->item_group_record && deit_db_prep_sql(_db->db, &_db->item_group_record)) ||
        (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
        (_db->produce_id && deit_db_prep_sql(_db->db, &_db->produce_id)) ||
        (_db->pet_id && deit_db_prep_sql(_db->db, &_db->pet_id)) ||
@@ -790,24 +792,55 @@ int produce_free(produce_t ** produces) {
 }
 
 int item_group_id(db_t * db, item_group_t * item_group, int id) {
+    int i = 0;
+    int size = 0;
     sqlite3_stmt * stmt = NULL;
 
+    /* get the group size for the group id */
     if(exit_null_safe(2, db, item_group) ||
        exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
-    item_group->group_id = id;
-
     stmt = db->item_group_id->stmt;
-    do {
+    item_group->group_id = sqlite3_column_int(stmt, 0);
+    item_group->size = sqlite3_column_int(stmt, 1);
 
+    /* check whether item group is empty */
+    if(0 == item_group->size)
+        return CHECK_FAILED;
+
+    item_group->item_id = malloc(item_group->size * sizeof(int));
+    if(NULL == item_group->item_id) {
+        item_group_free(item_group);
+        return CHECK_FAILED;
+    }
+    item_group->rate = malloc(item_group->size * sizeof(int));
+    if(NULL == item_group->rate) {
+        item_group_free(item_group);
+        return CHECK_FAILED;
+    }
+
+    /* get the group records */
+    if(exec_db_query(db->db, db->item_group_record, 1, BIND_NUMBER, id))
+        return CHECK_FAILED;
+
+    stmt = db->item_group_record->stmt;
+    do {
+        item_group->item_id[i] = sqlite3_column_int(stmt, 0);
+        item_group->rate[i] = sqlite3_column_int(stmt, 1);
+        i++;
     } while(SQLITE_DONE != sqlite3_step(stmt));
 
     return CHECK_PASSED;
 }
 
 int item_group_free(item_group_t * item_group) {
+    if(exit_null_safe(1, item_group))
+        return CHECK_PASSED;
 
+    SAFE_FREE(item_group->item_id);
+    SAFE_FREE(item_group->rate);
+    return CHECK_PASSED;
 }
 
 int item_combo_id(db_t * db, combo_t ** item_combos, int id) {

@@ -830,23 +830,26 @@ int main(int argc, char * argv[]) {
     db_t * db = NULL;
     init_db_load(&db, RE_PATH, EA_PATH, EATHENA);
     /* test resource databases */
-    test_opt_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\option_db.txt");
+    /*test_opt_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\option_db.txt");
     test_map_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\mapnametable.txt");
     test_bonus_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\item_bonus.txt");
     test_status_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\status_db.txt");
     test_var_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\var_db.txt");
     test_block_name(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\block_db.txt");
     test_sprite_id(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\idnum2itemresnametable.txt");
-    test_usprite_test(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\num2itemresnametable.txt");
+    test_usprite_test(db, "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\num2itemresnametable.txt");*/
 
     /* test eathena databases */
-    test_const_name(db, "G:\\Git\\eathena\\db\\const.txt", EATHENA);
+    /*test_const_name(db, "G:\\Git\\eathena\\db\\const.txt", EATHENA);
     test_skill_name(db, "G:\\Git\\eathena\\db\\skill_db.txt", EATHENA);
     test_item_name(db, "G:\\Git\\eathena\\db\\item_db.txt", EATHENA);
     test_mob_id(db, "G:\\Git\\eathena\\db\\mob_db.txt", EATHENA);
     test_merc_id(db, "G:\\Git\\eathena\\db\\mercenary_db.txt", EATHENA);
     test_pet_id(db, "G:\\Git\\eathena\\db\\pet_db.txt", EATHENA);
-    test_produce_id(db, "G:\\Git\\eathena\\db\\produce_db.txt", EATHENA);
+    test_produce_id(db, "G:\\Git\\eathena\\db\\produce_db.txt", EATHENA);*/
+    item_group_t item_group;
+    item_group_id(db, &item_group, 1);
+    item_group_free(&item_group);
     deit_db_load(&db);
 
     //init_db_load(&db, RE_PATH, RA_PATH, RATHENA);

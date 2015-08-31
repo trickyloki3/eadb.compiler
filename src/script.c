@@ -3592,9 +3592,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                     } else if(var_info.fflag & FUNC_PARAMS) {
                         temp_node->min = var_info.min;
                         temp_node->max = var_info.max;
-                        if(evaluate_function(block, expr, expr[expr_inx_open],
-                            expr_inx_open + 2, expr_inx_close, &(temp_node->min),
-                            &(temp_node->max), temp_node) == SCRIPT_FAILED) {
+                        if( evaluate_function(block, expr, expr[expr_inx_open],
+                            expr_inx_open + 2, expr_inx_close, temp_node) == SCRIPT_FAILED) {
                             exit_func_safe("failed to evaluate function '%s' in item %d", expr[expr_inx_open], block->item_id);
                             goto failed_expression;
                         }
@@ -3795,7 +3794,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         return NULL;
 }
 
-int evaluate_function(block_r * block, char ** expr, char * func, int start, int end, int * min, int * max, node_t * node) {
+int evaluate_function(block_r * block, char ** expr, char * func, int start, int end, node_t * node) {
     int i = 0;
     int index = 0;
     char * name = NULL;
@@ -3824,8 +3823,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         expression_write(node, "%s Level", skill.desc);
         id_write(node, "%s Level", skill.desc);
         /* skill level minimum is 0 (not learnt) or maximum level */
-        *min = 0;
-        *max = skill.maxlv;
+        node->min = 0;
+        node->max = skill.maxlv;
     } else if(ncs_strcmp(func,"pow") == 0) {
         split_paramater(expr, start, end, &i);
         resultOne = evaluate_expression_recursive(block, expr, start, i, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
@@ -3836,8 +3835,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             if(resultTwo != NULL) node_free(resultTwo);
             return SCRIPT_FAILED;
         } else {
-            *min = (int) pow(resultOne->min, resultTwo->min);
-            *max = (int) pow(resultOne->max, resultTwo->max);
+            node->min = (int) pow(resultOne->min, resultTwo->min);
+            node->max = (int) pow(resultOne->max, resultTwo->max);
             /*expression_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);*/
             id_write(node, "(%s)^%s", resultOne->formula, resultTwo->formula);
             node->type = NODE_TYPE_CONSTANT;
@@ -3852,8 +3851,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             if(resultTwo != NULL) node_free(resultTwo);
             return SCRIPT_FAILED;
         } else {
-            *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
-            *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
+            node->min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+            node->max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
             expression_write(node, "Minimum(%s,%s)", resultOne->formula, resultTwo->formula);
             id_write(node, "Minimum(%s,%s)", resultOne->formula, resultTwo->formula);
         }
@@ -3867,8 +3866,8 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             if(resultTwo != NULL) node_free(resultTwo);
             return SCRIPT_FAILED;
         } else {
-            *min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
-            *max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
+            node->min = (int) (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+            node->max = (int) (resultOne->max < resultTwo->max)?resultOne->max:resultTwo->max;
             expression_write(node, "Maximum(%s,%s)", resultOne->formula, resultTwo->formula);
             id_write(node, "Maximum(%s,%s)", resultOne->formula, resultTwo->formula);
         }
@@ -3891,12 +3890,12 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
                 exit_func_safe("failed to evaluate function '%s' in item id %d", expr, block->item_id);
                 return SCRIPT_FAILED;
             } else {
-                *min = (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
-                *max = (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
+                node->min = (resultOne->min < resultTwo->min)?resultOne->min:resultTwo->min;
+                node->max = (resultOne->max > resultTwo->max)?resultOne->max:resultTwo->max;
             }
         } else {
-            *min = resultOne->min;
-            *max = resultOne->max;
+            node->min = resultOne->min;
+            node->max = resultOne->max;
         }
         expression_write(node, "%s", "Random");
         id_write(node, "%s", "Random");
@@ -3928,7 +3927,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             return SCRIPT_FAILED;
         }
         block->ptr_cnt--;
-        *min = *max = 0;
+        node->min = node->max = 0;
     } else if(ncs_strcmp(func,"strcharinfo") == 0) {
         /* note; hercules uses a set of constants named PC_*; might need to resolve to integer via const_db. */
         resultOne = evaluate_expression(block, expr[start], 1, EVALUATE_FLAG_KEEP_NODE);
@@ -3981,14 +3980,14 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         }
         set_func(node, resultOne->min);
         switch(resultOne->min) {
-            case 1: id_write(node, "Seconds"); *min = 0; *max = 60; break;
-            case 2: id_write(node, "Minutes"); *min = 0; *max = 60; break;
-            case 3: id_write(node, "Hours"); *min = 0; *max = 24; break;
-            case 4: id_write(node, "Weeks"); *min = 1; *max = 7; break;
-            case 5: id_write(node, "Day"); *min = 0; *max = 31; break;
-            case 6: id_write(node, "Month");  *min = 1; *max = 12; break;
-            case 7: id_write(node, "Year"); *min = 0; *max = 2020; break;
-            case 8: id_write(node, "Day of Year"); *min = 0; *max = 365; break;
+            case 1: id_write(node, "Seconds"); node->min = 0; node->max = 60; break;
+            case 2: id_write(node, "Minutes"); node->min = 0; node->max = 60; break;
+            case 3: id_write(node, "Hours"); node->min = 0; node->max = 24; break;
+            case 4: id_write(node, "Weeks"); node->min = 1; node->max = 7; break;
+            case 5: id_write(node, "Day"); node->min = 0; node->max = 31; break;
+            case 6: id_write(node, "Month");  node->min = 1; node->max = 12; break;
+            case 7: id_write(node, "Year"); node->min = 0; node->max = 2020; break;
+            case 8: id_write(node, "Day of Year"); node->min = 0; node->max = 365; break;
             default:
                 exit_func_safe("invalid '%s' argument in item %d\n", expr, block->item_id);
                 return SCRIPT_FAILED;
@@ -4022,17 +4021,17 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             case 0: id_write(node, "%s's Buy Price", name); break;
             case 1: id_write(node, "%s's Sell Price", name); break;
             case 2: id_write(node, "%s's Item Type", name); break;
-            case 3: id_write(node, "%s's Max Drop Chance", name); *min = 0; *max = 100; break;
-            case 4: id_write(node, "%s's Gender", name); *min = 0; *max = 2; break;
+            case 3: id_write(node, "%s's Max Drop Chance", name); node->min = 0; node->max = 100; break;
+            case 4: id_write(node, "%s's Gender", name); node->min = 0; node->max = 2; break;
             case 5: id_write(node, "%s's Equip Location", name); break;
             case 6: id_write(node, "%s's Weight", name); break;
             case 7: id_write(node, "%s's Attack", name); break;
             case 8: id_write(node, "%s's Defense", name); break;
-            case 9: id_write(node, "%s's Range", name); *min = 0; *max = 16; break;
-            case 10: id_write(node, "%s's Slot", name); *min = 0; *max = 4; break;
+            case 9: id_write(node, "%s's Range", name); node->min = 0; node->max = 16; break;
+            case 10: id_write(node, "%s's Slot", name); node->min = 0; node->max = 4; break;
             case 11: id_write(node, "%s's Weapon Type", name); break;
-            case 12: id_write(node, "%s's Requirement Level", name); *min = 0; *max = 15; break;
-            case 13: id_write(node, "%s's Weapon Level", name); *min = 0; *max = 4; break;
+            case 12: id_write(node, "%s's Requirement Level", name); node->min = 0; node->max = 15; break;
+            case 13: id_write(node, "%s's Weapon Level", name); node->min = 0; node->max = 4; break;
             case 14: id_write(node, "%s's View ID", name); break;
             case 15: id_write(node, "%s's Magical Attack", name); break;
             default:
@@ -4082,12 +4081,7 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
             node->stack[node->stack_cnt] = '\0';
         }
     } else if(ncs_strcmp(func,"groupranditem") == 0) {
-        /*memset(&ea_item_group, 0, sizeof(ea_item_group_t));
-        if(const_keyword_search(block->db, &const_info, expr[start], block->mode))
-            exit_abt(build_buffer(global_err, "failed to search for const %s in %d", expr[start], block->item_id));
-        ea_item_group_search(block->db, &ea_item_group, const_info.value, block->mode, buffer);
-        block->flag |= 0x04;*/
-        translate_write(block, expr[start], 1);
+        evaluate_groupranditem(block, expr, start, end, node);
     } else if(ncs_strcmp(func,"getequiprefinerycnt") == 0) {
         resultOne = evaluate_expression_recursive(block, expr, start, end, block->logic_tree, EVALUATE_FLAG_WRITE_FORMULA);
         if(resultOne == NULL) {
@@ -4176,6 +4170,16 @@ int evaluate_function(block_r * block, char ** expr, char * func, int start, int
         node_free(resultTwo);
     }
     return SCRIPT_PASSED;
+}
+
+int evaluate_groupranditem(block_r * block, char ** expr, int start, int end, node_t * node) {
+    int i = 0;
+
+    for(i = start; i < end; i++)
+        printf("%s ", expr[i]);
+    printf("\n");
+
+    return CHECK_PASSED;
 }
 
 int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {

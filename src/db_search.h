@@ -16,6 +16,12 @@
     #define RATHENA    0x2
     #define HERCULE    0x4
 
+#if 0
+    #include "db_eathena.h"
+    #include "db_rathena.h"
+    #include "db_resources.h"
+    #include "db_hercules.h"
+#else
     typedef struct option_res {
         char option[MAX_NAME_SIZE];
         char name[MAX_NAME_SIZE];
@@ -81,7 +87,7 @@
         int id;
         char res[MAX_RESNAME_SIZE];
     } nid_res;
-
+#endif
     typedef struct const_t {
         char name[MAX_NAME_SIZE];
         int value;
@@ -186,6 +192,7 @@
         int group_id;
         int * item_id;
         int * rate;
+        int size;
     } item_group_t;
 
     typedef struct combo_t {
@@ -243,7 +250,8 @@
     #define EA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
     #define RA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
     #define HE_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
-    #define EA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate FROM item_group_ea WHERE group_id = ?;"
+    #define EA_ITEM_GROUP_ID_SEARCH "SELECT group_id, size FROM item_group_ea WHERE group_id = ?;"
+    #define EA_ITEM_GROUP_ID_RECORD "SELECT item_id, rate FROM item_group_record_ea WHERE group_id = ?;"
     #define RA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate FROM item_group_ra WHERE group_id = ?;"
     #define RA_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
     #define HE_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
@@ -279,6 +287,7 @@
         sql_t * pet_id;
         sql_t * produce_id;
         sql_t * item_group_id;
+        sql_t * item_group_record;
         sql_t * item_combo;
         /* server item database iterate */
         sql_t * item_db;
@@ -334,7 +343,7 @@
     int produce_id(db_t *, produce_t **, int);
     int produce_free(produce_t **);
     int item_group_id(db_t *, item_group_t *, int);
-    int item_group_free(db_t *, item_group_t *, int);
+    int item_group_free(item_group_t *);
     int item_combo_id(db_t *, combo_t **, int);
     int item_combo_free(combo_t **);
 #endif
