@@ -20,6 +20,7 @@ int init_db(sqlite3 ** db, const char * path) {
         } else {
             fprintf(stderr, "[load]: failed to load %s.\n", path);
         }
+        return CHECK_FAILED;
     }
 
     *db = _db;
@@ -162,8 +163,8 @@ int deit_db_load(db_t ** db) {
        (_db->map_id && deit_db_prep_sql(_db->re, &_db->map_id)) ||
        (_db->map_name && deit_db_prep_sql(_db->re, &_db->map_name)) ||
        (_db->opt_name && deit_db_prep_sql(_db->re, &_db->opt_name)) ||
-       deit_db(&_db->re) ||
-       deit_db(&_db->db))
+       (_db->re && deit_db(&_db->re)) ||
+       (_db->db && deit_db(&_db->db)))
         return CHECK_FAILED;
 
     SAFE_FREE(_db);

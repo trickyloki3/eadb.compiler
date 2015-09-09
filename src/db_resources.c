@@ -8,8 +8,8 @@
 #include "db_resources.h"
 
 native_config_t load_res_native[RESOURCE_DB_COUNT] = {
-	{ option_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, OPTION_RES_FIELD_COUNT, sizeof(option_res) },
-	{ map_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MAP_RES_FIELD_COUNT, sizeof(map_res) },
+    { option_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, OPTION_RES_FIELD_COUNT, sizeof(option_res) },
+    { map_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MAP_RES_FIELD_COUNT, sizeof(map_res) },
    { bonus_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS , 0, sizeof(bonus_res) },
    { status_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, STATUS_RES_FIELD_COUNT, sizeof(status_res) },
    { var_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, VAR_RES_FIELD_COUNT, sizeof(var_res) },
@@ -19,28 +19,28 @@ native_config_t load_res_native[RESOURCE_DB_COUNT] = {
 };
 
 int option_res_load(void * db, int row, int col, char * val) {
-	option_res * record = &((option_res *) db)[row];
-	switch(col) {
-		case 0: strnload(record->option, MAX_NAME_SIZE, val); break;
-		case 1: strnload(record->name, MAX_NAME_SIZE, val);   break;
-		default: exit_func_safe("invalid column field %d in option database", col);
-	}
-	return 0;
+    option_res * record = &((option_res *) db)[row];
+    switch(col) {
+        case 0: strnload(record->option, MAX_NAME_SIZE, val); break;
+        case 1: strnload(record->name, MAX_NAME_SIZE, val);   break;
+        default: exit_func_safe("invalid column field %d in option database", col);
+    }
+    return 0;
 }
 
 int map_res_load(void * db, int row, int col, char * val) {
-	int i = 0;
-	map_res * record = &((map_res *) db)[row];
-	record->id = row;
-	switch(col) {
-		case 0:
-			/* remove the file extension for the map name */
-			for(i = strlen(val); i >= 0; i--) if(val[i] == '.') { val[i] = '\0'; break; }
-			strnload(record->map, MAX_NAME_SIZE, val); 		break;
-		case 1: strnload(record->name, MAX_NAME_SIZE, val); break;
-		default: exit_func_safe("invalid column field %d in map database", col);
-	}
-	return 0;
+    int i = 0;
+    map_res * record = &((map_res *) db)[row];
+    record->id = row;
+    switch(col) {
+        case 0:
+            /* remove the file extension for the map name */
+            for(i = strlen(val); i >= 0; i--) if(val[i] == '.') { val[i] = '\0'; break; }
+            strnload(record->map, MAX_NAME_SIZE, val);         break;
+        case 1: strnload(record->name, MAX_NAME_SIZE, val); break;
+        default: exit_func_safe("invalid column field %d in map database", col);
+    }
+    return 0;
 }
 
 int nid_res_load(void * db, int row, int col, char * val) {
@@ -55,7 +55,7 @@ int nid_res_load(void * db, int row, int col, char * val) {
 
 int bonus_res_load(void * db, int row, int col, char * val) {
    /* loader is non-reentrant */
-	static int type_cnt = 0;
+    static int type_cnt = 0;
    static int order_cnt = 0;
    static int var_state = 0;
    bonus_res * record = &((bonus_res *) db)[row];

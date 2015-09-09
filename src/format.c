@@ -63,8 +63,8 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 	const char * item_type_name = NULL;
 	int item_type_constant = 0;
 
-	/* check for null references */	
-	if(exit_null_safe(2, format, lstate)) 
+	/* check for null references */
+	if(exit_null_safe(2, format, lstate))
 		return CHECK_FAILED;
 
 	/* set server type, file format, and format rules */
@@ -125,7 +125,7 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 		/* remove element until the last key */
 		lua_pop(lstate, lua_gettop(lstate) - item_format_table - 1);
 	}
-	
+
 	/* remove all element until the configuration table */
 	lua_pop(lstate, lua_gettop(lstate) - format_index);
 	return CHECK_PASSED;
@@ -176,7 +176,7 @@ int init_format_type(format_t * format, lua_State * lstate, int rule_table, int 
 			if(load_weapon_type(rule_temp, lstate, rule))
 				exit_abt_safe("failed to load weapon type filter");
 
-		
+
 		lua_pop(lstate, lua_gettop(lstate) - rule_table - 1);
 	}
 
@@ -248,7 +248,7 @@ int load_item_id_re(format_rule_t * type, lua_State * lstate, int item_id_table)
 				freerange(left_range);
 				freerange(right_range);
 			}
-			
+
 			lua_pop(lstate, lua_gettop(lstate) - item_id_table);
 			break;
 		}
@@ -266,7 +266,7 @@ int load_item_field(format_rule_t * type, lua_State * lstate, int rule) {
 	if(lua_get_field(lstate, rule, "format", LUA_TTABLE))
 		return CHECK_FAILED;
 	item_field_table = lua_gettop(lstate);
-	
+
 	/* iterate through the format table */
 	lua_pushnil(lstate);
 	while(lua_next(lstate, item_field_table)) {
@@ -286,7 +286,7 @@ int load_item_field(format_rule_t * type, lua_State * lstate, int rule) {
 			   (field_iter->next = field_temp);
 
 		/* loads the ["type"] and ["text"] for each table value in ["format"] */
-		if(load_item_field_re(field_temp, lstate, lua_gettop(lstate))) 
+		if(load_item_field_re(field_temp, lstate, lua_gettop(lstate)))
 			break;
 
 		/* pop everything except for the item field table and key */
@@ -340,7 +340,7 @@ int load_item_field_re(format_field_t * field, lua_State * lstate, int field_tab
 			exit_func_safe("'color' for %s type must consist of 6 hexadecimal characters", item_field_type);
 
 		strncopy(field->color, FMT_COLOR_SIZE, (const unsigned char *) item_field_text);
-	}	
+	}
 
 	/* pop everything except the field table */
 	lua_pop(lstate, lua_gettop(lstate) - field_table);
@@ -357,7 +357,7 @@ int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
 		return CHECK_PASSED;
 	}
 	weapon_type_table = lua_gettop(lstate);
-	
+
 	/* initialize the weapon type filter */
 	rule->weapon_type = 0;
 
@@ -383,7 +383,7 @@ int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
 
 int lua_get_field(lua_State * state, int table, const char * key, int expected_type) {
 	int value_type = 0;
-	if(exit_null_safe(2, state, key)) 
+	if(exit_null_safe(2, state, key))
 		return CHECK_FAILED;
 	if(lua_gettop(state) < table) {
 		exit_func_safe("invalid table index %d", table);
@@ -538,7 +538,7 @@ int write_item(FILE * file, format_t * format, item_t * item, char * script) {
 		return write_item_text(file, format, item_field, item, script);
 	else if(format->file_format & FORMAT_LUA)
 		return write_item_lua(file, format, item_field, item, script);
-	else 
+	else
 		exit_func_safe("invalid item format %d", format->file_format);
 
 	return CHECK_PASSED;
@@ -551,7 +551,7 @@ int write_item_text(FILE * file, format_t * format, format_field_t * field, item
 
 	/* write text format header */
 	fprintf(file,"%d#\n", item->id);
-	
+
 	/* get the item description */
 	format_description(format, field, item, script, buffer, &offset);
 
@@ -586,7 +586,7 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 		exit_func_safe("failed to find resource file name; skipping item id %d", item->id);
 		return CHECK_FAILED;
 	}
-	
+
 	/* get the item description */
 	format_description(format, field, item, script, buffer, &offset);
 
@@ -610,7 +610,7 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 	if(item->type == ARMOR_ITEM_TYPE) {
 		format_location(loc, &loc_offset, field, item->loc);
 		loc[loc_offset - 1] = '\0';
-		fprintf(file, 
+		fprintf(file,
 			"\t[%d] = {\n"
 			"\t\tunidentifiedDisplayName = \"%s\",\n"
 			"\t\tunidentifiedResourceName = \"%s\",\n"
@@ -619,12 +619,12 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 			"\t\tidentifiedResourceName = \"%s\",\n"
 			"\t\tidentifiedDescriptionName = {\n%s\t\t},\n"
 			"\t\tslotCount = %d,\n"
-			"\t\tClassNum = %d\n", 
+			"\t\tClassNum = %d\n",
 			item->id, loc, numid_res.res,
-			item->name, id_res.res, desc, 
+			item->name, id_res.res, desc,
 			item->slots, item->view);
 	} else if(item->type == WEAPON_ITEM_TYPE) {
-		fprintf(file, 
+		/*fprintf(file,
 			"\t[%d] = {\n"
 			"\t\tunidentifiedDisplayName = \"%s\",\n"
 			"\t\tunidentifiedResourceName = \"%s\",\n"
@@ -633,12 +633,12 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 			"\t\tidentifiedResourceName = \"%s\",\n"
 			"\t\tidentifiedDescriptionName = {\n%s\t\t},\n"
 			"\t\tslotCount = %d,\n"
-			"\t\tClassNum = %d\n", 
+			"\t\tClassNum = %d\n",
 			item->id, weapon_tbl(item->view), numid_res.res,
-			item->name, id_res.res, desc, 
-			item->slots, item->view);
+			item->name, id_res.res, desc,
+			item->slots, item->view);*/
 	} else {
-		fprintf(file, 
+		fprintf(file,
 			"\t[%d] = {\n"
 			"\t\tunidentifiedDisplayName = \"%s\",\n"
 			"\t\tunidentifiedResourceName = \"%s\",\n"
@@ -647,9 +647,9 @@ int write_item_lua(FILE * file, format_t * format, format_field_t * field, item_
 			"\t\tidentifiedResourceName = \"%s\",\n"
 			"\t\tidentifiedDescriptionName = {\n%s\t\t},\n"
 			"\t\tslotCount = %d,\n"
-			"\t\tClassNum = %d\n", 
+			"\t\tClassNum = %d\n",
 			item->id, item->name, numid_res.res,
-			desc, item->name, id_res.res, desc, 
+			desc, item->name, id_res.res, desc,
 			item->slots, item->view);
 	}
 
@@ -704,7 +704,7 @@ int format_flavour_text(char * buffer, int * offset, format_t * format, format_f
 		/*fprintf(stderr,"[warn]: failed to search for flavour text for item id %d.\n", item_id);*/
 		return CHECK_FAILED;
 	}
-	
+
 	/* preprocess the flavour text buffer */
 	flavor = flavour->identified_description_name;
 	length = strlen(flavor);
@@ -712,7 +712,7 @@ int format_flavour_text(char * buffer, int * offset, format_t * format, format_f
 		/*fprintf(stderr,"[warn]: empty flavour text for item id %d\n", item_id);*/
 		return CHECK_FAILED;
 	}
-	
+
 	/* skip initial newline and space characters */
 	for(i = 0; i < length; i++)
 		if(isspace(flavor[i])) flavor[i] = '\0'; else break;
@@ -742,7 +742,7 @@ int format_flavour_text(char * buffer, int * offset, format_t * format, format_f
 	/* write the flavour text strings into the buffer */
 	for(i = 0; i < count; i++)
 		*offset += sprintf(&buffer[*offset], "%s.\n", string[i]);
-	
+
 	return CHECK_PASSED;
 }
 
@@ -796,11 +796,11 @@ int format_view(char * buffer, int * offset, format_field_t * field, int view, i
 	char * view_type = NULL;
 
 	/* view is only interpreted for weapon and ammo type */
-	if(type != WEAPON_ITEM_TYPE && type != AMMO_ITEM_TYPE) 
+	if(type != WEAPON_ITEM_TYPE && type != AMMO_ITEM_TYPE)
 		return CHECK_FAILED;
 
 	/* map the weapon type constant to weapon type string */
-	if(type == WEAPON_ITEM_TYPE) {
+	/*if(type == WEAPON_ITEM_TYPE) {
 		view_type = weapon_tbl(view);
 		if(ncs_strcmp(view_type, "error") == 0) {
 			exit_func_safe("failed to find weapon type for view %d on type %d", view, type);
@@ -812,7 +812,7 @@ int format_view(char * buffer, int * offset, format_field_t * field, int view, i
 			exit_func_safe("failed to find ammo type for view %d on type %d", view, type);
 			return CHECK_FAILED;
 		}
-	}
+	}*/
 
 	/* write the weapon type string */
 	format_field_string(buffer, offset, field, view_type);
@@ -823,11 +823,11 @@ int format_type(char * buffer, int * offset, format_field_t * field, int type) {
 	char * item_type = NULL;
 
 	/* map the item type constant to item type string */
-	item_type = item_type_tbl(type);
+	/*item_type = item_type_tbl(type);
 	if(ncs_strcmp(item_type, "error") == 0) {
 		exit_func_safe("failed to find item type for item type %d", type);
 		return CHECK_FAILED;
-	}
+	}*/
 
 	/* write the item type string */
 	format_field_string(buffer, offset, field, item_type);
@@ -1014,7 +1014,7 @@ int format_location(char * buffer, int * offset, format_field_t * field, int loc
 }
 
 int format_weight(char * buffer, int * offset, format_field_t * field, int weight) {
-	if(weight == 0) return CHECK_FAILED;	
+	if(weight == 0) return CHECK_FAILED;
 	if(weight / 10 == 0) {
 		format_field_double(buffer, offset, field, ((double) weight) / 10);
 	} else {
@@ -1051,8 +1051,8 @@ int format_trade(char * buffer, int * offset, format_field_t * field, int * trad
 	int trade_offset = 0;
 	trade_list[0] = '\0';
 
-	if(trade[TRADE_NODROP] > 0 || trade[TRADE_NOTRADE] > 0 || 
-	   trade[TRADE_NOAUCTION] > 0 || trade[TRADE_NOSELLTONPC] > 0 || 
+	if(trade[TRADE_NODROP] > 0 || trade[TRADE_NOTRADE] > 0 ||
+	   trade[TRADE_NOAUCTION] > 0 || trade[TRADE_NOSELLTONPC] > 0 ||
 	   trade[TRADE_NOMAIL] > 0) {
 		trade_offset = 0;
 		trade_offset += sprintf(&trade_list[trade_offset], "Item cannot be ");
@@ -1071,7 +1071,7 @@ int format_trade(char * buffer, int * offset, format_field_t * field, int * trad
 		if(trade[TRADE_NOCART] > 0) 			trade_offset += sprintf(&trade_list[trade_offset], "%scart", (trade_offset != 0)?", ":"");
 		if(trade[TRADE_NOSTORAGE] > 0) 			trade_offset += sprintf(&trade_list[trade_offset], "%sstorage", (trade_offset != 0)?", ":"");
 		if(trade[TRADE_NOGSTORAGE] > 0) 		trade_offset += sprintf(&trade_list[trade_offset], "%sguild storage", (trade_offset != 0)?", ":"");
-		format_field_string(buffer, offset, field, trade_list);	
+		format_field_string(buffer, offset, field, trade_list);
 	}
 
 	if(trade[TRADE_PARTNEROVERRIDE] > 0)
@@ -1141,3 +1141,40 @@ int format_field_integer(char * buffer, int * offset, format_field_t * field, in
 	}
 	return CHECK_PASSED;
 }
+
+int weapon_flag(int i) {
+    switch(i) {
+        case 0: return 0x10000000;
+        case 1: return 0x00000001;
+        case 2: return 0x00000002;
+        case 3: return 0x00000004;
+        case 4: return 0x00000008;
+        case 5: return 0x00000010;
+        case 6: return 0x00000020;
+        case 7: return 0x00000040;
+        case 8: return 0x00000080;
+        case 10: return 0x00000100;
+        case 11: return 0x00000200;
+        case 12: return 0x00000400;
+        case 13: return 0x00000800;
+        case 14: return 0x00001000;
+        case 15: return 0x00002000;
+        case 16: return 0x00004000;
+        case 17: return 0x00008000;
+        case 18: return 0x00010000;
+        case 19: return 0x00020000;
+        case 20: return 0x00040000;
+        case 21: return 0x00080000;
+        case 22: return 0x00100000;
+        case 23: return 0x00200000;
+        case 25: return 0x00400000;
+        case 26: return 0x00800000;
+        case 27: return 0x01000000;
+        case 28: return 0x02000000;
+        case 29: return 0x04000000;
+        case 30: return 0x08000000;
+        default: break;
+    }
+    return 0;
+}
+

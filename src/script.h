@@ -15,7 +15,6 @@
     #include "util.h"
     #include "name_range.h"
     #include "range.h"
-    #include "table.h"
     #include "db_search.h"
 
     /* return code from (nearly) all functions */
@@ -62,15 +61,16 @@
     #define NODE_TYPE_SUB         0x40  /* subexpression node */
 
     /* alternative the normal behavior of all expression evaluation functions */
-    #define EVALUATE_FLAG_KEEP_LOGIC_TREE   0x01 /* keep the logic tree */
-    #define EVALUATE_FLAG_KEEP_NODE         0x02 /* keep the root node */
-    #define EVALUATE_FLAG_EXPR_BOOL         0x04 /* flag for evaluating relational operators to either 0 or 1
-                                                  * ignore expression simplification for conditional expression */
-    #define EVALUATE_FLAG_WRITE_FORMULA     0x08 /* write the formula for expression */
-    #define EVALUATE_FLAG_LIST_FORMULA      0x10
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE    0x20 /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_ITERABLE_SET      0x40
-    #define EVALUATE_FLAG_VARIANT_SET       0x80
+    #define EVALUATE_FLAG_KEEP_LOGIC_TREE   0x001 /* keep the logic tree */
+    #define EVALUATE_FLAG_KEEP_NODE         0x002 /* keep the root node */
+    #define EVALUATE_FLAG_EXPR_BOOL         0x004 /* flag for evaluating relational operators to either 0 or 1
+                                                   * ignore expression simplification for conditional expression */
+    #define EVALUATE_FLAG_WRITE_FORMULA     0x008 /* write the formula for expression */
+    #define EVALUATE_FLAG_LIST_FORMULA      0x010
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE    0x020 /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_ITERABLE_SET      0x040
+    #define EVALUATE_FLAG_VARIANT_SET       0x080
+    #define EVALUATE_FLAG_WRITE_STACK       0x100
 
     /* bonus flags for block minimization for script_bonus */
     #define BONUS_FLAG_NODUP        0x00020000  /* default: yes duplicate */
@@ -184,11 +184,15 @@
 
     /* abstract handle to contain everything for script processing */
     typedef struct script_t {
-        int item_id;
+        /* variant per item */
+        item_t item;
         block_list_t block;     /* linked list of allocated blocks */
         block_list_t free;      /* linked list of deallocated blocks */
         token_r token;          /* tokenize script */
-        db_t * db;       /* sqlite3 database handle to athena */
+        char buffer[BUF_SIZE];  /* item script translation */
+        int offset;
+        /* invariant */
+        db_t * db;              /* sqlite3 database handle to athena */
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
     } script_t;
 
@@ -196,7 +200,25 @@
     /* set this to some file descriptor to dump nodes */
     FILE * node_dbg;
 
-    /* block linked list operations */
+    /* script api */
+    int script_init(script_t **, const char *, const char *, int);
+    int script_deit(script_t **);
+    int script_lexical(token_r *, char *);
+    int script_analysis(script_t *, token_r *, block_r *, block_r **);
+    int script_parse(token_r *, int *, block_r *, char, char, int);
+    int script_extend_block(script_t *, char *, block_r *, block_r **);
+    int script_extend_paramater(block_r *, char *);
+    int script_translate(script_t *);
+    int script_bonus(script_t *);
+    int script_generate(script_t *, char *, int *);
+    int script_generate_combo(int, char *, int *, db_t *, int);
+
+/* ! (o.o) !
+ * core developers only
+ * ! (o.o) !
+ */
+
+    /* block linked list */
     int list_forward(block_list_t *);
     int list_backward(block_list_t *);
     void list_init_head(block_list_t * list);
@@ -217,43 +239,41 @@
     int script_block_release(block_r *);                                /* reset the block */
     int script_block_finalize(script_t *);                              /* remove every block from the free list and free the memory of each block */
 
-    /* block buffer operations */
-    #define TYPE_PTR 1    /* block->ptr */
-    #define TYPE_ENG 2    /* block->eng */
+    /* block buffer functions */
+    #define TYPE_PTR 1    /* block->ptr stack */
+    #define TYPE_ENG 2    /* block->eng stack */
     int script_buffer_write(block_r *, int, const char *);              /* push a string to block->ptr or block->eng stack */
     int script_buffer_unwrite(block_r *, int);                          /* pop a string from block->ptr or block->eng stack */
-    int script_formula_write(block_r *, int, node_t *, char **);        /* combine a node's formula with a string in  block->eng */
+    int script_formula_write(block_r *, int, node_t *, char **);        /* concatenate a node's formula string with block->eng stack string */
 
-    /* auxiliary script parsing functions */
+    /* block 'for' functions */
+    int script_block_write(block_r *, char *, ...);                     /* write to block->ptr stack using vararg */
+    int check_loop_expression(script_t *, char *, char *);              /* parse a statement within a for loop */
+
+    /* block debug functions */
     int script_block_dump(script_t *, FILE *);
-    int script_block_write(block_r *, char *, ...);
-    int split_paramater(char **, int, int, int *);
-    int check_loop_expression(script_t *, char *, char *);
-
-    /* compilation processes; exported functions, api functions */
-    int script_lexical(token_r *, char *);
-    int script_analysis(script_t *, token_r *, block_r *, block_r **);
-    int script_parse(token_r *, int *, block_r *, char, char, int);
-    int script_extend_block(script_t *, char *, block_r *, block_r **);
-    int script_extend_paramater(block_r *, char *);
-    int script_translate(script_t *);
-    int script_bonus(script_t *);
-    int script_generate(script_t *, char *, int *);
-    int script_generate_combo(int, char *, int *, db_t *, int);
-    char * script_compile_raw(char *, int, FILE *, db_t *, int);
-    #define script_compile(X, Y, A, B) script_compile_raw(X, Y, NULL, A, B)
 
     /* script stack functions */
-    /* unit tested */ int stack_ptr_call(block_r * block, char *);
-    /* unit tested */ int stack_eng_item(block_r * block, char *);
-    /* unit tested */ int stack_eng_int(block_r * block, char *);
-    /* unit tested */ int stack_eng_time(block_r * block, char *);
+    #define MAX_ITEM_LIST 5 /* limits the number of item names pushed on
+                             * to the block->eng stack by stack_eng_item */
+    /* revised */ int stack_ptr_call(block_r *, char *, int *);
+    /* revised */ int stack_ptr_call_(block_r *, token_r *, int *);
+    /* revised */ int stack_eng_item(block_r *, char *, int *);
+    /* revised */ int stack_eng_int(block_r * block, char *, int);
+    /* revised */ int stack_eng_time(block_r * block, char *, int);
+
+    /* script stack-translation functions to prevent source code
+     * repetitions by factoring and simplifying similar patterns */
+    /* revised */ int translate_id_amount(block_r *, int *, int *, const char *);
 
     /* script translation functions */
-    /* unit tested */ int translate_verbitem(block_r *, char *);
-    /* unit tested */ int translate_rentitem(block_r *);
+    /* revised */ int translate_getitem(block_r *);
+    /* revised */ int translate_delitem(block_r *);
+    /* revised */ int translate_rentitem(block_r *);
+    int translate_searchstore(block_r *);
+    int translate_buyingstore(block_r *);
+
     int translate_getrandgroup(block_r *, int);
-    int translate_bstore(block_r *, int);
     int translate_hire_merc(block_r *, int);
     int translate_pet_egg(block_r *, int);
     int translate_getexp(block_r *, int);

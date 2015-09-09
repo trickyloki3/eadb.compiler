@@ -15,6 +15,7 @@
     #define EATHENA    0x1
     #define RATHENA    0x2
     #define HERCULE    0x4
+    #define DB_MODE    0x7
 
 #if 0
     #include "db_eathena.h"

@@ -10,7 +10,6 @@
  	#include "util.h"
  	#include "range.h"
  	#include "setting.h"
- 	#include "table.h"
  	#include "db_search.h"
  	#include "sqlite3.h"
 	#include "lua.h"
@@ -175,4 +174,5 @@
 	int format_field_string(char *, int *, format_field_t *, char *);
 	int format_field_double(char *, int *, format_field_t *, double);
 	int format_field_integer(char *, int *, format_field_t *, int);
+    int weapon_flag(int);
 #endif
