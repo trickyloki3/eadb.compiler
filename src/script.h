@@ -37,8 +37,6 @@
                                          (X) == '*' || (X) == '!')
     #define ATHENA_SCRIPT_UNARY(X)      ((X) == '!' || (X) == '-')
     #define ATHENA_SCRIPT_IDENTIFER(X)  (isalpha(X) || isdigit(X) || (X) == '_')
-    #define CHECK_ZERO(X)               (strlen(X) == 1 && X[0] == '0')
-    #define CHECK_NEGATIVE(X)           (strlen(X) > 0 && strstr(X,"-") != NULL)
 
     /* flags to passed to script_parse */
     #define FLAG_PARSE_NORMAL       0x00
@@ -260,8 +258,9 @@
     /* revised */ int stack_ptr_call_(block_r *, token_r *, int *);
     /* revised */ int stack_eng_item(block_r *, char *, int *);
     /* revised */ int stack_eng_int(block_r * block, char *, int);
+    /* revised */ int stack_eng_int_signed(block_r *, char *, int, const char *, const char *);
     /* revised */ int stack_eng_time(block_r * block, char *, int);
-
+    /* revised */ int stack_aux_formula(block_r *, node_t *, char *);
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */
     /* revised */ int translate_id_amount(block_r *, int *, int *, const char *);
@@ -270,6 +269,7 @@
     /* revised */ int translate_getitem(block_r *);
     /* revised */ int translate_delitem(block_r *);
     /* revised */ int translate_rentitem(block_r *);
+    /* revised */ int translate_heal(block_r *);
     int translate_searchstore(block_r *);
     int translate_buyingstore(block_r *);
 
@@ -279,7 +279,6 @@
     int translate_getexp(block_r *, int);
     int translate_transform(block_r *);
     int translate_skill_block(block_r *, int);
-    int translate_heal(block_r *, int);
     int translate_bonus(block_r *, char *);
     int translate_const(block_r *, char *, int);
     int translate_skill(block_r *, char *);
@@ -308,9 +307,9 @@
     /* writing the formula expressions */
     char * formula(char *, char *, node_t *);                            /* deprecated; use write_formula */
     char * status_formula(char *, char *, node_t *, int, int);
-    void id_write(node_t *, char *, ...);
-    void var_write(node_t *, char *, ...);
-    void expression_write(node_t *, char *, ...);
+    int id_write(node_t *, char *, ...);
+    int var_write(node_t *, char *, ...);
+    int expression_write(node_t *, char *, ...);
 
     /* expression evaluation */
     node_t * evaluate_argument(block_r *, char *);
@@ -325,8 +324,9 @@
     void node_free(node_t *);
 
     /* script function */
-    int evaluate_function(block_r *, char **, char *, int, int, node_t *);
-    int evaluate_groupranditem(block_r *, char **, int, int, node_t *);
+    int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
+    int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
 
     /* support translation */
     int translate_bonus_desc(node_t **, block_r *, bonus_res *);
