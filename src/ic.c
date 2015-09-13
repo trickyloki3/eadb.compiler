@@ -1,7 +1,9 @@
 #include <script.h>
 
 int main(int argc, char * argv[]) {
+    int i = 0;
     int len = 0;
+    char * script = NULL;
     script_t * scribe = NULL;
 
     if (script_init(&scribe,
@@ -15,24 +17,24 @@ int main(int argc, char * argv[]) {
         scribe->offset = 0;
 
         /* skip empty scripts */
-        len = strlen(scribe->item.script);
+        script = scribe->item.script;
+        len = strlen(script);
         if (0 >= len)
             continue;
 
-        if (scribe->item.script[0] == '{' && scribe->item.script[len - 1] == '}')
+        /* skip on empty statements */
+        for (i = 0; i < len; i++)
+            if (';' == script[i])
+                break;
+        if (i == len)
             continue;
 
         /* compile the item script */
         if (script_lexical(&scribe->token, scribe->item.script) ||
             script_analysis(scribe, &scribe->token, NULL, NULL) ||
             script_translate(scribe)) {
-            printf("Error on item %d; %s!\n", scribe->item.id, scribe->item.script);
-            break;
-        }
-
-        if (scribe->item.id == 0) {
             script_block_dump(scribe, stderr);
-            printf("%s\n", scribe->item.script);
+            printf("Error on item %d; %s!\n", scribe->item.id, scribe->item.script);
             break;
         }
 
@@ -42,7 +44,12 @@ int main(int argc, char * argv[]) {
             break;
         }
 
-        /*printf("%s", scribe->buffer);*/
+        if (scribe->item.id == 622) {
+            script_block_dump(scribe, stderr);
+            printf("%d; %s\n", scribe->item.id, scribe->buffer);
+            break;
+        }
+
         script_block_reset(scribe);
     }
 

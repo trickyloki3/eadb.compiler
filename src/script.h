@@ -262,6 +262,8 @@ struct script_t;
     /* revised */ int stack_ptr_call(block_r *, char *, int *);
     /* revised */ int stack_ptr_call_(block_r *, token_r *, int *);
     /* revised */ int stack_eng_item(block_r *, char *, int *);
+    /* revised */ int stack_eng_skill(block_r *, char *, int *);
+    /* revised */ int stack_eng_grid(block_r *, char *);
     /* revised */ int stack_eng_int(block_r *, char *, int);
     /* revised */ int stack_eng_int_signed(block_r *, char *, int, const char *, const char *);
     /* revised */ int stack_eng_time(block_r *, char *, int);
@@ -304,14 +306,14 @@ struct script_t;
     #define BF_RANGEMASK            0x00F0
     #define BF_SKILLMASK            0x0F00
     /* revised */ int stack_eng_trigger_bt(block_r *, char *);
-    #define ATF_SELF    0x01
-    #define ATF_TARGET  0x02
-    #define ATF_SHORT   0x04
-    #define ATF_LONG    0x08
-    #define ATF_WEAPON  0x10
-    #define ATF_MAGIC   0x20
-    #define ATF_MISC    0x40
-    #define ATF_SKILL   0x60
+    #define ATF_SELF                0x01
+    #define ATF_TARGET              0x02
+    #define ATF_SHORT               0x04
+    #define ATF_LONG                0x08
+    #define ATF_WEAPON              0x10
+    #define ATF_MAGIC               0x20
+    #define ATF_MISC                0x40
+    #define ATF_SKILL               0x60
 
     /* revised */ int stack_eng_trigger_atf(block_r *, char *);
     /* revised */ int stack_eng_script(block_r *, char *);
@@ -330,7 +332,11 @@ struct script_t;
     /* revised */ int translate_status(block_r *);
     /* revised */ int translate_status_end(block_r *);
     /* revised */ int translate_pet_egg(block_r *);
-    int translate_group_id(block_r *);
+    /* revised */ int translate_bonus(block_r *, char *);
+    /* revised */ int translate_itemskill(block_r *);
+    /* revised */ int translate_petloot(block_r *);
+    int translate_petskillbonus(block_r *);
+    int translate_skill(block_r *);
     int translate_searchstore(block_r *);
     int translate_buyingstore(block_r *);
 
@@ -339,19 +345,13 @@ struct script_t;
     int translate_getexp(block_r *, int);
     int translate_transform(block_r *);
     int translate_skill_block(block_r *, int);
-    int translate_bonus(block_r *, char *);
-    int translate_skill(block_r *, char *);
-    int translate_splash(block_r *, char *);
     int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
-    int translate_id(block_r *, char *, int);
     int translate_autobonus(block_r *, int);
     int translate_misc(block_r *, char *);
     int translate_produce(block_r *, int);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
-    int translate_petloot(block_r *);
     int translate_petrecovery(block_r *);
-    int translate_petskillbonus(block_r *);
     int translate_petskillattack(block_r *);
     int translate_petskillattack2(block_r *);
     int translate_petskillsupport(block_r *);
