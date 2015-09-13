@@ -1253,7 +1253,7 @@ int script_translate(script_t * script) {
             case 38: ret = exit_func_safe("maintenance"); break;                                                    /* mercenary_sc_status */
             case 39: ret = translate_produce(iter, iter->type); break;                                              /* produce */
             case 40: ret = translate_produce(iter, iter->type); break;                                              /* cooking */
-            case 41: ret = exit_func_safe("maintenance"); break;                                              /* makerune */
+            case 41: ret = exit_func_safe("maintenance"); break;                                                    /* makerune */
             case 42: ret = translate_getexp(iter, iter->type); break;                                               /* getguildexp */
             case 43: ret = translate_getexp(iter, iter->type); break;                                               /* getexp */
             case 44: ret = translate_misc(iter, "monster"); break;                                                  /* monster */
@@ -3199,7 +3199,6 @@ failed:
 int translate_petloot(block_r * block) {
     int ret = 0;
     int len = 0;
-    int off = 0;
     char * buf = NULL;
 
     /* error on invalid reference and empty argument */
@@ -3216,9 +3215,75 @@ int translate_petloot(block_r * block) {
     if(NULL == buf)
         return CHECK_FAILED;
 
-    off += sprintf(buf, "Pet can loot and hold upto %s items.\n"
-                        "Use pet performance to transfer items to inventory.",
-                        block->eng[0]);
+    sprintf(buf, "Pet can loot and hold upto %s items.\n"
+    "Use pet performance to transfer items to inventory.",
+    block->eng[0]);
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
+}
+
+int translate_petheal(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int off = 0;
+    char * buf = NULL;
+
+    /* error on invalid reference and empty argument */
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 4)
+        return CHECK_FAILED;
+
+    len = block->arg_cnt;
+    if( stack_eng_int(block, block->ptr[0], 1) ||
+        stack_eng_int(block, block->ptr[1], 1) ||
+        stack_eng_int(block, block->ptr[2], 1) ||
+        stack_eng_int(block, block->ptr[3], 1))
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "[HP < %s and SP < %s]\nCast Heal [Lv. %s] for every %s "
+    "seconds.", block->eng[2], block->eng[3], block->eng[0], block->eng[1]);
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
+}
+
+int translate_petrecovery(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    char * buf = NULL;
+
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 2)
+        return CHECK_FAILED;
+
+    len  = block->arg_cnt;
+    if(translate_status_end(block) ||
+       stack_eng_int(block, block->ptr[0], 1))
+        return CHECK_FAILED;
+    len  = (block->arg_cnt - len) + 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    len = strlen(block->eng[0]);
+    block->eng[0][len - 1] = '\0';
+
+    sprintf(buf, "%s every %s seconds.", block->eng[0], block->eng[1]);
 
     if(script_buffer_reset(block, TYPE_ENG) ||
        script_buffer_write(block, TYPE_ENG, buf))
@@ -3233,6 +3298,11 @@ int translate_petskillbonus(block_r * block) {
     int len = 0;
     char * buf = NULL;
 
+    /* error on invalid reference and empty argument */
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 4)
+        return CHECK_FAILED;
+
     len = block->arg_cnt;
     if( translate_bonus(block, "bonus") ||
         stack_eng_int(block, block->ptr[2], 1) ||
@@ -3244,8 +3314,43 @@ int translate_petskillbonus(block_r * block) {
     if(NULL == buf)
         return CHECK_FAILED;
 
-    sprintf(buf, "Pet skill bonus is activated for %s seconds with a delay"
-    " of %s seconds.\n -> %s", block->eng[1], block->eng[2], block->eng[0]);
+    sprintf(buf, "Pet skill bonus is activated for %s seconds with a del"
+    "ay of %s seconds.\n%s", block->eng[1], block->eng[2], block->eng[0]);
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
+}
+
+int translate_petskillattack(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int off = 0;
+    int argc = 0;
+    char * buf = NULL;
+
+    /* error on invalid reference and empty argument */
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 4)
+        return CHECK_FAILED;
+
+    len = block->arg_cnt;
+    if( stack_eng_skill(block, block->ptr[0], &argc) || /* skill name */
+        stack_eng_int(block, block->ptr[1], 1) ||       /* skill level */
+        stack_eng_int(block, block->ptr[2], 1) ||       /* normal rate */
+        stack_eng_int(block, block->ptr[3], 1))         /* loyalty rate */
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "Add a %s (%s on loyalty) chance of casting %s level"
+    " %s.", block->eng[2], block->eng[3], block->eng[0], block->eng[1]);
 
     if(script_buffer_reset(block, TYPE_ENG) ||
        script_buffer_write(block, TYPE_ENG, buf))
@@ -3256,36 +3361,75 @@ int translate_petskillbonus(block_r * block) {
 }
 
 int translate_petskillattack2(block_r * block) {
-    /*int ret = 0;
-    int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * damage = NULL;
-    node_t * hit = NULL;
-    node_t * rate = NULL;
-    node_t * brate = NULL;
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    if(translate_skill(block, block->ptr[0]) == SCRIPT_FAILED)
-        return SCRIPT_FAILED;
-    damage = evaluate_argument(block, block->ptr[1]);
-    hit = evaluate_argument(block, block->ptr[2]);
-    rate = evaluate_argument(block, block->ptr[3]);
-    brate = evaluate_argument(block, block->ptr[4]);
-    ret = (damage != NULL && hit != NULL && rate != NULL && brate != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
-    if(ret == SCRIPT_PASSED) {
-        offset = sprintf(buf, "Add %s (%s on max intimacy) chance of casting %s for %s damage x %s hits.",
-            status_formula(&rate->stack[rate->stack_cnt], block->eng[3], rate, 'p', 1),
-            status_formula(&brate->stack[brate->stack_cnt], block->eng[4], brate, 'p', 1),
-            block->eng[0],
-            status_formula(&damage->stack[damage->stack_cnt], block->eng[1], damage, 'n', 1),
-            status_formula(&hit->stack[hit->stack_cnt], block->eng[2], hit, 'n', 1));
-        translate_write(block, buf, 1);
-    }
-    if(damage != NULL) node_free(damage);
-    if(hit != NULL) node_free(hit);
-    if(rate != NULL) node_free(rate);
-    if(brate != NULL) node_free(brate);*/
-    return exit_abt_safe("maintenance");
+    int ret = 0;
+    int len = 0;
+    int off = 0;
+    int argc = 0;
+    char * buf = NULL;
+
+    /* error on invalid reference and empty argument */
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 5)
+        return CHECK_FAILED;
+
+    len = block->arg_cnt;
+    if( stack_eng_skill(block, block->ptr[0], &argc) || /* skill name */
+        stack_eng_int(block, block->ptr[1], 1) ||       /* damage */
+        stack_eng_int(block, block->ptr[2], 1) ||       /* number of attacks */
+        stack_eng_int(block, block->ptr[3], 1) ||       /* normal rate */
+        stack_eng_int(block, block->ptr[4], 1))         /* loyalty rate */
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "Add a %s (%s on loyalty) chance of casting %s for %s damage x %s hi"
+    "ts.", block->eng[3], block->eng[4], block->eng[0], block->eng[1], block->eng[2]);
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return CHECK_PASSED;
+}
+
+int translate_petskillsupport(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int cnt = 0;
+    int off = 0;
+    char * buf = NULL;
+
+    /* error on invalid reference and empty argument */
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 4)
+        return CHECK_FAILED;
+
+    len = block->arg_cnt;
+    if( stack_eng_skill(block, block->ptr[0], &cnt) ||
+        stack_eng_int(block, block->ptr[1], 1) ||
+        stack_eng_int(block, block->ptr[2], 1) ||
+        stack_eng_int(block, block->ptr[3], 1) ||
+        stack_eng_int(block, block->ptr[4], 1))
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "[HP < %s and SP < %s]\nCast %s [Lv. %s] for every %s seconds.",
+    block->eng[3], block->eng[4], block->eng[0], block->eng[1], block->eng[2]);
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
 }
 
 int translate_skill(block_r * block) {
@@ -3710,116 +3854,6 @@ int translate_setfalcon(block_r * block) {
             translate_write(block, "Summon a falcon.", 1);
     }
     if(result != NULL) node_free(result);*/
-    return exit_abt_safe("maintenance");
-}
-
-int translate_petrecovery(block_r * block) {
-    //int offset = 0;
-    //char buf[BUF_SIZE];
-    //node_t * delay = NULL;
-    //if(exit_null_safe(1, block))
-    //    return SCRIPT_FAILED;
-    //if(translate_status_end(block) == SCRIPT_FAILED)
-    //    return SCRIPT_FAILED;
-    ///* evaluate the delay expression */
-    //delay = evaluate_argument(block, block->ptr[1]);
-    //if(delay == NULL) return SCRIPT_FAILED;
-    //offset += sprintf(buf, "Pet cures %s every %d seconds.", block->eng[0], delay->min);
-    //buf[offset] = '\0';
-    //translate_write(block, buf, 1);
-    //node_free(delay);
-    return exit_abt_safe("maintenance");
-}
-
-int translate_petskillattack(block_r * block) {
-    /*int ret = 0;
-    int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * level = NULL;
-    node_t * rate = NULL;
-    node_t * brate = NULL;
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    if(translate_skill(block, block->ptr[0]) == SCRIPT_FAILED)
-        return SCRIPT_FAILED;
-    level = evaluate_argument(block, block->ptr[1]);
-    rate = evaluate_argument(block, block->ptr[2]);
-    brate = evaluate_argument(block, block->ptr[3]);
-    ret = (level != NULL && rate != NULL && brate != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
-    if(ret == SCRIPT_PASSED) {
-        offset = sprintf(buf, "Add %s (%s on max intimacy) chance of casting %s [Lv. %s].",
-            status_formula(&rate->stack[rate->stack_cnt], block->eng[2], rate, 'p', 1),
-            status_formula(&brate->stack[brate->stack_cnt], block->eng[3], brate, 'p', 1),
-            block->eng[0],
-            formula(&level->stack[level->stack_cnt], block->eng[1], level));
-        translate_write(block, buf, 1);
-    }
-    if(level != NULL) node_free(level);
-    if(rate != NULL) node_free(rate);
-    if(brate != NULL) node_free(brate);*/
-    return exit_abt_safe("maintenance");
-}
-
-int translate_petskillsupport(block_r * block) {
-    /*int ret = 0;
-    int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * level = NULL;
-    node_t * delay = NULL;
-    node_t * hp = NULL;
-    node_t * sp = NULL;
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    if(translate_skill(block, block->ptr[0]) == SCRIPT_FAILED)
-        return SCRIPT_FAILED;
-    level = evaluate_argument(block, block->ptr[1]);
-    delay = evaluate_argument(block, block->ptr[2]);
-    hp = evaluate_argument(block, block->ptr[3]);
-    sp = evaluate_argument(block, block->ptr[4]);
-    ret = (level != NULL && delay != NULL && hp != NULL && sp != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
-    if(ret == SCRIPT_PASSED) {
-        offset = sprintf(buf, "Cast %s [Lv. %s] when pet owner's hp is below %s and sp is below %s for every %s seconds.",
-            block->eng[0],
-            status_formula(&level->stack[level->stack_cnt], block->eng[1], level, 'n', 1),
-            status_formula(&hp->stack[hp->stack_cnt], block->eng[3], hp, 'p', 1),
-            status_formula(&sp->stack[sp->stack_cnt], block->eng[4], sp, 'p', 1),
-            status_formula(&delay->stack[delay->stack_cnt], block->eng[2], delay, 'n', 1));
-        translate_write(block, buf, 1);
-    }
-    if(level != NULL) node_free(level);
-    if(delay != NULL) node_free(delay);
-    if(hp != NULL) node_free(hp);
-    if(sp != NULL) node_free(sp);*/
-    return exit_abt_safe("maintenance");
-}
-
-int translate_petheal(block_r * block) {
-    /*int ret = 0;
-    int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * level = NULL;
-    node_t * delay = NULL;
-    node_t * hp = NULL;
-    node_t * sp = NULL;
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    level = evaluate_argument(block, block->ptr[0]);
-    delay = evaluate_argument(block, block->ptr[1]);
-    hp = evaluate_argument(block, block->ptr[2]);
-    sp = evaluate_argument(block, block->ptr[3]);
-    ret = (level != NULL && delay != NULL && hp != NULL && sp != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
-    if(ret == SCRIPT_PASSED) {
-        offset = sprintf(buf, "Cast Heal [Lv. %s] when pet owner's hp is below %s and sp is below %s for every %s seconds.",
-            status_formula(&level->stack[level->stack_cnt], block->eng[0], level, 'n', 1),
-            status_formula(&hp->stack[hp->stack_cnt], block->eng[2], hp, 'p', 1),
-            status_formula(&sp->stack[sp->stack_cnt], block->eng[3], sp, 'p', 1),
-            status_formula(&delay->stack[delay->stack_cnt], block->eng[1], delay, 'n', 1));
-        translate_write(block, buf, 1);
-    }
-    if(level != NULL) node_free(level);
-    if(delay != NULL) node_free(delay);
-    if(hp != NULL) node_free(hp);
-    if(sp != NULL) node_free(sp);*/
     return exit_abt_safe("maintenance");
 }
 

@@ -164,7 +164,7 @@ struct script_t;
      * any problems.
      *
      * the script api can be used to compile the script recursively, but that
-     * would require loading separated databases and mappins, which is v-very
+     * would require loading separated databases and mappings, which is vvery
      * expensive. */
     /* revised */ int script_recursive(db_t *, int, lua_State *, char *, char **);
 
@@ -287,12 +287,16 @@ struct script_t;
     /* revised */ int translate_bonus(block_r *, char *);
     /* revised */ int translate_itemskill(block_r *);
     /* revised */ int translate_petloot(block_r *);
+    /* revised */ int translate_petheal(block_r *);
+    /* revised */ int translate_petrecovery(block_r *);
     /* revised */ int translate_petskillbonus(block_r *);
-    int translate_petskillattack2(block_r *);
+    /* revised */ int translate_petskillattack(block_r *);
+    /* revised */ int translate_petskillattack2(block_r *);
+    /* revised */ int translate_petskillsupport(block_r *);
+
     int translate_skill(block_r *);
     int translate_searchstore(block_r *);
     int translate_buyingstore(block_r *);
-
     int translate_getrandgroup(block_r *, int);
     int translate_hire_merc(block_r *, int);
     int translate_getexp(block_r *, int);
@@ -302,11 +306,7 @@ struct script_t;
     int translate_misc(block_r *, char *);
     int translate_produce(block_r *, int);
     int translate_bonus_script(block_r *);
-    int translate_setfalcon(block_r *);
-    int translate_petrecovery(block_r *);
-    int translate_petskillattack(block_r *);
-    int translate_petskillsupport(block_r *);
-    int translate_petheal(block_r *);
+    int translate_setfalcon(block_r *);;
     int translate_write(block_r *, char *, int);
     int translate_overwrite(block_r *, char *, int);
 
