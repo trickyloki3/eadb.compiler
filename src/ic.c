@@ -1,6 +1,7 @@
 #include <script.h>
 
 int main(int argc, char * argv[]) {
+    int len = 0;
     script_t * scribe = NULL;
 
     if (script_init(&scribe,
@@ -14,7 +15,11 @@ int main(int argc, char * argv[]) {
         scribe->offset = 0;
 
         /* skip empty scripts */
-        if (scribe->item.script[0] == '{' && scribe->item.script[1] == '}')
+        len = strlen(scribe->item.script);
+        if (0 >= len)
+            continue;
+
+        if (scribe->item.script[0] == '{' && scribe->item.script[len - 1] == '}')
             continue;
 
         /* compile the item script */
@@ -25,14 +30,13 @@ int main(int argc, char * argv[]) {
             break;
         }
 
-        if (scribe->item.id == 1388) {
+        if (scribe->item.id == 0) {
             script_block_dump(scribe, stderr);
             printf("%s\n", scribe->item.script);
             break;
         }
 
-        if( script_bonus(scribe) ||
-            script_generate(scribe, scribe->buffer, &scribe->offset)) {
+        if( script_generate(scribe, scribe->buffer, &scribe->offset)) {
             script_block_dump(scribe, stderr);
             printf("Error on item %d; %s!\n", scribe->item.id, scribe->item.script);
             break;

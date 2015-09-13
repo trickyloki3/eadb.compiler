@@ -91,23 +91,6 @@
     #define BONUS_FLAG_AG_4         0x00000800  /* aggregate 4th argument */
     #define BONUS_FLAG_AG_5         0x00001000  /* aggregate 5th argument */
 
-    /* bf and atf trigger flags for translate_trigger */
-    #define ATF_SELF    1
-    #define ATF_TARGET  2
-    #define ATF_SHORT   4
-    #define ATF_LONG    8
-    #define ATF_WEAPON  16
-    #define ATF_MAGIC   32
-    #define ATF_MISC    64
-    #define ATF_SKILL   96
-    #define BF_WEAPON   1
-    #define BF_MAGIC    2
-    #define BF_MISC     4
-    #define BF_SHORT    16
-    #define BF_LONG     64
-    #define BF_SKILL    256
-    #define BF_NORMAL   512
-
     typedef struct {
         char script[BUF_SIZE];
         char * script_ptr[PTR_SIZE];
@@ -162,9 +145,6 @@ struct script_t;
         struct block_r * set;                /* point to end of current linked list of set block */
         /* set block node for dependency */
         node_t * set_node;
-        /* bonus block keep bonus query and integer results for post analysis */
-        bonus_res bonus;                     /* bonus structure contain entry from item_bonus.txt */
-        node_t * result[BONUS_SIZE];         /* keep until after minimization */
         /* database references; duplicate information from script_t to prevent
          * passing script_t to every translator; read only */
         db_t * db;                           /* sqlite3 database handle to athena */
@@ -217,7 +197,6 @@ struct script_t;
     int script_extend_block(script_t *, char *, block_r *, block_r **);
     int script_extend_paramater(block_r *, char *);
     int script_translate(script_t *);
-    int script_bonus(script_t *);
     int script_generate(script_t *, char *, int *);
     int script_generate_combo(int, char *, int *, db_t *, int);
 
@@ -251,30 +230,30 @@ struct script_t;
     int list_head(block_list_t *, block_r **);
 
     /* block memory management */
-    int script_block_alloc(script_t *, block_r **);                     /* create a new block or get a block from the free list and place on the used list */
-    int script_block_dealloc(script_t *, block_r **);                   /* remove a block from the used list and add the block to the free list */
-    int script_block_reset(script_t *);                                 /* remove every block from used list, reset the block, and add to the free list */
-    int script_block_release(block_r *);                                /* reset the block */
-    int script_block_finalize(script_t *);                              /* remove every block from the free list and free the memory of each block */
+    int script_block_alloc(script_t *, block_r **);                                 /* create a new block or get a block from the free list and place on the used list */
+    int script_block_dealloc(script_t *, block_r **);                               /* remove a block from the used list and add the block to the free list */
+    int script_block_reset(script_t *);                                             /* remove every block from used list, reset the block, and add to the free list */
+    int script_block_release(block_r *);                                            /* reset the block */
+    int script_block_finalize(script_t *);                                          /* remove every block from the free list and free the memory of each block */
 
     /* block buffer functions */
     #define TYPE_PTR 1    /* block->ptr stack */
     #define TYPE_ENG 2    /* block->eng stack */
-    /* revised */ int script_buffer_write(block_r *, int, const char *);              /* push a string to block->ptr or block->eng stack */
-    /* revised */ int script_buffer_unwrite(block_r *, int);                          /* pop a string from block->ptr or block->eng stack */
-    /* revised */ int script_buffer_reset(block_r *, int);                            /* reset the entire stack */
-    /* revised */ int script_formula_write(block_r *, int, node_t *, char **);        /* concatenate a node's formula string with block->eng stack string */
+    /* revised */ int script_buffer_write(block_r *, int, const char *);            /* push a string to block->ptr or block->eng stack */
+    /* revised */ int script_buffer_unwrite(block_r *, int);                        /* pop a string from block->ptr or block->eng stack */
+    /* revised */ int script_buffer_reset(block_r *, int);                          /* reset the entire stack */
+    /* revised */ int script_formula_write(block_r *, int, node_t *, char **);      /* concatenate a node's formula string with block->eng stack string */
 
     /* block 'for' functions */
-    int script_block_write(block_r *, char *, ...);                     /* write to block->ptr stack using vararg */
-    int check_loop_expression(script_t *, char *, char *);              /* parse a statement within a for loop */
+    int script_block_write(block_r *, char *, ...);                                 /* write to block->ptr stack using vararg */
+    int check_loop_expression(script_t *, char *, char *);                          /* parse a statement within a for loop */
 
     /* block debug functions */
     int script_block_dump(script_t *, FILE *);
 
     /* map id to string */
-    /* revised */ int script_map_init(script_t *, const char *);
-    /* revised */ int script_map_id(block_r *, char *, int, char **);
+    /* revised */ int script_map_init(script_t *, const char *);                    /* create a lua stack containing the tables */
+    /* revised */ int script_map_id(block_r *, char *, int, char **);               /* resolve integer id to string values */
     /* revised */ int script_map_deit(script_t *);
 
     /* script stack functions */
@@ -313,7 +292,28 @@ struct script_t;
     #define DB_PET_ID               0x10
     #define DB_MAP_ID               0x20
     /* revised */ int stack_eng_db(block_r *, char *, int, int *);
-    /* revised */ int stack_eng_item_group(block_r *, char *, int *);
+    /* revised */ int stack_eng_item_group_name(block_r *, char *, int *);
+    #define BF_WEAPON               0x0001
+    #define BF_MAGIC                0x0002
+    #define BF_MISC                 0x0004
+    #define BF_SHORT                0x0010
+    #define BF_LONG                 0x0040
+    #define BF_SKILL                0x0100
+    #define BF_NORMAL               0x0200
+    #define BF_WEAPONMASK           0x000F
+    #define BF_RANGEMASK            0x00F0
+    #define BF_SKILLMASK            0x0F00
+    /* revised */ int stack_eng_trigger_bt(block_r *, char *);
+    #define ATF_SELF    0x01
+    #define ATF_TARGET  0x02
+    #define ATF_SHORT   0x04
+    #define ATF_LONG    0x08
+    #define ATF_WEAPON  0x10
+    #define ATF_MAGIC   0x20
+    #define ATF_MISC    0x40
+    #define ATF_SKILL   0x60
+
+    /* revised */ int stack_eng_trigger_atf(block_r *, char *);
     /* revised */ int stack_eng_script(block_r *, char *);
     /* revised */ int stack_aux_formula(block_r *, node_t *, char *);
 
@@ -385,24 +385,8 @@ struct script_t;
     /* revised */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
     /* revised */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
 
-    /* support translation */
-    int translate_bonus_desc(node_t **, block_r *, bonus_res *);
-    char * translate_bonus_template(char *, int *, char *, ...);
-    void translate_bonus_integer(block_r *, node_t *, int *);
-    void translate_bonus_integer2(block_r *, node_t *, int *, char *, char *, char *);
-    void translate_bonus_float(block_r *, node_t *, int *, int);
-    void translate_bonus_float_percentage(block_r *, node_t *, int *, int);
-    void translate_bonus_percentage(block_r *, node_t *, int *);
-    void translate_bonus_percentage2(block_r *, node_t *, int *, char *, char *, char *);
-    void translate_bonus_float_percentage2(block_r *, node_t *, int *, char *, char *, char *, int);
-    char * check_node_range(node_t *, char *);
-    char * check_node_range_float(node_t *, char *, int);
-    char * check_node_range_precentage(node_t *, char *);
-    char * check_node_range_float_percentage(node_t *, char *, int);
-    int check_node_affinity(node_t *);
-    int script_linkage_count(block_r *, int);
-
     /* support generation */
+    int script_linkage_count(block_r *, int);
     int script_generate_cond(logic_node_t *, FILE *, char *, char *, int *, block_r *);
     int script_generate_and_chain(logic_node_t *, char *, int *, block_r *);
     int script_generate_cond_node(logic_node_t *, char *, int *, block_r *);

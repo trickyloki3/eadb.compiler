@@ -267,19 +267,6 @@ int script_block_release(block_r * block) {
     deepfreenamerange(block->logic_tree);
     block->logic_tree = NULL;
 
-    /* the result calculated from bonus integer arguments are
-     * kept for post-integer analysis on writing the final string. */
-    for(i = 0; i < BONUS_SIZE; i++)
-        if(block->result[i] != NULL) {
-            node_free(block->result[i]);
-            block->result[i] = NULL;
-        }
-
-    /* invalid the bonus */
-    block->bonus.id = -1;
-    block->bonus.type_cnt = 0;
-    block->bonus.order_cnt = 0;
-
     /* free the set node */
     if(block->type == 28) {
         node_free(block->set_node);
@@ -519,12 +506,6 @@ int script_block_dump(script_t * script, FILE * stm) {
         if(iter->logic_tree != NULL) {
             fprintf(stm," Block Logic Tree: ");
             dmpnamerange(iter->logic_tree, stm, 0);
-        }
-        for(i = 0; i < BONUS_SIZE; i++) {
-            if(iter->result[i] != NULL) {
-                fprintf(stm," Paramater %d Logic Tree: ", i);
-                dmpnamerange(iter->result[i]->cond, stm, 0);
-            }
         }
         /* dump the buffer */
         for (i = 0; i < iter->arg_cnt; i++)
@@ -1272,159 +1253,160 @@ int script_translate(script_t * script) {
             case 2: ret = translate_bonus(iter, "bonus3"); break;                                                   /* bonus3 */
             case 3: ret = translate_bonus(iter, "bonus4"); break;                                                   /* bonus4 */
             case 4: ret = translate_bonus(iter, "bonus5"); break;                                                   /* bonus5 */
-            case 5: ret = translate_autobonus(iter, 0x01); break;                                                   /* autobonus */
-            case 6: ret = translate_autobonus(iter, 0x02); break;                                                   /* autobonus2 */
-            case 7: ret = translate_autobonus(iter, 0x04); break;                                                   /* autobonus3 */
-            case 8: ret = translate_heal(iter); break;                                                              /* heal */
-            case 9: ret = translate_heal(iter); break;                                                              /* percentheal */
-            case 10: ret = translate_heal(iter); break;                                                             /* itemheal */
-            case 11: ret = translate_skill_block(iter, iter->type); break;                                          /* skill */
-            case 12: ret = translate_skill_block(iter, iter->type); break;                                          /* itemskill */
-            case 13: ret = translate_skill_block(iter, iter->type); break;                                          /* unitskilluseid */
-            case 14: ret = translate_status(iter); break;                                                           /* sc_start */
-            case 15: ret = exit_func_safe("maintenance"); break;                                                     /* sc_start4 */
-            case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
-            case 17: ret = translate_getitem(iter); break;                                                          /* getitem */
-            case 18: ret = translate_rentitem(iter); break;                                                         /* rentitem */
-            case 19: ret = translate_delitem(iter); break;                                                          /* delitem */
-            case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
-            case 23: ret = translate_write(iter, "Set new font.", 1); break;                                        /* setfont */
-            case 24: ret = translate_buyingstore(iter); break;                                                      /* buyingstore */
-            case 25: ret = translate_searchstore(iter); break;                                                      /* searchstores */
-            case 30: ret = translate_write(iter, "Send a message through the announcement system.", 1); break;      /* announce */
-            case 31: ret = translate_misc(iter, "callfunc"); break;                                                 /* callfunc */
-            case 33: ret = translate_misc(iter, "warp"); break;                                                     /* warp */
-            case 35: ret = translate_write(iter, "Hatch a pet egg.", 1); break;                                     /* bpet */
-            case 34: ret = translate_pet_egg(iter); break;                                                          /* pet */
-            case 36: ret = translate_hire_merc(iter, iter->type); break;                                            /* mercenary_create */
-            case 37: ret = translate_heal(iter); break;                                                             /* mercenary_heal */
-            case 38: ret = exit_func_safe("maintenance"); break;                                                    /* mercenary_sc_status */
-            case 39: ret = translate_produce(iter, iter->type); break;                                              /* produce */
-            case 40: ret = translate_produce(iter, iter->type); break;                                              /* cooking */
-            case 41: ret = translate_produce(iter, iter->type); break;                                              /* makerune */
-            case 42: ret = translate_getexp(iter, iter->type); break;                                               /* getguildexp */
-            case 43: ret = translate_getexp(iter, iter->type); break;                                               /* getexp */
-            case 44: ret = translate_misc(iter, "monster"); break;                                                  /* monster */
-            case 45: ret = translate_write(iter, "Evolve homunculus when requirements are met.", 1); break;         /* homevolution */
-            case 46: ret = translate_write(iter, "Change to Summer Outfit when worn.", 1); break;                   /* setoption */
-            case 47: ret = translate_write(iter, "Summon a creature to mount. [Work for all classes].", 1); break;  /* setmounting */
-            case 48: ret = translate_setfalcon(iter); break;                                                        /* setfalcon */
-            case 49: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getgroupitem */
-            case 50: ret = translate_write(iter, "Reset all status points.", 1); break;                             /* resetstatus */
-            case 51: ret = translate_bonus_script(iter); break;                                                     /* bonus_script */
-            case 52: ret = translate_write(iter, "Play another background song.", 1); break;                        /* playbgm */
-            case 53: ret = translate_transform(iter); break;                                                        /* transform */
-            case 54: ret = exit_func_safe("maintenance"); break;                                                           /* sc_start2 */
-            case 55: ret = translate_petloot(iter); break;                                                          /* petloot */
-            case 56: ret = translate_petrecovery(iter); break;                                                      /* petrecovery */
-            case 57: ret = translate_petskillbonus(iter); break;                                                    /* petskillbonus */
-            case 58: ret = translate_petskillattack(iter); break;                                                   /* petskillattack */
-            case 59: ret = translate_petskillattack2(iter); break;                                                  /* petskillattack2 */
-            case 60: ret = translate_petskillsupport(iter); break;                                                  /* petskillsupport */
-            case 61: ret = translate_petheal(iter); break;                                                          /* petheal */
-            /* non-simple structures */
-            case 26:
-                evaluate_expression(iter, iter->ptr[0], 1,
-                EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-                break;                                                                                              /* if */
-            case 27: /* invert the linked logic tree; only the top needs to be inverted */
-                if(iter->logic_tree != NULL) {
-                    logic_tree = iter->logic_tree;
-                    iter->logic_tree = inverse_logic_tree(iter->logic_tree);
-                    iter->logic_tree->stack = logic_tree->stack;
-                    freenamerange(logic_tree);
-                }
+            //case 5: ret = translate_autobonus(iter, 0x01); break;                                                   /* autobonus */
+            //case 6: ret = translate_autobonus(iter, 0x02); break;                                                   /* autobonus2 */
+            //case 7: ret = translate_autobonus(iter, 0x04); break;                                                   /* autobonus3 */
+            //case 8: ret = translate_heal(iter); break;                                                              /* heal */
+            //case 9: ret = translate_heal(iter); break;                                                              /* percentheal */
+            //case 10: ret = translate_heal(iter); break;                                                             /* itemheal */
+            //case 11: ret = translate_skill_block(iter, iter->type); break;                                          /* skill */
+            //case 12: ret = translate_skill_block(iter, iter->type); break;                                          /* itemskill */
+            //case 13: ret = translate_skill_block(iter, iter->type); break;                                          /* unitskilluseid */
+            //case 14: ret = translate_status(iter); break;                                                           /* sc_start */
+            //case 15: ret = exit_func_safe("maintenance"); break;                                                     /* sc_start4 */
+            //case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
+            //case 17: ret = translate_getitem(iter); break;                                                          /* getitem */
+            //case 18: ret = translate_rentitem(iter); break;                                                         /* rentitem */
+            //case 19: ret = translate_delitem(iter); break;                                                          /* delitem */
+            //case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
+            //case 23: ret = translate_write(iter, "Set new font.", 1); break;                                        /* setfont */
+            //case 24: ret = translate_buyingstore(iter); break;                                                      /* buyingstore */
+            //case 25: ret = translate_searchstore(iter); break;                                                      /* searchstores */
+            //case 30: ret = translate_write(iter, "Send a message through the announcement system.", 1); break;      /* announce */
+            //case 31: ret = translate_misc(iter, "callfunc"); break;                                                 /* callfunc */
+            //case 33: ret = translate_misc(iter, "warp"); break;                                                     /* warp */
+            //case 35: ret = translate_write(iter, "Hatch a pet egg.", 1); break;                                     /* bpet */
+            //case 34: ret = translate_pet_egg(iter); break;                                                          /* pet */
+            //case 36: ret = translate_hire_merc(iter, iter->type); break;                                            /* mercenary_create */
+            //case 37: ret = translate_heal(iter); break;                                                             /* mercenary_heal */
+            //case 38: ret = exit_func_safe("maintenance"); break;                                                    /* mercenary_sc_status */
+            //case 39: ret = translate_produce(iter, iter->type); break;                                              /* produce */
+            //case 40: ret = translate_produce(iter, iter->type); break;                                              /* cooking */
+            //case 41: ret = translate_produce(iter, iter->type); break;                                              /* makerune */
+            //case 42: ret = translate_getexp(iter, iter->type); break;                                               /* getguildexp */
+            //case 43: ret = translate_getexp(iter, iter->type); break;                                               /* getexp */
+            //case 44: ret = translate_misc(iter, "monster"); break;                                                  /* monster */
+            //case 45: ret = translate_write(iter, "Evolve homunculus when requirements are met.", 1); break;         /* homevolution */
+            //case 46: ret = translate_write(iter, "Change to Summer Outfit when worn.", 1); break;                   /* setoption */
+            //case 47: ret = translate_write(iter, "Summon a creature to mount. [Work for all classes].", 1); break;  /* setmounting */
+            //case 48: ret = translate_setfalcon(iter); break;                                                        /* setfalcon */
+            //case 49: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getgroupitem */
+            //case 50: ret = translate_write(iter, "Reset all status points.", 1); break;                             /* resetstatus */
+            //case 51: ret = translate_bonus_script(iter); break;                                                     /* bonus_script */
+            //case 52: ret = translate_write(iter, "Play another background song.", 1); break;                        /* playbgm */
+            //case 53: ret = translate_transform(iter); break;                                                        /* transform */
+            //case 54: ret = exit_func_safe("maintenance"); break;                                                           /* sc_start2 */
+            //case 55: ret = translate_petloot(iter); break;                                                          /* petloot */
+            //case 56: ret = translate_petrecovery(iter); break;                                                      /* petrecovery */
+            //case 57: ret = translate_petskillbonus(iter); break;                                                    /* petskillbonus */
+            //case 58: ret = translate_petskillattack(iter); break;                                                   /* petskillattack */
+            //case 59: ret = translate_petskillattack2(iter); break;                                                  /* petskillattack2 */
+            //case 60: ret = translate_petskillsupport(iter); break;                                                  /* petskillsupport */
+            //case 61: ret = translate_petheal(iter); break;                                                          /* petheal */
+            ///* non-simple structures */
+            //case 26:
+            //    evaluate_expression(iter, iter->ptr[0], 1,
+            //    EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
+            //    break;                                                                                              /* if */
+            //case 27: /* invert the linked logic tree; only the top needs to be inverted */
+            //    if(iter->logic_tree != NULL) {
+            //        logic_tree = iter->logic_tree;
+            //        iter->logic_tree = inverse_logic_tree(iter->logic_tree);
+            //        iter->logic_tree->stack = logic_tree->stack;
+            //        freenamerange(logic_tree);
+            //    }
 
-                /* add the else if condition onto the stack */
-                if(iter->ptr_cnt > 1)
-                    evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-                break;                                                                                              /* else */
-            case 28:
-                if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
-                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                        EVALUATE_FLAG_EXPR_BOOL | EVALUATE_FLAG_ITERABLE_SET);
-                } else if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
-                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                        EVALUATE_FLAG_VARIANT_SET);
-                } else {
-                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                        EVALUATE_FLAG_EXPR_BOOL );
-                }
+            //    /* add the else if condition onto the stack */
+            //    if(iter->ptr_cnt > 1)
+            //        evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
+            //    break;                                                                                              /* else */
+            //case 28:
+            //    if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
+            //        iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
+            //            EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
+            //            EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
+            //            EVALUATE_FLAG_EXPR_BOOL | EVALUATE_FLAG_ITERABLE_SET);
+            //    } else if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
+            //        iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
+            //            EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
+            //            EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
+            //            EVALUATE_FLAG_VARIANT_SET);
+            //    } else {
+            //        iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
+            //            EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
+            //            EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
+            //            EVALUATE_FLAG_EXPR_BOOL );
+            //    }
 
-                /* special thanks to 'iterable' ranges for making set block 100x more complex! */
-                if(iter->set_node == NULL) {
-                    exit_func_safe("failed to evaluate set block expression "
-                    "'%s' on item id %d", iter->ptr[1], iter->item_id);
-                    return SCRIPT_FAILED;
-                }
+            //    /* special thanks to 'iterable' ranges for making set block 100x more complex! */
+            //    if(iter->set_node == NULL) {
+            //        exit_func_safe("failed to evaluate set block expression "
+            //        "'%s' on item id %d", iter->ptr[1], iter->item_id);
+            //        return SCRIPT_FAILED;
+            //    }
 
-                /* calculate a reasonable iterable range */
-                if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
-                    set = iter->set;   /* the parent is the non-variant */
+            //    /* calculate a reasonable iterable range */
+            //    if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
+            //        set = iter->set;   /* the parent is the non-variant */
 
-                    /* check that the non-variant set block is linked */
-                    if(set == NULL) {
-                        exit_func_safe("failed to search non-variant set block "
-                        "for '%s' in item %d", iter->ptr[0], iter->item_id);
-                        return SCRIPT_FAILED;
-                    }
+            //        /* check that the non-variant set block is linked */
+            //        if(set == NULL) {
+            //            exit_func_safe("failed to search non-variant set block "
+            //            "for '%s' in item %d", iter->ptr[0], iter->item_id);
+            //            return SCRIPT_FAILED;
+            //        }
 
-                    /* check that the condition was successfully analysis */
-                    if(set->logic_tree == NULL) {
-                        exit_func_safe("failed to build logic tree for set "
-                        "expression '%s' int item %d", set->ptr[1], set->item_id);
-                    }
+            //        /* check that the condition was successfully analysis */
+            //        if(set->logic_tree == NULL) {
+            //            exit_func_safe("failed to build logic tree for set "
+            //            "expression '%s' int item %d", set->ptr[1], set->item_id);
+            //        }
 
-                    /* search for the range of the set variable */
-                    iterable_range = search_tree_dependency_or(set->logic_tree, set->ptr[0], set->set_node->range);
-                    if(iterable_range == NULL) {
-                        exit_func_safe("failed to search iterable set block range '%s'"
-                        " from logic tree in item %d", set->ptr[0], set->item_id);
-                        dmpnamerange(set->logic_tree, stderr, 0);
-                        return SCRIPT_FAILED;
-                    } else {
-                        val_min = RANGE_MIN(iterable_range, set->set_node->range);
-                        val_max = RANGE_MAX(iterable_range, set->set_node->range);
-                        temp_range = iterable_range;
-                        if(IS_SUBSET_OF(set->set_node->range, iterable_range)) {
-                            switch(iter->set_node->range->min) {
-                                case -1: iterable_range = mkrange(INIT_OPERATOR, set->set_node->range->min, val_max, DONT_CARE); break;
-                                case  0: iterable_range = andrange(iterable_range, set->set_node->range); break;
-                                case  1: iterable_range = mkrange(INIT_OPERATOR, val_min, set->set_node->range->max, DONT_CARE); break;
-                                default: /* variant must evaluate to -1, 0, and 1 */
-                                    exit_func_safe("invalid variant value %d in item "
-                                    "id %d", iter->set_node->range->min, iter->item_id);
-                                    break;
-                            }
-                        } else {
-                            iterable_range = mkrange(INIT_OPERATOR, val_min, val_max, DONT_CARE); break;
-                        }
-                        freerange(temp_range);
+            //        /* search for the range of the set variable */
+            //        iterable_range = search_tree_dependency_or(set->logic_tree, set->ptr[0], set->set_node->range);
+            //        if(iterable_range == NULL) {
+            //            exit_func_safe("failed to search iterable set block range '%s'"
+            //            " from logic tree in item %d", set->ptr[0], set->item_id);
+            //            dmpnamerange(set->logic_tree, stderr, 0);
+            //            return SCRIPT_FAILED;
+            //        } else {
+            //            val_min = RANGE_MIN(iterable_range, set->set_node->range);
+            //            val_max = RANGE_MAX(iterable_range, set->set_node->range);
+            //            temp_range = iterable_range;
+            //            if(IS_SUBSET_OF(set->set_node->range, iterable_range)) {
+            //                switch(iter->set_node->range->min) {
+            //                    case -1: iterable_range = mkrange(INIT_OPERATOR, set->set_node->range->min, val_max, DONT_CARE); break;
+            //                    case  0: iterable_range = andrange(iterable_range, set->set_node->range); break;
+            //                    case  1: iterable_range = mkrange(INIT_OPERATOR, val_min, set->set_node->range->max, DONT_CARE); break;
+            //                    default: /* variant must evaluate to -1, 0, and 1 */
+            //                        exit_func_safe("invalid variant value %d in item "
+            //                        "id %d", iter->set_node->range->min, iter->item_id);
+            //                        break;
+            //                }
+            //            } else {
+            //                iterable_range = mkrange(INIT_OPERATOR, val_min, val_max, DONT_CARE); break;
+            //            }
+            //            freerange(temp_range);
 
-                        /* update the set block range to be iterable range */
-                        temp_range = iter->set_node->range;
-                        iter->set_node->min = minrange(iterable_range);
-                        iter->set_node->max = maxrange(iterable_range);
-                        iter->set_node->range = iterable_range;
-                        iter->set_node->range->id_min = set->set_node->min;
-                        iter->set_node->range->id_max = set->set_node->max;
-                        freerange(temp_range);
-                    }
-                }
-                break;                                                                                              /* set */
-            case 62: break;
-            case 21: /* skilleffect */
-            case 22: /* specialeffect2 */
-            case 29: /* input */
-            case 32: /* end */
-                break;
-            default: return SCRIPT_FAILED;
+            //            /* update the set block range to be iterable range */
+            //            temp_range = iter->set_node->range;
+            //            iter->set_node->min = minrange(iterable_range);
+            //            iter->set_node->max = maxrange(iterable_range);
+            //            iter->set_node->range = iterable_range;
+            //            iter->set_node->range->id_min = set->set_node->min;
+            //            iter->set_node->range->id_max = set->set_node->max;
+            //            freerange(temp_range);
+            //        }
+            //    }
+            //    break;                                                                                              /* set */
+            //case 62: break;
+            //case 21: /* skilleffect */
+            //case 22: /* specialeffect2 */
+            //case 29: /* input */
+            //case 32: /* end */
+            //    break;
+            //default: return SCRIPT_FAILED;
+            default: return SCRIPT_PASSED;
         }
 
         /* any failed translation indicate block cannot be translated */
@@ -1433,140 +1415,6 @@ int script_translate(script_t * script) {
         /* process next block */
         iter = iter->next;
     }
-    return SCRIPT_PASSED;
-}
-
-/* for each non-nullified block, attempt to minimize with
- * blocks on the same enclosing block and bonus id */
-int script_bonus(script_t * script) {
-    int i = 0;
-    int j = 0;
-    int k = 0;
-
-    block_r * iter = NULL;
-    block_r * iter_sub = NULL;
-
-    /* cache current and block pointer */
-    int cur_blk_type = 0;
-    int cur_blk_flag = 0;
-    block_r * cur_blk;      /* attempt to minimize current block */
-    block_r * cmp_blk;      /* compare current block with this block */
-
-    /* hold the aggregated strings into these buffers,
-     * should be ok to put these massive buffers on stack */
-    int total[BONUS_SIZE];              /* total strings aggregated */
-    int offset[BONUS_SIZE];             /* length of string */
-    char buffer[BONUS_SIZE][BUF_SIZE];  /* aggregate buffer holding strings */
-    char aux[BUF_SIZE];     /* =.= */   /* formatting buffer */
-
-    /* used for aggregating bonus fields by loop */
-    static const int agg_cnt = 5;
-    static const int agg_flag[5] = {
-        BONUS_FLAG_AG_1, BONUS_FLAG_AG_2,
-        BONUS_FLAG_AG_3, BONUS_FLAG_AG_4,
-        BONUS_FLAG_AG_5
-    };
-
-    iter = script->block.head->next;
-    if(iter == script->block.head) return SCRIPT_FAILED;
-    for(; iter != script->block.head; iter = iter->next) {
-        memset(total, 0, sizeof(int) * BONUS_SIZE);
-        memset(offset, 0, sizeof(int) * BONUS_SIZE);
-        cur_blk = iter;
-        cur_blk_type = cur_blk->type;
-        cur_blk_flag = cur_blk->bonus.flag;
-
-        /* check block is a bonus block and not nullified and can be minimized */
-        if(cur_blk_type > BONUS_ID_MAX || cur_blk_type == BLOCK_NULLIFIED || !(cur_blk_flag & 0x000C0000))
-            continue;
-
-        iter_sub = iter->next;
-        for(; iter_sub != script->block.head; iter_sub = iter_sub->next) {
-            cmp_blk = iter_sub;
-            /* bonus must be in same enclosing block and bonus id must match. */
-            if( cur_blk->bonus.id != cmp_blk->bonus.id || cur_blk->link != cmp_blk->link)
-                continue;
-
-            /* MINIZ - indicates that arguments must be checked
-             * MINIS - indicates that only one single argument for the bonus and also an aggregate. */
-            if(cur_blk_flag & BONUS_FLAG_MINIZ) {
-                /* check all specified arguments in item_bonus.txt all arguments are process from left to right in
-                 * translate_bonus, therefore indexing the same block->eng[i] yields the same argument order.
-                 * bonus block supports only up to 5 arguments. */
-                if( (cur_blk_flag & BONUS_FLAG_EQ_1 && ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_2 && ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_3 && ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_4 && ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) != 0) ||
-                    (cur_blk_flag & BONUS_FLAG_EQ_5 && ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) != 0))
-                    continue;
-            } else if(cur_blk_flag & BONUS_FLAG_MINIS) {
-                /* single argument for bonus is also an aggregate */
-            } else {
-                /* BONUS_FLAG_MINIS or BONUS_FLAG_MINIZ must be set */
-                fprintf(stderr, "[warn]: bonus flag must be either MINIS or MINIZ\n"
-                                "[warn]: check item_bonus.txt on bonus id %d\n"
-                                "[warn]: abort current bonus on item id %d\n",
-                                cur_blk->bonus.id, cur_blk->item_id);
-                break;
-            }
-
-            /* duplicate bonuses are typically errors */
-            if(cur_blk_flag & BONUS_FLAG_NODUP) {
-                if( (cur_blk_flag & BONUS_FLAG_AG_1 && ncs_strcmp(cur_blk->eng[0], cmp_blk->eng[0]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_2 && ncs_strcmp(cur_blk->eng[1], cmp_blk->eng[1]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_3 && ncs_strcmp(cur_blk->eng[2], cmp_blk->eng[2]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_4 && ncs_strcmp(cur_blk->eng[3], cmp_blk->eng[3]) == 0) ||
-                    (cur_blk_flag & BONUS_FLAG_AG_5 && ncs_strcmp(cur_blk->eng[4], cmp_blk->eng[4]) == 0)) {
-                    /* throw error and nullified duplicate block */
-                    fprintf(stderr,"[warn]: bonus duplicated on item id %d; in "
-                    "block %d and %d; see dump.txt.\n", cur_blk->item_id, i, j);
-                    iter_sub->type = BLOCK_NULLIFIED;
-                    continue;
-                }
-            }
-
-            /* aggregate the bonus fields */
-            for(j = 0; j < agg_cnt; j++) {
-                if(cur_blk_flag & agg_flag[j]) {
-                    offset[j] += (offset[j] <= 0) ?
-                        sprintf(buffer[j] + offset[j],"%s, %s", cur_blk->eng[j], cmp_blk->eng[j]):
-                        sprintf(buffer[j] + offset[j],", %s", cmp_blk->eng[j]);
-                    total[j]++;
-                }
-            }
-
-            /* nullified the minimized block */
-            iter_sub->type = BLOCK_NULLIFIED;
-        }
-
-        /* substitute the aggregate string into the argument translation
-         * and fix the english x and y or x, y, and z formats */
-        for(j = 0; j < BONUS_SIZE; j++)
-            if(offset[j] > 0) {
-                /* locate the last argument delimit by comma */
-                for(k = strlen(buffer[j]) - 1; k >= 0; k--)
-                    if(buffer[j][k] == ',')
-                        break;
-                buffer[j][k] = '\0';
-
-                /* write the new argument with the 'and' inserted */
-                k = (total[j] > 1) ?
-                    sprintf(aux, "%s, and %s", buffer[j], &buffer[j][k + 2]):
-                    sprintf(aux, "%s and %s", buffer[j], &buffer[j][k + 2]);
-                aux[k] = '\0';
-                translate_overwrite(cur_blk, aux, j);
-            }
-    }
-
-    /* generate the final item description for bonus blocks */
-    iter = script->block.head->next;
-    while(iter != script->block.head) {
-        if(iter->type >= 0 && iter->type <= 4)
-            if(translate_bonus_desc(iter->result, iter, &iter->bonus))
-                return SCRIPT_FAILED;
-        iter = iter->next;
-    }
-
     return SCRIPT_PASSED;
 }
 
@@ -1720,7 +1568,6 @@ int script_recursive(db_t * db, int mode, lua_State * map, char * script, char *
     if (script_lexical(&scribe->token, script) ||
         script_analysis(scribe, &scribe->token, NULL, NULL) ||
         script_translate(scribe) ||
-        script_bonus(scribe) ||
         script_generate(scribe, scribe->buffer, &scribe->offset))
         goto failed;
 
@@ -1962,8 +1809,8 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     if (node == NULL)
         goto failed;
 
-    min = minrange(node->range);
-    max = maxrange(node->range);
+    min = node->min;
+    max = node->max;
 
     /* failed on the odd case */
     if(0 == min && 0 == max)
@@ -2028,8 +1875,8 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
         return SCRIPT_FAILED;
 
     /* get the minimum and maximum of the time expression */
-    tick_min = minrange(time->range);
-    tick_max = maxrange(time->range);
+    tick_min = time->min;
+    tick_max = time->max;
 
     /* get the closest time metric that can divide the total number of milliseconds */
     if (tick_min / 86400000 > 1) {
@@ -2419,6 +2266,174 @@ int stack_eng_item_group_name(block_r * block, char * expr, int * argc) {
 clean:
     *argc = block->eng_cnt - top;
     node_free(group_id);
+    return ret;
+
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int stack_eng_trigger_bt(block_r * block, char * expr) {
+    int ret = 0;
+    int off = 0;
+    int val = 0;
+    char buf[256];
+    node_t * trigger = NULL;
+
+    /* error on invalid references */
+    if(exit_null_safe(2, block, expr))
+        return CHECK_FAILED;
+
+    trigger = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == trigger)
+        goto failed;
+
+    /* trigger must be a constant */
+    if(trigger->min != trigger->max)
+        goto failed;
+
+    val = trigger->min;
+
+    /* write using the format:
+     *  trigger on
+     *  [meelee and range]
+     *  [weapon and magic or misc]
+     *  [normal attacks or skills]
+     */
+
+    off += sprintf(&buf[off], "activate on ");
+
+    /* trigger range (inclusive) */
+    if(BF_RANGEMASK & val) {
+        if((BF_LONG | BF_SHORT) & val)
+            off += sprintf(&buf[off], "meelee and range ");
+        else if(BF_LONG & val)
+            off += sprintf(&buf[off], "range ");
+        else if(BF_SHORT & val)
+            off += sprintf(&buf[off], "meelee ");
+        else
+            /* unsupported bit */
+            goto failed;
+    } else {
+        /* default to meelee and range */
+        off += sprintf(&buf[off], "meelee and range ");
+    }
+
+    /* trigger type (exclusive?) */
+    if(BF_WEAPONMASK & val) {
+        if(BF_WEAPON & val)
+            off += sprintf(&buf[off], "weapon ");
+        else if((BF_MAGIC | BF_MISC) & val)
+            off += sprintf(&buf[off], "magic and misc");
+        else if(BF_MAGIC & val)
+            off += sprintf(&buf[off], "magic ");
+        else if(BF_MISC & val)
+            off += sprintf(&buf[off], "misc ");
+        else
+            /* unsupported bit */
+            goto failed;
+    } else {
+        /* default to weapon */
+        off += sprintf(&buf[off], "weapon ");
+    }
+
+    /* trigger method (exclusive) */
+    if(BF_SKILLMASK & val) {
+        if(BF_SKILL & val)
+            off += sprintf(&buf[off], "skills ");
+        else if(BF_NORMAL & val)
+            off += sprintf(&buf[off], "normal attack ");
+        else
+            /* unsupported bit */
+            goto failed;
+    } else {
+        /* default depends on trigger type */
+        if(BF_MISC & val || BF_MAGIC & val)
+            off += sprintf(&buf[off], "skills ");
+        else if(BF_WEAPON & val)
+            off += sprintf(&buf[off], "normal attack ");
+    }
+
+    if(script_buffer_write(block, TYPE_ENG, buf))
+        goto failed;
+
+clean:
+    node_free(trigger);
+    return ret;
+
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int stack_eng_trigger_atf(block_r * block, char * expr) {
+    int ret = 0;
+    int off = 0;
+    int val = 0;
+    char buf[256];
+    node_t * trigger = NULL;
+
+    /* error on invalid references */
+    if(exit_null_safe(2, block, expr))
+        return CHECK_FAILED;
+
+    trigger = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == trigger)
+        goto failed;
+
+    /* trigger must be a constant */
+    if(trigger->min != trigger->max)
+        goto failed;
+
+    val = trigger->min;
+
+    /* write using the format:
+     *  trigger on
+     *  [meelee and range]
+     *  [weapon or magic and misc]
+     *  [on self or target ]
+     */
+
+    off += sprintf(&buf[off], "activate on ");
+
+    /* trigger range (inclusive) */
+    if((ATF_LONG | ATF_SHORT) & val)
+        off += sprintf(&buf[off], "meelee and range ");
+    else if(ATF_LONG & val)
+        off += sprintf(&buf[off], "range ");
+    else if(ATF_SHORT & val)
+        off += sprintf(&buf[off], "meelee ");
+    else
+        /* default range is both */
+        off += sprintf(&buf[off], "meelee and range ");
+
+    /* trigger type (exclusive?) */
+    if(ATF_WEAPON & val)
+        off += sprintf(&buf[off], "weapon ");
+    else if((ATF_MAGIC | ATF_MISC) & val)
+        off += sprintf(&buf[off], "magic and misc");
+    else if(ATF_MAGIC & val)
+        off += sprintf(&buf[off], "magic ");
+    else if(ATF_MISC & val)
+        off += sprintf(&buf[off], "misc ");
+    else
+        /* unsupported bit */
+        goto failed;
+
+    /* trigger target */
+    if(ATF_SELF & val)
+        off += sprintf(&buf[off], "on self");
+    else if(ATF_TARGET & val)
+        off += sprintf(&buf[off], "on target");
+    else
+        /* default is target */
+        off += sprintf(&buf[off], "on target");
+
+    if(script_buffer_write(block, TYPE_ENG, buf))
+        goto failed;
+
+clean:
+    node_free(trigger);
     return ret;
 
 failed:
@@ -3038,9 +3053,8 @@ int translate_bstore(block_r * block, int handler) {
 }
 
 int translate_hire_merc(block_r * block, int handler) {
-    int offset = 0;
+    /*int offset = 0;
     char buf[BUF_SIZE];
-    /* check null paramater */
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
     if(translate_id(block, block->ptr[0], 0x04) ||
@@ -3048,8 +3062,8 @@ int translate_hire_merc(block_r * block, int handler) {
         return SCRIPT_FAILED;
     offset = sprintf(buf,"Hire %s for %s.", block->eng[0], block->eng[2]);
     buf[offset] = '\0';
-    translate_write(block, buf, 1);
-    return SCRIPT_PASSED;
+    translate_write(block, buf, 1);*/
+    return exit_abt_safe("maintenance");
 }
 
 int translate_getexp(block_r * block, int handler) {
@@ -3076,12 +3090,10 @@ int translate_getexp(block_r * block, int handler) {
 }
 
 int translate_transform(block_r * block) {
-    int offset = 0;
+    /*int offset = 0;
     char buf[BUF_SIZE];
-    /* check null paramater */
     if(exit_null_safe(1, block))
         return SCRIPT_FAILED;
-    /* support both mob id and name */
     if(isdigit(block->ptr[0][0])) {
         if(translate_id(block, block->ptr[0], 0x01) ||
             stack_eng_time(block, block->ptr[1], 1))
@@ -3094,8 +3106,8 @@ int translate_transform(block_r * block) {
         offset = sprintf(buf, "Transform into a %s for %s.", block->eng[0], block->eng[2]);
     }
     buf[offset] = '\0';
-    translate_write(block, buf, 1);
-    return SCRIPT_PASSED;
+    translate_write(block, buf, 1);*/
+    return exit_abt_safe("maintenance");
 }
 
 int translate_skill_block(block_r * block, int handler) {
@@ -3126,73 +3138,88 @@ int translate_skill_block(block_r * block, int handler) {
     return SCRIPT_PASSED;
 }
 
-int translate_bonus(block_r * block, char * bonus) {
+int translate_bonus(block_r * block, char * prefix) {
     int i = 0;
     int j = 0;
     int ret = 0;
     int cnt = 0;
 
-    static int flag = EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA|EVALUATE_FLAG_KEEP_LOGIC_TREE;
-    /* check null paramater */
-    if(exit_null_safe(2, block, bonus))
+    int blen = 0;
+    int plen = 0;
+    bonus_res * bonus = NULL;
+
+    /* error on invalid references
+     * or error on empty arguments */
+    if(exit_null_safe(2, block, prefix) ||
+       1 > block->ptr_cnt)
         return SCRIPT_FAILED;
 
-    /* bonus information and integer results are kept for minimizing and post processing */
-    memset(block->result, 0, sizeof(node_t *) * BONUS_SIZE);
-    if(bonus_name(block->db, &block->bonus, bonus, strlen(bonus), block->ptr[0], strlen(block->ptr[0]))) {
-        exit_func_safe("failed to search for bonus '%s %s' for item %d", bonus, block->ptr[0], block->item_id);
+    /* error on empty string */
+    blen = strlen(block->ptr[0]);
+    plen = strlen(prefix);
+    if(0 >= blen || 0 >= plen)
         return SCRIPT_FAILED;
+
+    /* search for bonus information */
+    bonus = calloc(1, sizeof(bonus_res));
+    if(NULL == bonus)
+        return SCRIPT_FAILED;
+
+    if(bonus_name(block->db, bonus, prefix, plen, block->ptr[0], blen)) {
+        exit_func_safe("unsupported %s %s for item "
+        "%d", prefix, block->ptr[0], block->item_id);
+        goto failed;
     }
 
-    /* translate each argument individually
+
+    /* translate each argument
         i = subscript the bonus type array
         j = offset and subscript the block argument array (ptr)
         j = 0; is the buff identifier
         j = 1; is where the arguments start
     */
-    for(i = 0, j = 1; i < block->bonus.type_cnt; i++, j++) {
-        switch(block->bonus.type[i]) {
-            case 'n': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Integer Value */
-            case 'p': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Integer Percentage */
+    for(i = 0, j = 1; i < bonus->type_cnt; i++, j++) {
+        switch(bonus->type[i]) {
+            case 'n': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Integer Value */
+            case 'p': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Integer Percentage */
             case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);           break; /* Race */
             case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);        break; /* Element */
             case 'w': ret = translate_splash(block, block->ptr[j]);                             break; /* Splash */
-            case 'z': block->eng_cnt++;                                                         break; /* Meaningless */
+            case 'z':                                                                           break; /* Meaningless */
             case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);         break; /* Effect */
-            case 'q': block->result[i] = evaluate_expression(block, block->ptr[j], 100, flag);  break; /* Integer Percentage / 100 */
-            case 'k': ret = translate_skill(block, block->ptr[j]);                              break; /* Skill */
+            case 'q': ret = stack_eng_int(block, block->ptr[j], 100);                           break; /* Integer Percentage / 100 */
+            case 'k': ret = stack_eng_db(block, block->ptr[j], DB_SKILL_ID, &cnt);              break; /* Skill */
             case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);           break; /* Size */
-            case 'c': ret = translate_id(block, block->ptr[j], 0x01);                           break; /* Monster Class & Job ID * Monster ID */
-            case 'o': block->result[i] = evaluate_expression(block, block->ptr[j], 10, flag);   break; /* Integer Percentage / 10 */
+            case 'c': ret = stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt);                break; /* Monster Class & Job ID * Monster ID */
+            case 'o': ret = stack_eng_int(block, block->ptr[j], 10);                            break; /* Integer Percentage / 10 */
             case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);               break; /* Item ID */
-            case 'x': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Level */
+            case 'x': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Level */
             case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);          break; /* Regen */
-            case 'a': block->result[i] = evaluate_expression(block, block->ptr[j], 1000, flag); break; /* Millisecond */
-            case 'h': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* SP Gain Bool */
+            case 'a': ret = stack_eng_int(block, block->ptr[j], 1000);                          break; /* Millisecond */
+            case 'h': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* SP Gain Bool */
             case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);           break; /* Cast Self, Enemy */
-            case 't': ret = translate_trigger(block, block->ptr[j], 1);                         break; /* Trigger */
-            case 'y': ret = stack_eng_item_group_name(block, block->ptr[j], &cnt);                   break; /* Item Group */
-            case 'd': ret = translate_trigger(block, block->ptr[j], 2);                         break; /* Triger ATF */
-            case 'f': block->result[i] = evaluate_expression(block, block->ptr[j], 1, flag);    break; /* Cell */
+            case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                         break; /* Trigger BT */
+            case 'y': ret = stack_eng_item_group_name(block, block->ptr[j], &cnt);              break; /* Item Group */
+            case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                        break; /* Triger ATF */
+            case 'f': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Cell */
             case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);         break; /* Flag Bitfield */
             case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);         break; /* Weapon Type */
             case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG, &cnt)
                               && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));          break; /* Class Group & Monster */
             default: break;
         }
-
-        switch(block->bonus.type[i]) {
-            /* check for error on integer arguments */
-            case 'n': case 'p': case 'q': case 'o':
-            case 'x': case 'a': case 'h': case 'f':
-                if(block->result[i] == NULL)
-                    return SCRIPT_FAILED;
-            default:
-                if(ret == SCRIPT_FAILED)
-                    return SCRIPT_FAILED;
-        }
+        if(ret)
+            goto failed;
     }
-    return SCRIPT_PASSED;
+
+    goto failed;
+
+clean:
+    SAFE_FREE(bonus);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int translate_skill(block_r * block, char * expr) {
@@ -3228,153 +3255,39 @@ int translate_splash(block_r * block, char * expr) {
    return SCRIPT_PASSED;
 }
 
-int translate_trigger(block_r * block, char * expr, int type) {
-    int trigger = 0;
-    node_t * result = NULL;
-    char trigger_buf[BUF_SIZE];
-    memset(trigger_buf, 0, BUF_SIZE);
-    /* check null paramater */
-    if(exit_null_safe(2, block, expr))
-        return SCRIPT_FAILED;
-
-    /* evalute the trigger to bit-mask value */
-    result = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    block->eng_cnt--;    /* remove value from stack */
-    if(result == NULL) {
-        exit_func_safe("failed to evaluate '%s' for item %d\n", expr, block->item_id);
-        return SCRIPT_FAILED;
-    } else {
-        trigger = result->max;
-        node_free(result);
-    }
-
-    switch(type) {
-        case 0x01:
-            /* Meelee or range attack */
-            if(trigger & BF_SHORT && trigger & BF_LONG) {
-                strcat(trigger_buf," [Meelee Damage]");
-                strcat(trigger_buf," [Range Damage]");
-            } else if(trigger&BF_SHORT) {
-                strcat(trigger_buf," [Meelee Damage]");
-            } else if(trigger&BF_LONG) {
-                strcat(trigger_buf," [Range Damage]");
-            } else {
-                /* default (nothing?) */
-            }
-
-            /* Skill attacks */
-            if(trigger&BF_WEAPON || trigger&BF_MAGIC || trigger&BF_MISC) {
-                if(trigger&BF_WEAPON) strcat(trigger_buf," [Weapon Skill]");
-                if(trigger&BF_MAGIC) strcat(trigger_buf," [Magic Skill]");
-                if(trigger&BF_MISC) strcat(trigger_buf," [Misc Skill]");
-            } else {
-                strcat(trigger_buf," [Weapon Skill]");
-            }
-            break;
-        case 0x02:
-            /* Decide whether to inflict enemy (default) or self or both */
-            if(trigger&ATF_SELF && trigger&ATF_TARGET) {
-                strcat(trigger_buf," on self and enemy");
-            } else if(trigger&ATF_SELF) {
-                strcat(trigger_buf," on self");
-            } else {
-                strcat(trigger_buf," on enemy");
-            }
-
-            if(trigger&ATF_SHORT) {
-                strcat(trigger_buf," [Meelee Damage]");
-            } else if(trigger&ATF_LONG) {
-                strcat(trigger_buf," [Range Damage]");
-            }
-
-            /* ATF_SKILL is not a very bitwise friendly hex, thus special case */
-            if(trigger & ATF_SKILL) {
-                strcat(trigger_buf," [Skill Damage]");
-                trigger -= ATF_SKILL;
-            }
-
-            if(trigger&ATF_WEAPON || trigger&ATF_MAGIC || trigger&ATF_MISC) {
-                if(trigger&ATF_WEAPON) strcat(trigger_buf," [Weapon Attack]");
-                if(trigger&ATF_MAGIC) strcat(trigger_buf," [Magic Attack]");
-                if(trigger&ATF_MISC) strcat(trigger_buf," [Misc Attack]");
-            }
-            break;
-        default: return SCRIPT_FAILED;
-    }
-    translate_write(block, trigger_buf, 0x01);
-    return SCRIPT_PASSED;
-}
-
-int translate_id(block_r * block, char * expr, int flag) {
-    int id = 0;
-    merc_t merc;
-    mob_t mob;
-    item_t item;
-    memset(&merc, 0, sizeof(merc_t));
-    memset(&mob, 0, sizeof(mob_t));
-    memset(&item, 0, sizeof(item_t));
-
-    /* check null paramater */
-    if(exit_null_safe(2, block, expr))
-        return SCRIPT_FAILED;
-
-    /* check if integer */
-    if(!isdigit(expr[0]))
-        return exit_func_safe("invalid id %s for %d", expr, block->item_id);
-
-    id = convert_integer(expr, 10);
-    if(flag & 0x01 && !mob_id(block->db, &mob, id)) {
-        translate_write(block, mob.name, 0x01);
-        return SCRIPT_PASSED;
-    }
-
-    if(flag & 0x02 && !item_id(block->db, &item, id)) {
-        translate_write(block, item.name, 0x01);
-        return SCRIPT_PASSED;
-    }
-
-    if(flag & 0x04 && !merc_id(block->db, &merc, id)) {
-        translate_write(block, merc.name, 0x01);
-        return SCRIPT_PASSED;
-    }
-
-    exit_func_safe("failed to resolve id %s for %d", expr, block->item_id);
-    return SCRIPT_FAILED;
-}
-
 int translate_autobonus(block_r * block, int flag) {
-    int offset = 0;
-    char buf[BUF_SIZE];
-    char aux[BUF_SIZE];
-    node_t * rate = NULL;
-    /* check null paramater */
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    rate = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
-    if(rate == NULL) return SCRIPT_FAILED;
-    translate_bonus_float_percentage(block, rate, &offset, 100);
-    if (stack_eng_time(block, block->ptr[2], 1) == SCRIPT_FAILED)
-        return SCRIPT_FAILED;
-    /* translate for autobonus and autobonus2 */
-    if(flag & 0x01 || flag & 0x02) {
-        if(block->ptr_cnt > 3)
-            if(translate_trigger(block, block->ptr[3], 1) == SCRIPT_FAILED)
-                return SCRIPT_FAILED;
-        offset = sprintf(buf,"Add %s chance to autobonus for %s when attacked.%s",
-            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
-    }
+    //int offset = 0;
+    //char buf[BUF_SIZE];
+    //char aux[BUF_SIZE];
+    //node_t * rate = NULL;
+    ///* check null paramater */
+    //if(exit_null_safe(1, block))
+    //    return SCRIPT_FAILED;
+    //rate = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
+    //if(rate == NULL) return SCRIPT_FAILED;
+    //translate_bonus_float_percentage(block, rate, &offset, 100);
+    //if (stack_eng_time(block, block->ptr[2], 1) == SCRIPT_FAILED)
+    //    return SCRIPT_FAILED;
+    ///* translate for autobonus and autobonus2 */
+    //if(flag & 0x01 || flag & 0x02) {
+    //    if(block->ptr_cnt > 3)
+    //        if(translate_trigger(block, block->ptr[3], 1) == SCRIPT_FAILED)
+    //            return SCRIPT_FAILED;
+    //    offset = sprintf(buf,"Add %s chance to autobonus for %s when attacked.%s",
+    //        formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
+    //}
 
-    if(flag & 0x04) {
-        if(block->ptr_cnt > 3)
-            if(translate_skill(block, block->ptr[3]) == SCRIPT_FAILED)
-                return SCRIPT_FAILED;
-        offset = sprintf(buf,"Add %s chance to autobonus for %s when using skill %s.",
-            formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
-    }
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);
-    if(rate != NULL) node_free(rate);
-    return SCRIPT_PASSED;
+    //if(flag & 0x04) {
+    //    if(block->ptr_cnt > 3)
+    //        if(translate_skill(block, block->ptr[3]) == SCRIPT_FAILED)
+    //            return SCRIPT_FAILED;
+    //    offset = sprintf(buf,"Add %s chance to autobonus for %s when using skill %s.",
+    //        formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
+    //}
+    //buf[offset] = '\0';
+    //translate_write(block, buf, 1);
+    //if(rate != NULL) node_free(rate);
+    return exit_abt_safe("maintenance");
 }
 
 int translate_misc(block_r * block, char * expr) {
@@ -3608,7 +3521,7 @@ int translate_petrecovery(block_r * block) {
 
 /* require refactoring */
 int translate_petskillbonus(block_r * block) {
-    int offset = 0;
+    /*int offset = 0;
     char buf[BUF_SIZE];
     char aux[BUF_SIZE];
     char aux2[BUF_SIZE];
@@ -3642,8 +3555,8 @@ int translate_petskillbonus(block_r * block) {
             formula(aux, block->eng[0], block->result[0]));
     node_free(duration);
     node_free(delay);
-    translate_write(block, buf, 1);
-    return SCRIPT_PASSED;
+    translate_write(block, buf, 1);*/
+    return exit_abt_safe("maintenance");
 }
 
 int translate_petskillattack(block_r * block) {
@@ -3811,7 +3724,7 @@ char * formula(char * buf, char * eng, node_t * result) {
 }
 
 char * status_formula(char * aux, char * eng, node_t * result, int type, int blank) {
-    int offset = 0;
+    /*int offset = 0;
     if(aux == NULL || eng == NULL || blank < 0)
         return "";
     if(result == NULL)
@@ -3821,7 +3734,9 @@ char * status_formula(char * aux, char * eng, node_t * result, int type, int bla
         case 'p': check_node_range_precentage(result, aux); break;
         default: offset = sprintf(aux, "%s", eng); aux[offset] = '\0'; break;
     }
-    return formula(aux, aux, result);
+    return formula(aux, aux, result);*/
+    exit_abt_safe("maintenance");
+    exit(EXIT_FAILURE);
 }
 
 int id_write(node_t * node, char * fmt, ...) {
@@ -4330,259 +4245,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         return NULL;
 }
 
-int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node_t * node) {
-    int i = 0;
-    int ret = 0;
-    int arg_off = 0;
-    int arg_cnt = 0;
-    token_r * token = NULL;
-
-    /* error on invalid references */
-    if(exit_null_safe(4, block, expr, func, node))
-        return CHECK_FAILED;
-
-    /* error on invalid indexes */
-    if(start > end)
-        return CHECK_FAILED;
-
-    /* substitute with malloc to improve performance */
-    token = calloc(1, sizeof(token_r));
-    if(NULL == token)
-        return CHECK_FAILED;
-
-    for(i = start; i <= end; i++)
-        token->script_ptr[token->script_cnt++] = expr[i];
-
-    /* push function arguments onto the block->ptr stack */
-    arg_off = block->ptr_cnt;
-    if(ret = stack_ptr_call_(block, token, &arg_cnt))
-        goto clean;
-
-    /* execute the proper handler for the function */
-    switch(func->tag) {
-        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);       break; /* readparam */
-        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);      break; /* getskilllv */
-        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);            break; /* rand */
-        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);  break; /* groupranditem */
-        default:
-            exit_func_safe("unsupported function '%s' in item %d", func->id, block->item_id);
-            goto clean;
-    }
-
-    /* pop the function arguments from the block->ptr stack */
-    for(i = 0; i < arg_cnt; i++)
-        script_buffer_unwrite(block, TYPE_PTR);
-
-clean:
-    SAFE_FREE(token);
-    return ret;
-}
-
-/* rand takes one or two arguments; [0, max) for
- * one argument and [min, max] for two arguments */
-int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    node_t * operand_1 = NULL;
-    node_t * operand_2 = NULL;
-
-    switch(cnt) {
-        case 1: /* [0, max) */
-            operand_1 = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == operand_1)
-                goto failed;
-
-            node->min = 0;
-            node->max = maxrange(operand_1->range) - 1;
-            break;
-        case 2: /* [min, max] */
-            operand_1 = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == operand_1)
-                goto failed;
-
-            operand_2 = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == operand_2)
-                goto failed;
-
-            node->min = RANGE_MIN(operand_1->range, operand_2->range);
-            node->max = RANGE_MAX(operand_1->range, operand_2->range);
-            break;
-        default:
-            return exit_func_safe("invalid argument count to"
-            " function '%s' in %d", func->id, block->item_id);
-    }
-
-    /* set the new formula and write dependency identifer */
-    if( expression_write(node, "random") ||
-        id_write(node, "random"))
-        goto failed;
-
-clean:
-    node_free(operand_1);
-    node_free(operand_2);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-}
-
-/* groupranditem takes on a constant id or value */
-int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int i = 0;
-    int ret = 0;
-    int min = 0;
-    node_t * group_id = NULL;
-    range_t * temp = NULL;
-    range_t * iter = NULL;
-    item_group_t item_group;
-
-    /* error on invalid references */
-    if(exit_null_safe(3, block, func, node))
-        return CHECK_FAILED;
-
-    switch(cnt) {
-        case 1:
-            /* group id must evaluate to a integer */
-            group_id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == group_id)
-                goto failed;
-
-            /* group id must be a constant */
-            if(group_id->range->min != group_id->range->max)
-                goto failed;
-
-            memset(&item_group, 0, sizeof(item_group_t));
-            if(item_group_id(block->db, &item_group, group_id->range->min))
-                goto failed;
-
-            if(0 >= item_group.size)
-                goto failed;
-
-            if(1 == item_group.size) {
-                /* evaluate_expression_recursive will make the range node */
-                node->min = item_group.item_id[0];
-                node->max = item_group.item_id[0];
-            }
-
-            /* build linked list of discontinous item id in item group */
-            min = item_group.item_id[i];
-            for(i = 1; i < item_group.size - 1; i++) {
-                /* create a new range for each discontinous item id */
-                if(item_group.item_id[i] + 1 != item_group.item_id[i + 1]) {
-                    if(node->range == NULL) {
-                        iter = node->range = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
-                    } else {
-                        temp = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
-
-                        /* linked the nodes */
-                        iter->next = temp;
-                        temp->prev = iter;
-                        iter = temp;
-                    }
-                    min = item_group.item_id[i + 1];
-                }
-            }
-
-
-            break;
-        default:
-            return exit_func_safe("invalid argument count to"
-            " function '%s' in %d", func->id, block->item_id);
-    }
-
-clean:
-    node_free(group_id);
-    item_group_free(&item_group);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-}
-
-int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    char * param = NULL;
-    node_t * id = NULL;
-
-    /* error on invalid references */
-    if(exit_null_safe(3, block, func, node))
-        return CHECK_FAILED;
-
-    /* error on invalid argument count */
-    if(1 != cnt)
-        return exit_func_safe("invalid argument count to"
-        " function '%s' in %d", func->id, block->item_id);
-
-    id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == id)
-        return CHECK_FAILED;
-
-    /* support only constant value */
-    if(id->min != id->max)
-        goto failed;
-
-    /* write the dependency */
-    if(script_map_id(block, "readparam", id->range->min, &param) ||
-       expression_write(node, param) ||
-       id_write(node, param))
-        goto failed;
-
-    /* readparam always range from 0 to max status points */
-    node->min = func->min;
-    node->max = func->max;
-
-clean:
-    SAFE_FREE(param);
-    node_free(id);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-}
-
-int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    skill_t skill;
-    node_t * id = NULL;
-    /* error on invalid references */
-    if(exit_null_safe(3, block, func, node))
-        return CHECK_FAILED;
-
-    /* error on invalid argument count */
-    if(1 != cnt)
-        return exit_func_safe("invalid argument count to"
-        " function '%s' in %d", func->id, block->item_id);
-
-    /* search for skill by name */
-    if(ATHENA_SCRIPT_IDENTIFER(block->ptr[off][0]) &&
-       skill_name(block->db, &skill, block->ptr[off], strlen(block->ptr[off]))) {
-            /* fallback by evaluating expression for skill id */
-            id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == id)
-                goto failed;
-
-            /* support constant only */
-            if(id->min != id->max ||
-               skill_id(block->db, &skill, id->min))
-                goto failed;
-    }
-
-    set_func(node, skill.id);
-    expression_write(node, "%s Level", skill.desc);
-    id_write(node, "%s Level", skill.desc);
-
-    /* set min and max skill level */
-    node->min = 0;
-    node->max = skill.maxlv;
-
-clean:
-    node_free(id);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-}
-
 int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {
     range_t * temp = NULL;
     range_t * result = NULL;
@@ -4939,316 +4601,257 @@ void node_free(node_t * node) {
     }
 }
 
-int translate_bonus_desc(node_t ** result, block_r * block, bonus_res * bonus) {
+int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node_t * node) {
     int i = 0;
-    int arg_cnt = bonus->type_cnt;
-    int offset = 0;                 /* current buffer offset */
-    char buffer[BUF_SIZE];          /* buffer for handling modifier and qualifiers */
-    int order[BONUS_SIZE];
-    char aux[BONUS_SIZE][BUF_SIZE]; /* FORMULA Q.Q */
+    int ret = 0;
+    int arg_off = 0;
+    int arg_cnt = 0;
+    token_r * token = NULL;
 
-    /* item bonus integrity check */
-    if(bonus->type_cnt != bonus->order_cnt || bonus->type_cnt > BONUS_SIZE) {
-        exit_func_safe("argument and order count mismatch in item %d\n", block->item_id);
-        return SCRIPT_FAILED;
+    /* error on invalid references */
+    if(exit_null_safe(4, block, expr, func, node))
+        return CHECK_FAILED;
+
+    /* error on invalid indexes */
+    if(start > end)
+        return CHECK_FAILED;
+
+    /* substitute with malloc to improve performance */
+    token = calloc(1, sizeof(token_r));
+    if(NULL == token)
+        return CHECK_FAILED;
+
+    for(i = start; i <= end; i++)
+        token->script_ptr[token->script_cnt++] = expr[i];
+
+    /* push function arguments onto the block->ptr stack */
+    arg_off = block->ptr_cnt;
+    if(ret = stack_ptr_call_(block, token, &arg_cnt))
+        goto clean;
+
+    /* execute the proper handler for the function */
+    switch(func->tag) {
+        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);       break; /* readparam */
+        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);      break; /* getskilllv */
+        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);            break; /* rand */
+        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);  break; /* groupranditem */
+        default:
+            exit_func_safe("unsupported function '%s' in item %d", func->id, block->item_id);
+            goto clean;
     }
 
-    /* order contains stack pointer constants that indicate
-     * the string on the stack to write to template */
-    for(i = 0; i < bonus->type_cnt; i++)
-        order[i] = bonus->order[i];
+    /* pop the function arguments from the block->ptr stack */
+    for(i = 0; i < arg_cnt; i++)
+        script_buffer_unwrite(block, TYPE_PTR);
 
-    /* perform post-integer analysis to determine qualifier or modifier use for translation;
-     * specific qualifier or modifier is selected base on the <attr> field in item_bonus.txt;
-     * these handlers will normalize the integer to positive and given modifier. */
-    switch(bonus->attr) {
-        case 1: translate_bonus_percentage2(block, result[1], &order[0], "Induce %s damage", "Reduce %s damage taken", "Receive %s more damage"); break;
-        case 2: translate_bonus_percentage2(block, result[1], &order[0], "Add %s", "Add %s", "Reduce %s"); break;
-        case 3: translate_bonus_percentage2(block, result[0], &order[0], "Increase %s", "Increase %s", "Decrease %s"); break;
-        case 4: block->eng[0][0] = toupper(block->eng[0][0]); break;
-        case 5: translate_bonus_integer(block, result[0], &order[0]); break;
-        case 6: translate_bonus_percentage(block, result[0], &order[0]); break;
-        case 7: translate_bonus_integer2(block, result[0], &order[0], "Regain %s", "Regain %s", "Drain %s"); break;
-        case 8: translate_bonus_integer2(block, result[1], &order[0], "Regain %s", "Regain %s", "Drain %s"); break;
-        case 9: translate_bonus_float(block, result[1], &order[0], 100); break;
-        case 10: translate_bonus_percentage2(block, result[1], &order[0], "Induce %s damage", "Receive %s", "Reduce %s"); break;
-        case 11: translate_bonus_percentage(block, result[1], &order[0]); break;
-        case 12:
-            translate_bonus_float_percentage2(block, result[1], &order[0], "Add %s", "Add %s", "Reduce %s", 10);
-            translate_bonus_percentage(block, result[2], &order[1]);
+clean:
+    SAFE_FREE(token);
+    return ret;
+}
+
+/* rand takes one or two arguments; [0, max) for
+ * one argument and [min, max] for two arguments */
+int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    node_t * operand_1 = NULL;
+    node_t * operand_2 = NULL;
+
+    switch(cnt) {
+        case 1: /* [0, max) */
+            operand_1 = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == operand_1)
+                goto failed;
+
+            node->min = 0;
+            node->max = maxrange(operand_1->range) - 1;
             break;
-        case 13:
-            translate_bonus_integer(block, result[3], &order[2]);
-            translate_bonus_float_percentage(block, result[1], &order[0], 100);
-            translate_bonus_float(block, result[2], &order[3], 1000);
-            /*translate_bonus_float(block, result[3], &order[2], 1000);*/
+        case 2: /* [min, max] */
+            operand_1 = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == operand_1)
+                goto failed;
+
+            operand_2 = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == operand_2)
+                goto failed;
+
+            node->min = RANGE_MIN(operand_1->range, operand_2->range);
+            node->max = RANGE_MAX(operand_1->range, operand_2->range);
             break;
-        case 14: translate_bonus_percentage2(block, result[1], &order[0], "Increase %s", "Increase %s", "Decrease %s"); break;
-        case 15: translate_bonus_percentage2(block, result[0], &order[0], "Add %s", "Add %s", "Reduce %s"); break;
-        case 16: translate_bonus_integer2(block, result[0], &order[0], "Add %s", "Add %s", "Add %s"); break;
-        case 17: translate_bonus_float_percentage2(block, result[0], &order[0], "Add %s", "Add %s", "Reduce %s", 100); break;
-        case 18: translate_bonus_integer(block, result[1], &order[0]); break;
-        case 19: translate_bonus_percentage2(block, result[1], &order[0], "Add %s", "Reduce %s", "Receive %s"); break;
-        case 20: translate_bonus_percentage2(block, result[2], &order[0], "Add %s", "Add %s", "Reduce %s"); break;
-        case 21: translate_bonus_percentage2(block, result[1], &order[0], "Reduce %s", "Reduce %s", "Add %s"); break;
-        case 22:
-            /* missing a modifier function for integer based */
-            if((result[1]->min / 1000) != 0 && (result[1]->max / 1000) != 0) {
-                result[1]->min /= 1000;
-                result[1]->max /= 1000;
-                translate_bonus_integer2(block, result[1], &order[0], "Add %s seconds", "Add %s seconds", "Reduce %s seconds");
-            } else {
-                translate_bonus_integer2(block, result[1], &order[0], "Add %s millisecond", "Add %s millisecond", "Reduce %s millisecond");
-            }
-            break;
-        case 23: /* special case */
-            if(result[1]->min == 0) {
-                translate_bonus_integer2(block, result[0], &order[0], "Gain %s", "Gain %s", "Drain %s"); break;
-            } else {
-                translate_bonus_integer2(block, result[0], &order[0], "Drain %s", "Drain %s", "Gain %s"); break;
-            }
-            arg_cnt = 1;
-            break;
-        case 24:
-            translate_bonus_float_percentage2(block, result[0], &order[0], "Add %s", "Add %s", "Reduce %s", 10);
-            translate_bonus_percentage(block, result[1], &order[1]);
-            break;
-        case 25:
-            if(result[2]->min == 0) {
-                translate_bonus_float_percentage2(block, result[0], &order[0], "Add %s", "Add %s", "Reduce %s", 10);
-                translate_bonus_percentage2(block, result[1], &order[1], "gain %s", "gain %s", "drain %s");
-            } else {
-                translate_bonus_float_percentage2(block, result[0], &order[0], "Add %s", "Add %s", "Reduce %s", 10);
-                translate_bonus_percentage2(block, result[1], &order[1], "drain %s", "drain %s", "gain %s");
-            }
-            arg_cnt = 2;
-            break;
-        case 26: translate_bonus_float_percentage2(block, result[1], &order[0], "Add %s", "Add %s", "Reduce %s", 100); break;
-        case 27: translate_bonus_float_percentage2(block, result[2], &order[0], "Add %s", "Add %s", "Reduce %s", 10); break;
-        case 28: translate_bonus_float_percentage2(block, result[2], &order[0], "Add %s", "Add %s", "Reduce %s", 100); break;
-        case 29: translate_bonus_float(block, result[3], &order[0], 10); break;
-        case 30: translate_bonus_float_percentage2(block, result[2], &order[0], "%s", "%s", "%s", 100); break; /* inefficient */
-        default: break;
+        default:
+            return exit_func_safe("invalid argument count to"
+            " function '%s' in %d", func->id, block->item_id);
     }
 
-    /* write the final translation using the template */
-    switch(arg_cnt) {
+    /* set the new formula and write dependency identifer */
+    if( expression_write(node, "random") ||
+        id_write(node, "random"))
+        goto failed;
+
+clean:
+    node_free(operand_1);
+    node_free(operand_2);
+    return ret;
+
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+/* groupranditem takes on a constant id or value */
+int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int i = 0;
+    int ret = 0;
+    int min = 0;
+    node_t * group_id = NULL;
+    range_t * temp = NULL;
+    range_t * iter = NULL;
+    item_group_t item_group;
+
+    /* error on invalid references */
+    if(exit_null_safe(3, block, func, node))
+        return CHECK_FAILED;
+
+    switch(cnt) {
         case 1:
-            translate_bonus_template(buffer, &offset, bonus->format,
-                formula(aux[0], block->eng[order[0]], result[bonus->order[0]]));
+            /* group id must evaluate to a integer */
+            group_id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == group_id)
+                goto failed;
+
+            /* group id must be a constant */
+            if(group_id->range->min != group_id->range->max)
+                goto failed;
+
+            memset(&item_group, 0, sizeof(item_group_t));
+            if(item_group_id(block->db, &item_group, group_id->range->min))
+                goto failed;
+
+            if(0 >= item_group.size)
+                goto failed;
+
+            if(1 == item_group.size) {
+                /* evaluate_expression_recursive will make the range node */
+                node->min = item_group.item_id[0];
+                node->max = item_group.item_id[0];
+            }
+
+            /* build linked list of discontinous item id in item group */
+            min = item_group.item_id[i];
+            for(i = 1; i < item_group.size - 1; i++) {
+                /* create a new range for each discontinous item id */
+                if(item_group.item_id[i] + 1 != item_group.item_id[i + 1]) {
+                    if(node->range == NULL) {
+                        iter = node->range = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
+                    } else {
+                        temp = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
+
+                        /* linked the nodes */
+                        iter->next = temp;
+                        temp->prev = iter;
+                        iter = temp;
+                    }
+                    min = item_group.item_id[i + 1];
+                }
+            }
+
+
             break;
-        case 2:
-            translate_bonus_template(buffer, &offset, bonus->format,
-                formula(aux[0], block->eng[order[0]], result[bonus->order[0]]),
-                formula(aux[1], block->eng[order[1]], result[bonus->order[1]]));
-            break;
-        case 3:
-            translate_bonus_template(buffer, &offset, bonus->format,
-                formula(aux[0], block->eng[order[0]], result[bonus->order[0]]),
-                formula(aux[1], block->eng[order[1]], result[bonus->order[1]]),
-                formula(aux[2], block->eng[order[2]], result[bonus->order[2]]));
-            break;
-        case 4:
-            translate_bonus_template(buffer, &offset, bonus->format,
-                formula(aux[0], block->eng[order[0]], result[bonus->order[0]]),
-                formula(aux[1], block->eng[order[1]], result[bonus->order[1]]),
-                formula(aux[2], block->eng[order[2]], result[bonus->order[2]]),
-                formula(aux[3], block->eng[order[3]], result[bonus->order[3]]));
-            break;
-        case 5:
-            translate_bonus_template(buffer, &offset, bonus->format,
-                formula(aux[0], block->eng[order[0]], result[bonus->order[0]]),
-                formula(aux[1], block->eng[order[1]], result[bonus->order[1]]),
-                formula(aux[2], block->eng[order[2]], result[bonus->order[2]]),
-                formula(aux[3], block->eng[order[3]], result[bonus->order[3]]),
-                formula(aux[4], block->eng[order[4]], result[bonus->order[4]]));
-            break;
+        default:
+            return exit_func_safe("invalid argument count to"
+            " function '%s' in %d", func->id, block->item_id);
     }
 
-    /*if(bonus->attr == 5) printf("%s\n", buffer);*/
-    translate_write(block, buffer, 1);
-    return SCRIPT_PASSED;
+clean:
+    node_free(group_id);
+    item_group_free(&item_group);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
-char * translate_bonus_template(char * buffer, int * offset, char * template, ...) {
-    va_list bonus_args;
-    va_start(bonus_args, template);
-    (*offset) += vsprintf(buffer, template, bonus_args);
-    buffer[(*offset)] = '\0';
-    va_end(bonus_args);
-    return buffer;
+int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    char * param = NULL;
+    node_t * id = NULL;
+
+    /* error on invalid references */
+    if(exit_null_safe(3, block, func, node))
+        return CHECK_FAILED;
+
+    /* error on invalid argument count */
+    if(1 != cnt)
+        return exit_func_safe("invalid argument count to"
+        " function '%s' in %d", func->id, block->item_id);
+
+    id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == id)
+        return CHECK_FAILED;
+
+    /* support only constant value */
+    if(id->min != id->max)
+        goto failed;
+
+    /* write the dependency */
+    if(script_map_id(block, "readparam", id->range->min, &param) ||
+       expression_write(node, param) ||
+       id_write(node, param))
+        goto failed;
+
+    /* readparam always range from 0 to max status points */
+    node->min = func->min;
+    node->max = func->max;
+
+clean:
+    SAFE_FREE(param);
+    node_free(id);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
-void translate_bonus_integer(block_r * block, node_t * result, int * order) {
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
-    offset = sprintf(buffer,"%s", check_node_range(result, range));
-    buffer[offset] = '\0';
-    translate_write(block, buffer, 1);
-    *order = block->eng_cnt - 1;
-}
+int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    skill_t skill;
+    node_t * id = NULL;
+    /* error on invalid references */
+    if(exit_null_safe(3, block, func, node))
+        return CHECK_FAILED;
 
-void translate_bonus_integer2(block_r * block, node_t * result, int * order, char * bipolar, char * positive, char * negative) {
-    int polarity = 0;
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
+    /* error on invalid argument count */
+    if(1 != cnt)
+        return exit_func_safe("invalid argument count to"
+        " function '%s' in %d", func->id, block->item_id);
 
-    /* calculate polarity */
-    polarity = check_node_affinity(result);
-    switch(polarity) {
-        case -1: return;
-        case 0: offset = sprintf(buffer, bipolar, check_node_range(result, range)); break;
-        case 1: offset = sprintf(buffer, positive, check_node_range(result, range)); break;
-        case 2:
-            if(result->min < 0) result->min *= -1;
-            if(result->max < 0) result->max *= -1;
-            offset = sprintf(buffer, negative, check_node_range(result, range));
-            break;
+    /* search for skill by name */
+    if(ATHENA_SCRIPT_IDENTIFER(block->ptr[off][0]) &&
+       skill_name(block->db, &skill, block->ptr[off], strlen(block->ptr[off]))) {
+            /* fallback by evaluating expression for skill id */
+            id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == id)
+                goto failed;
+
+            /* support constant only */
+            if(id->min != id->max ||
+               skill_id(block->db, &skill, id->min))
+                goto failed;
     }
-    buffer[offset] = '\0';
-    /* write new translation onto translation stack */
-    translate_write(block, buffer, 1);
-    /* change ordering so template writes new string */
-    *order = block->eng_cnt - 1;
-}
 
-void translate_bonus_float(block_r * block, node_t * result, int * order, int modifier) {
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
-    offset = sprintf(buffer,"%s", check_node_range_float(result, range, modifier));
-    buffer[offset] = '\0';
-    translate_write(block, buffer, 1);
-    *order = block->eng_cnt - 1;
-}
+    set_func(node, skill.id);
+    expression_write(node, "%s Level", skill.desc);
+    id_write(node, "%s Level", skill.desc);
 
-void translate_bonus_float_percentage(block_r * block, node_t * result, int * order, int modifier) {
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
-    offset = sprintf(buffer,"%s", check_node_range_float_percentage(result, range, modifier));
-    buffer[offset] = '\0';
-    translate_write(block, buffer, 1);
-    *order = block->eng_cnt - 1;
-}
+    /* set min and max skill level */
+    node->min = 0;
+    node->max = skill.maxlv;
 
-void translate_bonus_percentage(block_r * block, node_t * result, int * order) {
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
-    offset = sprintf(buffer,"%s", check_node_range_precentage(result, range));
-    buffer[offset] = '\0';
-    translate_write(block, buffer, 1);
-    *order = block->eng_cnt - 1;
-}
-
-void translate_bonus_percentage2(block_r * block, node_t * result, int * order, char * bipolar, char * positive, char * negative) {
-    int polarity = 0;
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
-
-    /* calculate polarity */
-    polarity = check_node_affinity(result);
-    switch(polarity) {
-        case -1: return;
-        case 0: offset = sprintf(buffer, bipolar, check_node_range_precentage(result, range)); break;
-        case 1: offset = sprintf(buffer, positive, check_node_range_precentage(result, range)); break;
-        case 2:
-            if(result->min < 0) result->min *= -1;
-            if(result->max < 0) result->max *= -1;
-            offset = sprintf(buffer, negative, check_node_range_precentage(result, range));
-            break;
-    }
-    buffer[offset] = '\0';
-    /* write new translation onto translation stack */
-    translate_write(block, buffer, 1);
-    /* change ordering so template writes new string */
-    *order = block->eng_cnt - 1;
-}
-
-void translate_bonus_float_percentage2(block_r * block, node_t * result, int * order, char * bipolar, char * positive, char * negative, int modifier) {
-    int polarity = 0;
-    int offset = 0;
-    char buffer[BUF_SIZE];
-    char range[BUF_SIZE];
-
-    /* calculate polarity */
-    polarity = check_node_affinity(result);
-    switch(polarity) {
-        case -1: return;
-        case 0: offset = sprintf(buffer, bipolar, check_node_range_float_percentage(result, range, modifier)); break;
-        case 1: offset = sprintf(buffer, positive, check_node_range_float_percentage(result, range, modifier)); break;
-        case 2:
-            if(result->min < 0) result->min *= -1;
-            if(result->max < 0) result->max *= -1;
-            offset = sprintf(buffer, negative, check_node_range_float_percentage(result, range, modifier));
-            break;
-    }
-    buffer[offset] = '\0';
-    /* write new translation onto translation stack */
-    translate_write(block, buffer, 1);
-    /* change ordering so template writes new string */
-    *order = block->eng_cnt - 1;
-}
-
-char * check_node_range(node_t * node, char * buffer) {
-    int offset = 0;
-    offset = (node->min != node->max) ?
-        sprintf(buffer, "%+d ~ %+d", node->min, node->max) :
-        sprintf(buffer, "%+d", node->min);
-    buffer[offset] = '\0';
-    return buffer;
-}
-
-char * check_node_range_float(node_t * node, char * buffer, int modifier) {
-    int offset = 0;
-    if((node->min / modifier) < 1 && (node->max / modifier) < 1)
-        offset = (node->min != node->max) ?
-        sprintf(buffer, "%+.2f ~ %+.2f", ((double) node->min / modifier), ((double) node->max / modifier)) :
-        sprintf(buffer, "%+.2f", ((double) node->min / modifier));
-    else
-        offset = (node->min != node->max) ?
-        sprintf(buffer, "%+.0f ~ %+.0f", ((double) node->min / modifier), ((double) node->max / modifier)) :
-        sprintf(buffer, "%+.0f", ((double) node->min / modifier));
-    buffer[offset] = '\0';
-    return buffer;
-}
-
-char * check_node_range_precentage(node_t * node, char * buffer) {
-    int offset = 0;
-    offset = (node->min != node->max) ?
-        sprintf(buffer, "%+d%% ~ %+d%%", node->min, node->max) :
-        sprintf(buffer, "%+d%%", node->min);
-    buffer[offset] = '\0';
-    return buffer;
-}
-
-char * check_node_range_float_percentage(node_t * node, char * buffer, int modifier) {
-    int offset = 0;
-    if((node->min / modifier) < 1 && (node->max / modifier) < 1)
-        offset = (node->min != node->max) ?
-        sprintf(buffer, "%+.2f%% ~ %+.2f%%", ((double) node->min / modifier), ((double) node->max / modifier)) :
-        sprintf(buffer, "%+.2f%%", ((double) node->min / modifier));
-    else
-        offset = (node->min != node->max) ?
-        sprintf(buffer, "%+.0f%% ~ %+.0f%%", ((double) node->min / modifier), ((double) node->max / modifier)) :
-        sprintf(buffer, "%+.0f%%", ((double) node->min / modifier));
-    buffer[offset] = '\0';
-    return buffer;
-}
-
-/* 0; both; 1 positive; 2; negative*/
-int check_node_affinity(node_t * node) {
-    int affinity = 0;
-    if(exit_null_safe(1, node))
-        return SCRIPT_FAILED;
-    if(node->min <= 0 && node->max <= 0) affinity = 2;
-    else if(node->min >= 0 && node->max >= 0) affinity = 1;
-    else if(node->min < 0 && node->max > 0) affinity = 0;
-    return affinity;
+clean:
+    node_free(id);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int script_linkage_count(block_r * block, int start) {
