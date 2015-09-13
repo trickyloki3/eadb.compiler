@@ -1084,7 +1084,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             block->ptr_cnt--;
         }
     }
-    if(block_cnt == 0) 
+    if(block_cnt == 0)
         return SCRIPT_FAILED;
     return SCRIPT_PASSED;
 }
@@ -3846,54 +3846,82 @@ int translate_overwrite(block_r * block, char * desc, int position) {
     return SCRIPT_PASSED;
 }
 
+/* write variable's identifier on the stack */
 int id_write(node_t * node, char * fmt, ...) {
+    int off = 0;
+    int len = 0;
+    char * buf = NULL;
+    va_list expr_list;
     if(exit_null_safe(2, node, fmt))
         return CHECK_FAILED;
 
-    va_list expr_list;
     va_start(expr_list, fmt);
-    int offset = node->stack_cnt;                               /* current offset on stack */
-    char * temp = &node->stack[offset];                         /* record current offset on stack */
-    offset += vsprintf(node->stack + offset, fmt, expr_list);   /* write new string onto stack */
+
+    off = node->stack_cnt;
+    len = BUF_SIZE - off;
+    buf = &node->stack[off];
+    off += vsnprintf(buf, len, fmt, expr_list);
     va_end(expr_list);
-    node->stack_cnt = offset + 1;                               /* set new offset on stack */
-    node->id = temp;
+    if(0 >= off)
+        return CHECK_FAILED;
+
+    node->stack_cnt = off + 1;
+    node->id = buf;
     return CHECK_PASSED;
 }
 
+/* write variable's identifier on the stack
+ * maintain by the variable list */
 int var_write(node_t * node, char * fmt, ...) {
+    int off = 0;
+    int len = 0;
+    char * buf = NULL;
+    va_list expr_list;
+
     if(exit_null_safe(2, node, fmt))
         return CHECK_FAILED;
 
-    va_list expr_list;
     va_start(expr_list, fmt);
-    int offset = node->stack_cnt;                               /* current offset on stack */
-    char * temp = &node->stack[offset];                         /* record current offset on stack */
-    offset += vsprintf(node->stack + offset, fmt, expr_list);
-    node->stack[offset] = '\0';                                 /* null terminate new string */
+    off = node->stack_cnt;
+    len = BUF_SIZE - off;
+    buf = &node->stack[off];
+    off += vsnprintf(buf, len, fmt, expr_list);
     va_end(expr_list);
-    node->stack_cnt = offset + 1;
-    node->var_str[node->var_cnt] = temp;
-    node->var_cnt++;
+    if(0 >= off)
+        return CHECK_FAILED;
+
+    node->stack_cnt = off + 1;
+    node->var_str[node->var_cnt++] = buf;
     return CHECK_PASSED;
 }
 
+/* write the formula expression on the stack */
 int expression_write(node_t * node, char * fmt, ...) {
+    int off = 0;
+    int len = 0;
+    char * buf = NULL;
+    va_list expr_list;
+
     if(exit_null_safe(2, node, fmt))
         return CHECK_FAILED;
 
-    va_list expr_list;
     va_start(expr_list, fmt);
-    int offset = node->stack_cnt;                               /* current offset on stack */
-    char * temp = &node->stack[offset];                         /* record current offset on stack */
-    offset += vsprintf(node->stack + offset, fmt, expr_list);   /* write new string onto stack */
-    node->stack[offset] = '\0';                                 /* null terminate new string */
+    off = node->stack_cnt;
+    len = BUF_SIZE - off;
+    buf = &node->stack[off];
+    off += vsnprintf(buf, len, fmt, expr_list);
     va_end(expr_list);
-    node->stack_cnt = offset + 1;                               /* set new offset on stack */
-    node->formula = temp;
+    if(0 >= off)
+        return CHECK_FAILED;
+
+    node->stack_cnt = off + 1;
+    node->formula = buf;
     return CHECK_PASSED;
 }
 
+/* lowest level function for evaluating expressions
+ * stack_eng_* and evaluate_function_* are both one
+ * level above */
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
     int i = 0;
     node_t * result = NULL;
@@ -3923,10 +3951,11 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     }
 
     /* post expression handling of node */
-    return evaluate_expression_post(block, result, modifier, flag);
+    return evaluate_expression_(block, result, modifier, flag);
 }
 
-node_t * evaluate_expression_post(block_r * block, node_t * root_node, int modifier, int flag) {
+/* handle specific flags before returning to the caller */
+node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier, int flag) {
     int min = 0;
     int max = 0;
     int len = 0;
@@ -4188,7 +4217,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                                 temp_node->cond = copy_deep_any_tree(set_iter->set_node->cond);
                             temp_node->cond_cnt = set_iter->set_node->cond_cnt;
                             expression_write(temp_node, "%s", set_iter->set_node->formula);
-                            node_write_recursive(set_iter->set_node, temp_node);
+                            node_var_stack(set_iter->set_node, temp_node);
                             break;
                         }
                     }
@@ -4277,7 +4306,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     }
 
     /* evaluate the infix expression with pre-order traversal */
-    ret = evaluate_node(root_node->next, node_dbg, logic_tree, flag, &temp);
+    ret = node_evaluate(root_node->next, node_dbg, logic_tree, flag, &temp);
 
     /* the actual result is in root_node->next so we need
      * to copy any value we want to return using the root node */
@@ -4297,7 +4326,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         expression_write(root_node, "%s", root_node->next->formula);
 
         /* collect all the arguments on the last stack */
-        node_write_recursive(root_node->next, root_node);
+        node_var_stack(root_node->next, root_node);
 
         /* write the formula on last stack */
         if(root_node->var_cnt > 0) {
@@ -4341,362 +4370,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             free(temp_node);
         }
         return NULL;
-}
-
-int evaluate_node(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {
-    range_t * temp = NULL;
-    range_t * result = NULL;
-    logic_node_t * new_tree = NULL;
-
-    /* support unary and binary operators */
-    if(node->left == node->right) {
-        /* unary operator */
-        if(node->left != NULL)
-            if(evaluate_node(node->left, stm, logic_tree, flag, complexity))
-                return SCRIPT_FAILED;
-    } else {
-        /* support ?: flip the logic tree for one side */
-        if(node->type == NODE_TYPE_OPERATOR && node->op == ':') {
-            if(logic_tree != NULL) {
-                new_tree = inverse_logic_tree(logic_tree);
-                /* use the 'true' logic tree for left; 'false' logic tree for right */
-                if(node->left != NULL)
-                    if(evaluate_node(node->left, stm, logic_tree, flag, complexity))
-                        return SCRIPT_FAILED;
-                if(node->right != NULL)
-                    if(evaluate_node(node->right, stm, new_tree, flag, complexity))
-                        return SCRIPT_FAILED;
-                freenamerange(new_tree);
-            } else{
-                if(evaluate_node(node->left, stm, logic_tree, flag, complexity) ||
-                   evaluate_node(node->right, stm, logic_tree, flag, complexity))
-                    return SCRIPT_FAILED;
-            }
-        /* normal pre-order traversal */
-        } else {
-            if(node->left != NULL)
-                if(evaluate_node(node->left, stm, logic_tree, flag, complexity))
-                    return SCRIPT_FAILED;
-            /* support ?: add logic tree on stack */
-            if(node->type == NODE_TYPE_OPERATOR && node->op == '?') {
-                /* check that logic tree exist for left side */
-                if(node->left->cond != NULL) {
-                    new_tree = node->left->cond;
-                    new_tree->stack = logic_tree;
-                    /* keep the logic tree of ? conditional */
-                    if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
-                        node->cond = copy_any_tree(new_tree);
-                    if(node->right != NULL)
-                        if(evaluate_node(node->right, stm, new_tree, flag, complexity))
-                            return SCRIPT_FAILED;
-                } else {
-                    if(node->right != NULL)
-                        if(evaluate_node(node->right, stm, logic_tree, flag, complexity))
-                            return SCRIPT_FAILED;
-                }
-            } else {
-                if(node->right != NULL)
-                    if(evaluate_node(node->right, stm, logic_tree, flag, complexity))
-                        return SCRIPT_FAILED;
-            }
-        }
-    }
-
-    /* handle variable and function nodes; generate condition node */
-    if( (node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) ||
-        ((node->type & NODE_TYPE_LOCAL) && (flag & EVALUATE_FLAG_ITERABLE_SET))) {
-        if(node->id == NULL) {
-            exit_abt_safe("invalid node id");
-            return SCRIPT_FAILED;
-        }
-        /* check logic tree for dependency */
-        if(logic_tree != NULL) {
-            result = search_tree_dependency(logic_tree, node->id, node->range);
-            if(result != NULL) {
-                temp = node->range;
-                node->min = minrange(result);
-                node->max = maxrange(result);
-                node->range = result;
-                node->range->id_min = node->min;
-                node->range->id_max = node->max;
-                freerange(temp);
-            }
-        }
-        node->cond = make_cond(node->var, node->id, node->range, NULL);
-    }
-
-    /* handle unary operator nodes */
-    if(node->type & NODE_TYPE_UNARY) {
-        if(node->left == NULL) {
-            exit_abt_safe("invalid unary operator operand");
-            return SCRIPT_FAILED;
-        }
-
-        if(node->left->range == NULL) {
-            exit_abt_safe("invalid unary operator operand without range");
-            return SCRIPT_FAILED;
-        }
-
-        switch(node->op) {
-            case '-': node->range = negaterange(node->left->range); break;
-            case '!': node->range = notrange(node->left->range); break;
-        }
-
-        if(node->left->cond != NULL)
-            node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
-
-        /* extract the local min and max from the range */
-        node->min = minrange(node->range);
-        node->max = maxrange(node->range);
-
-        /* running count of all the variable, function, and set block */
-        node->cond_cnt += node->left->cond_cnt;
-    }
-
-    /* handle operators nodes */
-    if(node->type & NODE_TYPE_OPERATOR) {
-        /* operators must have two non-null operands */
-        if(node->left == NULL || node->right == NULL) {
-            fprintf(stderr,"evaluate_node; left or right node is null.\n");
-            return SCRIPT_FAILED;
-        }
-
-        /* sub node inherit range, operator calculate range, operands have nodes created */
-        if(node->left->range == NULL || node->right->range == NULL) {
-            fprintf(stderr,"evaluate_node; left or right operand has null range.\n");
-            return SCRIPT_FAILED;
-        }
-
-        /* calculate range for operator node */
-        switch(node->op) {
-            case '*':
-            case '/':
-            case '+':
-            case '-':
-                node->range = calcrange(node->op, node->left->range, node->right->range);
-                node_inherit_cond(node);
-                break;
-            case '<' + '=':
-            case '<':
-            case '>' + '=':
-            case '>':
-            case '!' + '=':
-            case '=' + '=':
-                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    /* typically, scripts use boolean expressions like 100 + 600 * (getrefine() > 5),
-                     * which can be interpreted wrong for non-boolean expression, which should result
-                     * in either 0 or 1 rather than range. */
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                } else if(flag & EVALUATE_FLAG_VARIANT_SET) {
-                    /* variant need to determine whether the loop is increasing or decreasing
-                     * -1 less than (increasing), 0 equal, 1 greater than (decreasing) */
-                    if(IS_EQUALSET(node->left->range, node->right->range)) {
-                        node->range = mkrange(INIT_OPERATOR, 0, 0, DONT_CARE);
-                    } else if(maxrange(node->left->range) <  maxrange(node->right->range)) {
-                        node->range = mkrange(INIT_OPERATOR, -1, -1, DONT_CARE);
-                    } else {
-                        node->range = mkrange(INIT_OPERATOR, 1, 1, DONT_CARE);
-                    }
-                } else {
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
-                }
-
-                /* variable and functions generate logic trees that are inherited by up until the root node */
-                node_inherit_cond(node);
-                (*complexity)++;
-                break;
-            case '&':
-            case '|':
-                node->range = calcrange(node->op, node->left->range, node->right->range);
-                /* variable and functions generate logic trees that are inherited by up until the root node */
-                node_inherit_cond(node);
-                break;
-            case '&' + '&':
-                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                    if(node->left->cond != NULL && node->right->cond != NULL)
-                        node->cond = new_cond(LOGIC_NODE_AND, node->left->cond, node->right->cond);
-                } else {
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
-                }
-                (*complexity)++;
-                break;
-            case '|' + '|':
-                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                    if(node->left->cond != NULL && node->right->cond != NULL)
-                        node->cond = new_cond(LOGIC_NODE_OR, node->left->cond, node->right->cond);
-                } else {
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
-                }
-                (*complexity)++;
-                break;
-            case ':':
-                /* iterable use the ? operator to handle the for condition */
-                node->range = (flag & EVALUATE_FLAG_ITERABLE_SET) ?
-                    copyrange(node->left->range) :
-                    orrange(node->left->range, node->right->range);
-                (*complexity)++;
-                break;
-            case '?':
-                node->range = copyrange(node->right->range); /* right node is : operator */
-                (*complexity)++;
-                break;
-            default:
-                fprintf(stderr,"evaluate_node; supported operator %c\n", node->op);
-                return SCRIPT_FAILED;
-        }
-
-        /* extract the local min and max from the range */
-        node->min = minrange(node->range);
-        node->max = maxrange(node->range);
-
-        /* running count of all the variable, function, and set block */
-        node->cond_cnt = node->left->cond_cnt + node->right->cond_cnt;
-    }
-
-    /* write expression and print node */
-    if(EVALUATE_FLAG_WRITE_FORMULA & flag)
-        (node->type == NODE_TYPE_OPERATOR)?
-            node_expr_append(node->left, node->right, node):
-            node_expr_append(NULL, NULL, node);
-
-    /* useful for debugging the nodes */
-    node_dmp(node, stm);
-    return SCRIPT_PASSED;
-}
-
-/* function must be called AFTER node->range is calc */
-void node_inherit_cond(node_t * node) {
-    if(exit_null_safe(1, node)) return;
-    /* only inherit if only ONE condition exist; if condition
-     * exist on either end, then the condition can't be interpreted. */
-    if(node->left->cond != NULL && node->right->cond == NULL) {
-        node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
-    } else if(node->left->cond == NULL && node->right->cond != NULL) {
-        node->cond = make_cond(node->right->cond->var, node->right->cond->name, node->range, node->right->cond);
-    }
-}
-
-void node_write_recursive(node_t * node, node_t * root) {
-    int i = 0;
-    int j = 0;
-    if(node->left == node->right) {
-        /* unary node */
-        if(node->left != NULL) node_write_recursive(node->left, root);
-    } else {
-        /* binary node */
-        if(node->left != NULL) node_write_recursive(node->left, root);
-        if(node->right != NULL) node_write_recursive(node->right, root);
-    }
-    /* write function or variable to simple list */
-    if(node->var_cnt > 0) {
-        /* include var stack of any node with var on stack */
-        for(i = 0; i < node->var_cnt; i++) {
-            /* check whether var or func is already included */
-            for(j = 0; j < root->var_cnt; j++)
-                if(root->var_set[j] == node->var_set[i])
-                    break;
-            /* add var or func to list */
-            if(j == root->var_cnt || root->var_cnt == 0) {
-                root->var_set[root->var_cnt] = node->var_set[i];
-                var_write(root, "%s", node->var_str[i]);
-            }
-        }
-    } else if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
-        /* check whether var or func is already included */
-        for(i = 0; i < root->var_cnt; i++)
-            if(root->var_set[i] == node->var)
-                break;
-        /* add var or func to list */
-        if(i == root->var_cnt || root->var_cnt == 0) {
-            root->var_set[root->var_cnt] = node->var;
-            var_write(root, "%s", node->id);
-        }
-    }
-}
-
-void node_expr_append(node_t * left, node_t * right, node_t * dest) {
-    if(exit_null_safe(1, dest)) return;
-
-    /* constructs the formula by resolving variables to names */
-    if(left == NULL && right == NULL) {
-        /* dest is a leave node */
-        switch(dest->type) {
-            case NODE_TYPE_UNARY: expression_write(dest, "%c%s", dest->op, dest->left->formula); break;
-            case NODE_TYPE_OPERAND: expression_write(dest, "%d", dest->max); break;
-            case NODE_TYPE_FUNCTION: expression_write(dest, "%s", dest->id); break;
-            case NODE_TYPE_VARIABLE: expression_write(dest, "%s", dest->id); break;
-            case NODE_TYPE_LOCAL: /* already inherited when resolving set block */ break;
-            case NODE_TYPE_CONSTANT: expression_write(dest, "%s", dest->id); break;
-            case NODE_TYPE_SUB: expression_write(dest, "%s", dest->formula); break;
-            default: exit_func_safe("invalid node type %d", dest->type); break;
-        }
-    } else if(left != NULL && right != NULL) {
-        /* dest is a operand node */
-        switch(dest->type) {
-            case NODE_TYPE_OPERATOR:
-                switch(dest->op) {
-                    case '?': expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
-                    case '>': expression_write(dest,"%s > %s", left->formula, right->formula); break;
-                    case '<': expression_write(dest,"%s < %s", left->formula, right->formula); break;
-                    case '!' + '=': expression_write(dest,"%s != %s", left->formula, right->formula); break;
-                    case '=' + '=': expression_write(dest,"%s == %s", left->formula, right->formula); break;
-                    case '<' + '=': expression_write(dest,"%s <= %s", left->formula, right->formula); break;
-                    case '>' + '=': expression_write(dest,"%s >= %s", left->formula, right->formula); break;
-                    case '&' + '&': expression_write(dest,"%s and %s", left->formula, right->formula); break;
-                    case '|' + '|': expression_write(dest,"%s or %s", left->formula, right->formula); break;
-                    default: expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
-                }
-                break;
-            default: exit_func_safe("invalid node type %d", dest->type); break;
-        }
-    }
-}
-
-void node_dmp(node_t * node, FILE * stm) {
-    if(node != NULL && stm != NULL) {
-        fprintf(stm," -- Node %p --\n", (void *) node);
-        switch(node->type) {
-            case NODE_TYPE_OPERATOR:
-                switch(node->op) {
-                     case '<' + '=':   fprintf(stm,"     Type: Operator <=\n"); break;
-                     case '>' + '=':   fprintf(stm,"     Type: Operator >=\n"); break;
-                     case '!' + '=':   fprintf(stm,"     Type: Operator !=\n"); break;
-                     case '=' + '=':   fprintf(stm,"     Type: Operator ==\n"); break;
-                     case '&' + '&':   fprintf(stm,"     Type: Operator &&\n"); break;
-                     case '|' + '|':   fprintf(stm,"     Type: Operator ||\n"); break;
-                     default:          fprintf(stm,"     Type: Operator %c\n", node->op); break;
-                 }
-                 break;
-            case NODE_TYPE_UNARY: fprintf(stm,"     Type: Operator %c\n", node->op); break;
-            case NODE_TYPE_OPERAND: fprintf(stm,"     Type: Literal %d:%d\n", node->min, node->max); break;
-            case NODE_TYPE_FUNCTION: fprintf(stm,"     Type: Function %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_VARIABLE: fprintf(stm,"     Type: Variable %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_LOCAL: fprintf(stm,"     Type: Local %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_CONSTANT: fprintf(stm,"     Type: Constant %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_SUB: fprintf(stm,"     Type: Subexpression %s; %d:%d\n", node->formula, node->min, node->max); break;
-            default: fprintf(stm,"     Type: %d\n", node->op); break;
-        }
-        fprintf(stm,"      var: %d\n", node->var);
-        fprintf(stm,"stack_cnt: %d\n", node->stack_cnt);
-        fprintf(stm," cond_cnt: %d\n", node->cond_cnt);
-        for(int i = 0; i < node->var_cnt; i++)
-            fprintf(stm,"  var_set: [%d] %s\n", node->var_set[i], node->var_str[i]);
-        fprintf(stm,"  var_cnt: %d\n", node->var_cnt);
-        fprintf(stm,"  formula: %s\n", node->formula);
-        dmprange(node->range, stm, "range; ");
-        dmpnamerange(node->cond, stm, 0);
-        fprintf(stm,"\n");
-    }
-}
-
-void node_free(node_t * node) {
-    if(node != NULL) {
-        if(node->cond != NULL) freenamerange(node->cond);
-        if(node->range != NULL) freerange(node->range);
-        free(node);
-    }
 }
 
 int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node_t * node) {
@@ -4950,6 +4623,384 @@ clean:
 failed:
     ret = CHECK_FAILED;
     goto clean;
+}
+
+int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {
+    range_t * temp = NULL;
+    range_t * result = NULL;
+    logic_node_t * new_tree = NULL;
+
+    /* support unary and binary operators */
+    if(node->left == node->right) {
+        /* unary operator */
+        if(node->left != NULL)
+            if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
+                return SCRIPT_FAILED;
+    } else {
+        /* support ?: flip the logic tree for one side */
+        if(node->type == NODE_TYPE_OPERATOR && node->op == ':') {
+            if(logic_tree != NULL) {
+                new_tree = inverse_logic_tree(logic_tree);
+                /* use the 'true' logic tree for left; 'false' logic tree for right */
+                if(node->left != NULL)
+                    if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
+                        return SCRIPT_FAILED;
+                if(node->right != NULL)
+                    if(node_evaluate(node->right, stm, new_tree, flag, complexity))
+                        return SCRIPT_FAILED;
+                freenamerange(new_tree);
+            } else{
+                if(node_evaluate(node->left, stm, logic_tree, flag, complexity) ||
+                   node_evaluate(node->right, stm, logic_tree, flag, complexity))
+                    return SCRIPT_FAILED;
+            }
+        /* normal pre-order traversal */
+        } else {
+            if(node->left != NULL)
+                if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
+                    return SCRIPT_FAILED;
+            /* support ?: add logic tree on stack */
+            if(node->type == NODE_TYPE_OPERATOR && node->op == '?') {
+                /* check that logic tree exist for left side */
+                if(node->left->cond != NULL) {
+                    new_tree = node->left->cond;
+                    new_tree->stack = logic_tree;
+                    /* keep the logic tree of ? conditional */
+                    if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
+                        node->cond = copy_any_tree(new_tree);
+                    if(node->right != NULL)
+                        if(node_evaluate(node->right, stm, new_tree, flag, complexity))
+                            return SCRIPT_FAILED;
+                } else {
+                    if(node->right != NULL)
+                        if(node_evaluate(node->right, stm, logic_tree, flag, complexity))
+                            return SCRIPT_FAILED;
+                }
+            } else {
+                if(node->right != NULL)
+                    if(node_evaluate(node->right, stm, logic_tree, flag, complexity))
+                        return SCRIPT_FAILED;
+            }
+        }
+    }
+
+    /* handle variable and function nodes; generate condition node */
+    if( (node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) ||
+        ((node->type & NODE_TYPE_LOCAL) && (flag & EVALUATE_FLAG_ITERABLE_SET))) {
+        if(node->id == NULL) {
+            exit_abt_safe("invalid node id");
+            return SCRIPT_FAILED;
+        }
+        /* check logic tree for dependency */
+        if(logic_tree != NULL) {
+            result = search_tree_dependency(logic_tree, node->id, node->range);
+            if(result != NULL) {
+                temp = node->range;
+                node->min = minrange(result);
+                node->max = maxrange(result);
+                node->range = result;
+                node->range->id_min = node->min;
+                node->range->id_max = node->max;
+                freerange(temp);
+            }
+        }
+        node->cond = make_cond(node->var, node->id, node->range, NULL);
+    }
+
+    /* handle unary operator nodes */
+    if(node->type & NODE_TYPE_UNARY) {
+        if(node->left == NULL) {
+            exit_abt_safe("invalid unary operator operand");
+            return SCRIPT_FAILED;
+        }
+
+        if(node->left->range == NULL) {
+            exit_abt_safe("invalid unary operator operand without range");
+            return SCRIPT_FAILED;
+        }
+
+        switch(node->op) {
+            case '-': node->range = negaterange(node->left->range); break;
+            case '!': node->range = notrange(node->left->range); break;
+        }
+
+        if(node->left->cond != NULL)
+            node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
+
+        /* extract the local min and max from the range */
+        node->min = minrange(node->range);
+        node->max = maxrange(node->range);
+
+        /* running count of all the variable, function, and set block */
+        node->cond_cnt += node->left->cond_cnt;
+    }
+
+    /* handle operators nodes */
+    if(node->type & NODE_TYPE_OPERATOR) {
+        /* operators must have two non-null operands */
+        if(node->left == NULL || node->right == NULL) {
+            fprintf(stderr,"node_evaluate; left or right node is null.\n");
+            return SCRIPT_FAILED;
+        }
+
+        /* sub node inherit range, operator calculate range, operands have nodes created */
+        if(node->left->range == NULL || node->right->range == NULL) {
+            fprintf(stderr,"node_evaluate; left or right operand has null range.\n");
+            return SCRIPT_FAILED;
+        }
+
+        /* calculate range for operator node */
+        switch(node->op) {
+            case '*':
+            case '/':
+            case '+':
+            case '-':
+                node->range = calcrange(node->op, node->left->range, node->right->range);
+                node_cond_inherit(node);
+                break;
+            case '<' + '=':
+            case '<':
+            case '>' + '=':
+            case '>':
+            case '!' + '=':
+            case '=' + '=':
+                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
+                    /* typically, scripts use boolean expressions like 100 + 600 * (getrefine() > 5),
+                     * which can be interpreted wrong for non-boolean expression, which should result
+                     * in either 0 or 1 rather than range. */
+                    node->range = calcrange(node->op, node->left->range, node->right->range);
+                } else if(flag & EVALUATE_FLAG_VARIANT_SET) {
+                    /* variant need to determine whether the loop is increasing or decreasing
+                     * -1 less than (increasing), 0 equal, 1 greater than (decreasing) */
+                    if(IS_EQUALSET(node->left->range, node->right->range)) {
+                        node->range = mkrange(INIT_OPERATOR, 0, 0, DONT_CARE);
+                    } else if(maxrange(node->left->range) <  maxrange(node->right->range)) {
+                        node->range = mkrange(INIT_OPERATOR, -1, -1, DONT_CARE);
+                    } else {
+                        node->range = mkrange(INIT_OPERATOR, 1, 1, DONT_CARE);
+                    }
+                } else {
+                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
+                }
+
+                /* variable and functions generate logic trees that are inherited by up until the root node */
+                node_cond_inherit(node);
+                (*complexity)++;
+                break;
+            case '&':
+            case '|':
+                node->range = calcrange(node->op, node->left->range, node->right->range);
+                /* variable and functions generate logic trees that are inherited by up until the root node */
+                node_cond_inherit(node);
+                break;
+            case '&' + '&':
+                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
+                    node->range = calcrange(node->op, node->left->range, node->right->range);
+                    if(node->left->cond != NULL && node->right->cond != NULL)
+                        node->cond = new_cond(LOGIC_NODE_AND, node->left->cond, node->right->cond);
+                } else {
+                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
+                }
+                (*complexity)++;
+                break;
+            case '|' + '|':
+                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
+                    node->range = calcrange(node->op, node->left->range, node->right->range);
+                    if(node->left->cond != NULL && node->right->cond != NULL)
+                        node->cond = new_cond(LOGIC_NODE_OR, node->left->cond, node->right->cond);
+                } else {
+                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
+                }
+                (*complexity)++;
+                break;
+            case ':':
+                /* iterable use the ? operator to handle the for condition */
+                node->range = (flag & EVALUATE_FLAG_ITERABLE_SET) ?
+                    copyrange(node->left->range) :
+                    orrange(node->left->range, node->right->range);
+                (*complexity)++;
+                break;
+            case '?':
+                node->range = copyrange(node->right->range); /* right node is : operator */
+                (*complexity)++;
+                break;
+            default:
+                fprintf(stderr,"node_evaluate; supported operator %c\n", node->op);
+                return SCRIPT_FAILED;
+        }
+
+        /* extract the local min and max from the range */
+        node->min = minrange(node->range);
+        node->max = maxrange(node->range);
+
+        /* running count of all the variable, function, and set block */
+        node->cond_cnt = node->left->cond_cnt + node->right->cond_cnt;
+    }
+
+    /* write expression and print node */
+    if(EVALUATE_FLAG_WRITE_FORMULA & flag)
+        (node->type == NODE_TYPE_OPERATOR)?
+            node_expr_append(node->left, node->right, node):
+            node_expr_append(NULL, NULL, node);
+
+    /* useful for debugging the nodes */
+    node_dump(node, stm);
+    return SCRIPT_PASSED;
+}
+
+/* function must be called AFTER node->range is calc */
+int node_cond_inherit(node_t * node) {
+    if(exit_null_safe(1, node))
+        return SCRIPT_FAILED;
+
+    /* inherit only from left or right but not both;
+     * conditions cannot be accurately interpreted */
+    if(node->left->cond != NULL && node->right->cond == NULL) {
+        /* inherit the logic tree from the left node */
+        node->cond = make_cond(
+            node->left->cond->var,
+            node->left->cond->name,
+            node->range,
+            node->left->cond);
+    } else if(node->left->cond == NULL && node->right->cond != NULL) {
+        /* inherit the logic tree from the right node */
+        node->cond = make_cond(
+            node->right->cond->var,
+            node->right->cond->name,
+            node->range,
+            node->right->cond);
+
+    }
+    return SCRIPT_PASSED;
+}
+
+void node_var_stack(node_t * node, node_t * root) {
+    int i = 0;
+    int j = 0;
+    if(node->left == node->right) {
+        /* unary node */
+        if(node->left != NULL)
+            node_var_stack(node->left, root);
+    } else {
+        /* binary node */
+        if(node->left != NULL)
+            node_var_stack(node->left, root);
+        if(node->right != NULL)
+            node_var_stack(node->right, root);
+    }
+
+    /* non-leaf case */
+    if(node->var_cnt > 0) {
+        /* copy the current node's variable list */
+        for(i = 0; i < node->var_cnt; i++) {
+            /* ignore the variables already in root's variable list */
+            for(j = 0; j < root->var_cnt; j++)
+                if(root->var_set[j] == node->var_set[i])
+                    break;
+            /* write the variable to root's variable list */
+            if(j == root->var_cnt || root->var_cnt == 0) {
+                root->var_set[root->var_cnt] = node->var_set[i];
+                var_write(root, "%s", node->var_str[i]);
+            }
+        }
+    /* leaf case */
+    } else if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+        /* copy the current node's variable */
+        for(i = 0; i < root->var_cnt; i++)
+            if(root->var_set[i] == node->var)
+                break;
+
+        /* write the variable to root's variable list */
+        if(i == root->var_cnt || root->var_cnt == 0) {
+            root->var_set[root->var_cnt] = node->var;
+            var_write(root, "%s", node->id);
+        }
+    }
+}
+
+void node_expr_append(node_t * left, node_t * right, node_t * dest) {
+    if(exit_null_safe(1, dest)) return;
+
+    /* constructs the formula by resolving variables to names */
+    if(left == NULL && right == NULL) {
+        /* dest is a leave node */
+        switch(dest->type) {
+            case NODE_TYPE_UNARY: expression_write(dest, "%c%s", dest->op, dest->left->formula); break;
+            case NODE_TYPE_OPERAND: expression_write(dest, "%d", dest->max); break;
+            case NODE_TYPE_FUNCTION: expression_write(dest, "%s", dest->id); break;
+            case NODE_TYPE_VARIABLE: expression_write(dest, "%s", dest->id); break;
+            case NODE_TYPE_LOCAL: /* already inherited when resolving set block */ break;
+            case NODE_TYPE_CONSTANT: expression_write(dest, "%s", dest->id); break;
+            case NODE_TYPE_SUB: expression_write(dest, "%s", dest->formula); break;
+            default: exit_func_safe("invalid node type %d", dest->type); break;
+        }
+    } else if(left != NULL && right != NULL) {
+        /* dest is a operand node */
+        switch(dest->type) {
+            case NODE_TYPE_OPERATOR:
+                switch(dest->op) {
+                    case '?': expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
+                    case '>': expression_write(dest,"%s > %s", left->formula, right->formula); break;
+                    case '<': expression_write(dest,"%s < %s", left->formula, right->formula); break;
+                    case '!' + '=': expression_write(dest,"%s != %s", left->formula, right->formula); break;
+                    case '=' + '=': expression_write(dest,"%s == %s", left->formula, right->formula); break;
+                    case '<' + '=': expression_write(dest,"%s <= %s", left->formula, right->formula); break;
+                    case '>' + '=': expression_write(dest,"%s >= %s", left->formula, right->formula); break;
+                    case '&' + '&': expression_write(dest,"%s and %s", left->formula, right->formula); break;
+                    case '|' + '|': expression_write(dest,"%s or %s", left->formula, right->formula); break;
+                    default: expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
+                }
+                break;
+            default: exit_func_safe("invalid node type %d", dest->type); break;
+        }
+    }
+}
+
+void node_dump(node_t * node, FILE * stm) {
+    if(node != NULL && stm != NULL) {
+        fprintf(stm," -- Node %p --\n", (void *) node);
+        switch(node->type) {
+            case NODE_TYPE_OPERATOR:
+                switch(node->op) {
+                     case '<' + '=':   fprintf(stm,"     Type: Operator <=\n"); break;
+                     case '>' + '=':   fprintf(stm,"     Type: Operator >=\n"); break;
+                     case '!' + '=':   fprintf(stm,"     Type: Operator !=\n"); break;
+                     case '=' + '=':   fprintf(stm,"     Type: Operator ==\n"); break;
+                     case '&' + '&':   fprintf(stm,"     Type: Operator &&\n"); break;
+                     case '|' + '|':   fprintf(stm,"     Type: Operator ||\n"); break;
+                     default:          fprintf(stm,"     Type: Operator %c\n", node->op); break;
+                 }
+                 break;
+            case NODE_TYPE_UNARY: fprintf(stm,"     Type: Operator %c\n", node->op); break;
+            case NODE_TYPE_OPERAND: fprintf(stm,"     Type: Literal %d:%d\n", node->min, node->max); break;
+            case NODE_TYPE_FUNCTION: fprintf(stm,"     Type: Function %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_VARIABLE: fprintf(stm,"     Type: Variable %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_LOCAL: fprintf(stm,"     Type: Local %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_CONSTANT: fprintf(stm,"     Type: Constant %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_SUB: fprintf(stm,"     Type: Subexpression %s; %d:%d\n", node->formula, node->min, node->max); break;
+            default: fprintf(stm,"     Type: %d\n", node->op); break;
+        }
+        fprintf(stm,"      var: %d\n", node->var);
+        fprintf(stm,"stack_cnt: %d\n", node->stack_cnt);
+        fprintf(stm," cond_cnt: %d\n", node->cond_cnt);
+        for(int i = 0; i < node->var_cnt; i++)
+            fprintf(stm,"  var_set: [%d] %s\n", node->var_set[i], node->var_str[i]);
+        fprintf(stm,"  var_cnt: %d\n", node->var_cnt);
+        fprintf(stm,"  formula: %s\n", node->formula);
+        dmprange(node->range, stm, "range; ");
+        dmpnamerange(node->cond, stm, 0);
+        fprintf(stm,"\n");
+    }
+}
+
+void node_free(node_t * node) {
+    if(node != NULL) {
+        if(node->cond != NULL)
+            freenamerange(node->cond);
+        if(node->range != NULL)
+            freerange(node->range);
+        free(node);
+    }
 }
 
 int script_linkage_count(block_r * block, int start) {

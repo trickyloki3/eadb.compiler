@@ -49,7 +49,7 @@ int main(int argc, char * argv[]) {
             printf("%d; %s\n", scribe->item.id, scribe->buffer);
             break;
         }
-
+        /*printf("%d; %s\n", scribe->item.id, scribe->buffer);*/
         script_block_reset(scribe);
     }
 

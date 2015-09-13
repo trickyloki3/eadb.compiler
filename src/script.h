@@ -46,26 +46,27 @@
         int type;               /* see node types macros */
         int op;                 /* operator (NODE_TYPE_OPERATOR) */
         char * id;              /* identifier (NODE_TYPE_FUNCTION / VARIABLE / LOCAL / CONSTANT / SUB) */
-        int min;                /* minrange() and maxrange() values */
-        int max;
-        /* dependency */
-        range_t * range;        /* min max range */
-        logic_node_t * cond;
-        int cond_cnt;           /* total count of variable and functions; cascaded by operator */
-        /* single stack */
-        char stack[BUF_SIZE];   /* stack to hold all strings */
-        int stack_cnt;          /* size of stack */
-        char * formula;         /* each node contains a (translated) subset of the entire expression */
-        /* simplified formula */
+        /* range is a discontinuous set of values
+         * between the minimum and maximum value */
+        int min;                /* minrange() */
+        int max;                /* maxrange() */
+        range_t * range;        /* range values */
+        /* logic tree is a 'balance' and-or-cond tree */
+        logic_node_t * cond;    /* logic tree */
+        int cond_cnt;           /* total number of variable and functions in the logic tree */
+        char * formula;         /* user-friendly string of the expression */
+        /* general stack */
+        char stack[BUF_SIZE];   /* stack holding the variable, identifers, and formula strings */
+        int stack_cnt;          /* stack offset */
         char * var_str[ARG_SIZE];
-        int var_set[ARG_SIZE]; /* list of var written to var_str */
+        int var_set[ARG_SIZE];
         int var_cnt;
         /* expression precedence and associative */
         struct node * left;
         struct node * right;
         struct node * next;
         struct node * prev;
-        struct node * list;     /* arbitrary chain in sequence of creation; this allow freeing everything easier */
+        struct node * list; /* singly linked list for memory management */
     } node_t;
 
 /* forward declaration for block_r */
@@ -73,11 +74,9 @@ struct script_t;
 
     typedef struct block_r {
         int item_id;                         /* item id defined in item_db.txt */
-
         /* block identification */
         char * name;                         /* block name */
         int type;                            /* block id defined in res/block_db.txt */
-
         /* ptr is the argument stack
          * eng is the translate stack
          * arg is the buffer for both stacks */
@@ -87,36 +86,29 @@ struct script_t;
         int arg_cnt;                         /* current offset in arg buffer */
         int ptr_cnt;
         int eng_cnt;
-
         /* each block is part of doubly linked list maintained by
          * a script_t structure for memory management purposes */
         struct block_r * next;               /* next block */
         struct block_r * prev;               /* prev block */
-
         /* blocks form a child-parent relationship for the purposes
          * of inheriting logic trees, which is a singly linked list
          * from child to parent */
         struct block_r * link;               /* linked to if, else-if, else, for block */
-
         /* a singly linked list of variable blocks that the current
          * block can reference and use in evaluate_expression */
         struct block_r * set;                /* point to end of current linked list of set block */
-
         /* set for variable block */
         node_t * set_node;
-
         /* block references the resource from script_t
          * to prevent passing script_t as an argument
-         * to every function 8/
+         * to every function */
         db_t * db;                           /* sqlite3 database handle to athena */
         int mode;                            /* multiplexer for rathena, eathena, or hercule tables */
         lua_State * map;
         struct script_t * scribe;            /* reference the enclosing script context */
-
         /* the logic tree is set for if, else, and for blocks
          * which is inherited by child blocks */
         logic_node_t * logic_tree;           /* calculational and dependency information */
-
         /* don't remember what this is for */
         int flag;
     } block_r;
@@ -306,7 +298,6 @@ struct script_t;
     int translate_getexp(block_r *, int);
     int translate_transform(block_r *);
     int translate_skill_block(block_r *, int);
-    int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
     int translate_autobonus(block_r *, int);
     int translate_misc(block_r *, char *);
     int translate_produce(block_r *, int);
@@ -320,11 +311,11 @@ struct script_t;
     int translate_overwrite(block_r *, char *, int);
 
     /* writing the formula expressions */
-    int id_write(node_t *, char *, ...);
-    int var_write(node_t *, char *, ...);
-    int expression_write(node_t *, char *, ...);
+    /* revised */ int id_write(node_t *, char *, ...);
+    /* revised */ int var_write(node_t *, char *, ...);
+    /* revised */ int expression_write(node_t *, char *, ...);    /* write the node->formula */
 
-    /* expression evaluation */
+    /* evaluate an expression */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE   0x001 /* keep the logic tree */
     #define EVALUATE_FLAG_KEEP_NODE         0x002 /* keep the root node */
     #define EVALUATE_FLAG_EXPR_BOOL         0x004 /* relational operators returns 0 or 1 rather than range */
@@ -334,9 +325,17 @@ struct script_t;
     #define EVALUATE_FLAG_ITERABLE_SET      0x040
     #define EVALUATE_FLAG_VARIANT_SET       0x080
     #define EVALUATE_FLAG_WRITE_STACK       0x100
-    node_t * evaluate_expression(block_r *, char *, int, int);
-    node_t * evaluate_expression_post(block_r *, node_t *, int, int);
-    node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
+    /* revised */ node_t * evaluate_expression(block_r *, char *, int, int);
+    /* revised */ node_t * evaluate_expression_(block_r *, node_t *, int, int);
+    /* revised */ node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
+
+    /* evaluate a function with the expression */
+    /* revised */ int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
+
     #define NODE_TYPE_OPERATOR              0x01
     #define NODE_TYPE_OPERAND               0x02
     #define NODE_TYPE_UNARY                 0x80  /* unary operator */
@@ -345,19 +344,12 @@ struct script_t;
     #define NODE_TYPE_LOCAL                 0x10  /* set block variable */
     #define NODE_TYPE_CONSTANT              0x20  /* const.txt */
     #define NODE_TYPE_SUB                   0x40  /* subexpression node */
-    int evaluate_node(node_t *, FILE *, logic_node_t *, int, int *);
-    void node_inherit_cond(node_t *);
-    void node_write_recursive(node_t *, node_t *);
-    void node_expr_append(node_t *, node_t *, node_t *);
-    void node_dmp(node_t *, FILE *);
-    void node_free(node_t *);
-
-    /* script function */
-    /* revised */ int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int, int *);
+    /* revised */ int node_cond_inherit(node_t *);
+    /* revised */ void node_var_stack(node_t *, node_t *);
+    /* revised */ void node_expr_append(node_t *, node_t *, node_t *);
+    /* revised */ void node_dump(node_t *, FILE *);
+    /* revised */ void node_free(node_t *);
 
     /* support generation */
     int script_linkage_count(block_r *, int);
