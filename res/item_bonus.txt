@@ -6,8 +6,8 @@
 5,0x00000000,5,bonus,bDex,"DEX %s",1,n,1,0
 6,0x00000000,5,bonus,bLuk,"LUK %s",1,n,1,0
 7,0x00000000,5,bonus,bAllStats,"All Stat %s",1,n,1,0
-8,0x00000000,5,bonus,bAgiVit,"AGI %s VIT %s",1,n,2,0,0
-9,0x00000000,5,bonus,bAgiDexStr,"STR %s AGI %s DEX %s",1,n,3,0,0,0
+8,0x00000000,5,bonus,bAgiVit,"AGI, VIT %s",1,n,1,0
+9,0x00000000,5,bonus,bAgiDexStr,"STR, AGI, DEX %s",1,n,1,0
 10,0x00000000,5,bonus,bMaxHP,"MaxHP %s",1,n,1,0
 11,0x00000000,5,bonus,bMaxSP,"MaxSP %s",1,n,1,0
 12,0x00000000,5,bonus,bAtk,"ATK %s",1,n,1,0

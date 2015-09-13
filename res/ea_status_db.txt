@@ -16,3 +16,4 @@
 61,sc_atkpotion,1,"Increase attack strength %s ATK","",1,n,0,0,0,1,0,0,0
 62,sc_matkpotion,1,"Increase magical power %s MATK","",1,n,0,0,0,1,0,0,0
 63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0
+

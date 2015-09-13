@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
             break;
         }
 
-        if (scribe->item.id == 622) {
+        if (scribe->item.id == 0) {
             script_block_dump(scribe, stderr);
             printf("%d; %s\n", scribe->item.id, scribe->buffer);
             break;
