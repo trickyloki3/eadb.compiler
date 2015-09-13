@@ -6,7 +6,7 @@
 #define OPTION_DB_PATH          "option_db.txt"
 #define MAP_DB_PATH             "mapnametable.txt"
 #define BONUS_DB_PATH           "item_bonus.txt"
-#define STATUS_DB_PATH          "status_db.txt"
+#define STATUS_DB_PATH          "ea_status_db.txt"
 #define VARIABLE_DB_PATH        "var_db.txt"
 #define BLOCK_DB_PATH           "block_db.txt"
 #define RID_DB_PATH             "idnum2itemresnametable.txt"
@@ -19,14 +19,14 @@ int main(int argc, char * argv[]) {
     opt_db_t * db = NULL;
 
     if (1 >= argc || getopts(argc, argv) || !(path = opt['p' % 26])) {
-        fprintf(stderr, "ra.sql.exe -p <rathena path> -o <output path>\n");
+        fprintf(stderr, "opt.sql.exe -p <rathena path> -o <output path>\n");
         exit(EXIT_FAILURE);
     }
 
     out = opt['o' % 26];
     if (NULL != out) {
         if (!SetCurrentDirectory(out)) {
-            fprintf(stderr, "ra.sql: invalid output path '%s'.\n", out);
+            fprintf(stderr, "opt.sql: invalid output path '%s'.\n", out);
             exit(EXIT_FAILURE);
         }
     }

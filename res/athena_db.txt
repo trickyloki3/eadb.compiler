@@ -251,6 +251,30 @@ race_type =  {
     [12] = "non-demi-human";
 }
 
+readparam = {
+    [6] = "Maximum HP";
+    [8] = "Maximum SP";
+    [13] = "Strength";
+    [14] = "Agility";
+    [15] = "Vitality";
+    [16] = "Intelligence";
+    [17] = "Dexterity";
+    [18] = "Luck";
+    [41] = "Base Attack";
+    [42] = "Weapon Attack";
+    [45] = "Base Defense";
+    [46] = "Armor Defense";
+    [47] = "Base Magical Defense";
+    [48] = "Armor Magical Defense";
+    [49] = "Hit";
+    [50] = "Base Flee";
+    [51] = "Armor Flee";
+    [52] = "Critical Rate";
+    [53] = "Attack Speed";
+    [59] = "Fame";
+    [60] = "Unbreakable";
+}
+
 regen_flag =  {
     [1] = "HP";
     [2] = "SP";

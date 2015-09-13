@@ -173,6 +173,7 @@
 
     typedef struct pet_t {
         int mob_id;
+        char name[MAX_NAME_SIZE];
         char pet_script[MAX_SCRIPT_SIZE];
         char loyal_script[MAX_SCRIPT_SIZE];
     } pet_t;
@@ -207,14 +208,14 @@
     #define RE_MAP_NAME_SEARCH      "SELECT * FROM map_res WHERE map = ?;"
     #define RE_MAP_ID_SEARCH        "SELECT * FROM map_res WHERE id = ?;"
     #define RE_BONUS_NAME_SEARCH    "SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
-    #define RE_STATUS_NAME_SEARCH   "SELECT * FROM status_res WHERE scid = ? AND scstr = ? COLLATE NOCASE;"
+    #define RE_STATUS_NAME_SEARCH   "SELECT * FROM status_res WHERE scid = ? COLLATE NOCASE;"
     #define RE_VAR_NAME_SEARCH      "SELECT * FROM var_res WHERE id = ? COLLATE NOCASE;"
     #define RE_BLOCK_NAME_SEARCH    "SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
     #define RE_SPR_ID_SEARCH        "SELECT * FROM id_res WHERE id = ?;"
     #define RE_NSPR_ID_SEARCH       "SELECT * FROM numid_res WHERE id = ?;"
 
     /* server item database queries */
-    #define EA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
+    #define EA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea WHERE id = 1388;"
     #define RA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
     #define HE_ITEM_ITERATE         "SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
                                     "BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
@@ -245,9 +246,9 @@
     #define EA_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_ea WHERE id = ?;"
     #define RA_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_ra WHERE id = ?;"
     #define HE_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_he WHERE id = ?;"
-    #define EA_PET_ID_SEARCH        "SELECT mob_id, pet_script, loyal_script FROM pet_ea WHERE mob_id = ?;"
-    #define RA_PET_ID_SEARCH        "SELECT mob_id, pet_script, loyal_script FROM pet_ra WHERE mob_id = ?;"
-    #define HE_PET_ID_SEARCH        "SELECT mob_id, pet_script, loyal_script FROM pet_he WHERE mob_id = ?;"
+    #define EA_PET_ID_SEARCH        "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_ea WHERE mob_id = ?;"
+    #define RA_PET_ID_SEARCH        "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_ra WHERE mob_id = ?;"
+    #define HE_PET_ID_SEARCH        "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_he WHERE mob_id = ?;"
     #define EA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
     #define RA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
     #define HE_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
@@ -319,7 +320,7 @@
     int map_name(db_t *, map_res *, const char *, int);
     int map_id(db_t *, map_res *, int);
     int bonus_name(db_t *, bonus_res *, const char *, int, const char *, int);
-    int status_name(db_t *, status_res *, int, const char *, int);
+    int status_id(db_t *, status_res *, int);
     int var_name(db_t *, var_res *, const char *, int);
     int block_name(db_t *, block_res *, const char *, int);
     int sprite_id(db_t *, nid_res *, int);

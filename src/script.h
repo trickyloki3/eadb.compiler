@@ -16,6 +16,8 @@
     #include "name_range.h"
     #include "range.h"
     #include "db_search.h"
+    #include "lua.h"
+    #include "lauxlib.h"
 
     /* return code from (nearly) all functions */
     #define SCRIPT_PASSED 0
@@ -139,7 +141,11 @@
         struct node * list;     /* arbitrary chain in sequence of creation; this allow freeing everything easier */
     } node_t;
 
+/* forward declaration for block_r */
+struct script_t;
+
     typedef struct block_r {
+        char * name;                         /* block name */
         int item_id;                         /* item id defined in item_db.txt */
         int type;                            /* block id defined in res/block_db.txt */
         /* ptr loaded by parser & eng translated by translator */
@@ -163,6 +169,8 @@
          * passing script_t to every translator; read only */
         db_t * db;                           /* sqlite3 database handle to athena */
         int mode;                            /* multiplexer for rathena, eathena, or hercule tables */
+        lua_State * map;
+        struct script_t * scribe;            /* reference the enclosing script context */
         /* translation information */
         logic_node_t * logic_tree;           /* calculational and dependency information */
         /* flag and offset are use for variable length arguments in functions */
@@ -189,9 +197,11 @@
         token_r token;          /* tokenize script */
         char buffer[BUF_SIZE];  /* item script translation */
         int offset;
-        /* invariant */
+        /* invariant; databases */
         db_t * db;              /* sqlite3 database handle to athena */
         int mode;               /* multiplexer for rathena, eathena, or hercule tables */
+        /* invariant; mappings */
+        lua_State * map;
     } script_t;
 
 
@@ -199,7 +209,7 @@
     FILE * node_dbg;
 
     /* script api */
-    int script_init(script_t **, const char *, const char *, int);
+    int script_init(script_t **, const char *, const char *, const char *, int);
     int script_deit(script_t **);
     int script_lexical(token_r *, char *);
     int script_analysis(script_t *, token_r *, block_r *, block_r **);
@@ -215,6 +225,16 @@
  * core developers only
  * ! (o.o) !
  */
+
+    /* script recursive will inherit the parent script_t resources (invariant)
+     * but is required to have its own resources (variant) to compiled without
+     * any problems.
+     *
+     * the script api can be used to compile the script recursively, but that
+     * would require loading separated databases and mappins, which is v-very
+     * expensive. */
+    /* revised */ int script_recursive(db_t *, int, lua_State *, char *, char **);
+
 
     /* block linked list */
     int list_forward(block_list_t *);
@@ -240,9 +260,10 @@
     /* block buffer functions */
     #define TYPE_PTR 1    /* block->ptr stack */
     #define TYPE_ENG 2    /* block->eng stack */
-    int script_buffer_write(block_r *, int, const char *);              /* push a string to block->ptr or block->eng stack */
-    int script_buffer_unwrite(block_r *, int);                          /* pop a string from block->ptr or block->eng stack */
-    int script_formula_write(block_r *, int, node_t *, char **);        /* concatenate a node's formula string with block->eng stack string */
+    /* revised */ int script_buffer_write(block_r *, int, const char *);              /* push a string to block->ptr or block->eng stack */
+    /* revised */ int script_buffer_unwrite(block_r *, int);                          /* pop a string from block->ptr or block->eng stack */
+    /* revised */ int script_buffer_reset(block_r *, int);                            /* reset the entire stack */
+    /* revised */ int script_formula_write(block_r *, int, node_t *, char **);        /* concatenate a node's formula string with block->eng stack string */
 
     /* block 'for' functions */
     int script_block_write(block_r *, char *, ...);                     /* write to block->ptr stack using vararg */
@@ -251,16 +272,51 @@
     /* block debug functions */
     int script_block_dump(script_t *, FILE *);
 
+    /* map id to string */
+    /* revised */ int script_map_init(script_t *, const char *);
+    /* revised */ int script_map_id(block_r *, char *, int, char **);
+    /* revised */ int script_map_deit(script_t *);
+
     /* script stack functions */
     #define MAX_ITEM_LIST 5 /* limits the number of item names pushed on
                              * to the block->eng stack by stack_eng_item */
     /* revised */ int stack_ptr_call(block_r *, char *, int *);
     /* revised */ int stack_ptr_call_(block_r *, token_r *, int *);
     /* revised */ int stack_eng_item(block_r *, char *, int *);
-    /* revised */ int stack_eng_int(block_r * block, char *, int);
+    /* revised */ int stack_eng_int(block_r *, char *, int);
     /* revised */ int stack_eng_int_signed(block_r *, char *, int, const char *, const char *);
-    /* revised */ int stack_eng_time(block_r * block, char *, int);
+    /* revised */ int stack_eng_time(block_r *, char *, int);
+    /* revised */ int stack_eng_produce(block_r *, char *, int *);
+    /* stack_eng_map flag (bitmask) */
+    #define MAP_AMMO_FLAG           0x0001
+    #define MAP_CAST_FLAG           0x0002
+    #define MAP_CLASS_FLAG          0x0004
+    #define MAP_EFFECT_FLAG         0x0008
+    #define MAP_ELEMENT_FLAG        0x0010
+    #define MAP_LOCATION_FLAG       0x0020
+    #define MAP_ITEM_FLAG           0x0040
+    #define MAP_JOB_FLAG            0x0080
+    #define MAP_RACE_FLAG           0x0100
+    #define MAP_READPARAM_FLAG      0x0200
+    #define MAP_REGEN_FLAG          0x0400
+    #define MAP_SEARCHSTORE_FLAG    0x0800
+    #define MAP_SIZE_FLAG           0x1000
+    #define MAP_SP_FLAG             0x2000
+    #define MAP_TARGET_FLAG         0x4000
+    #define MAP_WEAPON_FLAG         0x8000
+    /* revised */ int stack_eng_map(block_r *, char *, int, int *);
+    /* stack_eng_db flag (bitmask) */
+    #define DB_SKILL_ID             0x01
+    #define DB_ITEM_ID              0x02
+    #define DB_MOB_ID               0x04
+    #define DB_MERC_ID              0x08
+    #define DB_PET_ID               0x10
+    #define DB_MAP_ID               0x20
+    /* revised */ int stack_eng_db(block_r *, char *, int, int *);
+    /* revised */ int stack_eng_item_group(block_r *, char *, int *);
+    /* revised */ int stack_eng_script(block_r *, char *);
     /* revised */ int stack_aux_formula(block_r *, node_t *, char *);
+
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */
     /* revised */ int translate_id_amount(block_r *, int *, int *, const char *);
@@ -270,28 +326,27 @@
     /* revised */ int translate_delitem(block_r *);
     /* revised */ int translate_rentitem(block_r *);
     /* revised */ int translate_heal(block_r *);
+    /* revised */ int translate_produce(block_r *, int);
+    /* revised */ int translate_status(block_r *);
+    /* revised */ int translate_status_end(block_r *);
+    /* revised */ int translate_pet_egg(block_r *);
+    int translate_group_id(block_r *);
     int translate_searchstore(block_r *);
     int translate_buyingstore(block_r *);
 
     int translate_getrandgroup(block_r *, int);
     int translate_hire_merc(block_r *, int);
-    int translate_pet_egg(block_r *, int);
     int translate_getexp(block_r *, int);
     int translate_transform(block_r *);
     int translate_skill_block(block_r *, int);
     int translate_bonus(block_r *, char *);
-    int translate_const(block_r *, char *, int);
     int translate_skill(block_r *, char *);
-    int translate_tbl(block_r *, char *, int);
     int translate_splash(block_r *, char *);
     int translate_trigger(block_r *, char *, int); /* 0x01 - BF_TRIGGERS, 0x02 - ATF_TRIGGERS */
     int translate_id(block_r *, char *, int);
-    int translate_item(block_r *, char *);
     int translate_autobonus(block_r *, int);
     int translate_misc(block_r *, char *);
     int translate_produce(block_r *, int);
-    int translate_status(block_r *, int);
-    int translate_status_end(block_r *);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
     int translate_petloot(block_r *);
@@ -324,9 +379,11 @@
     void node_free(node_t *);
 
     /* script function */
-    int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
-    int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
 
     /* support translation */
     int translate_bonus_desc(node_t **, block_r *, bonus_res *);

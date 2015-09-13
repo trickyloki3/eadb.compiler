@@ -91,6 +91,9 @@ int main(int argc, char * argv[]) {
     if(NULL != PathCombine(lpPath, lpPathBase, MERCENARY_DB_PATH))
         ea_db_merc_load(lpAthena, lpPath);
 
+    if (NULL != PathCombine(lpPath, lpPathBase, PET_DB_PATH))
+        ea_db_pet_load(lpAthena, lpPath);
+
     if(NULL != PathCombine(lpPath, lpPathBase, ITEM_GROUP_BLUEBOX))
         ea_db_item_group_load(lpAthena, lpPath);
 

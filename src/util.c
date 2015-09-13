@@ -341,7 +341,7 @@ int convert_integer_delimit_array(const char * str, const char * delimiters, arr
    return CHECK_PASSED;
 }
 
-int convert_integer_delimit_static(const char * str, const char * delimiters, int * list, int size) {
+int convert_integer_delimit_static(const char * str, const char * delimiters, int * list, int size, int * argc) {
    int i = 0;
    int * val = NULL;
    array_w array;
@@ -360,8 +360,9 @@ int convert_integer_delimit_static(const char * str, const char * delimiters, in
       list[i] = val[i];
 
    if (val != NULL)
-	   free(val);
+      free(val);
 
+   *argc = array.size;
    return CHECK_PASSED;
 }
 
@@ -618,7 +619,7 @@ int heap_sort(void * list, size_t size, swap_t * cb) {
 int insertion_sort(void * list, size_t min, size_t max, swap_t * cb) {
     size_t i = 0;
     size_t j = 0;
-    
+
     if (min == max)
         return 0;
 

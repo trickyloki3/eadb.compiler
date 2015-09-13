@@ -1,0 +1,18 @@
+1,sc_freeze,1,"Inflict freeze","freeze",0,0,0,0,0,0,0,0,0
+2,sc_stun,1,"Inflict stun","stun",0,0,0,0,0,0,0,0,0
+4,sc_poison,1,"Inflict poison","poison",0,0,0,0,0,0,0,0,0
+5,sc_curse,1,"Inflict curse","curse",0,0,0,0,0,0,0,0,0
+6,sc_silence,1,"Inflict silence","silence",0,0,0,0,0,0,0,0,0
+7,sc_confusion,1,"Inflict confusion","confusion",0,0,0,0,0,0,0,0,0
+8,sc_blind,1,"Inflict blind","blind",0,0,0,0,0,0,0,0,0
+10,sc_dpoison,1,"Inflict poison","poison",0,0,0,0,0,0,0,0,0
+52,sc_hallucination,0,"Inflict hallucination","hallucination",0,0,0,0,0,0,0,0,0
+55,sc_aspdpotion0,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
+56,sc_aspdpotion1,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
+57,sc_aspdpotion2,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
+58,sc_aspdpotion3,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
+59,sc_speedup0,1,"Increase movement speed","",0,0,0,0,0,0,0,0,0
+60,sc_speedup1,1,"Increase movement speed","",0,0,0,0,0,0,0,0,0
+61,sc_atkpotion,1,"Increase attack strength %s ATK","",1,n,0,0,0,1,0,0,0
+62,sc_matkpotion,1,"Increase magical power %s MATK","",1,n,0,0,0,1,0,0,0
+63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0

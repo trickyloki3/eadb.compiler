@@ -374,6 +374,7 @@ int map_id(db_t * db, map_res * map, int id) {
 }
 
 int bonus_name(db_t * db, bonus_res * bonus, const char * prefix, int plen, const char * name, int nlen) {
+    int cnt = 0;
     sqlite3_stmt * stmt = NULL;
 
     if(exit_null_safe(4, db, bonus, prefix, name) ||
@@ -388,17 +389,20 @@ int bonus_name(db_t * db, bonus_res * bonus, const char * prefix, int plen, cons
     strncopy(bonus->bonus, MAX_NAME_SIZE, sqlite3_column_text(stmt, 4));
     strncopy(bonus->format, MAX_NAME_SIZE, sqlite3_column_text(stmt, 5));
     bonus->type_cnt = sqlite3_column_int(stmt, 6);
-    convert_integer_delimit_static((const char *) sqlite3_column_text(stmt, 7), ":", bonus->type, MAX_BONUS);
+    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 7), ":", bonus->type, MAX_BONUS, &cnt))
+        return CHECK_FAILED;
     bonus->order_cnt = sqlite3_column_int(stmt, 8);
-    convert_integer_delimit_static((const char *) sqlite3_column_text(stmt, 9), ":", bonus->order, MAX_BONUS);
+    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 9), ":", bonus->order, MAX_BONUS, &cnt))
+        return CHECK_FAILED;
     return CHECK_PASSED;
 }
 
-int status_name(db_t * db, status_res * status, int id, const char * name, int len) {
+int status_id(db_t * db, status_res * status, int id) {
+    int cnt = 0;
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, status, name) ||
-       exec_db_query(db->re, db->status_name, 2, BIND_NUMBER, id, BIND_STRING, name, len))
+    if(exit_null_safe(2, db, status) ||
+       exec_db_query(db->re, db->status_name, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->status_name->stmt;
@@ -408,8 +412,9 @@ int status_name(db_t * db, status_res * status, int id, const char * name, int l
     strncopy(status->scfmt, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 3));
     strncopy(status->scend, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 4));
     status->vcnt = sqlite3_column_int(stmt, 5);
-    convert_integer_delimit_static(sqlite3_column_text(stmt, 6), ":", status->vmod, 4);
-    convert_integer_delimit_static(sqlite3_column_text(stmt, 7), ":", status->voff, 4);
+    if (convert_integer_delimit_static(sqlite3_column_text(stmt, 6), ":", status->vmod, 4, &cnt) ||
+        convert_integer_delimit_static(sqlite3_column_text(stmt, 7), ":", status->voff, 4, &cnt))
+        return CHECK_FAILED;
     return CHECK_PASSED;
 }
 
@@ -738,8 +743,9 @@ int pet_id(db_t * db, pet_t * pet, int id) {
 
     stmt = db->pet_id->stmt;
     pet->mob_id = sqlite3_column_int(stmt, 0);
-    strncopy(pet->pet_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 1));
-    strncopy(pet->loyal_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
+    strncopy(pet->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    strncopy(pet->pet_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 2));
+    strncopy(pet->loyal_script, MAX_SCRIPT_SIZE, sqlite3_column_text(stmt, 3));
     return CHECK_PASSED;
 }
 
@@ -761,10 +767,9 @@ int produce_id(db_t * db, produce_t ** produces, int item_level) {
         temp->item_lv = sqlite3_column_int(stmt, 1);
         temp->skill_id = sqlite3_column_int(stmt, 2);
         temp->skill_lv = sqlite3_column_int(stmt, 3);
-        temp->ingredient_count = convert_integer_delimit_static((const char *)
-        sqlite3_column_text(stmt, 4), ":", temp->item_id_req, MAX_INGREDIENT);
-        temp->ingredient_count = convert_integer_delimit_static((const char *)
-        sqlite3_column_text(stmt, 5), ":", temp->item_amount_req, MAX_INGREDIENT);
+        if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 4), ":", temp->item_id_req, MAX_INGREDIENT, &temp->ingredient_count) ||
+            convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 5), ":", temp->item_amount_req, MAX_INGREDIENT, &temp->ingredient_count))
+            return CHECK_FAILED;
         temp->next = NULL;
         (root == NULL) ?
             (root = iter = temp) :
