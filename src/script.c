@@ -1085,7 +1085,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
         }
     }
     if(block_cnt == 0)
-        return SCRIPT_FAILED;
+        return SCRIPT_SKIPPED;
     return SCRIPT_PASSED;
 }
 
@@ -1482,7 +1482,6 @@ int script_combo(int item_id, char * buffer, int * offset, db_t * db, int mode) 
     return SCRIPT_PASSED;
 }
 
-
 int script_recursive(db_t * db, int mode, lua_State * map, char * script, char ** value) {
     int ret = 0;
     script_t * scribe = NULL;
@@ -1503,9 +1502,20 @@ int script_recursive(db_t * db, int mode, lua_State * map, char * script, char *
     list_init_head(&scribe->free);
 
     /* compile the item script */
-    if (script_lexical(&scribe->token, script) ||
-        script_analysis(scribe, &scribe->token, NULL, NULL) ||
-        script_translate(scribe) ||
+    if(script_lexical(&scribe->token, script))
+        goto failed;
+
+    ret = script_analysis(scribe, &scribe->token, NULL, NULL);
+    if(SCRIPT_SKIPPED == ret) {
+        /* empty script */
+        *value = convert_string(" ");
+        ret = CHECK_PASSED;
+        goto clean;
+    } else if(ret) {
+        goto failed;
+    }
+
+    if( script_translate(scribe) ||
         script_generate(scribe, scribe->buffer, &scribe->offset))
         goto failed;
 
@@ -1518,6 +1528,7 @@ clean:
     return ret;
 
 failed:
+    printf("%s\n", script);
     script_block_dump(scribe, stderr);
     ret = CHECK_FAILED;
     goto clean;
@@ -2402,21 +2413,21 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
     /* trigger method (exclusive) */
     if(BF_SKILLMASK & val) {
         if(BF_SKILL & val)
-            off += sprintf(&buf[off], "skills ");
+            off += sprintf(&buf[off], "skills");
         else if(BF_NORMAL & val)
-            off += sprintf(&buf[off], "normal attack ");
+            off += sprintf(&buf[off], "attack");
         else
             /* unsupported bit */
             goto failed;
     } else {
         /* default depends on trigger type */
         if(BF_MISC & val || BF_MAGIC & val)
-            off += sprintf(&buf[off], "skills ");
+            off += sprintf(&buf[off], "skills");
         else if(BF_WEAPON & val)
-            off += sprintf(&buf[off], "normal attack ");
+            off += sprintf(&buf[off], "attack");
     }
 
-    if(script_buffer_write(block, TYPE_ENG, buf))
+    if(stack_aux_formula(block, trigger, buf))
         goto failed;
 
 clean:
@@ -2491,7 +2502,7 @@ int stack_eng_trigger_atf(block_r * block, char * expr) {
         /* default is target */
         off += sprintf(&buf[off], "on target");
 
-    if(script_buffer_write(block, TYPE_ENG, buf))
+    if(stack_aux_formula(block, trigger, buf))
         goto failed;
 
 clean:
@@ -3072,7 +3083,7 @@ int translate_bonus(block_r * block, char * prefix) {
             case 'z':                                                                           break; /* Meaningless */
             case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);         break; /* Effect */
             case 'q': ret = stack_eng_int(block, block->ptr[j], 100);                           break; /* Integer Percentage / 100 */
-            case 'k': ret = stack_eng_db(block, block->ptr[j], DB_SKILL_ID, &cnt);              break; /* Skill */
+            case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                        break; /* Skill */
             case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);           break; /* Size */
             case 'c': ret = stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt);                break; /* Monster Class & Job ID * Monster ID */
             case 'o': ret = stack_eng_int(block, block->ptr[j], 10);                            break; /* Integer Percentage / 10 */
@@ -3138,9 +3149,19 @@ int translate_bonus(block_r * block, char * prefix) {
                 block->eng[bonus->order[2]],
                 block->eng[bonus->order[3]]);
             break;
+        case 5:
+            sprintf(buf,
+                bonus->format,
+                block->eng[bonus->order[0]],
+                block->eng[bonus->order[1]],
+                block->eng[bonus->order[2]],
+                block->eng[bonus->order[3]],
+                block->eng[bonus->order[4]]);
+            break;
         default:
-            exit_func_safe("unsupport bonus argument count "
-            "%d in item %d", bonus->type_cnt, block->item_id);
+            return exit_func_safe("unsupport bonus argument count"
+            " %d on %s in item %d", bonus->type_cnt, bonus->bonus,
+            block->item_id);
     }
 
     if(script_buffer_reset(block, TYPE_ENG) ||
@@ -3150,6 +3171,75 @@ int translate_bonus(block_r * block, char * prefix) {
 clean:
     SAFE_FREE(buf);
     SAFE_FREE(bonus);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int translate_skill(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int cnt = 0;
+    int temp = 0;
+    char * buf = NULL;
+    node_t * flag = NULL;
+
+    /* error on invalid references
+     * and error on empty argument */
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 2)
+        return CHECK_FAILED;
+
+    /* translate skill name and level */
+    len = block->arg_cnt;
+    if(stack_eng_skill(block, block->ptr[0], &cnt) ||
+       cnt > 1 || /* skill id must be constant */
+       stack_eng_int(block, block->ptr[1], 1))
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 128;
+
+    /* translate skill flag */
+    if(block->ptr_cnt == 3) {
+        flag = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE);
+        if(NULL == flag)
+            return CHECK_FAILED;
+
+        /* flag must be a constant */
+        if(flag->min != flag->max)
+            goto failed;
+
+        temp = flag->min;
+    } else {
+        /* default is 1 */
+        temp = 1;
+    }
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        goto failed;
+
+    switch(temp) {
+        case 0:
+            sprintf(buf, "Enable skill %s level %s.", block->eng[0], block->eng[1]);
+            break;
+        case 1:
+            sprintf(buf, "Temporarily enable skill %s level %s.", block->eng[0], block->eng[1]);
+            break;
+        case 2:
+            sprintf(buf, "Enable skill %s level %s.\nOr add %s levels "
+            "to the skill.", block->eng[0], block->eng[1], block->eng[1]);
+            break;
+        default:
+            break;
+    }
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        goto failed;
+
+clean:
+    node_free(flag);
     return ret;
 failed:
     ret = CHECK_FAILED;
@@ -3432,34 +3522,76 @@ int translate_petskillsupport(block_r * block) {
     return ret;
 }
 
-int translate_skill(block_r * block) {
+int translate_getexp(block_r * block, int handler) {
     int ret = 0;
-    int cnt = 0;
-    return exit_abt_safe("maintenance");
-    /* error on invalid references
-     * and error on empty argument */
+    int len = 0;
+    char * buf = NULL;
+
     if(exit_null_safe(1, block) ||
-       block->ptr_cnt < 2)
+       block->ptr_cnt < 1)
         return CHECK_FAILED;
 
-    /* translate skill name and level */
-    if(stack_eng_db(block, block->ptr[0], DB_SKILL_ID, &cnt) ||
-       cnt > 1 || /* skill id must be constant */
-       stack_eng_int(block, block->ptr[1], 1))
-        goto failed;
+    len = block->arg_cnt;
+    if(stack_eng_int(block, block->ptr[0], 1))
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 32;
 
-    /* translate skill flag */
-    if(block->ptr_cnt == 3)
-        ;
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
 
+    sprintf(buf, "Gain %s %s experience.", block->eng[0], (handler == 43) ? "player" : "guild");
 
-    goto failed;
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
 
-clean:
+    SAFE_FREE(buf);
     return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+}
+
+int translate_autobonus(block_r * block, int flag) {
+    int ret = 0;
+    int len = 0;
+    int off = 0;
+    char * buf = NULL;
+    char * script = NULL;
+    if(exit_null_safe(1, block) ||
+       block->ptr_cnt < 3)
+        return CHECK_FAILED;
+
+    len = block->arg_cnt;
+
+    if(script_recursive(block->db, block->mode, block->map, block->ptr[0], &script) ||
+       stack_eng_int(block, block->ptr[1], 10) ||
+       stack_eng_time(block, block->ptr[2], 1))
+        return CHECK_FAILED;
+
+
+    if(block->ptr_cnt > 3) {
+       if(stack_eng_trigger_bt(block, block->ptr[3]))
+            return CHECK_FAILED;
+    } else {
+        /* evaluates to default bf flags */
+        if(stack_eng_trigger_bt(block, "0"))
+            return CHECK_FAILED;
+    }
+
+    len = (block->arg_cnt - len) + strlen(script) + 256;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "Add %s chance to %s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], script);
+
+    if(script_buffer_reset(block, TYPE_ENG) ||
+       script_buffer_write(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    SAFE_FREE(script);
+    return ret;
 }
 
 int translate_searchstore(block_r * block) {
@@ -3474,11 +3606,11 @@ int translate_searchstore(block_r * block) {
         "amount or effect in item %d", block->item_id);
 
 
-    return SCRIPT_PASSED;
+    return SCRIPT_FAILED;
 }
 
 int translate_buyingstore(block_r * block) {
-    return SCRIPT_PASSED;
+    return SCRIPT_FAILED;
 }
 
 /* implemented only for rathena and hercules
@@ -3565,29 +3697,6 @@ int translate_hire_merc(block_r * block, int handler) {
     return exit_abt_safe("maintenance");
 }
 
-int translate_getexp(block_r * block, int handler) {
-    //int offset = 0;
-    //char buf[BUF_SIZE];
-    //node_t * exp_amount = NULL;
-    ///* check null paramater */
-    //if(exit_null_safe(1, block))
-    //    return SCRIPT_FAILED;
-    //exp_amount = evaluate_expression(block, block->ptr[0], 1,
-    //    EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA);
-    //if(exp_amount != NULL) {
-    //    offset = sprintf(buf,"Gain %s %s experience.",
-    //             status_formula(&exp_amount->stack[exp_amount->
-    //                stack_cnt], block->eng[1], exp_amount, 'n', 1),
-    //             (handler == 43)?"player":"guild");
-    //    buf[offset] = '\0';
-    //    translate_write(block, buf, 1);
-    //    node_free(exp_amount);
-    //} else {
-    //    return SCRIPT_FAILED;
-    //}
-    return exit_abt_safe("maintenance");
-}
-
 int translate_transform(block_r * block) {
     /*int offset = 0;
     char buf[BUF_SIZE];
@@ -3628,41 +3737,6 @@ int translate_skill_block(block_r * block, int handler) {
     buf[offset] = '\0';
     translate_write(block, buf, 1);
     if(level != NULL) node_free(level);*/
-    return exit_abt_safe("maintenance");
-}
-
-int translate_autobonus(block_r * block, int flag) {
-    //int offset = 0;
-    //char buf[BUF_SIZE];
-    //char aux[BUF_SIZE];
-    //node_t * rate = NULL;
-    ///* check null paramater */
-    //if(exit_null_safe(1, block))
-    //    return SCRIPT_FAILED;
-    //rate = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE|EVALUATE_FLAG_WRITE_FORMULA);
-    //if(rate == NULL) return SCRIPT_FAILED;
-    //translate_bonus_float_percentage(block, rate, &offset, 100);
-    //if (stack_eng_time(block, block->ptr[2], 1) == SCRIPT_FAILED)
-    //    return SCRIPT_FAILED;
-    ///* translate for autobonus and autobonus2 */
-    //if(flag & 0x01 || flag & 0x02) {
-    //    if(block->ptr_cnt > 3)
-    //        if(translate_trigger(block, block->ptr[3], 1) == SCRIPT_FAILED)
-    //            return SCRIPT_FAILED;
-    //    offset = sprintf(buf,"Add %s chance to autobonus for %s when attacked.%s",
-    //        formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
-    //}
-
-    //if(flag & 0x04) {
-    //    if(block->ptr_cnt > 3)
-    //        if(translate_skill(block, block->ptr[3]) == SCRIPT_FAILED)
-    //            return SCRIPT_FAILED;
-    //    offset = sprintf(buf,"Add %s chance to autobonus for %s when using skill %s.",
-    //        formula(aux, block->eng[1], rate), block->eng[3], (block->eng[5] != NULL)?block->eng[5]:"");
-    //}
-    //buf[offset] = '\0';
-    //translate_write(block, buf, 1);
-    //if(rate != NULL) node_free(rate);
     return exit_abt_safe("maintenance");
 }
 
@@ -4436,10 +4510,11 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
 
     /* execute the proper handler for the function */
     switch(func->tag) {
-        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);       break; /* readparam */
-        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);      break; /* getskilllv */
-        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);            break; /* rand */
-        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);  break; /* groupranditem */
+        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);         break; /* readparam */
+        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);        break; /* getskilllv */
+        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);              break; /* rand */
+        case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);       break; /* isequipped */
+        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);    break; /* groupranditem */
         default:
             exit_func_safe("unsupported function '%s' in item %d", func->id, block->item_id);
             goto clean;
@@ -4653,6 +4728,62 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
 
 clean:
     node_free(id);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int i = 0;
+    int ret = 0;
+    int len = 0;
+    int offset = 0;
+    char * buf = NULL;
+    int item_off = 0;
+    int item_cnt = 0;
+    /* error on invalid references */
+    if(exit_null_safe(3, block, func, node))
+        return CHECK_FAILED;
+
+    /* error on invalid argument count */
+    if(0 == cnt)
+        return exit_func_safe("invalid argument count to"
+        " function '%s' in %d", func->id, block->item_id);
+
+    /* evaluate each item id and push item names on the block->eng stack */
+    len = block->arg_cnt;
+    item_off = block->eng_cnt;
+    for(i = 0; i < cnt; i++)
+        if(stack_eng_item(block, block->ptr[off + i], &item_cnt))
+            return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 128;
+
+    /* write the isequip string */
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    offset += sprintf(&buf[offset], "%s", block->eng[item_off]);
+    for(i = item_off + 1; i < block->eng_cnt; i++)
+        offset += (i + 1 == block->eng_cnt) ?
+            sprintf(&buf[offset], ", and %s", block->eng[i]):
+            sprintf(&buf[offset], ", %s", block->eng[i]);
+    offset += sprintf(&buf[offset], " is equipped");
+
+    /* pop each item name from the block->eng stack */
+    for(i = item_off; i < block->eng_cnt; i++)
+        if(script_buffer_unwrite(block, TYPE_ENG))
+            goto failed;
+
+    /* write the formula */
+    expression_write(node, "%s", buf);
+    id_write(node, "%s", buf);
+    node->min = 0;
+    node->max = 1;
+
+clean:
+    SAFE_FREE(buf);
     return ret;
 failed:
     ret = CHECK_FAILED;

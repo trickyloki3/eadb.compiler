@@ -3,6 +3,7 @@
 int main(int argc, char * argv[]) {
     int i = 0;
     int len = 0;
+    int ret = 0;
     char * script = NULL;
     script_t * scribe = NULL;
 
@@ -14,7 +15,8 @@ int main(int argc, char * argv[]) {
         exit(EXIT_FAILURE);
 
     while(!item_iterate(scribe->db, &scribe->item)) {
-        scribe->offset = 0;
+        /* reset variant data */
+        script_block_reset(scribe);
 
         /* skip empty scripts */
         script = scribe->item.script;
@@ -30,29 +32,32 @@ int main(int argc, char * argv[]) {
             continue;
 
         /* compile the item script */
-        if (script_lexical(&scribe->token, scribe->item.script) ||
-            script_analysis(scribe, &scribe->token, NULL, NULL) ||
-            script_translate(scribe)) {
-            script_block_dump(scribe, stderr);
-            printf("Error on item %d; %s!\n", scribe->item.id, scribe->item.script);
-            break;
-        }
+        if (script_lexical(&scribe->token, scribe->item.script))
+            goto failed;
 
-        if( script_generate(scribe, scribe->buffer, &scribe->offset)) {
-            script_block_dump(scribe, stderr);
-            printf("Error on item %d; %s!\n", scribe->item.id, scribe->item.script);
-            break;
-        }
+        ret = script_analysis(scribe, &scribe->token, NULL, NULL);
+        if (SCRIPT_SKIPPED == ret)
+            continue;
+        else if (ret)
+            goto failed;
+
+        if (script_translate(scribe) ||
+            script_generate(scribe, scribe->buffer, &scribe->offset))
+            goto failed;
 
         if (scribe->item.id == 0) {
             script_block_dump(scribe, stderr);
             printf("%d; %s\n", scribe->item.id, scribe->buffer);
             break;
         }
-        /*printf("%d; %s\n", scribe->item.id, scribe->buffer);*/
-        script_block_reset(scribe);
     }
 
+clean:
     script_deit(&scribe);
     return 0;
+
+failed:
+    script_block_dump(scribe, stderr);
+    printf("Item %d; %s\n", scribe->item.id, scribe->item.script);
+    goto clean;
 }

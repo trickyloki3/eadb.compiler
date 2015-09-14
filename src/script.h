@@ -25,6 +25,7 @@
 
     #define SCRIPT_PASSED                   CHECK_PASSED
     #define SCRIPT_FAILED                   CHECK_FAILED
+    #define SCRIPT_SKIPPED                  2
     #define BUF_SIZE                        4096        /* total size of script, stack, and etc */
     #define PTR_SIZE                        4096        /* =.=; total number of possible tokens */
     #define ARG_SIZE                        64          /* total argument to keep track of */
@@ -285,6 +286,7 @@ struct script_t;
     /* revised */ int translate_status_end(block_r *);
     /* revised */ int translate_pet_egg(block_r *);
     /* revised */ int translate_bonus(block_r *, char *);
+    /* revised */ int translate_skill(block_r *);
     /* revised */ int translate_itemskill(block_r *);
     /* revised */ int translate_petloot(block_r *);
     /* revised */ int translate_petheal(block_r *);
@@ -293,20 +295,19 @@ struct script_t;
     /* revised */ int translate_petskillattack(block_r *);
     /* revised */ int translate_petskillattack2(block_r *);
     /* revised */ int translate_petskillsupport(block_r *);
+    /* revised */ int translate_getexp(block_r *, int);
+    /* revised */ int translate_autobonus(block_r *, int);
 
-    int translate_skill(block_r *);
     int translate_searchstore(block_r *);
     int translate_buyingstore(block_r *);
     int translate_getrandgroup(block_r *, int);
     int translate_hire_merc(block_r *, int);
-    int translate_getexp(block_r *, int);
     int translate_transform(block_r *);
     int translate_skill_block(block_r *, int);
-    int translate_autobonus(block_r *, int);
     int translate_misc(block_r *, char *);
-    int translate_produce(block_r *, int);
     int translate_bonus_script(block_r *);
-    int translate_setfalcon(block_r *);;
+    int translate_setfalcon(block_r *);
+
     int translate_write(block_r *, char *, int);
     int translate_overwrite(block_r *, char *, int);
 
@@ -335,6 +336,7 @@ struct script_t;
     /* revised */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
     /* revised */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
     /* revised */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
+    /* revised */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
 
     #define NODE_TYPE_OPERATOR              0x01
     #define NODE_TYPE_OPERAND               0x02
