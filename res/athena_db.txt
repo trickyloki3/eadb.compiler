@@ -280,6 +280,30 @@ regen_flag =  {
     [2] = "SP";
 }
 
+refine_location = {
+    [1] = "Upper Headgear";
+    [2] = "Armor";
+    [3] = "Left Hand";
+    [4] = "Right Hand";
+    [5] = "Garment";
+    [6] = "Shoes";
+    [7] = "Left Accessory";
+    [8] = "Right Accessory";
+    [9] = "Middle Headgear";
+    [10] = "Lower Headgear";
+    [11] = "Lower Costume Headgear";
+    [12] = "Middle Costume Headgear";
+    [13] = "Upper Costume Headgear";
+    [14] = "Costume Garment";
+    [15] = "Ammo";
+    [16] = "Shadow Armor";
+    [17] = "Shadow Weapon";
+    [18] = "Shadow Shield";
+    [19] = "Shadow Shoes";
+    [20] = "Shadow Right Accessory";
+    [21] = "Shadow left Accessory";
+}
+
 search_store = {
     [0] = "the current map and mark their location";
     [1] = "the entire server and open their store";

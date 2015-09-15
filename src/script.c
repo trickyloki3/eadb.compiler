@@ -490,7 +490,7 @@ int script_map_id(block_r * block, char * map, int id, char ** val) {
     lua_pushinteger(block->map, id);
     lua_gettable(block->map, index);
     if(!lua_isstring(block->map, -1)) {
-        exit_func_safe("%s at index %d does not map to a string", map, id);
+        /*exit_func_safe("%s at index %d does not map to a string", map, id);*/
         goto failed;
     }
 
@@ -2146,10 +2146,13 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
                 goto found;
             if(MAP_WEAPON_FLAG & flag && !script_map_id(block, "weapon_type", i, &value))
                 goto found;
+            if(MAP_REFINE_FLAG & flag && !script_map_id(block, "refine_location", i, &value))
+                goto found;
 
             /* failed to find resolve the id */
-            exit_func_safe("failed to map %d (%s) on flag "
-            "%d in item %d", i, expr, flag, block->item_id);
+            if(!(flag & MAP_NO_ERROR))
+                exit_func_safe("failed to map %d (%s) on flag "
+                "%d in item %d", i, expr, flag, block->item_id);
             goto failed;
 found:
             /* write the mapped value on the block->eng stack */
@@ -2318,17 +2321,10 @@ int stack_eng_item_group_name(block_r * block, char * expr, int * argc) {
 
     /* group id must evaluate to a integer */
     group_id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == group_id)
-        goto failed;
-
-    /* group id must be a constant */
-    if(group_id->min != group_id->max)
-        goto failed;
-
-    if(item_group_id(block->db, &item_group, group_id->min))
-        goto failed;
-
-    if(0 >= item_group.size)
+    if(NULL == group_id ||
+       group_id->min != group_id->max ||
+       item_group_id(block->db, &item_group, group_id->min) ||
+       0 >= item_group.size)
         goto failed;
 
     sprintf(buf, "group %d (%d items)", group_id->min, item_group.size);
@@ -2374,7 +2370,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
      *  [normal attacks or skills]
      */
 
-    off += sprintf(&buf[off], "activate on ");
+    off += sprintf(&buf[off], "on ");
 
     /* trigger range (inclusive) */
     if(BF_RANGEMASK & val) {
@@ -2451,12 +2447,14 @@ int stack_eng_trigger_atf(block_r * block, char * expr) {
         return CHECK_FAILED;
 
     trigger = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == trigger)
+    if(NULL == trigger) {
         goto failed;
+    }
 
     /* trigger must be a constant */
-    if(trigger->min != trigger->max)
+    if(trigger->min != trigger->max) {
         goto failed;
+    }
 
     val = trigger->min;
 
@@ -2467,7 +2465,7 @@ int stack_eng_trigger_atf(block_r * block, char * expr) {
      *  [on self or target ]
      */
 
-    off += sprintf(&buf[off], "activate on ");
+    off += sprintf(&buf[off], "on ");
 
     /* trigger range (inclusive) */
     if((ATF_LONG | ATF_SHORT) & val)
@@ -2484,14 +2482,14 @@ int stack_eng_trigger_atf(block_r * block, char * expr) {
     if(ATF_WEAPON & val)
         off += sprintf(&buf[off], "weapon ");
     else if((ATF_MAGIC | ATF_MISC) & val)
-        off += sprintf(&buf[off], "magic and misc");
+        off += sprintf(&buf[off], "magic and misc ");
     else if(ATF_MAGIC & val)
         off += sprintf(&buf[off], "magic ");
     else if(ATF_MISC & val)
         off += sprintf(&buf[off], "misc ");
     else
-        /* unsupported bit */
-        goto failed;
+        /* default is weapon */
+        off += sprintf(&buf[off], "weapon ");
 
     /* trigger target */
     if(ATF_SELF & val)
@@ -2561,8 +2559,7 @@ int stack_aux_formula(block_r * block, node_t * node, char * buf) {
 
     /* get time expression formula */
     if (script_buffer_write(block, TYPE_ENG, buf) ||
-        script_formula_write(block, block->eng_cnt - 1, node, &formula) ||
-        formula == NULL)
+        script_formula_write(block, block->eng_cnt - 1, node, &formula))
         goto failed;
 
     /* pop results and write final translated string */
@@ -3075,32 +3072,33 @@ int translate_bonus(block_r * block, char * prefix) {
 
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
-            case 'n': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Integer Value */
-            case 'p': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Integer Percentage */
-            case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);           break; /* Race */
-            case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);        break; /* Element */
-            case 'w': ret = stack_eng_grid(block, block->ptr[j]);                               break; /* Splash */
-            case 'z':                                                                           break; /* Meaningless */
-            case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);         break; /* Effect */
-            case 'q': ret = stack_eng_int(block, block->ptr[j], 100);                           break; /* Integer Percentage / 100 */
-            case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                        break; /* Skill */
-            case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);           break; /* Size */
-            case 'c': ret = stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt);                break; /* Monster Class & Job ID * Monster ID */
-            case 'o': ret = stack_eng_int(block, block->ptr[j], 10);                            break; /* Integer Percentage / 10 */
-            case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);               break; /* Item ID */
-            case 'x': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Level */
-            case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);          break; /* Regen */
-            case 'a': ret = stack_eng_int(block, block->ptr[j], 1000);                          break; /* Millisecond */
-            case 'h': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* SP Gain Bool */
-            case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);           break; /* Cast Self, Enemy */
-            case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                         break; /* Trigger BT */
-            case 'y': ret = stack_eng_item_group_name(block, block->ptr[j], &cnt);              break; /* Item Group */
-            case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                        break; /* Triger ATF */
-            case 'f': ret = stack_eng_int(block, block->ptr[j], 1);                             break; /* Cell */
-            case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);         break; /* Flag Bitfield */
-            case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);         break; /* Weapon Type */
-            case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG, &cnt) &&
-                             stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));              break; /* Class Group & Monster */
+            case 'n': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Integer Value */
+            case 'p': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Integer Percentage */
+            case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
+            case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
+            case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
+            case 'z':                                                                                   break; /* Meaningless */
+            case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                 break; /* Effect */
+            case 'q': ret = stack_eng_int(block, block->ptr[j], 100);                                   break; /* Integer Percentage / 100 */
+            case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                                break; /* Skill */
+            case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                   break; /* Size */
+            case 'c': ret = stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt);                        break; /* Monster Class & Job ID * Monster ID */
+            case 'o': ret = stack_eng_int(block, block->ptr[j], 10);                                    break; /* Integer Percentage / 10 */
+            case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                       break; /* Item ID */
+            case 'x': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Level */
+            case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                  break; /* Regen */
+            case 'a': ret = stack_eng_int(block, block->ptr[j], 1000);                                  break; /* Millisecond */
+            case 'h': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* SP Gain Bool */
+            case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
+            case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                                 break; /* Trigger BT */
+            case 'y': ret = (stack_eng_item_group_name(block, block->ptr[j], &cnt)
+                            && stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt));                   break; /* Item Group */
+            case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                                break; /* Triger ATF */
+            case 'f': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Cell */
+            case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                 break; /* Flag Bitfield */
+            case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                 break; /* Weapon Type */
+            case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
+                             && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                  break; /* Class Group & Monster */
             default: break;
         }
 
@@ -3583,7 +3581,7 @@ int translate_autobonus(block_r * block, int flag) {
     if(NULL == buf)
         return CHECK_FAILED;
 
-    sprintf(buf, "Add %s chance to %s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], script);
+    sprintf(buf, "Add %s chance to activate %s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], script);
 
     if(script_buffer_reset(block, TYPE_ENG) ||
        script_buffer_write(block, TYPE_ENG, buf))
@@ -4245,14 +4243,16 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         /* handler constant, variable, or function call */
         } else if(ATHENA_SCRIPT_IDENTIFER(expr[i][0]) || ATHENA_SCRIPT_SYMBOL(expr[i][0])) {
             temp_node = calloc(1, sizeof(node_t));
-            id_write(temp_node,"%s", expr[i]);
+            if(id_write(temp_node,"%s", expr[i]))
+                goto failed_expression;
 
             /* handle variable or function */
             memset(&var_info, 0, sizeof(var_res));
             if(!var_name(block->db, &var_info, expr[i], strlen(expr[i]))) {
                 temp_node->cond_cnt = 1;
                 temp_node->var = var_info.tag;
-                id_write(temp_node, "%s", var_info.str);
+                if(id_write(temp_node, "%s", var_info.str))
+                    goto failed_expression;
                 /* handle function call */
                 if(var_info.type & TYPE_FUNC) {
                     /* find the ending parenthesis */
@@ -4324,7 +4324,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                             if(set_iter->set_node->cond != NULL)
                                 temp_node->cond = copy_deep_any_tree(set_iter->set_node->cond);
                             temp_node->cond_cnt = set_iter->set_node->cond_cnt;
-                            expression_write(temp_node, "%s", set_iter->set_node->formula);
+                            if(expression_write(temp_node, "%s", set_iter->set_node->formula))
+                                goto failed_expression;
                             node_var_stack(set_iter->set_node, temp_node);
                             break;
                         }
@@ -4420,7 +4421,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
      * to copy any value we want to return using the root node */
     if(ret == SCRIPT_PASSED) {
         if(root_node->next->id != NULL)
-            id_write(root_node, "%s", root_node->next->id);
+            if(id_write(root_node, "%s", root_node->next->id))
+                goto failed_expression;
         /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
         root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
             NODE_TYPE_SUB : root_node->next->type;
@@ -4431,7 +4433,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         if(root_node->cond == NULL && root_node->next->cond != NULL)
             root_node->cond = copy_any_tree(root_node->next->cond);
         root_node->cond_cnt = root_node->next->cond_cnt;
-        expression_write(root_node, "%s", root_node->next->formula);
+        if(expression_write(root_node, "%s", root_node->next->formula))
+            goto failed_expression;
 
         /* collect all the arguments on the last stack */
         node_var_stack(root_node->next, root_node);
@@ -4485,6 +4488,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     int ret = 0;
     int arg_off = 0;
     int arg_cnt = 0;
+    int eng_off = 0;
     token_r * token = NULL;
 
     /* error on invalid references */
@@ -4503,6 +4507,9 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     for(i = start; i <= end; i++)
         token->script_ptr[token->script_cnt++] = expr[i];
 
+    /* save block->eng stack top */
+    eng_off = block->eng_cnt;
+
     /* push function arguments onto the block->ptr stack */
     arg_off = block->ptr_cnt;
     if(ret = stack_ptr_call_(block, token, &arg_cnt))
@@ -4510,11 +4517,12 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
 
     /* execute the proper handler for the function */
     switch(func->tag) {
-        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);         break; /* readparam */
-        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);        break; /* getskilllv */
-        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);              break; /* rand */
-        case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);       break; /* isequipped */
-        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);    break; /* groupranditem */
+        case 2: ret = evaluate_function_getequiprefinerycnt(block, arg_off, arg_cnt, func, node);   break; /* getequiprefinerycnt */
+        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);             break; /* readparam */
+        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);            break; /* getskilllv */
+        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                  break; /* rand */
+        case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
+        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
             exit_func_safe("unsupported function '%s' in item %d", func->id, block->item_id);
             goto clean;
@@ -4522,8 +4530,13 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
 
     /* pop the function arguments from the block->ptr stack */
     for(i = 0; i < arg_cnt; i++)
-        script_buffer_unwrite(block, TYPE_PTR);
+        if(script_buffer_unwrite(block, TYPE_PTR))
+            return CHECK_FAILED;
 
+    /* pop the any translation pushed onto the block->eng stack */
+    for(i = eng_off; i < block->eng_cnt;)
+        if(script_buffer_unwrite(block, TYPE_ENG))
+            return CHECK_FAILED;
 clean:
     SAFE_FREE(token);
     return ret;
@@ -4652,8 +4665,7 @@ failed:
 
 int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * func, node_t * node) {
     int ret = 0;
-    char * param = NULL;
-    node_t * id = NULL;
+    int argc = 0;
 
     /* error on invalid references */
     if(exit_null_safe(3, block, func, node))
@@ -4664,27 +4676,18 @@ int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * fun
         return exit_func_safe("invalid argument count to"
         " function '%s' in %d", func->id, block->item_id);
 
-    id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == id)
-        return CHECK_FAILED;
-
-    /* support only constant value */
-    if(id->min != id->max)
-        goto failed;
-
     /* write the dependency */
-    if(script_map_id(block, "readparam", id->range->min, &param) ||
-       expression_write(node, param) ||
-       id_write(node, param))
+    if(stack_eng_map(block, block->ptr[off], MAP_READPARAM_FLAG, &argc) ||
+       argc != 1 ||
+       expression_write(node, block->eng[block->eng_cnt - 1]) ||
+       id_write(node, block->eng[block->eng_cnt - 1]))
         goto failed;
 
-    /* readparam always range from 0 to max status points */
+    /* readparam is a fixed range */
     node->min = func->min;
     node->max = func->max;
 
 clean:
-    SAFE_FREE(param);
-    node_free(id);
     return ret;
 failed:
     ret = CHECK_FAILED;
@@ -4695,6 +4698,7 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
     int ret = 0;
     skill_t skill;
     node_t * id = NULL;
+
     /* error on invalid references */
     if(exit_null_safe(3, block, func, node))
         return CHECK_FAILED;
@@ -4705,24 +4709,28 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
         " function '%s' in %d", func->id, block->item_id);
 
     /* search for skill by name */
-    if(ATHENA_SCRIPT_IDENTIFER(block->ptr[off][0]) &&
-       skill_name(block->db, &skill, block->ptr[off], strlen(block->ptr[off]))) {
-            /* fallback by evaluating expression for skill id */
-            id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == id)
-                goto failed;
+    if( ATHENA_SCRIPT_IDENTIFER(block->ptr[off][0]) &&
+        !skill_name(block->db, &skill, block->ptr[off], strlen(block->ptr[off])))
+        goto found;
+    else
+        return CHECK_FAILED;
 
-            /* support constant only */
-            if(id->min != id->max ||
-               skill_id(block->db, &skill, id->min))
-                goto failed;
-    }
+    /* fallback by evaluating expression for skill id */
+    id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == id)
+        goto failed;
 
-    set_func(node, skill.id);
-    expression_write(node, "%s Level", skill.desc);
-    id_write(node, "%s Level", skill.desc);
+    /* support constant only */
+    if(id->min != id->max ||
+       skill_id(block->db, &skill, id->min))
+        goto failed;
 
-    /* set min and max skill level */
+found:
+    /* skill level is a fixed range */
+    if( expression_write(node, "%s Level", skill.desc) ||
+        id_write(node, "%s Level", skill.desc))
+        goto failed;
+
     node->min = 0;
     node->max = skill.maxlv;
 
@@ -4742,6 +4750,7 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
     char * buf = NULL;
     int item_off = 0;
     int item_cnt = 0;
+
     /* error on invalid references */
     if(exit_null_safe(3, block, func, node))
         return CHECK_FAILED;
@@ -4751,7 +4760,7 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
         return exit_func_safe("invalid argument count to"
         " function '%s' in %d", func->id, block->item_id);
 
-    /* evaluate each item id and push item names on the block->eng stack */
+    /* push item names into the block->eng stack */
     len = block->arg_cnt;
     item_off = block->eng_cnt;
     for(i = 0; i < cnt; i++)
@@ -4765,22 +4774,69 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
         return CHECK_FAILED;
 
     offset += sprintf(&buf[offset], "%s", block->eng[item_off]);
-    for(i = item_off + 1; i < block->eng_cnt; i++)
-        offset += (i + 1 == block->eng_cnt) ?
-            sprintf(&buf[offset], ", and %s", block->eng[i]):
-            sprintf(&buf[offset], ", %s", block->eng[i]);
+    if(block->eng_cnt - offset == 2) {
+        /* <item> and <item> */
+        offset += sprintf(&buf[offset], " and %s", block->eng[item_off + 1]);
+    } else {
+        /* <item>, <item>, and <item> */
+        for(i = item_off + 1; i < block->eng_cnt; i++)
+            offset += (i + 1 == block->eng_cnt) ?
+                sprintf(&buf[offset], ", and %s", block->eng[i]):
+                sprintf(&buf[offset], ", %s", block->eng[i]);
+    }
     offset += sprintf(&buf[offset], " is equipped");
 
-    /* pop each item name from the block->eng stack */
-    for(i = item_off; i < block->eng_cnt; i++)
-        if(script_buffer_unwrite(block, TYPE_ENG))
-            goto failed;
+    /* isequipped is a boolean function */
+    if( expression_write(node, "%s", buf) ||
+        id_write(node, "%s", buf))
+        goto failed;
 
-    /* write the formula */
-    expression_write(node, "%s", buf);
-    id_write(node, "%s", buf);
     node->min = 0;
     node->max = 1;
+
+clean:
+    SAFE_FREE(buf);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    int len = 0;
+    char * buf = NULL;
+    int equip_cnt = 0;
+
+    /* error on invalid references */
+    if(exit_null_safe(3, block, func, node))
+        return CHECK_FAILED;
+
+    /* error on invalid argument count */
+    if(1 != cnt)
+        return exit_func_safe("invalid argument count to"
+        " function '%s' in %d", func->id, block->item_id);
+
+    /* push equip location into the block->eng stack */
+    len = block->arg_cnt;
+    if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &equip_cnt) ||
+       equip_cnt != 1)
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + strlen(node->id) + 32;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "%s's %s", block->eng[block->eng_cnt - 1], node->id);
+
+    /* refine rate is a fixed range */
+    if( expression_write(node, "%s", buf) ||
+        id_write(node, buf))
+        goto failed;
+
+    node->min = func->min;
+    node->max = func->max;
 
 clean:
     SAFE_FREE(buf);
@@ -5004,9 +5060,10 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
 
     /* write expression and print node */
     if(EVALUATE_FLAG_WRITE_FORMULA & flag)
-        (node->type == NODE_TYPE_OPERATOR)?
+        if((node->type == NODE_TYPE_OPERATOR)?
             node_expr_append(node->left, node->right, node):
-            node_expr_append(NULL, NULL, node);
+            node_expr_append(NULL, NULL, node))
+            return CHECK_FAILED;
 
     /* useful for debugging the nodes */
     node_dump(node, stm);
@@ -5083,20 +5140,23 @@ void node_var_stack(node_t * node, node_t * root) {
     }
 }
 
-void node_expr_append(node_t * left, node_t * right, node_t * dest) {
-    if(exit_null_safe(1, dest)) return;
+int node_expr_append(node_t * left, node_t * right, node_t * dest) {
+    int ret = 0;
+
+    if(exit_null_safe(1, dest))
+        return CHECK_FAILED;
 
     /* constructs the formula by resolving variables to names */
     if(left == NULL && right == NULL) {
         /* dest is a leave node */
         switch(dest->type) {
-            case NODE_TYPE_UNARY: expression_write(dest, "%c%s", dest->op, dest->left->formula); break;
-            case NODE_TYPE_OPERAND: expression_write(dest, "%d", dest->max); break;
-            case NODE_TYPE_FUNCTION: expression_write(dest, "%s", dest->id); break;
-            case NODE_TYPE_VARIABLE: expression_write(dest, "%s", dest->id); break;
+            case NODE_TYPE_UNARY: ret = expression_write(dest, "%c%s", dest->op, dest->left->formula); break;
+            case NODE_TYPE_OPERAND: ret = expression_write(dest, "%d", dest->max); break;
+            case NODE_TYPE_FUNCTION: ret = expression_write(dest, "%s", dest->id); break;
+            case NODE_TYPE_VARIABLE: ret = expression_write(dest, "%s", dest->id); break;
             case NODE_TYPE_LOCAL: /* already inherited when resolving set block */ break;
-            case NODE_TYPE_CONSTANT: expression_write(dest, "%s", dest->id); break;
-            case NODE_TYPE_SUB: expression_write(dest, "%s", dest->formula); break;
+            case NODE_TYPE_CONSTANT: ret = expression_write(dest, "%s", dest->id); break;
+            case NODE_TYPE_SUB: ret = expression_write(dest, "%s", dest->formula); break;
             default: exit_func_safe("invalid node type %d", dest->type); break;
         }
     } else if(left != NULL && right != NULL) {
@@ -5104,21 +5164,23 @@ void node_expr_append(node_t * left, node_t * right, node_t * dest) {
         switch(dest->type) {
             case NODE_TYPE_OPERATOR:
                 switch(dest->op) {
-                    case '?': expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
-                    case '>': expression_write(dest,"%s > %s", left->formula, right->formula); break;
-                    case '<': expression_write(dest,"%s < %s", left->formula, right->formula); break;
-                    case '!' + '=': expression_write(dest,"%s != %s", left->formula, right->formula); break;
-                    case '=' + '=': expression_write(dest,"%s == %s", left->formula, right->formula); break;
-                    case '<' + '=': expression_write(dest,"%s <= %s", left->formula, right->formula); break;
-                    case '>' + '=': expression_write(dest,"%s >= %s", left->formula, right->formula); break;
-                    case '&' + '&': expression_write(dest,"%s and %s", left->formula, right->formula); break;
-                    case '|' + '|': expression_write(dest,"%s or %s", left->formula, right->formula); break;
-                    default: expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
+                    case '?': ret = expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
+                    case '>': ret = expression_write(dest,"%s > %s", left->formula, right->formula); break;
+                    case '<': ret = expression_write(dest,"%s < %s", left->formula, right->formula); break;
+                    case '!' + '=': ret = expression_write(dest,"%s != %s", left->formula, right->formula); break;
+                    case '=' + '=': ret = expression_write(dest,"%s == %s", left->formula, right->formula); break;
+                    case '<' + '=': ret = expression_write(dest,"%s <= %s", left->formula, right->formula); break;
+                    case '>' + '=': ret = expression_write(dest,"%s >= %s", left->formula, right->formula); break;
+                    case '&' + '&': ret = expression_write(dest,"%s and %s", left->formula, right->formula); break;
+                    case '|' + '|': ret = expression_write(dest,"%s or %s", left->formula, right->formula); break;
+                    default: ret = expression_write(dest,"%s %c %s", left->formula, dest->op, right->formula); break;
                 }
                 break;
             default: exit_func_safe("invalid node type %d", dest->type); break;
         }
     }
+
+    return ret;
 }
 
 void node_dump(node_t * node, FILE * stm) {

@@ -222,22 +222,24 @@ struct script_t;
     /* revised */ int stack_eng_time(block_r *, char *, int);
     /* revised */ int stack_eng_produce(block_r *, char *, int *);
     /* stack_eng_map flag (bitmask) */
-    #define MAP_AMMO_FLAG                   0x0001
-    #define MAP_CAST_FLAG                   0x0002
-    #define MAP_CLASS_FLAG                  0x0004
-    #define MAP_EFFECT_FLAG                 0x0008
-    #define MAP_ELEMENT_FLAG                0x0010
-    #define MAP_LOCATION_FLAG               0x0020
-    #define MAP_ITEM_FLAG                   0x0040
-    #define MAP_JOB_FLAG                    0x0080
-    #define MAP_RACE_FLAG                   0x0100
-    #define MAP_READPARAM_FLAG              0x0200
-    #define MAP_REGEN_FLAG                  0x0400
-    #define MAP_SEARCHSTORE_FLAG            0x0800
-    #define MAP_SIZE_FLAG                   0x1000
-    #define MAP_SP_FLAG                     0x2000
-    #define MAP_TARGET_FLAG                 0x4000
-    #define MAP_WEAPON_FLAG                 0x8000
+    #define MAP_AMMO_FLAG                   0x00001
+    #define MAP_CAST_FLAG                   0x00002
+    #define MAP_CLASS_FLAG                  0x00004
+    #define MAP_EFFECT_FLAG                 0x00008
+    #define MAP_ELEMENT_FLAG                0x00010
+    #define MAP_LOCATION_FLAG               0x00020
+    #define MAP_ITEM_FLAG                   0x00040
+    #define MAP_JOB_FLAG                    0x00080
+    #define MAP_RACE_FLAG                   0x00100
+    #define MAP_READPARAM_FLAG              0x00200
+    #define MAP_REGEN_FLAG                  0x00400
+    #define MAP_SEARCHSTORE_FLAG            0x00800
+    #define MAP_SIZE_FLAG                   0x01000
+    #define MAP_SP_FLAG                     0x02000
+    #define MAP_TARGET_FLAG                 0x04000
+    #define MAP_WEAPON_FLAG                 0x08000
+    #define MAP_REFINE_FLAG                 0x10000
+    #define MAP_NO_ERROR                    0x20000
     /* revised */ int stack_eng_map(block_r *, char *, int, int *);
     /* stack_eng_db flag (bitmask) */
     #define DB_SKILL_ID                     0x01
@@ -330,13 +332,22 @@ struct script_t;
     /* revised */ node_t * evaluate_expression_(block_r *, node_t *, int, int);
     /* revised */ node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
 
-    /* evaluate a function with the expression */
+    /* evaluate a function with the expression
+     *
+     * arguments with complex expressions can cause stack overflow
+     * problems or produce results that are difficult to translate
+     * therefore, complex expressions are typically not supported.
+     *
+     * vararg - variable support
+     * const  - constant support
+     */
     /* revised */ int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
-    /* revised */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
+    /* revised; vararg */ int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
+    /* revised; vararg */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
+    /* revised; vararg */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);       /* no-multi */
 
     #define NODE_TYPE_OPERATOR              0x01
     #define NODE_TYPE_OPERAND               0x02
@@ -349,7 +360,7 @@ struct script_t;
     /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int, int *);
     /* revised */ int node_cond_inherit(node_t *);
     /* revised */ void node_var_stack(node_t *, node_t *);
-    /* revised */ void node_expr_append(node_t *, node_t *, node_t *);
+    /* revised */ int node_expr_append(node_t *, node_t *, node_t *);
     /* revised */ void node_dump(node_t *, FILE *);
     /* revised */ void node_free(node_t *);
 

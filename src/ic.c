@@ -45,7 +45,7 @@ int main(int argc, char * argv[]) {
             script_generate(scribe, scribe->buffer, &scribe->offset))
             goto failed;
 
-        if (scribe->item.id == 0) {
+        if (scribe->item.id == 4421) {
             script_block_dump(scribe, stderr);
             printf("%d; %s\n", scribe->item.id, scribe->buffer);
             break;
