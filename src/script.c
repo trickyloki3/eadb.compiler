@@ -1390,6 +1390,7 @@ int script_translate(script_t * script) {
 }
 
 int script_generate(script_t * script, char * buffer, int * offset) {
+    char buf[BUF_SIZE];
     block_r * iter = NULL;
 
     if(exit_null_safe(3, script, buffer, offset))
@@ -1412,7 +1413,7 @@ int script_generate(script_t * script, char * buffer, int * offset) {
             default:
                 if(iter->eng_cnt != 1)
                     return CHECK_FAILED;
-                *offset += sprintf(&buffer[*offset], "%s", iter->eng[0]);
+                *offset += sprintf(buffer[*offset], "%s", iter->eng[0]);
         }
         iter = iter->next;
     }
