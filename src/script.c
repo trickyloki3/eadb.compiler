@@ -1390,65 +1390,32 @@ int script_translate(script_t * script) {
 }
 
 int script_generate(script_t * script, char * buffer, int * offset) {
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int nest = 0;
-    int sc_end_cnt = 0;
-    char buf[BUF_SIZE];
     block_r * iter = NULL;
-    block_r * iter_sub = NULL;
 
     if(exit_null_safe(3, script, buffer, offset))
         return SCRIPT_FAILED;
-
     iter = script->block.head->next;
-    for(; iter != script->block.head; iter = iter->next) {
-        /* calculate linkage nest */
-        nest = script_linkage_count(iter, i);
-        buf[0] = '\0';
-        if(nest > 0) {
-            k = 0;
-            buf[k++] = ' ';
-            for(j = 0; j < nest && k < BUF_SIZE; j++, k++) {
-                if(j + 1 >= nest) {
-                    buf[k++] = '-';
-                    buf[k++] = '>';
-                    buf[k] = ' ';
-                } else {
-                    buf[k++] = '-';
-                    buf[k++] = '-';
-                    buf[k] = '-';
-                }
-            }
-            buf[k] = '\0';
-        }
+    while(iter != script->block.head) {
         switch(iter->type) {
-            /* blocks that might have other blocks linked to it */
             case 26: /* if */
             case 27: /* else */
-                /*if(iter->logic_tree != NULL)
-                    if(script_generate_cond(iter->logic_tree, stdout, buf, buffer, offset, iter))
-                        return SCRIPT_FAILED;*/
+                /* traverse logic tree */
                 break;
             case 28: /* set */
                 /* special case for zeny */
-                if(ncs_strcmp(iter->ptr[0], "zeny") == 0)
-                    *offset += sprintf(buffer + *offset, "%sCurrent %s\n", buf, iter->eng[0]);
                 break;
-            /* ignore these blocks, since they have no interpretation */
             case 21: /* skilleffect */
             case 22: /* specialeffect2 */
             case 29: /* input */
             case 32: /* end */
                 break;
-            /* general block writing */
             default:
-                if(iter->eng_cnt > 0 && iter->eng[iter->eng_cnt - 1] != NULL)
-                    *offset += sprintf(buffer + *offset, "%s%s\n", buf, iter->eng[iter->eng_cnt - 1]);
+                if(iter->eng_cnt != 1)
+                    return CHECK_FAILED;
+                *offset += sprintf(&buffer[*offset], "%s", iter->eng[0]);
         }
+        iter = iter->next;
     }
-    buffer[*offset] = '\0';
     return SCRIPT_PASSED;
 }
 
@@ -5273,251 +5240,4 @@ void node_free(node_t * node) {
             freerange(node->range);
         free(node);
     }
-}
-
-int script_linkage_count(block_r * block, int start) {
-    int nest = 0;
-    block_r * iter = block->link;
-    /* calculate the nesting */
-    while(iter != NULL) {
-        if(iter->type != 27) nest++;
-        iter = iter->link;
-    }
-    return nest;
-}
-
-/* primary multiplexer for translating logic tree */
-int script_generate_cond(logic_node_t * tree, FILE * stm, char * prefix, char * buffer, int * offset, block_r * block) {
-    char buf[BUF_SIZE];
-    int off = 0;
-    buf[0] = '\0';
-
-    switch(tree->type) {
-        /* each OR node means that multiple conditions */
-        case LOGIC_NODE_OR:
-            if(tree->left != NULL)
-                if(script_generate_cond(tree->left, stm, prefix, buffer, offset, block) == SCRIPT_FAILED)
-                    return SCRIPT_FAILED;
-            if(tree->right != NULL)
-                if(script_generate_cond(tree->right, stm, prefix, buffer, offset, block) == SCRIPT_FAILED)
-                    return SCRIPT_FAILED;
-            break;
-        /* write each OR's children (non-OR node) as separate condition */
-        case LOGIC_NODE_AND:
-            if(script_generate_and_chain(tree, buf, &off, block) == SCRIPT_FAILED)
-                return SCRIPT_FAILED;
-            *offset += sprintf(buffer + *offset, "%s[%s]\n", prefix, buf);
-            break;
-        case LOGIC_NODE_COND:
-            if(script_generate_cond_node(tree, buf, &off, block) == SCRIPT_FAILED)
-                return SCRIPT_FAILED;
-            *offset += sprintf(buffer + *offset, "%s[%s]\n", prefix, buf);
-            break;
-        default: break;
-    }
-    return SCRIPT_PASSED;
-}
-
-/* recursively chain all cond nodes into one buffer */
-int script_generate_and_chain(logic_node_t * tree, char * buf, int * offset, block_r * block) {
-    int ret_value = 0;
-    if(tree->left != NULL)
-        switch(tree->left->type) {
-            case LOGIC_NODE_AND: ret_value = script_generate_and_chain(tree->left, buf, offset, block); break;
-            case LOGIC_NODE_COND: ret_value = script_generate_cond_node(tree->left, buf, offset, block); break;
-            default: break;
-        }
-    if(ret_value == SCRIPT_FAILED) return SCRIPT_FAILED;
-
-    if(tree->right != NULL)
-        switch(tree->right->type) {
-            case LOGIC_NODE_AND: ret_value = script_generate_and_chain(tree->right, buf, offset, block); break;
-            case LOGIC_NODE_COND: ret_value = script_generate_cond_node(tree->right, buf, offset, block); break;
-            default: break;
-        }
-    return ret_value;
-}
-
-int script_generate_cond_node(logic_node_t * tree, char * buf, int * offset, block_r * block) {
-    int ret = SCRIPT_PASSED;
-    /* add 'and' when chaining condition */
-    if(*offset > 0) condition_write_format(buf, offset, " and ");
-    switch(get_var(tree)) {
-        case 1:     /* refine rate */
-        case 2:     /* refine rate */
-        case 3:     /* paramater */
-        case 4:     /* skill level */
-        case 6:     /* pow */
-        case 10:    /* gettime */
-        case 17:    /* job level */
-        case 18:    /* base level */
-        case 19:    /* max hp */
-        case 23:    /* hp */
-        case 24:    /* zeny */
-        case 26:    /* callfunc (noncondition) */
-        case 27:    /* getrandgroupitem (noncondition) */
-        case 30:    /* countitem */
-        case 46:    /* max */
-        case 47:    /* min */
-        case 49:    /* groupranditem (noncondition) */
-            ret = condition_write_range(buf, offset, tree->range, tree->name); break;
-        case 5:     /* random */
-        case 28:    /* getpartnerid */
-        case 31:    /* checkoption */
-        case 32:    /* checkfalcon */
-        case 33:    /* checkmadogear */
-        case 34:    /* rebirth */
-        case 48:    /* checkmount */
-            ret = condition_write_format(buf, offset, "%s", tree->name); break;
-        case 13:    /* isequipped */
-            ret = condition_write_format(buf, offset, "%s Equipped", tree->name); break;
-        case 20:    /* base class */
-        case 21:    /* base job */
-        case 22:    /* class */
-            ret = condition_write_class(buf, offset, tree->range, tree->name); break;
-        case 9:     /* getequipid */
-            ret = condition_write_item(buf, offset, tree->range, block);
-            ret = condition_write_format(buf, offset,"Equipped");
-            break;
-        case 8:     /* getiteminfo */
-            ret = condition_write_getiteminfo(buf, offset, tree); break;
-        case 29:    /* strcharinfo */
-            ret = condition_write_strcharinfo(buf, offset, tree, block); break;
-        default: break;
-    }
-    return ret;
-}
-
-int condition_write_strcharinfo(char * buf, int * offset, logic_node_t * tree, block_r * block) {
-    map_res map_info;
-    int val_min = minrange(tree->range);
-    switch(get_func(tree)) {
-        case 3: /* maps */
-            if(map_id(block->db, &map_info, val_min)) {
-                exit_func_safe("failed to search for map id"
-                " %d in item %d", val_min, block->item_id);
-                return SCRIPT_FAILED;
-            }
-            condition_write_format(buf, offset, "On Map %s", map_info.name);
-            break;
-        default: condition_write_format(buf, offset, "%s", tree->name); break;
-    }
-    return SCRIPT_PASSED;
-}
-
-int condition_write_getiteminfo(char * buf, int * offset, logic_node_t * tree) {
-    //int val_min = minrange(tree->range);
-    //switch(get_func(tree)) {
-    //    case 2: /* item type */
-    //        condition_write_format(buf, offset,"%s Is A %s", tree->name, item_type_tbl(val_min));
-    //        break;
-    //    case 4: /* gender */
-    //        switch(val_min) {
-    //            case 0: condition_write_format(buf, offset,"%s Is A Female Only", tree->name); break;
-    //            case 1: condition_write_format(buf, offset,"%s Is A Male Only", tree->name); break;
-    //            case 2: condition_write_format(buf, offset,"%s Is A Unisex", tree->name); break;
-    //            default: return SCRIPT_FAILED;
-    //        }
-    //        break;
-    //    case 5: /* equip location */
-    //        condition_write_format(buf, offset,"%s Is A %s", tree->name, loc_tbl(val_min));
-    //        break;
-    //    case 11: /* weapon type */
-    //        condition_write_format(buf, offset,"%s Is A %s", tree->name, weapon_tbl(val_min));
-    //        break;
-    //    default:
-    //        condition_write_range(buf, offset, tree->range, tree->name); break;
-    //}
-    return exit_func_safe("maintenance");
-}
-
-int condition_write_item(char * buf, int * offset, range_t * range, block_r * block) {
-    int i = 0;
-    item_t item;
-    range_t * itr = range;
-    /* iterate the range of item id */
-    while(itr != NULL) {
-        for(i = itr->min; i <= itr->max; i++) {
-            /* search for item name from item id */
-            memset(&item, 0, sizeof(item_t));
-            if(item_id(block->db, &item, i)) {
-                exit_func_safe("failed to search for item %d in %d", i, block->item_id);
-                return SCRIPT_FAILED;
-            }
-            /* add the item name to the list of items */
-            *offset += sprintf(buf + *offset,"%s, ", item.name);
-            buf[*offset] = '\0';
-        }
-        itr = itr->next;
-    }
-    /* discard last comma */
-    buf[(*offset) - 2] = ' ';
-    (*offset) -= 1;
-    return SCRIPT_PASSED;
-}
-
-int condition_write_class(char * buf, int * offset, range_t * range, char * template) {
-    //int i = 0;
-    //int val_min = 0;
-    //int val_max = 0;
-    //range_t * itrrange = NULL;
-    //range_t * negrange = NULL;
-
-    //if(exit_null_safe(4, buf, offset, range, template))
-    //    return SCRIPT_FAILED;
-
-    //val_min = minrange(range);
-    //val_max = maxrange(range);
-
-    ///* assume (!=) for mismatch min and max value in range
-    // * because otherwise all class logic node have matching
-    // * min and max. */
-    //if(val_min != val_max) {
-    //    negrange = notrange(range);
-    //    itrrange = negrange;
-    //} else {
-    //    itrrange = range;
-    //}
-
-    ///* iterate through the range */
-    //while(itrrange != NULL) {
-    //    for(i = itrrange->min; i <= itrrange->max; i++) {
-    //        *offset += sprintf(buf + *offset,"%s, ", job_tbl(i));
-    //        buf[*offset] = '\0';
-    //    }
-    //    itrrange = itrrange->next;
-    //}
-    ///* discard last comma */
-    //buf[(*offset) - 2] = ' ';
-    //(*offset) -= 1;
-
-    ///* append base class, job, or class at the end */
-    //*offset += sprintf(buf + *offset,"%s",template);
-
-    ///* free negate range */
-    //if(negrange != NULL) freerange(negrange);
-    return exit_func_safe("maintenance");
-}
-
-int condition_write_range(char * buf, int * offset, range_t * range, char * template) {
-    int val_min = 0;
-    int val_max = 0;
-    if(exit_null_safe(3, buf, offset, template))
-        return SCRIPT_FAILED;
-    val_min = minrange(range);
-    val_max = maxrange(range);
-    *offset += (val_min != val_max) ?
-        sprintf(buf + *offset, "%s %d ~ %d", template, val_min, val_max) :
-        sprintf(buf + *offset, "%s %d", template, val_min);
-    buf[*offset] = '\0';
-    return SCRIPT_PASSED;
-}
-
-int condition_write_format(char * buf, int * offset, char * format, ...) {
-    va_list arg_list;
-    va_start(arg_list, format);
-    *offset += vsprintf(buf + *offset, format, arg_list);
-    buf[*offset] = '\0';
-    va_end(arg_list);
-    return SCRIPT_PASSED;
 }

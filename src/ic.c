@@ -41,8 +41,7 @@ int main(int argc, char * argv[]) {
         else if (ret)
             goto failed;
 
-        if (script_translate(scribe) ||
-            script_generate(scribe, scribe->buffer, &scribe->offset))
+        if (script_translate(scribe))
             goto failed;
 
         if (scribe->item.id == 4421) {
