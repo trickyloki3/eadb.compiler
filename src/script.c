@@ -4521,6 +4521,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);             break; /* readparam */
         case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);            break; /* getskilllv */
         case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                  break; /* rand */
+        case 8: ret = evaluate_function_getiteminfo(block, arg_off, arg_cnt, func, node);           break; /* getiteminfo */
         case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
         case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
@@ -4846,57 +4847,101 @@ failed:
     goto clean;
 }
 
+int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    goto failed;
+clean:
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+/* node_evaluate uses the post-order traversal of a binary tree;
+ * evaluate the left expression, then the right expression, and
+ * then the current expression.
+ *
+ * to get a real good understanding of how this algorithm works,
+ * simply draw a few examples and work through it by hand; which
+ * was how the algorithm was developed. !D */
 int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {
     range_t * temp = NULL;
     range_t * result = NULL;
     logic_node_t * new_tree = NULL;
 
-    /* support unary and binary operators */
     if(node->left == node->right) {
-        /* unary operator */
+        /* unary operator has one expression
+         * (operator) (expression) */
         if(node->left != NULL)
             if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
                 return SCRIPT_FAILED;
     } else {
-        /* support ?: flip the logic tree for one side */
-        if(node->type == NODE_TYPE_OPERATOR && node->op == ':') {
-            if(logic_tree != NULL) {
-                new_tree = inverse_logic_tree(logic_tree);
-                /* use the 'true' logic tree for left; 'false' logic tree for right */
-                if(node->left != NULL)
-                    if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
-                        return SCRIPT_FAILED;
-                if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, new_tree, flag, complexity))
-                        return SCRIPT_FAILED;
-                freenamerange(new_tree);
-            } else{
-                if(node_evaluate(node->left, stm, logic_tree, flag, complexity) ||
-                   node_evaluate(node->right, stm, logic_tree, flag, complexity))
+        /* binary operators has two expression
+         * (left-expression) (operator) (right-expression) */
+
+        /* : operator node's left child is the (true) expression
+         * and the node's right child is the (false) expression */
+        if(node->type == NODE_TYPE_OPERATOR && node->op == ':' && logic_tree != NULL) {
+            /* (condition) ? (true) : (false)
+             *
+             * explanation
+             *  a logic tree represents a tree of conditions and each condition
+             *  represents a range of values for a variable or function; (true)
+             *  uses the logic tree generated from (condition) and (false) uses
+             *  an inverse of the logic tree generated from (condition).
+             *
+             * example
+             *  (getrefine() < 5) ? getrefine() + 5 : getrefine() - 5;
+             *
+             *  (condition)
+             *  getrefine(0 - 4)     ; original logic tree use by (true)
+             *  getrefine(5 - 15)    ; inverse logic tree use by (false)
+             *
+             *  (true)
+             *  getrefine() + 5
+             *  (0 - 4) + 5
+             *  (5 - 9)
+             *
+             *  (false)
+             *  getrefine() - 5
+             *  (5 - 15) - 5
+             *  (0 - 10)
+             */
+
+            /* (true)  original logic tree */
+            if(node->left != NULL)
+                if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
                     return SCRIPT_FAILED;
-            }
-        /* normal pre-order traversal */
+
+            /* (false) inverse logic tree */
+            new_tree = inverse_logic_tree(logic_tree);
+            if(node->right != NULL)
+                if(node_evaluate(node->right, stm, new_tree, flag, complexity))
+                    return SCRIPT_FAILED;
+            freenamerange(new_tree);
+
+        /* normal traversal
+         * evaluate the left expression before the right expression */
         } else {
             if(node->left != NULL)
                 if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
                     return SCRIPT_FAILED;
-            /* support ?: add logic tree on stack */
-            if(node->type == NODE_TYPE_OPERATOR && node->op == '?') {
-                /* check that logic tree exist for left side */
-                if(node->left->cond != NULL) {
-                    new_tree = node->left->cond;
-                    new_tree->stack = logic_tree;
-                    /* keep the logic tree of ? conditional */
-                    if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
-                        node->cond = copy_any_tree(new_tree);
-                    if(node->right != NULL)
-                        if(node_evaluate(node->right, stm, new_tree, flag, complexity))
-                            return SCRIPT_FAILED;
-                } else {
-                    if(node->right != NULL)
-                        if(node_evaluate(node->right, stm, logic_tree, flag, complexity))
-                            return SCRIPT_FAILED;
-                }
+
+            /* ? operator node's left child is the (condition) expression and
+             * the node's right child is the (true) : (false) expression */
+            if(node->type == NODE_TYPE_OPERATOR && node->op == '?' && node->left->cond != NULL) {
+                /* stack the (condition) on the existing logic tree;
+                 * the search algorithm will search for variable and
+                 * function from top to bottom */
+                new_tree = node->left->cond;
+                new_tree->stack = logic_tree;
+                /* keep the logic tree of ? conditional */
+                if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
+                    node->cond = copy_any_tree(new_tree);
+                /* evaluate the (true) : (false) expression */
+                if(node->right != NULL)
+                    if(node_evaluate(node->right, stm, new_tree, flag, complexity))
+                        return SCRIPT_FAILED;
             } else {
                 if(node->right != NULL)
                     if(node_evaluate(node->right, stm, logic_tree, flag, complexity))

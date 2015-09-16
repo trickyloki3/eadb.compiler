@@ -347,7 +347,8 @@ struct script_t;
     /* revised; const  */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
     /* revised; vararg */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);       /* no-multi */
+    /* revised; const  */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node_t *);
 
     #define NODE_TYPE_OPERATOR              0x01
     #define NODE_TYPE_OPERAND               0x02

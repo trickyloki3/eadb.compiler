@@ -58,6 +58,10 @@ element_type = {
     [10] = "all elements";
 }
 
+equip_id = {
+
+}
+
 item_location = {
     [0x000100] = "Upper Headgear";
     [0x000200] = "Middle Headgear";
