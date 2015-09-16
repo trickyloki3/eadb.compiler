@@ -1390,7 +1390,6 @@ int script_translate(script_t * script) {
 }
 
 int script_generate(script_t * script, char * buffer, int * offset) {
-    char buf[BUF_SIZE];
     block_r * iter = NULL;
 
     if(exit_null_safe(3, script, buffer, offset))
@@ -1413,7 +1412,7 @@ int script_generate(script_t * script, char * buffer, int * offset) {
             default:
                 if(iter->eng_cnt != 1)
                     return CHECK_FAILED;
-                *offset += sprintf(buffer[*offset], "%s", iter->eng[0]);
+                *offset += sprintf(&buffer[*offset], "%s", iter->eng[0]);
         }
         iter = iter->next;
     }
@@ -4921,67 +4920,58 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
     /* handle variable and function nodes; generate condition node */
     if( (node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) ||
         ((node->type & NODE_TYPE_LOCAL) && (flag & EVALUATE_FLAG_ITERABLE_SET))) {
-        if(node->id == NULL) {
-            exit_abt_safe("invalid node id");
+        /* error on invalid variable, function, or athena variable name */
+        if(node->id == NULL)
             return SCRIPT_FAILED;
-        }
-        /* check logic tree for dependency */
+
+        /* search logic tree for variable, function or athena variable name */
         if(logic_tree != NULL) {
             result = search_tree_dependency(logic_tree, node->id, node->range);
             if(result != NULL) {
                 temp = node->range;
-                node->min = minrange(result);
-                node->max = maxrange(result);
-                node->range = result;
-                node->range->id_min = node->min;
-                node->range->id_max = node->max;
+                node->range = copyrange(result);
+                node->min = minrange(node->range);
+                node->max = maxrange(node->range);
                 freerange(temp);
             }
         }
+
+        /* create a condition node that can be added to a logic tree */
         node->cond = make_cond(node->var, node->id, node->range, NULL);
-    }
 
     /* handle unary operator nodes */
-    if(node->type & NODE_TYPE_UNARY) {
-        if(node->left == NULL) {
-            exit_abt_safe("invalid unary operator operand");
+    } else if(node->type & NODE_TYPE_UNARY) {
+        /* error on invalid node */
+        if(node->left == NULL ||
+           node->left->range == NULL)
             return SCRIPT_FAILED;
-        }
 
-        if(node->left->range == NULL) {
-            exit_abt_safe("invalid unary operator operand without range");
-            return SCRIPT_FAILED;
-        }
-
+        /* evaluate the unary operator */
         switch(node->op) {
             case '-': node->range = negaterange(node->left->range); break;
             case '!': node->range = notrange(node->left->range); break;
+            default: return SCRIPT_FAILED;
         }
 
+        /* create a condition node that can be added to a logic tree */
         if(node->left->cond != NULL)
             node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
 
-        /* extract the local min and max from the range */
+        /* calculate min and max */
         node->min = minrange(node->range);
         node->max = maxrange(node->range);
 
-        /* running count of all the variable, function, and set block */
+        /* track total number of conditions */
         node->cond_cnt += node->left->cond_cnt;
-    }
 
-    /* handle operators nodes */
-    if(node->type & NODE_TYPE_OPERATOR) {
-        /* operators must have two non-null operands */
-        if(node->left == NULL || node->right == NULL) {
-            fprintf(stderr,"node_evaluate; left or right node is null.\n");
+    /* handle binary operator nodes */
+    } else if(node->type & NODE_TYPE_OPERATOR) {
+        /* error on invalid nodes */
+        if(node->left == NULL ||
+           node->right == NULL ||
+           node->left->range == NULL ||
+           node->right->range == NULL)
             return SCRIPT_FAILED;
-        }
-
-        /* sub node inherit range, operator calculate range, operands have nodes created */
-        if(node->left->range == NULL || node->right->range == NULL) {
-            fprintf(stderr,"node_evaluate; left or right operand has null range.\n");
-            return SCRIPT_FAILED;
-        }
 
         /* calculate range for operator node */
         switch(node->op) {
@@ -5052,7 +5042,6 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 node->range = (flag & EVALUATE_FLAG_ITERABLE_SET) ?
                     copyrange(node->left->range) :
                     orrange(node->left->range, node->right->range);
-                (*complexity)++;
                 break;
             case '?':
                 node->range = copyrange(node->right->range); /* right node is : operator */
@@ -5063,22 +5052,25 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 return SCRIPT_FAILED;
         }
 
-        /* extract the local min and max from the range */
+        /* calculate min and max */
         node->min = minrange(node->range);
         node->max = maxrange(node->range);
 
-        /* running count of all the variable, function, and set block */
+        /* track total number of conditions */
         node->cond_cnt = node->left->cond_cnt + node->right->cond_cnt;
     }
 
-    /* write expression and print node */
+    /* convert the expression to a user-friendly string */
     if(EVALUATE_FLAG_WRITE_FORMULA & flag)
         if((node->type == NODE_TYPE_OPERATOR)?
             node_expr_append(node->left, node->right, node):
             node_expr_append(NULL, NULL, node))
             return CHECK_FAILED;
 
-    /* useful for debugging the nodes */
+    /* dump the node list at each step;
+     * used only for debugging and you
+     * need to set the global node_dbg
+     * stream */
     node_dump(node, stm);
     return SCRIPT_PASSED;
 }
