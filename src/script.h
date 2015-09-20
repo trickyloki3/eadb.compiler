@@ -332,7 +332,8 @@
     #define NODE_TYPE_CONSTANT             0x20  /* const.txt */
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
-    /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int, int *);
+    /* revised */ int node_structure(node_t *);
+    /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int);
     /* revised */ int node_inherit(node_t *);
     /* revised */ void node_free(node_t *);
     /* revised */ void node_dump(node_t *, FILE *);

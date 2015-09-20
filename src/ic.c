@@ -27,11 +27,9 @@ compile:
         if (script_lexical(&context->token, context->item.script) ||
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
-            context->item.id == 0)
+            script_block_free_all(context)) {
             goto failed;
-
-        /* reset all the blocks */
-        script_block_free_all(context);
+        }
     }
 
 clean:

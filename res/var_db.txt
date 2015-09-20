@@ -26,7 +26,7 @@
 34,0,0x1,0,         1,                    upper,"Rebirth";
 
 //simple functions
-1 ,0,0x1,0,        15,                getrefine,"Refine Level";
+1 ,0,0x2,0,        15,                getrefine,"Refine Level";
 2 ,0,0x2,0,        15,      getequiprefinerycnt,"Refine Level";
 3 ,0,0x2,1,       150,                readparam,"Paramater";
 4 ,0,0x2,0,2147483647,               getskilllv,"Skill";
@@ -34,14 +34,14 @@
 6 ,0,0x2,0,         0,                      pow,"Pow";
 10,0,0x2,0,2147483647,                  gettime,"Time";
 13,0,0x2,0,2147483647,               isequipped,"Equip ID";
-28,0,0x1,0,         1,             getpartnerid,"Partner Online";
+28,0,0x2,0,         1,             getpartnerid,"Partner Online";
 30,0,0x2,0,2147483647,                countitem,"Item Count";
 31,0,0x2,0,2147483647,              checkoption,"Companion";
-32,0,0x1,0,         1,              checkfalcon,"Falcon Companion";
-33,0,0x1,0,         1,            checkmadogear,"Operating Mado Gear";
+32,0,0x2,0,         1,              checkfalcon,"Falcon Companion";
+33,0,0x2,0,         1,            checkmadogear,"Operating Mado Gear";
 46,0,0x2,0,         0,                      max,"Max";
 47,0,0x2,0,         0,                      min,"Min";
-48,0,0x1,0,         8,               checkmount,"Riding Mount";
+48,0,0x2,0,         8,               checkmount,"Riding Mount";
 
 //non-condition functions
 26,0,0x2,0,         0,                 callfunc,"Function";

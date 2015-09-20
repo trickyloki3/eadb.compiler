@@ -1182,7 +1182,7 @@ int script_translate(script_t * script) {
             return SCRIPT_FAILED;
 
         iter = iter->next;
-    } while(iter != script->blocks);
+    } while(iter != script->blocks && !iter->free);
 
     return SCRIPT_PASSED;
 }
@@ -1192,28 +1192,28 @@ int script_generate(script_t * script, char * buffer, int * offset) {
 
     exit_null_safe(3, script, buffer, offset);
 
-    //iter = script->block.head->next;
-    //while(iter != script->block.head) {
-    //    switch(iter->type) {
-    //        case 26: /* if */
-    //        case 27: /* else */
-    //            /* traverse logic tree */
-    //            break;
-    //        case 28: /* set */
-    //            /* special case for zeny */
-    //            break;
-    //        case 21: /* skilleffect */
-    //        case 22: /* specialeffect2 */
-    //        case 29: /* input */
-    //        case 32: /* end */
-    //            break;
-    //        default:
-    //            if(iter->eng_cnt != 1)
-    //                return CHECK_FAILED;
-    //            *offset += sprintf(&buffer[*offset], "%s", iter->eng[0]);
-    //    }
-    //    iter = iter->next;
-    //}
+    iter = script->blocks;
+    do {
+        switch(iter->type) {
+            case 26: /* if */
+            case 27: /* else */
+                /* traverse logic tree */
+                break;
+            case 28: /* set */
+                /* special case for zeny */
+                break;
+            case 21: /* skilleffect */
+            case 22: /* specialeffect2 */
+            case 29: /* input */
+            case 32: /* end */
+                break;
+            default:
+                if(iter->eng_cnt != 1)
+                    return CHECK_FAILED;
+                *offset += sprintf(&buffer[*offset], "%s", iter->eng[0]);
+        }
+        iter = iter->next;
+    } while (iter != script->blocks && !iter->free);
     return SCRIPT_PASSED;
 }
 
@@ -1252,7 +1252,7 @@ int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, cha
     script_t * script = NULL;
 
     /* error on invalid references */
-    exit_null_safe(4, db, map, script, value);
+    exit_null_safe(4, db, map, subscript, value);
 
     /* build a "sub-script" (lol) context */
     script = calloc(1, sizeof(script_t));
@@ -2510,9 +2510,11 @@ int translate_heal(block_r * block) {
         return exit_func_safe("missing hp or sp argument for %s in item %d", block->name, block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_int_signed(block, block->ptr[0], 1, "Recover HP by", "Drain HP by") &&
-       stack_eng_int_signed(block, block->ptr[1], 1, "Recover SP by", "Drain SP by"))
+    stack_eng_int_signed(block, block->ptr[0], 1, "Recover HP by", "Drain HP by");
+    stack_eng_int_signed(block, block->ptr[1], 1, "Recover SP by", "Drain SP by");
+    if(block->eng_cnt == 0)
         return CHECK_FAILED;
+
     len = (block->arg_cnt - len) + 128;
 
     buf = calloc(len, sizeof(char));
@@ -3815,28 +3817,10 @@ failed:
 
 node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, int flag) {
     int i = 0;
-    int j = 0;
     int len = 0;
-    int ret = 0;
-    int off = 0;
     int temp = 0;
     int op_cnt = 0;
     char c = 0;
-
-    /* operator precedence tree */
-    static int op_pred[11][5] = {
-        {'*'          ,'/'          ,'\0' ,'\0'         ,'\0'},
-        {'+'          ,'-'          ,'\0' ,'\0'         ,'\0'},
-        {'<'          ,'<' + '='    ,'>'  ,'>' + '='    ,'\0'},
-        {'&'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'|'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'=' + '='    ,'!' + '='    ,'\0' ,'\0'         ,'\0'},
-        {'&' + '&'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'|' + '|'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {':'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'?'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'='          ,'\0'         ,'\0' ,'\0'         ,'\0'}
-    };
 
     /* linked list builder */
     node_t * root_node = NULL;
@@ -3845,6 +3829,12 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
     /* initialize the root node */
     iter_node = root_node = calloc(1, sizeof(node_t));
+
+    /* circularly link the free and node list */
+    root_node->list = root_node;
+    root_node->next = root_node;
+    root_node->prev = root_node;
+
     for(i = start; i < end; i++) {
         if(expr[i][0] == '(') {
             /* create subexpression node */
@@ -3896,6 +3886,11 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             goto failed;
         }
 
+        /* circular linked the free list before checking errors
+         * otherwise failed will attempt to deference a null */
+        iter_node->list = temp_node;
+        temp_node->list = root_node;
+
         /* error on operator without operand */
         if(op_cnt > 1) {
             exit_func_safe("operand '%s' without operator in item %d", expr[i], block->item_id);
@@ -3912,10 +3907,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         if(0x3E & temp_node->type &&
            NULL == temp_node->range)
             temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
-
-        /* singly link the free list */
-        iter_node->list = temp_node;
-        temp_node->list = root_node;
 
         /* doubly link the nodes */
         iter_node->next = temp_node;
@@ -3934,65 +3925,30 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     if(root_node == iter_node)
         goto failed;
 
-    /* structre the tree unary operators */
-    iter_node = root_node;
-    do {
-        /* assume all unary operator have same precedences */
-        if(iter_node->type == NODE_TYPE_UNARY) {
-            /* unary operator (forward) expansion */
-            iter_node->left = iter_node->next;
-            iter_node->right = iter_node->next;
-            iter_node->next->next->prev = iter_node;
-            iter_node->next = iter_node->next->next;
-        }
-        iter_node = iter_node->next;
-    } while(iter_node != root_node);
-
-    /* structure the tree binary operators */
-    for(i = 0; i < 11; i++) {
-        iter_node = root_node;
-        do {
-            if(iter_node->type == NODE_TYPE_OPERATOR) {
-                for(j = 0; j < 5; j++) {
-                    if(iter_node->op == op_pred[i][j] && op_pred[i][j] != '\0') {
-                        /* binary operator vertical expansion */
-                        iter_node->left = iter_node->prev;
-                        iter_node->right = iter_node->next;
-                        iter_node->prev->prev->next = iter_node;
-                        iter_node->next->next->prev = iter_node;
-                        iter_node->next = iter_node->next->next;
-                        iter_node->prev = iter_node->prev->prev;
-                    }
-                }
-            }
-            iter_node = iter_node->next;
-        } while(iter_node != root_node);
-    }
-
     /* the actual result is in root_node->next so we need
      * to copy any value we want to return using the root
      * node */
-    if(node_evaluate(root_node->next, node_dbg, logic_tree, flag, &temp)) {
+    if(node_structure(root_node) ||
+       node_evaluate(root_node->next, node_dbg, logic_tree, flag)) {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed;
-    } else {
-
-        if(root_node->next->id != NULL)
-            /*if(id_write(root_node, "%s", root_node->next->id))
-                goto failed;*/
-        /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
-        root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
-            NODE_TYPE_SUB : root_node->next->type;
-        root_node->min = root_node->next->min;
-        root_node->max = root_node->next->max;
-        root_node->range = copyrange(root_node->next->range);
-        /* copy the logical tree if it exist */
-        if(root_node->cond == NULL && root_node->next->cond != NULL)
-            root_node->cond = copy_any_tree(root_node->next->cond);
-        root_node->cond_cnt = root_node->next->cond_cnt;
-        /*if(expression_write(root_node, "%s", root_node->next->formula))
-            goto failed;*/
     }
+
+    if(root_node->next->id != NULL)
+        /*if(id_write(root_node, "%s", root_node->next->id))
+            goto failed;*/
+    /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
+    root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
+        NODE_TYPE_SUB : root_node->next->type;
+    root_node->min = root_node->next->min;
+    root_node->max = root_node->next->max;
+    root_node->range = copyrange(root_node->next->range);
+    /* copy the logical tree if it exist */
+    if(root_node->cond == NULL && root_node->next->cond != NULL)
+        root_node->cond = copy_any_tree(root_node->next->cond);
+    root_node->cond_cnt = root_node->next->cond_cnt;
+    /*if(expression_write(root_node, "%s", root_node->next->formula))
+        goto failed;*/
 
     /* free every node except the root */
     iter_node = root_node->list;
@@ -4090,7 +4046,6 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
         _node->var = var.id;
         _node->cond_cnt = 1;
 
-
         /* copy the variable or function name */
         _node->id = convert_string(var.desc);
         if(NULL == _node->id)
@@ -4127,6 +4082,9 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
             /* evaluate the function */
             if(evaluate_function(block, expr, *start + 1, i, &var, _node))
                 goto failed;
+
+            /* skip the function's argument list */
+            *start = i;
         } else {
             goto failed;
         }
@@ -4152,6 +4110,7 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
             _node->min = 0;
             _node->max = 0;
 
+            /* find the set variable in the linked list */
             set = block->set;
             while(NULL != set) {
                 /* copy the set block's node */
@@ -4191,7 +4150,6 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
 
     /* set the result */
     *node = _node;
-    *start = i;
     return CHECK_PASSED;
 
 failed:
@@ -4240,7 +4198,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
         case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
-            exit_func_safe("unsupported function '%s' in item %d", func->id, block->item_id);
+            exit_func_safe("unsupported function '%s' in item %d", func->name, block->item_id);
             goto clean;
     }
 
@@ -4568,6 +4526,64 @@ failed:
     goto clean;
 }
 
+int node_structure(node_t * root_node) {
+    int i = 0;
+    int j = 0;
+    node_t * iter_node = NULL;
+
+    /* operator precedence tree */
+    static int op_pred[11][5] = {
+        {'*'          ,'/'          ,'\0' ,'\0'         ,'\0'},
+        {'+'          ,'-'          ,'\0' ,'\0'         ,'\0'},
+        {'<'          ,'<' + '='    ,'>'  ,'>' + '='    ,'\0'},
+        {'&'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'|'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'=' + '='    ,'!' + '='    ,'\0' ,'\0'         ,'\0'},
+        {'&' + '&'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'|' + '|'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {':'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'?'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'='          ,'\0'         ,'\0' ,'\0'         ,'\0'}
+    };
+
+    /* structre the tree unary operators */
+    iter_node = root_node;
+    do {
+        /* assume all unary operator have same precedences */
+        if(iter_node->type == NODE_TYPE_UNARY) {
+            /* unary operator (forward) expansion */
+            iter_node->left = iter_node->next;
+            iter_node->right = iter_node->next;
+            iter_node->next->next->prev = iter_node;
+            iter_node->next = iter_node->next->next;
+        }
+        iter_node = iter_node->next;
+    } while(iter_node != root_node);
+
+    /* structure the tree binary operators */
+    for(i = 0; i < 11; i++) {
+        iter_node = root_node;
+        do {
+            if(iter_node->type == NODE_TYPE_OPERATOR) {
+                for(j = 0; j < 5; j++) {
+                    if(iter_node->op == op_pred[i][j] && op_pred[i][j] != '\0') {
+                        /* binary operator vertical expansion */
+                        iter_node->left = iter_node->prev;
+                        iter_node->right = iter_node->next;
+                        iter_node->prev->prev->next = iter_node;
+                        iter_node->next->next->prev = iter_node;
+                        iter_node->next = iter_node->next->next;
+                        iter_node->prev = iter_node->prev->prev;
+                    }
+                }
+            }
+            iter_node = iter_node->next;
+        } while(iter_node != root_node);
+    }
+
+    return CHECK_PASSED;
+}
+
 /* node_evaluate uses the post-order traversal of a binary tree;
  * evaluate the left expression, then the right expression, and
  * then the current expression.
@@ -4575,7 +4591,7 @@ failed:
  * to get a real good understanding of how this algorithm works,
  * simply draw a few examples and work through it by hand; which
  * was how the algorithm was developed. !D */
-int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag, int * complexity) {
+int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag) {
     range_t * temp = NULL;
     range_t * result = NULL;
     logic_node_t * new_tree = NULL;
@@ -4584,7 +4600,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
         /* unary operator has one expression
          * (operator) (expression) */
         if(node->left != NULL)
-            if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
+            if(node_evaluate(node->left, stm, logic_tree, flag))
                 return SCRIPT_FAILED;
     } else {
         /* binary operators has two expression
@@ -4624,13 +4640,13 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
 
             /* (true)  original logic tree */
             if(node->left != NULL)
-                if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
+                if(node_evaluate(node->left, stm, logic_tree, flag))
                     return SCRIPT_FAILED;
 
             /* (false) inverse logic tree */
             new_tree = inverse_logic_tree(logic_tree);
             if(node->right != NULL)
-                if(node_evaluate(node->right, stm, new_tree, flag, complexity))
+                if(node_evaluate(node->right, stm, new_tree, flag))
                     return SCRIPT_FAILED;
             freenamerange(new_tree);
 
@@ -4638,7 +4654,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
          * evaluate the left expression before the right expression */
         } else {
             if(node->left != NULL)
-                if(node_evaluate(node->left, stm, logic_tree, flag, complexity))
+                if(node_evaluate(node->left, stm, logic_tree, flag))
                     return SCRIPT_FAILED;
 
             /* ? operator node's left child is the (condition) expression and
@@ -4654,11 +4670,11 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                     node->cond = copy_any_tree(new_tree);
                 /* evaluate the (true) : (false) expression */
                 if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, new_tree, flag, complexity))
+                    if(node_evaluate(node->right, stm, new_tree, flag))
                         return SCRIPT_FAILED;
             } else {
                 if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, logic_tree, flag, complexity))
+                    if(node_evaluate(node->right, stm, logic_tree, flag))
                         return SCRIPT_FAILED;
             }
         }
@@ -4752,7 +4768,6 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
 
                 /* variable and functions generate logic trees that are inherited by up until the root node */
                 node_inherit(node);
-                (*complexity)++;
                 break;
             case '&':
             case '|':
@@ -4768,7 +4783,6 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 } else {
                     node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
                 }
-                (*complexity)++;
                 break;
             case '|' + '|':
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
@@ -4778,7 +4792,6 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 } else {
                     node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
                 }
-                (*complexity)++;
                 break;
             case ':':
                 /* iterable use the ? operator to handle the for condition */
@@ -4788,7 +4801,6 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 break;
             case '?':
                 node->range = copyrange(node->right->range); /* right node is : operator */
-                (*complexity)++;
                 break;
             default:
                 exit_func_safe("unsupported operator %c", node->op);
