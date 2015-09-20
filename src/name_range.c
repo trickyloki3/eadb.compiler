@@ -12,8 +12,8 @@ logic_node_t * make_cond(int var, char * name, range_t * range, logic_node_t * f
     int name_len = 0;
     logic_node_t * new_node = NULL;
     /* check null name and range */
-    if(exit_null_safe(2, name, range))
-        return NULL;
+    exit_null_safe(2, name, range);
+
     /* make the condition node */
     name_len = strlen(name);
     new_node = calloc(1, sizeof(logic_node_t));
@@ -52,8 +52,7 @@ logic_node_t * new_cond(int logic_node_type, logic_node_t * left, logic_node_t *
         return NULL;
     }
 
-    if(exit_null_safe(2, left, right))
-        return NULL;
+    exit_null_safe(2, left, right);
 
     if(COND_COND_CASE(left, right)) {
         root = base_cond_cond(logic_node_type, left, right);

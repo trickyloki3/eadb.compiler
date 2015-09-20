@@ -29,7 +29,7 @@
 
 	/* error functions */
  	extern char err_buf[BUF_SIZE];
- 	#define exit_null_safe(X, ...) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)
+ 	#define exit_null_safe(X, ...) if(exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)) return CHECK_FAILED
  	#define exit_func_safe(X, ...) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, exit_msg(err_buf, (X), __VA_ARGS__))
  	#define exit_abt_safe(X) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, (X))
  	char * exit_msg(char * buffer, char * format, ...);

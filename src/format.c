@@ -12,8 +12,7 @@ int init_flavour_db(format_t * format, const char * flavour_db_path) {
 	const char * error = NULL;
 
 	/* check null paramaters */
-	if(exit_null_safe(2, format, flavour_db_path))
-		return CHECK_FAILED;
+    exit_null_safe(2, format, flavour_db_path);
 
 	/* open the flavour text database and compiled sql statements */
 	if(sqlite3_open(flavour_db_path, &format->flavour_text) != SQLITE_OK ||
@@ -33,8 +32,8 @@ int flavour_text_id_search(format_t * format, flavour_text_t * flavour_text, int
 	int status = 0;
 	sqlite3_stmt * stmt = NULL;
 	/* check null paramaters */
-	if(exit_null_safe(2, format, flavour_text))
-		return CHECK_FAILED;
+    exit_null_safe(2, format, flavour_text);
+
 	stmt = format->flavour_text_id_search;
 	sqlite3_clear_bindings(stmt);
 	sqlite3_bind_int(stmt, 1, item_id);
@@ -64,8 +63,7 @@ int init_format(format_t * format, lua_State * lstate, int format_index, int fil
 	int item_type_constant = 0;
 
 	/* check for null references */
-	if(exit_null_safe(2, format, lstate))
-		return CHECK_FAILED;
+    exit_null_safe(2, format, lstate);
 
 	/* set server type, file format, and format rules */
 	format->file_format = file_format;
@@ -383,8 +381,8 @@ int load_weapon_type(format_rule_t * rule, lua_State * lstate, int rule_table) {
 
 int lua_get_field(lua_State * state, int table, const char * key, int expected_type) {
 	int value_type = 0;
-	if(exit_null_safe(2, state, key))
-		return CHECK_FAILED;
+    exit_null_safe(2, state, key);
+
 	if(lua_gettop(state) < table) {
 		exit_func_safe("invalid table index %d", table);
 		return CHECK_FAILED;

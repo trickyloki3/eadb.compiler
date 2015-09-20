@@ -29,14 +29,14 @@ int main(int argc, char * argv[]) {
 
     /* parse the command line arguments */
     if (1 >= argc || getopts(argc, argv)) {
-        fprintf(stderr, "ra.sql.exe -p <rathena-path> -o <output-path>\n");
+        fprintf(stderr, "ea.sql.exe -p <rathena-path> -o <output-path>\n");
         exit(EXIT_FAILURE);
     }
 
     /* set the base directory and calloc the database path buffer */
     lpPathBase = getopt('p');
     if(NULL == lpPathBase) {
-        fprintf(stderr, "ra.sql.exe -p <rathena-path> -o <output-path>\n");
+        fprintf(stderr, "ea.sql.exe -p <rathena-path> -o <output-path>\n");
         exit(EXIT_FAILURE);
     }
 

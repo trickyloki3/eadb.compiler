@@ -10,8 +10,7 @@
 int init_db(sqlite3 ** db, const char * path) {
     sqlite3 * _db = NULL;
 
-    if(exit_null_safe(2, db, path))
-        return CHECK_FAILED;
+    exit_null_safe(2, db, path);
 
     if(SQLITE_OK != sqlite3_open_v2(path, &_db, SQLITE_OPEN_READONLY, NULL)) {
         if(NULL != _db) {
@@ -31,8 +30,7 @@ int init_db(sqlite3 ** db, const char * path) {
 int deit_db(sqlite3 ** db) {
     sqlite3 * _db = NULL;
 
-    if(exit_null_safe(2, db, *db))
-        return CHECK_PASSED;
+    exit_null_safe(2, db, *db);
 
     _db = *db;
     if(sqlite3_close(_db)) {
@@ -47,8 +45,7 @@ int deit_db(sqlite3 ** db) {
 int init_db_load(db_t ** db, const char * re_path, const char * db_path, int server_type) {
     db_t * _db = NULL;
 
-    if(exit_null_safe(3, db, re_path, db_path))
-        return CHECK_FAILED;
+    exit_null_safe(3, db, re_path, db_path);
 
     _db = calloc(1, sizeof(db_t));
     if(NULL == _db)
@@ -136,8 +133,7 @@ failed:
 int deit_db_load(db_t ** db) {
     db_t * _db = NULL;
 
-    if(exit_null_safe(2, db, *db))
-        return CHECK_FAILED;
+    exit_null_safe(2, db, *db);
 
     _db = *db;
     if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
@@ -177,8 +173,7 @@ int init_db_prep_sql(sqlite3 * db, sql_t ** sql, const char * query) {
     sql_t * _sql = NULL;
     const char * tail = NULL;
 
-    if(exit_null_safe(3, db, sql, query))
-        return CHECK_FAILED;
+    exit_null_safe(3, db, sql, query);
 
     _sql = calloc(1, sizeof(sql_t));
     if(NULL == _sql)
@@ -210,8 +205,7 @@ failed:
 int deit_db_prep_sql(sqlite3 * db, sql_t ** sql) {
     sql_t * _sql = NULL;
 
-    if(exit_null_safe(3, db, sql, *sql))
-        return CHECK_PASSED;
+    exit_null_safe(3, db, sql, *sql);
 
     _sql = *sql;
     if(NULL != _sql->stmt)
@@ -229,8 +223,7 @@ int exec_db_query(sqlite3 * db, sql_t * sql, ...) {
     sqlite3_stmt * stmt = NULL;
     va_list args;
 
-    if(exit_null_safe(2, db, sql))
-        return CHECK_FAILED;
+    exit_null_safe(2, db, sql);
 
     query = sql->query;
     stmt = sql->stmt;
@@ -335,8 +328,9 @@ int bind_db_number(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) 
 int opt_name(db_t * db, option_res * opt, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, opt, name) ||
-       exec_db_query(db->re, db->opt_name, 1, BIND_STRING, name, len))
+    exit_null_safe(3, db, opt, name);
+
+    if(exec_db_query(db->re, db->opt_name, 1, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->opt_name->stmt;
@@ -348,8 +342,9 @@ int opt_name(db_t * db, option_res * opt, const char * name, int len) {
 int map_name(db_t * db, map_res * map, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, map, name) ||
-       exec_db_query(db->re, db->map_name, 1, BIND_STRING, name, len))
+    exit_null_safe(3, db, map, name);
+
+    if(exec_db_query(db->re, db->map_name, 1, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->map_name->stmt;
@@ -362,8 +357,9 @@ int map_name(db_t * db, map_res * map, const char * name, int len) {
 int map_id(db_t * db, map_res * map, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, map) ||
-       exec_db_query(db->re, db->map_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, map);
+
+    if (exec_db_query(db->re, db->map_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->map_id->stmt;
@@ -377,8 +373,8 @@ int bonus_name(db_t * db, bonus_res * bonus, const char * prefix, int plen, cons
     int cnt = 0;
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(4, db, bonus, prefix, name) ||
-       exec_db_query(db->re, db->bonus_name, 2, BIND_STRING, prefix, plen, BIND_STRING, name, nlen))
+    exit_null_safe(4, db, bonus, prefix, name);
+    if(exec_db_query(db->re, db->bonus_name, 2, BIND_STRING, prefix, plen, BIND_STRING, name, nlen))
         return CHECK_FAILED;
 
     stmt = db->bonus_name->stmt;
@@ -401,8 +397,9 @@ int status_id(db_t * db, status_res * status, int id) {
     int cnt = 0;
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, status) ||
-       exec_db_query(db->re, db->status_name, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, status);
+
+    if(exec_db_query(db->re, db->status_name, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->status_name->stmt;
@@ -421,27 +418,29 @@ int status_id(db_t * db, status_res * status, int id) {
 int var_name(db_t * db, var_res * var, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, var, name) ||
-       exec_db_query(db->re, db->var_name, 1, BIND_STRING, name, len))
+    exit_null_safe(3, db, var, name);
+
+    if(exec_db_query(db->re, db->var_name, 1, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->var_name->stmt;
-    var->tag = sqlite3_column_int(stmt, 0);
-    strncopy(var->id, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
-    var->type = sqlite3_column_int(stmt, 2);
-    var->vflag = sqlite3_column_int(stmt, 3);
-    var->fflag = sqlite3_column_int(stmt, 4);
-    var->min = sqlite3_column_int(stmt, 5);
-    var->max = sqlite3_column_int(stmt, 6);
-    strncopy(var->str, MAX_NAME_SIZE, sqlite3_column_text(stmt, 7));
+
+    var->id = sqlite3_column_int(stmt, 0);
+    var->type = sqlite3_column_int(stmt, 1);
+    var->flag = sqlite3_column_int(stmt, 2);
+    var->min = sqlite3_column_int(stmt, 3);
+    var->max = sqlite3_column_int(stmt, 4);
+    strncopy(var->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 5));
+    strncopy(var->desc, MAX_NAME_SIZE, sqlite3_column_text(stmt, 6));
     return CHECK_PASSED;
 }
 
 int block_name(db_t * db, block_res * block, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, block, name) ||
-       exec_db_query(db->re, db->block_name, 1, BIND_STRING, name, len))
+    exit_null_safe(3, db, block, name);
+
+    if(exec_db_query(db->re, db->block_name, 1, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->block_name->stmt;
@@ -454,8 +453,9 @@ int block_name(db_t * db, block_res * block, const char * name, int len) {
 int sprite_id(db_t * db, nid_res * sprite, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, sprite) ||
-       exec_db_query(db->re, db->sprite_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, sprite);
+
+    if(exec_db_query(db->re, db->sprite_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->sprite_id->stmt;
@@ -467,8 +467,9 @@ int sprite_id(db_t * db, nid_res * sprite, int id) {
 int usprite_id(db_t * db, nid_res * usprite, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, usprite) ||
-       exec_db_query(db->re, db->usprite_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, usprite);
+
+    if(exec_db_query(db->re, db->usprite_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->usprite_id->stmt;
@@ -480,8 +481,7 @@ int usprite_id(db_t * db, nid_res * usprite, int id) {
 int item_iterate(db_t * db, item_t * item) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, item))
-        return CHECK_FAILED;
+    exit_null_safe(2, db, item);
 
     /* reset the item struct */
     memset(item, 0, sizeof(item_t));
@@ -625,8 +625,9 @@ int item_hercule(sqlite3_stmt * stmt, item_t * item) {
 int const_name(db_t * db, const_t * constant, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, constant, name) ||
-       exec_db_query(db->db, db->const_name, 1, BIND_STRING, name, len))
+    exit_null_safe(3, db, constant, name);
+
+    if(exec_db_query(db->db, db->const_name, 1, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->const_name->stmt;
@@ -639,8 +640,9 @@ int const_name(db_t * db, const_t * constant, const char * name, int len) {
 int const_id(db_t * db, const_t * constant, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, constant) ||
-       exec_db_query(db->db, db->const_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, constant);
+
+    if(exec_db_query(db->db, db->const_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->const_id->stmt;
@@ -653,8 +655,9 @@ int const_id(db_t * db, const_t * constant, int id) {
 int skill_name(db_t * db, skill_t * skill, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, skill, name) ||
-       exec_db_query(db->db, db->skill_name, 1, BIND_STRING, name, len))
+    exit_null_safe(3, db, skill, name);
+
+    if(exec_db_query(db->db, db->skill_name, 1, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->skill_name->stmt;
@@ -668,8 +671,9 @@ int skill_name(db_t * db, skill_t * skill, const char * name, int len) {
 int skill_id(db_t * db, skill_t * skill, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, skill) ||
-       exec_db_query(db->db, db->skill_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, skill);
+
+    if(exec_db_query(db->db, db->skill_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->skill_id->stmt;
@@ -683,8 +687,9 @@ int skill_id(db_t * db, skill_t * skill, int id) {
 int item_name(db_t * db, item_t * item, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(3, db, item, name) ||
-       exec_db_query(db->db, db->item_name, 2, BIND_STRING, name, len, BIND_STRING, name, len))
+    exit_null_safe(3, db, item, name);
+
+    if(exec_db_query(db->db, db->item_name, 2, BIND_STRING, name, len, BIND_STRING, name, len))
         return CHECK_FAILED;
 
     stmt = db->item_name->stmt;
@@ -697,8 +702,9 @@ int item_name(db_t * db, item_t * item, const char * name, int len) {
 int item_id(db_t * db, item_t * item, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, item) ||
-       exec_db_query(db->db, db->item_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, item);
+
+    if(exec_db_query(db->db, db->item_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->item_id->stmt;
@@ -711,8 +717,9 @@ int item_id(db_t * db, item_t * item, int id) {
 int mob_id(db_t * db, mob_t * mob, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, mob) ||
-       exec_db_query(db->db, db->mob_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, mob);
+
+    if(exec_db_query(db->db, db->mob_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->mob_id->stmt;
@@ -724,8 +731,9 @@ int mob_id(db_t * db, mob_t * mob, int id) {
 int merc_id(db_t * db, merc_t * merc, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, merc) ||
-       exec_db_query(db->db, db->merc_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, merc);
+
+    if(exec_db_query(db->db, db->merc_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->merc_id->stmt;
@@ -737,8 +745,9 @@ int merc_id(db_t * db, merc_t * merc, int id) {
 int pet_id(db_t * db, pet_t * pet, int id) {
     sqlite3_stmt * stmt = NULL;
 
-    if(exit_null_safe(2, db, pet) ||
-       exec_db_query(db->db, db->pet_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, pet);
+
+    if(exec_db_query(db->db, db->pet_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->pet_id->stmt;
@@ -755,8 +764,9 @@ int produce_id(db_t * db, produce_t ** produces, int item_level) {
     produce_t * root = NULL;
     produce_t * iter = NULL;
 
-    if(exit_null_safe(2, db, produces) ||
-       exec_db_query(db->db, db->produce_id, 1, BIND_NUMBER, item_level))
+    exit_null_safe(2, db, produces);
+
+    if(exec_db_query(db->db, db->produce_id, 1, BIND_NUMBER, item_level))
         return CHECK_FAILED;
 
     stmt = db->produce_id->stmt;
@@ -784,8 +794,7 @@ int produce_free(produce_t ** produces) {
     produce_t * temporary = NULL;
     produce_t * _produces = NULL;
 
-    if(exit_null_safe(2, produces, *produces))
-        return CHECK_FAILED;
+    exit_null_safe(2, produces, *produces);
 
     _produces = *produces;
     while(_produces != NULL) {
@@ -803,8 +812,9 @@ int item_group_id(db_t * db, item_group_t * item_group, int id) {
     sqlite3_stmt * stmt = NULL;
 
     /* get the group size for the group id */
-    if(exit_null_safe(2, db, item_group) ||
-       exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, item_group);
+
+    if(exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->item_group_id->stmt;
@@ -841,8 +851,7 @@ int item_group_id(db_t * db, item_group_t * item_group, int id) {
 }
 
 int item_group_free(item_group_t * item_group) {
-    if(exit_null_safe(1, item_group))
-        return CHECK_PASSED;
+    exit_null_safe(1, item_group);
 
     SAFE_FREE(item_group->item_id);
     SAFE_FREE(item_group->rate);
@@ -855,8 +864,9 @@ int item_combo_id(db_t * db, combo_t ** item_combos, int id) {
     combo_t * root = NULL;
     combo_t * iter = NULL;
 
-    if(exit_null_safe(2, db, item_combos) ||
-       exec_db_query(db->db, db->item_combo, 1, BIND_NUMBER, id))
+    exit_null_safe(2, db, item_combos);
+
+    if(exec_db_query(db->db, db->item_combo, 1, BIND_NUMBER, id))
         return CHECK_FAILED;
 
     stmt = db->item_combo->stmt;
@@ -878,8 +888,7 @@ int item_combo_free(combo_t ** item_combos) {
     combo_t * temporary = NULL;
     combo_t * _item_combos = NULL;
 
-    if(exit_null_safe(2, item_combos, *item_combos))
-        return CHECK_FAILED;
+    exit_null_safe(2, item_combos, *item_combos);
 
     _item_combos = *item_combos;
     while(_item_combos != NULL) {

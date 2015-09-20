@@ -135,7 +135,10 @@ void strncopy(char * buf, int size, const unsigned char * str) {
    const char * src = NULL;
 
    /* check null */
-   if(exit_null_safe(1, buf) || str == NULL)
+   if (NULL == buf)
+       return;
+   
+   if(str == NULL)
       return;
 
    if(size <= 0) {
@@ -163,8 +166,7 @@ int strnload(char * buf, int size, char * str) {
    int len = 0;
 
    /* check null */
-   if(exit_null_safe(2, buf, str))
-      return CHECK_FAILED;
+   exit_null_safe(2, buf, str);
 
    if(size <= 0)
       return exit_abt_safe("invalid buffer size");
@@ -223,8 +225,7 @@ int convert_integer(const char * str, int base) {
    long int val = 0;    /* string converted to integer value */
 
    /* check null */
-   if(exit_null_safe(1, str))
-      return CHECK_FAILED;
+   exit_null_safe(1, str);
 
    /* check empty string */
    len = strlen(str);
@@ -270,7 +271,7 @@ void convert_integer_delimit(char * src, char * delimiters, int argc, ...) {
    va_list argv;
    va_start(argv, argc);
 
-   if(!exit_null_safe(2, src, delimiters)) {
+   if(NULL != src && NULL != delimiters) {
 	   /* check source string is greater than 0 */
 	  len = strlen(src);
 	  if (len > 0) {
@@ -313,8 +314,7 @@ int convert_integer_delimit_array(const char * str, const char * delimiters, arr
    int * list = NULL;
 
    /* check null */
-   if(exit_null_safe(3, str, delimiters, array))
-      return CHECK_FAILED;
+   exit_null_safe(3, str, delimiters, array);
 
    /* size of list is the number of delimiters + 1 */
    size = count_delimit(str, delimiters) + 1;
@@ -373,8 +373,7 @@ int convert_uinteger(const char * str, int base) {
    unsigned long int val = 0;    /* string converted to integer value */
 
    /* check null */
-   if(exit_null_safe(1, str))
-      return CHECK_FAILED;
+   exit_null_safe(1, str);
 
    /* check empty string */
    len = strlen(str);
@@ -413,8 +412,8 @@ char * convert_string(const char * str) {
    char * tmp = NULL;   /* copy of str */
 
    /* check null */
-   if(exit_null_safe(1, str))
-      return NULL;
+   if (NULL == str)
+       return NULL;
 
    len = strlen(str);
    if(len <= 0)
@@ -434,7 +433,7 @@ char * convert_stringn(const char * str, int * size) {
    char * tmp = NULL;   /* copy of str */
 
    /* check null */
-   if(exit_null_safe(1, str))
+   if(NULL == str)
       return NULL;
 
    len = strlen(str);
@@ -476,7 +475,7 @@ int count_delimit(const char * src, const char * delimiters) {
    int cnt = 0;
 
    /* check null */
-   if(exit_null_safe(2, src, delimiters))
+   if(NULL == src || NULL == delimiters)
       return cnt;
 
    /* get a total of all the delimiters */
@@ -495,7 +494,7 @@ const char * substr_delimit(const char * src, char * des, const char * delimiter
    int len = 0;
 
    /* check null */
-   if(exit_null_safe(3, src, des, delimiters))
+   if(NULL == src || NULL == des || NULL == delimiters)
       return NULL;
 
    /* check empty source buffer or delimiter */

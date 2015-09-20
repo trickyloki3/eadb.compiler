@@ -16,7 +16,7 @@
     #define OPTION_RES_FIELD_COUNT  2
     #define MAP_RES_FIELD_COUNT     2
     #define STATUS_RES_FIELD_COUNT  14
-    #define VAR_RES_FIELD_COUNT     8
+    #define VAR_RES_FIELD_COUNT     7
     #define BLOCK_RES_FIELD_COUNT   3
     #define NID_RES_FIELD_COUNT     2
 
@@ -109,37 +109,26 @@
 
     /* variable table contain specific information on the script engine's special variables */
     typedef struct {
-      int tag;                     /* in-house identification */
-      char id[MAX_NAME_SIZE];      /* identifier string */
-      int type;                    /* type of identifer and flags */
-      int vflag;
-      int fflag;
-      int min;                     /* help calculations */
-      int max;
-      char str[MAX_NAME_SIZE];
-   } var_res;
+        int id;
+        int type;
+        int flag;
+        int min;
+        int max;
+        char name[MAX_NAME_SIZE];
+        char desc[MAX_NAME_SIZE];
+    } var_res;
 
-       #define RES_VAR_DELETE       "DROP TABLE IF EXISTS var_res;"
-    #define RES_VAR_INSERT          "INSERT INTO var_res VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+    #define RES_VAR_DELETE          "DROP TABLE IF EXISTS var_res;"
+    #define RES_VAR_INSERT          "INSERT INTO var_res VALUES(?, ?, ?, ?, ?, ?, ?);"
     #define RES_VAR_CREATE          "CREATE TABLE IF NOT EXISTS var_res("\
-                                    "    tag INTEGER PRIMARY KEY,"\
-                                    "    id TEXT,"\
-                                    "    type INTEGER,"\
-                                    "    vflag INTEGER,"\
-                                    "    fflag INTEGER,"\
-                                    "    min INTEGER,"\
-                                    "    max INTEGER,"\
-                                    "    str TEXT"\
+                                    "id INTEGER PRIMARY KEY,"\
+                                    "type INTEGER, "\
+                                    "flag INTEGER, "\
+                                    "min INTEGER, "\
+                                    "max INTEGER, "\
+                                    "name TEXT, "\
+                                    "desc TEXT"\
                                     ");"
-
-       #define TYPE_FUNC            0x00000001
-    #define TYPE_VARI               0x00000002
-    #define VARI_DIRECT             0x00000001
-    #define FUNC_DIRECT             0x00000001  /* retrieve min and max directly */
-    #define FUNC_PARAMS             0x00000002  /* retrieve min and max from handler */
-    #define FUNC_GETSKILLLV         0x10000000  /* getskilllv */
-    #define FUNC_RAND               0x20000000  /* rand */
-    #define FUNC_POW                0x40000000  /* pow */
 
    /* block table contains a list of keywords */
    typedef struct block_res {

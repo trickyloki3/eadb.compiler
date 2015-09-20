@@ -8,8 +8,8 @@
 #include "db_resources.h"
 
 native_config_t load_res_native[RESOURCE_DB_COUNT] = {
-    { option_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, OPTION_RES_FIELD_COUNT, sizeof(option_res) },
-    { map_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MAP_RES_FIELD_COUNT, sizeof(map_res) },
+   { option_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, OPTION_RES_FIELD_COUNT, sizeof(option_res) },
+   { map_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MAP_RES_FIELD_COUNT, sizeof(map_res) },
    { bonus_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS , 0, sizeof(bonus_res) },
    { status_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, STATUS_RES_FIELD_COUNT, sizeof(status_res) },
    { var_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, VAR_RES_FIELD_COUNT, sizeof(var_res) },
@@ -117,14 +117,13 @@ int status_res_load(void * db, int row, int col, char * val) {
 int var_res_load(void * db, int row, int col, char * val) {
    var_res * record = &((var_res *) db)[row];
    switch(col) {
-      case 0: record->tag = convert_integer(val, 10);    break;
-      case 1: strnload(record->id, MAX_NAME_SIZE, val);  break;
-      case 2: record->type = convert_integer(val, 16);   break;
-      case 3: record->vflag = convert_integer(val, 16);  break;
-      case 4: record->fflag = convert_integer(val, 16);  break;
-      case 5: record->min = convert_integer(val, 10);    break;
-      case 6: record->max = convert_integer(val, 10);    break;
-      case 7: strnload(record->str, MAX_NAME_SIZE, val); break;
+      case 0: record->id = convert_integer(val, 10);      break;
+      case 1: record->type = convert_integer(val, 10);    break;
+      case 2: record->flag = convert_integer(val, 16);    break;
+      case 3: record->min = convert_integer(val, 10);     break;
+      case 4: record->max = convert_integer(val, 10);     break;
+      case 5: strnload(record->name, MAX_NAME_SIZE, val); break;
+      case 6: strnload(record->desc, MAX_NAME_SIZE, val); break;
       default: exit_func_safe("invalid column field %d in variable and function database", col);
    }
    return 0;
@@ -470,23 +469,22 @@ int opt_db_var_load_record(var_res * vars, int size, sqlite3_stmt * sql) {
       var = &vars[i];
 
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 1, var->tag) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, var->id, strlen(var->id), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 3, var->type) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 4, var->vflag) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 5, var->fflag) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 6, var->min) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 7, var->max) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 8, var->str, strlen(var->str), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 1, var->id) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 2, var->type) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 3, var->flag) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 4, var->min) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 5, var->max) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 6, var->name, strlen(var->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 7, var->desc, strlen(var->desc), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-          fprintf(stderr, "[load]: failed to add %s to variable db.\n", var->str);
+          fprintf(stderr, "[load]: failed to add %s to variable db.\n", var->name);
           if (SQLITE_OK != sqlite3_reset(sql)) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
       } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, var->str);
+         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, var->name);
       }
 
    }
