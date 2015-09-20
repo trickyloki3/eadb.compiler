@@ -97,11 +97,10 @@
         logic_node_t * logic_tree;                                              /* calculational and dependency information */
         int flag;                                                               /* use for handling for blocks in script_analysis */
 
-        /* reference the enclosing script context */
+        /* reference script context */
         struct script_t * script;
 
-        /* each block is part of doubly linked list maintained by
-         * a script_t structure for memory management purposes */
+        /* block list interface */
         struct block_r * next;                                                  /* next block */
         struct block_r * prev;                                                  /* prev block */
         int free;                                                               /* free flag */
@@ -250,7 +249,6 @@
     /* revised */ int stack_eng_script(block_r *, char *);
     /* revised */ int stack_aux_formula(block_r *, node_t *, char *);
 
-
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */
     /* revised */ int translate_id_amount(block_r *, int *, int *, const char *);
@@ -303,6 +301,8 @@
     /* revised */ node_t * evaluate_expression(block_r *, char *, int, int);
     /* revised */ node_t * evaluate_expression_(block_r *, node_t *, int, int);
     /* revised */ node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
+    /* revised */ int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
+    /* revised */ int evaluate_expression_var(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
 
     /* evaluate a function with the expression
      *
@@ -333,7 +333,7 @@
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
     /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int, int *);
-    /* revised */ int node_condition_inherit(node_t *);
-    /* revised */ void node_dump(node_t *, FILE *);
+    /* revised */ int node_inherit(node_t *);
     /* revised */ void node_free(node_t *);
+    /* revised */ void node_dump(node_t *, FILE *);
 #endif

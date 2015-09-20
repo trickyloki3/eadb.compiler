@@ -68,6 +68,9 @@
         char desc[MAX_NAME_SIZE];
     } var_res;
 
+    #define VARI_FLAG 0x1
+    #define FUNC_FLAG 0x2
+
    typedef struct block_res {
         int id;
         char name[MAX_NAME_SIZE];

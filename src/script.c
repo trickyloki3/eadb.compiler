@@ -3820,14 +3820,8 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     int ret = 0;
     int off = 0;
     int temp = 0;
-    int expr_inx_open = 0;
-    int expr_inx_close = 0;
-    int expr_sub_level = 0;
     int op_cnt = 0;
-    block_r * set_iter = NULL;
-    const_t const_info;
-    var_res var_info;
-    map_res map_info;
+    char c = 0;
 
     /* operator precedence tree */
     static int op_pred[11][5] = {
@@ -3850,217 +3844,95 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     node_t * temp_node = NULL;
 
     /* initialize the root node */
-    root_node = calloc(1, sizeof(node_t));
-    iter_node = root_node;
+    iter_node = root_node = calloc(1, sizeof(node_t));
     for(i = start; i < end; i++) {
-        /* mark end of free list so that fail_expression does not overflow */
-        iter_node->list = NULL;
-
-        /* handle sub-expression by calling evaluate_expression_recursive recursively*/
         if(expr[i][0] == '(') {
-            /* find the ending parenthesis */
-            expr_inx_open = expr_inx_close = expr_sub_level = 0;
-            for(expr_inx_open = i; i < end; i++) {
-                if(expr[i][0] == '(') expr_sub_level++;
-                if(expr[i][0] == ')') expr_sub_level--;
-                if(!expr_sub_level && expr[i][0] == ')') {
-                    expr_inx_close = i;
-                    break;
-                }
-            }
-
-            if(!expr_inx_close || expr_sub_level) {
-                exit_func_safe("unmatch parenthesis in item %d", block->item_id);
-                goto failed_expression;
-            }
-
-            /* check for empty sub expressions */
-            if ((expr_inx_close - expr_inx_open) == 1) {
-                exit_func_safe("empty sub expression in item %d", block->item_id);
-                goto failed_expression;
-            }
-
-            /* ? operator require setting the EVALUATE_FLAG_EXPR_BOOL to prevent recursive
-             * evaluate expression to free the logic tree use by the 2nd and 3rd expression. */
-            temp_node = (i + 1 < end && expr[i+1][0] == '?')?
-                evaluate_expression_recursive(block, expr, expr_inx_open + 1, expr_inx_close, logic_tree, flag | EVALUATE_FLAG_EXPR_BOOL):
-                evaluate_expression_recursive(block, expr, expr_inx_open + 1, expr_inx_close, logic_tree, flag);
-            if(temp_node == NULL) {
-                exit_func_safe("fail to evaluate subexpression in item %d", block->item_id);
-                goto failed_expression;
-            }
-            /* subexpression value is now a special operand */
-            temp_node->type = NODE_TYPE_SUB;
+            /* create subexpression node */
+            if(evaluate_expression_sub(block, expr, &i, end, logic_tree, flag, &temp_node))
+                goto failed;
             op_cnt++;
-        /* handle single or dual operators and prefix operators */
         } else if(SCRIPT_BINARY(expr[i][0])) {
-            /* create an operator node */
+            /* create single or dual operator node */
             temp_node = calloc(1, sizeof(node_t));
+            if(NULL == temp_node)
+                goto failed;
+
+            /* set the operator symbol and type */
             temp_node->op = expr[i][0];
-            if(op_cnt) {
-                /* dual operators detected merge the operators to one */
-                if((i + 1) < end && SCRIPT_BINARY(expr[i + 1][0]) && !SCRIPT_UNARY(expr[i + 1][0])) {
-                    temp_node->op += expr[i + 1][0];
-                    i++;
-                }
-                op_cnt = 0;
-                temp_node->type = NODE_TYPE_OPERATOR;
-            } else if(!op_cnt) {
-                /* detect only one operand, assume prefix next expression */
-                temp_node->type = NODE_TYPE_UNARY;
-            }
-        /* handle numeric literal operand */
-        } else if(isdigit(expr[i][0])) {
-            /* check if entirely numeric */
-            len = strlen(expr[i]);
-            for(j = 0; j < len; j++)
-                if(!isdigit(expr[i][j])) {
-                    exit_func_safe("invalid numeric operand '%s' in item %d", expr[i], block->item_id);
-                    goto failed_expression;
-                }
-            /* create an operand node */
-            temp_node = calloc(1, sizeof(node_t));
-            temp_node->type = NODE_TYPE_OPERAND;
-            temp_node->min = temp_node->max = convert_integer(expr[i],10);
-            op_cnt++;
-        /* handler constant, variable, or function call */
-        } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
-            temp_node = calloc(1, sizeof(node_t));
-            /*if(id_write(temp_node,"%s", expr[i]))
-                goto failed_expression;*/
+            temp_node->type = (op_cnt) ? NODE_TYPE_OPERATOR : NODE_TYPE_UNARY;
 
-            /* handle variable or function */
-            memset(&var_info, 0, sizeof(var_res));
-            if(!var_name(block->script->db, &var_info, expr[i], strlen(expr[i]))) {
-                //temp_node->cond_cnt = 1;
-                //temp_node->var = var_info.id;
-                ///*if(id_write(temp_node, "%s", var_info.str))
-                //    goto failed_expression;*/
-                ///* handle function call */
-                //if(var_info.type & TYPE_FUNC) {
-                //    /* find the ending parenthesis */
-                //    expr_inx_open = expr_inx_close = expr_sub_level = 0;
-                //    for(expr_inx_open = i; i < end; i++) {
-                //        if(expr[i][0] == '(') expr_sub_level++;
-                //        if(expr[i][0] == ')') expr_sub_level--;
-                //        if(!expr_sub_level && expr[i][0] == ')') {
-                //            expr_inx_close = i;
-                //            break;
-                //        }
-                //    }
-                //    if(!expr_inx_close || expr_sub_level) {
-                //        exit_func_safe("unmatch parenthesis in item %d", block->item_id);
-                //        goto failed_expression;
-                //    }
-
-                //    /* create function node */
-                //    temp_node->type = NODE_TYPE_FUNCTION;
-
-                //    /* function returns a fixed range */
-                //    if(var_info.fflag & FUNC_DIRECT) {
-                //        temp_node->min = var_info.min;
-                //        temp_node->max = var_info.max;
-                //    /* function returns a varied range */
-                //    } else if(var_info.fflag & FUNC_PARAMS) {
-                //        if( evaluate_function(block, expr, expr_inx_open + 1, expr_inx_close, &var_info, temp_node)) {
-                //            exit_func_safe("failed to evaluate function '%s' in item %d", expr[expr_inx_open], block->item_id);
-                //            goto failed_expression;
-                //        }
-                //    }
-
-                ///* handle variable */
-                //} else if(var_info.type & TYPE_VARI) {
-                //    /* create function node */
-                //    temp_node->type = NODE_TYPE_VARIABLE;
-
-                //    /* static variable value */
-                //    if(var_info.vflag & VARI_DIRECT) {
-                //        temp_node->min = var_info.min;
-                //        temp_node->max = var_info.max;
-                //    }
-                //}
-            /* handle constant */
-            } else if(!const_name(block->script->db, &const_info, expr[i], strlen(expr[i]))) {
-                /* create constant node */
-                temp_node->type = NODE_TYPE_CONSTANT;
-                temp_node->min = temp_node->max = const_info.value;
-            /* handle map name */
-            } else if(!map_name(block->script->db, &map_info, expr[i], strlen(expr[i]))) {
-                temp_node->type = NODE_TYPE_CONSTANT;
-                temp_node->min = temp_node->max = map_info.id;
-            /* handle set'd variable */
-            } else {
-                /* create set block node */
-                temp_node->type = NODE_TYPE_LOCAL; /* assume string literal unless resolved in for loop */
-                temp_node->min = temp_node->max = 0;
-                /* search for the set block in the link list */
-                set_iter = block->set;
-                while(set_iter != NULL) {
-                    if(ncs_strcmp(set_iter->ptr[0], expr[i]) == 0) {
-                        if(set_iter->set_node != NULL) {
-                            /* inherit from the set block */
-                            temp_node->var = (long) set_iter;
-                            temp_node->min = set_iter->set_node->min;
-                            temp_node->max = set_iter->set_node->max;
-                            if(set_iter->set_node->range != NULL)
-                                temp_node->range = copyrange(set_iter->set_node->range);
-                            if(set_iter->set_node->cond != NULL)
-                                temp_node->cond = copy_deep_any_tree(set_iter->set_node->cond);
-                            temp_node->cond_cnt = set_iter->set_node->cond_cnt;
-                            /*if(expression_write(temp_node, "%s", set_iter->set_node->formula))
-                                goto failed_expression;*/
-                            /*node_var_stack(set_iter->set_node, temp_node);*/
-                            break;
-                        }
+            /* check for dual operators */
+            if(NODE_TYPE_OPERATOR == temp_node->type) {
+                /* peek ahead for dual operator */
+                if(i + 1 < end) {
+                    c = expr[i + 1][0];
+                    if(SCRIPT_BINARY(c) && !SCRIPT_UNARY(c)) {
+                        /* consume the operator */
+                        temp_node->op += expr[i + 1][0];
+                        i++;
                     }
-                    set_iter = set_iter->set;
                 }
-                /* iterable set flag indicates condition is evaluated on
-                 * the entire range of an integer 0 ~ INT_MAX, which is
-                 * later combine with the range calculated */
-                if(flag & EVALUATE_FLAG_ITERABLE_SET)
-                    temp_node->max = 2147483647;
+                /* reset the operand count */
+                op_cnt = 0;
             }
+        } else if(isdigit(expr[i][0])) {
+            /* create numeric constant */
+            temp_node = calloc(1, sizeof(node_t));
+            if(NULL == temp_node)
+                goto failed;
+
+            temp_node->type = NODE_TYPE_OPERAND;
+            temp_node->min = convert_integer(expr[i], 10);
+            temp_node->max = temp_node->min;
             op_cnt++;
-        /* catch everything else */
+        } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
+            /* create variables, functions, and identifiers */
+            if(evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp_node))
+                goto failed;
+            op_cnt++;
         } else {
+            /* something has gone wrong during processing */
             exit_func_safe("invalid token '%s' in item %d", expr[i], block->item_id);
-            goto failed_expression;
+            goto failed;
         }
 
-        /* check operands are connected by opreator */
+        /* error on operator without operand */
         if(op_cnt > 1) {
             exit_func_safe("operand '%s' without operator in item %d", expr[i], block->item_id);
-            goto failed_expression;
+            goto failed;
         }
 
-        if(temp_node != NULL) {
-            /* generate range for everything but subexpression and operators */
-            if(temp_node->type & 0x3e && temp_node->range == NULL)
-                temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
-            /* add node to linked list */
-            iter_node->next = temp_node;
-            iter_node->list = temp_node;
-            temp_node->prev = iter_node;
-            iter_node = temp_node;
-            iter_node->list = NULL;
-            temp_node = NULL;
-        } else {
-            exit_func_safe("failed to generate node in item %s", block->item_id);
-            goto failed_expression;
+        /* error on invalid node */
+        if(NULL == temp_node) {
+            exit_func_safe("invalid node in item %d", block->item_id);
+            goto failed;
         }
+
+        /* create range if no range */
+        if(0x3E & temp_node->type &&
+           NULL == temp_node->range)
+            temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
+
+        /* singly link the free list */
+        iter_node->list = temp_node;
+        temp_node->list = root_node;
+
+        /* doubly link the nodes */
+        iter_node->next = temp_node;
+        temp_node->prev = iter_node;
+        root_node->prev = temp_node;
+        temp_node->next = root_node;
+
+        /* set the tail */
+        iter_node = temp_node;
+
+        /* reset the temp_node reference */
+        temp_node = NULL;
     }
 
-    /* complete the head doubly linked list */
-    root_node->prev = iter_node;
-    iter_node->next = root_node;
-    iter_node->list = root_node;
-
-    /* check that at least one node was added */
-    if(root_node == iter_node) {
-        exit_func_safe("detect zero node in expression in item %d", block->item_id);
-        goto failed_expression;
-    }
+    /* error on empty node list */
+    if(root_node == iter_node)
+        goto failed;
 
     /* structre the tree unary operators */
     iter_node = root_node;
@@ -4097,15 +3969,17 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         } while(iter_node != root_node);
     }
 
-    /* evaluate the infix expression with pre-order traversal */
-    ret = node_evaluate(root_node->next, node_dbg, logic_tree, flag, &temp);
-
     /* the actual result is in root_node->next so we need
-     * to copy any value we want to return using the root node */
-    if(ret == SCRIPT_PASSED) {
+     * to copy any value we want to return using the root
+     * node */
+    if(node_evaluate(root_node->next, node_dbg, logic_tree, flag, &temp)) {
+        exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
+        goto failed;
+    } else {
+
         if(root_node->next->id != NULL)
             /*if(id_write(root_node, "%s", root_node->next->id))
-                goto failed_expression;*/
+                goto failed;*/
         /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
         root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
             NODE_TYPE_SUB : root_node->next->type;
@@ -4117,36 +3991,212 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             root_node->cond = copy_any_tree(root_node->next->cond);
         root_node->cond_cnt = root_node->next->cond_cnt;
         /*if(expression_write(root_node, "%s", root_node->next->formula))
-            goto failed_expression;*/
-    } else {
-        exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
-        goto failed_expression;
+            goto failed;*/
     }
 
-    /* free all nodes except the head */
+    /* free every node except the root */
     iter_node = root_node->list;
-    do {
-        if(iter_node != root_node) {
-            temp_node = iter_node;
-            iter_node = iter_node->list;
-            freenamerange(temp_node->cond);
-            freerange(temp_node->range);
-            free(temp_node);
-        }
-    } while(iter_node != root_node);
+    while(iter_node != root_node) {
+        temp_node = iter_node;
+        iter_node = iter_node->list;
+        node_free(temp_node);
+    }
+
     return root_node;
 
-    /* script has failed; clean up everything */
-    failed_expression:
-        iter_node = root_node;
-        while(iter_node != NULL) {
-            temp_node = iter_node;
-            iter_node = iter_node->list;
-            freenamerange(temp_node->cond);
-            freerange(temp_node->range);
-            free(temp_node);
+failed:
+    /* free every node */
+    iter_node = root_node->list;
+    while(iter_node != root_node) {
+        temp_node = iter_node;
+        iter_node = iter_node->list;
+        node_free(temp_node);
+    }
+    node_free(root_node);
+    return NULL;
+}
+
+int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, logic_node_t * logic_tree, int flag, node_t ** node) {
+    int  i = 0;
+    char c = 0;
+    int  level = 0;
+    node_t * _node = NULL;
+
+    /* find the ending parenthesis */
+    for(i = *start; i < end; i++) {
+        c = expr[i][0];
+        if('(' == c) {
+            level++;
+        } else if(')' == c) {
+            level--;
+
+            /* ending parenthesis founded */
+            if(0 == level)
+                break;
         }
-        return NULL;
+    }
+
+    /* error on missing parenthesis */
+    if(0 < level || i >= end)
+        return exit_func_safe("missing parenthesis in item %d", block->item_id);
+
+    /* error on empty subexpression */
+    if(1 == (i - *start))
+        return exit_func_safe("empty subexpression in item %d", block->item_id);
+
+    /* peek ahead to check if subexpression is part of ? operator */
+    _node = (i + 1 < end && expr[i + 1][0] == '?') ?
+        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, flag | EVALUATE_FLAG_EXPR_BOOL):
+        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, flag);
+    if(NULL == _node)
+        return exit_func_safe("failed to evaluate subexpression in item %d", block->item_id);
+
+    /* set node type is subexpression */
+    _node->type = NODE_TYPE_SUB;
+
+    *node = _node;
+    *start = i;
+    return CHECK_PASSED;
+}
+
+int evaluate_expression_var(block_r * block, char ** expr, int * start, int end, logic_node_t * logic_tree, int flag, node_t ** node) {
+    int  i = 0;
+    char c = 0;
+    int  level = 0;
+    int len = 0;
+    node_t * _node = NULL;  /* node */
+    db_t * db = NULL;       /* resource or athena database */
+    var_res var;            /* variable or function search */
+    map_res map;            /* mapping search */
+    const_t constant;       /* constant search */
+    block_r * set = NULL;   /* search variable */
+    node_t * __node = NULL; /* set node */
+
+    /* error on empty identifer */
+    len = strlen(expr[*start]);
+    if(0 >= len)
+        return CHECK_FAILED;
+
+    /* create the variable and function node */
+    _node = calloc(1, sizeof(node_t));
+    if(NULL == _node)
+        return CHECK_FAILED;
+
+    /* search the database */
+    db = block->script->db;
+
+    if(!var_name(db, &var, expr[*start], len)) {
+        /* copy the variable id */
+        _node->var = var.id;
+        _node->cond_cnt = 1;
+
+
+        /* copy the variable or function name */
+        _node->id = convert_string(var.desc);
+        if(NULL == _node->id)
+            goto failed;
+
+        if(var.flag & VARI_FLAG) {
+            _node->type = NODE_TYPE_VARIABLE;
+            _node->range = mkrange(INIT_OPERATOR, var.min, var.max, DONT_CARE);
+            _node->min = minrange(_node->range);
+            _node->max = minrange(_node->range);
+        } else if(var.flag & FUNC_FLAG) {
+            _node->type = NODE_TYPE_FUNCTION;
+
+            /* find the ending parenthesis */
+            for(i = *start; i < end; i++) {
+                c = expr[i][0];
+                if('(' == c) {
+                    level++;
+                } else if(')' == c) {
+                    level--;
+
+                    /* ending parenthesis founded */
+                    if(0 == level)
+                        break;
+                }
+            }
+
+            /* error on missing parenthesis */
+            if(0 < level || i >= end) {
+                exit_func_safe("missing parenthesis in item %d", block->item_id);
+                goto failed;
+            }
+
+            /* evaluate the function */
+            if(evaluate_function(block, expr, *start + 1, i, &var, _node))
+                goto failed;
+        } else {
+            goto failed;
+        }
+    } else {
+        /* copied the identifier */
+        _node->id = convert_string(expr[*start]);
+        if(NULL == _node->id)
+            goto failed;
+
+        if(!map_name(db, &map, expr[*start], len)) {
+            /* map name */
+            _node->type = NODE_TYPE_CONSTANT;
+            _node->min = map.id;
+            _node->max = map.id;
+        } else if(!const_name(db, &constant, expr[*start], len)) {
+            /* constant name */
+            _node->type = NODE_TYPE_CONSTANT;
+            _node->min = constant.value;
+            _node->max = constant.value;
+        } else {
+            /* set default value */
+            _node->type = NODE_TYPE_LOCAL;
+            _node->min = 0;
+            _node->max = 0;
+
+            set = block->set;
+            while(NULL != set) {
+                /* copy the set block's node */
+                if(0 == ncs_strcmp(set->ptr[0], expr[*start])) {
+                    __node = set->set_node;
+                    if(NULL == __node)
+                        goto failed;
+
+                    _node->var = 0;
+
+                    /* copy the range */
+                    _node->range = copyrange(__node->range);
+                    _node->min = minrange(_node->range);
+                    _node->max = maxrange(_node->range);
+
+                    /* copy the logic tree */
+                    if(NULL != __node->cond)
+                        _node->cond = copy_deep_any_tree(__node->cond);
+                    _node->cond_cnt = __node->cond_cnt;
+
+                    /* copy the formula */
+                    if(NULL != __node->formula)
+                        _node->formula = convert_string(__node->formula);
+                    break;
+                }
+
+                /* iterate the set blocks */
+                set = set->set;
+            }
+
+            /* set the range 0 to INT_MAX on 'for'
+             * block's condition expression */
+            if(flag & EVALUATE_FLAG_ITERABLE_SET)
+                _node->max = 2147483647;
+        }
+    }
+
+    /* set the result */
+    *node = _node;
+    *start = i;
+    return CHECK_PASSED;
+
+failed:
+    node_free(_node);
+    return CHECK_FAILED;
 }
 
 int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node_t * node) {
@@ -4673,7 +4723,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
             case '+':
             case '-':
                 node->range = calcrange(node->op, node->left->range, node->right->range);
-                node_condition_inherit(node);
+                node_inherit(node);
                 break;
             case '<' + '=':
             case '<':
@@ -4701,14 +4751,14 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 }
 
                 /* variable and functions generate logic trees that are inherited by up until the root node */
-                node_condition_inherit(node);
+                node_inherit(node);
                 (*complexity)++;
                 break;
             case '&':
             case '|':
                 node->range = calcrange(node->op, node->left->range, node->right->range);
                 /* variable and functions generate logic trees that are inherited by up until the root node */
-                node_condition_inherit(node);
+                node_inherit(node);
                 break;
             case '&' + '&':
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
@@ -4758,11 +4808,12 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
      * need to set the global node_dbg
      * stream */
     node_dump(node, stm);
+
     return SCRIPT_PASSED;
 }
 
 /* function must be called AFTER node->range is calc */
-int node_condition_inherit(node_t * node) {
+int node_inherit(node_t * node) {
     exit_null_safe(1, node);
 
     /* inherit only from left or right but not both;
@@ -4786,44 +4837,46 @@ int node_condition_inherit(node_t * node) {
     return SCRIPT_PASSED;
 }
 
-void node_dump(node_t * node, FILE * stm) {
-    if(node != NULL && stm != NULL) {
-        fprintf(stm," -- Node %p --\n", (void *) node);
-        switch(node->type) {
-            case NODE_TYPE_OPERATOR:
-                switch(node->op) {
-                     case '<' + '=':    fprintf(stm,"     Type: Operator <=\n"); break;
-                     case '>' + '=':    fprintf(stm,"     Type: Operator >=\n"); break;
-                     case '!' + '=':    fprintf(stm,"     Type: Operator !=\n"); break;
-                     case '=' + '=':    fprintf(stm,"     Type: Operator ==\n"); break;
-                     case '&' + '&':    fprintf(stm,"     Type: Operator &&\n"); break;
-                     case '|' + '|':    fprintf(stm,"     Type: Operator ||\n"); break;
-                     default:           fprintf(stm,"     Type: Operator %c\n", node->op); break;
-                 }
-                 break;
-            case NODE_TYPE_UNARY:       fprintf(stm,"     Type: Operator %c\n", node->op); break;
-            case NODE_TYPE_OPERAND:     fprintf(stm,"     Type: Literal %d:%d\n", node->min, node->max); break;
-            case NODE_TYPE_FUNCTION:    fprintf(stm,"     Type: Function %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_VARIABLE:    fprintf(stm,"     Type: Variable %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_LOCAL:       fprintf(stm,"     Type: Local %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_CONSTANT:    fprintf(stm,"     Type: Constant %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_SUB:         fprintf(stm,"     Type: Subexpression %s; %d:%d\n", node->formula, node->min, node->max); break;
-            default:                    fprintf(stm,"     Type: %d\n", node->op); break;
-        }
-        fprintf(stm," Variable: %d\n", node->var);
-        fprintf(stm,"  Formula: %s\n", node->formula);
-        dmprange(node->range, stm, "Range; ");
-        dmpnamerange(node->cond, stm, 0);
-        fprintf(stm,"\n");
+void node_free(node_t * node) {
+    if(NULL != node) {
+        if(NULL != node->cond)
+            freenamerange(node->cond);
+        if(NULL != node->range)
+            freerange(node->range);
+        SAFE_FREE(node->formula);
+        SAFE_FREE(node->id);
+        SAFE_FREE(node);
     }
 }
 
-void node_free(node_t * node) {
-    if(node != NULL) {
-        if(node->cond != NULL)
-            freenamerange(node->cond);
-        if(node->range != NULL)
-            freerange(node->range);
-        free(node);
+void node_dump(node_t * node, FILE * stream) {
+    if(node != NULL && stream != NULL) {
+        fprintf(stream," -- Node %p --\n", (void *) node);
+        switch(node->type) {
+            case NODE_TYPE_OPERATOR:
+                switch(node->op) {
+                     case '<' + '=':    fprintf(stream,"     Type: Operator <=\n"); break;
+                     case '>' + '=':    fprintf(stream,"     Type: Operator >=\n"); break;
+                     case '!' + '=':    fprintf(stream,"     Type: Operator !=\n"); break;
+                     case '=' + '=':    fprintf(stream,"     Type: Operator ==\n"); break;
+                     case '&' + '&':    fprintf(stream,"     Type: Operator &&\n"); break;
+                     case '|' + '|':    fprintf(stream,"     Type: Operator ||\n"); break;
+                     default:           fprintf(stream,"     Type: Operator %c\n", node->op); break;
+                 }
+                 break;
+            case NODE_TYPE_UNARY:       fprintf(stream,"     Type: Operator %c\n", node->op); break;
+            case NODE_TYPE_OPERAND:     fprintf(stream,"     Type: Literal %d:%d\n", node->min, node->max); break;
+            case NODE_TYPE_FUNCTION:    fprintf(stream,"     Type: Function %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_VARIABLE:    fprintf(stream,"     Type: Variable %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_LOCAL:       fprintf(stream,"     Type: Local %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_CONSTANT:    fprintf(stream,"     Type: Constant %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_SUB:         fprintf(stream,"     Type: Subexpression %s; %d:%d\n", node->formula, node->min, node->max); break;
+            default:                    fprintf(stream,"     Type: %d\n", node->op); break;
+        }
+        fprintf(stream," Variable: %d\n", node->var);
+        fprintf(stream,"  Formula: %s\n", node->formula);
+        dmprange(node->range, stream, "Range; ");
+        dmpnamerange(node->cond, stream, 0);
+        fprintf(stream,"\n");
     }
 }
