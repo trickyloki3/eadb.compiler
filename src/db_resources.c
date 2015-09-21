@@ -118,7 +118,7 @@ int var_res_load(void * db, int row, int col, char * val) {
    var_res * record = &((var_res *) db)[row];
    switch(col) {
       case 0: record->id = convert_integer(val, 10);      break;
-      case 1: record->type = convert_integer(val, 10);    break;
+      case 1: record->type = convert_integer(val, 16);    break;
       case 2: record->flag = convert_integer(val, 16);    break;
       case 3: record->min = convert_integer(val, 10);     break;
       case 4: record->max = convert_integer(val, 10);     break;

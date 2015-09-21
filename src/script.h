@@ -43,25 +43,26 @@
     } token_r;
 
     typedef struct node {
-         int var;                                                              /* var_db.txt tag for variable and functions */
-         int type;                                                             /* see node types macros */
-         int op;                                                               /* operator (NODE_TYPE_OPERATOR) */
-         char * id;                                                            /* identifier (NODE_TYPE_FUNCTION / VARIABLE / LOCAL / CONSTANT / SUB) */
-         /* range is a discontinuous set of values
-          * between the minimum and maximum value */
-         int min;                                                              /* minrange() */
-         int max;                                                              /* maxrange() */
-         range_t * range;                                                      /* range values */
-         /* logic tree is a and-or-cond tree */
-         logic_node_t * cond;                                                  /* logic tree */
-         int cond_cnt;                                                         /* total number of variable and functions in the logic tree */
-         char * formula;                                                       /* user-friendly string of the expression */
-         /* expression precedence and associative */
-         struct node * left;
-         struct node * right;
-         struct node * next;
-         struct node * prev;
-         /* singly linked list for memory management */
+        int var;                                                              /* var_db.txt tag for variable and functions */
+        int type;                                                             /* see node types macros */
+        int op;                                                               /* operator (NODE_TYPE_OPERATOR) */
+        char * id;                                                            /* identifier (NODE_TYPE_FUNCTION / VARIABLE / LOCAL / CONSTANT / SUB) */
+        int return_type;                                                      /* bitmask of return types use for check formula compatibility */
+        /* range is a discontinuous set of values
+         * between the minimum and maximum value */
+        int min;                                                              /* minrange() */
+        int max;                                                              /* maxrange() */
+        range_t * range;                                                      /* range values */
+        /* logic tree is a and-or-cond tree */
+        logic_node_t * cond;                                                  /* logic tree */
+        int cond_cnt;                                                         /* total number of variable and functions in the logic tree */
+        char * formula;                                                       /* user-friendly string of the expression */
+        /* expression precedence and associative */
+        struct node * left;
+        struct node * right;
+        struct node * next;
+        struct node * prev;
+        /* singly linked list for memory management */
          struct node * list;
     } node_t;
 
@@ -196,6 +197,7 @@
     #define MAP_TARGET_FLAG                0x04000
     #define MAP_WEAPON_FLAG                0x08000
     #define MAP_REFINE_FLAG                0x10000
+    #define MAP_ITEM_INFO_FLAG             0x40000
     #define MAP_NO_ERROR                   0x20000
 
     /* stack_eng_db bitmask flags */
@@ -321,6 +323,7 @@
     /* revised; vararg */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01
@@ -332,6 +335,7 @@
     #define NODE_TYPE_CONSTANT             0x20  /* const.txt */
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
+    /* revised */ int node_steal(node_t *, node_t *);
     /* revised */ int node_structure(node_t *);
     /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int);
     /* revised */ int node_inherit(node_t *);

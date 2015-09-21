@@ -8,6 +8,7 @@ int main(int argc, char * argv[]) {
     int i = 0;
     int len = 0;
     int ret = 0;
+    int level = 0;
     char * script = NULL;
     script_t * context = NULL;
 
@@ -17,12 +18,21 @@ int main(int argc, char * argv[]) {
     while(!item_iterate(context->db, &context->item)) {
         /* skip any script without statements */
         script = context->item.script;
-        for (i = 0; script[i] != '\0'; i++)
-            if (';' == script[i])
+        for (i = 0; script[i] != '\0'; i++) {
+            /* comments can be problematic */
+            if (script[i + 1] != '\0' && script[i] == '/' && script[i + 1] == '*') {
+                level++;
+            } else if (script[i] != '\0' < len && script[i] == '*' && script[i + 1] == '/') {
+                level--;
+                i += 2;
+            }
+            if (!level && ';' == script[i])
                 goto compile;
+        }
         continue;
 
-compile:
+    compile:
+
         /* compile the item script */
         if (script_lexical(&context->token, context->item.script) ||
             script_analysis(context, &context->token, NULL, NULL) ||
@@ -37,6 +47,7 @@ clean:
     return 0;
 
 failed:
+    fprintf(stderr, "      script: %s\n", context->item.script);
     script_block_dump(context, stderr);
     goto clean;
 }

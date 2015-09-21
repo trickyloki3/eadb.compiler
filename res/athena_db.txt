@@ -101,6 +101,25 @@ item_type = {
     [18] = "Delayed Usable";
 }
 
+item_info = {
+    [0] = "Buy Price";
+    [1] = "Sell Price";
+    [2] = "Item Type";
+    [3] = "Max Drop Chance";
+    [4] = "Gender";
+    [5] = "Equip Location";
+    [6] = "Weight";
+    [7] = "Attack";
+    [8] = "Defense";
+    [9] = "Range";
+    [10] = "Slot";
+    [11] = "Weapon Type";
+    [12] = "Requirement Level";
+    [13] = "Weapon Level";
+    [14] = "View ID";
+    [15] = "Magical Attack";
+}
+
 job_type = {
     [0] = "Novice";
     [1] = "Swordsman";

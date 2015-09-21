@@ -12,43 +12,51 @@
  * max  - fixed maximum
  * name - variable or function name
  * desc - user friendly string
+ *
+ * type values
+ *  0x1 - item id
+ *
+ * flag values
+ *  0x1 - identifier is a variable
+ *  0x2 - identifier is a function
+ *  0x4 - copy the min, max, and desc without calling a specific handler
  */
 
 // script engine variables
-17,0,0x1,1,        70,                 joblevel,"Job Level";
-18,0,0x1,1,       175,                baselevel,"Base Level";
-19,0,0x1,1,   1000000,                    maxhp,"Max HP";
-20,0,0x1,0,      4212,                baseclass,"Base Class";
-21,0,0x1,0,      4212,                  basejob,"Base Job";
-22,0,0x1,0,      4212,                    class,"Class";
-23,0,0x1,1,   1000000,                       hp,"HP";
-24,0,0x1,0,2147483647,                     zeny,"Zeny";
-34,0,0x1,0,         1,                    upper,"Rebirth";
+17,0x0,0x1,1,        70,                 joblevel,"Job Level";
+18,0x0,0x1,1,       175,                baselevel,"Base Level";
+19,0x0,0x1,1,   1000000,                    maxhp,"Max HP";
+20,0x0,0x1,0,      4212,                baseclass,"Base Class";
+21,0x0,0x1,0,      4212,                  basejob,"Base Job";
+22,0x0,0x1,0,      4212,                    class,"Class";
+23,0x0,0x1,1,   1000000,                       hp,"HP";
+24,0x0,0x1,0,2147483647,                     zeny,"Zeny";
+34,0x0,0x1,0,         1,                    upper,"Rebirth";
 
 //simple functions
-1 ,0,0x2,0,        15,                getrefine,"Refine Level";
-2 ,0,0x2,0,        15,      getequiprefinerycnt,"Refine Level";
-3 ,0,0x2,1,       150,                readparam,"Paramater";
-4 ,0,0x2,0,2147483647,               getskilllv,"Skill";
-5 ,0,0x2,0,2147483647,                     rand,"Random";
-6 ,0,0x2,0,         0,                      pow,"Pow";
-10,0,0x2,0,2147483647,                  gettime,"Time";
-13,0,0x2,0,2147483647,               isequipped,"Equip ID";
-28,0,0x2,0,         1,             getpartnerid,"Partner Online";
-30,0,0x2,0,2147483647,                countitem,"Item Count";
-31,0,0x2,0,2147483647,              checkoption,"Companion";
-32,0,0x2,0,         1,              checkfalcon,"Falcon Companion";
-33,0,0x2,0,         1,            checkmadogear,"Operating Mado Gear";
-46,0,0x2,0,         0,                      max,"Max";
-47,0,0x2,0,         0,                      min,"Min";
-48,0,0x2,0,         8,               checkmount,"Riding Mount";
+1 ,0x0,0x6,0,        15,                getrefine,"Refine Level";
+2 ,0x0,0x2,0,        15,      getequiprefinerycnt,"Refine Level";
+3 ,0x0,0x2,1,       150,                readparam,"Paramater";
+4 ,0x0,0x2,0,2147483647,               getskilllv,"Skill";
+5 ,0x0,0x2,0,2147483647,                     rand,"Random";
+6 ,0x0,0x2,0,         0,                      pow,"Pow";
+10,0x0,0x2,0,2147483647,                  gettime,"Time";
+13,0x0,0x2,0,2147483647,               isequipped,"Equip ID";
+28,0x0,0x6,0,         1,             getpartnerid,"Partner Online";
+30,0x0,0x2,0,2147483647,                countitem,"Item Count";
+31,0x0,0x2,0,2147483647,              checkoption,"Companion";
+32,0x0,0x6,0,         1,              checkfalcon,"Falcon Companion";
+33,0x0,0x6,0,         1,            checkmadogear,"Operating Mado Gear";
+46,0x0,0x2,0,         0,                      max,"Max";
+47,0x0,0x2,0,         0,                      min,"Min";
+48,0x0,0x6,0,         8,               checkmount,"Riding Mount";
 
 //non-condition functions
-26,0,0x2,0,         0,                 callfunc,"Function";
-27,0,0x2,0,         0,         getrandgroupitem,"Group Item";
-49,0,0x2,0,         0,            groupranditem,"Item Group";
+26,0x0,0x2,0,         0,                 callfunc,"Function";
+27,0x0,0x2,0,         0,         getrandgroupitem,"Group Item";
+49,0x0,0x2,0,         0,            groupranditem,"Item Group";
 
 //complex functions
-8 ,0,0x2,0,2147483647,              getiteminfo,"Item Info";
-9 ,0,0x2,0,2147483647,               getequipid,"Equip ID";
-29,0,0x2,0,2147483647,              strcharinfo,"String Type";
+8 ,0x0,0x2,0,2147483647,              getiteminfo,"Item Info";
+9 ,0x1,0x2,0,2147483647,               getequipid,"Equip ID";
+29,0x0,0x2,0,2147483647,              strcharinfo,"String Type";

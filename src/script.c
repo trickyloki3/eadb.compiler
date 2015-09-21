@@ -995,6 +995,7 @@ int script_translate(script_t * script) {
     block_r * iter = NULL;
     block_r * end = NULL;
     block_r * set = NULL;
+    node_t * node = NULL;
     logic_node_t * logic_tree = NULL;
 
     /* handling iterable set ranges */
@@ -1074,100 +1075,106 @@ int script_translate(script_t * script) {
             case 61: ret = translate_petheal(iter); break;                                                          /* petheal */
             /* non-simple structures */
             case 26:
-               evaluate_expression(iter, iter->ptr[0], 1,
-               EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-               break;                                                                                              /* if */
+                node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
+                if(NULL == node)
+                    return CHECK_FAILED;
+                node_free(node);
+                break;                                                                                              /* if */
             case 27: /* invert the linked logic tree; only the top needs to be inverted */
-               if(iter->logic_tree != NULL) {
-                   logic_tree = iter->logic_tree;
-                   iter->logic_tree = inverse_logic_tree(iter->logic_tree);
-                   iter->logic_tree->stack = logic_tree->stack;
-                   freenamerange(logic_tree);
-               }
+                if(iter->logic_tree != NULL) {
+                    logic_tree = iter->logic_tree;
+                    iter->logic_tree = inverse_logic_tree(iter->logic_tree);
+                    iter->logic_tree->stack = logic_tree->stack;
+                    freenamerange(logic_tree);
+                }
 
-               /* add the else if condition onto the stack */
-               if(iter->ptr_cnt > 1)
-                   evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
+                /* add the else if condition onto the stack */
+                if(iter->ptr_cnt > 1) {
+                    node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
+                    if(NULL == node)
+                        return CHECK_FAILED;
+                    node_free(node);
+                }
                break;                                                                                              /* else */
             case 28:
-               if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
-                   iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                       EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                       EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                       EVALUATE_FLAG_EXPR_BOOL | EVALUATE_FLAG_ITERABLE_SET);
-               } else if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
-                   iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                       EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                       EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                       EVALUATE_FLAG_VARIANT_SET);
-               } else {
-                   iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                       EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                       EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                       EVALUATE_FLAG_EXPR_BOOL );
-               }
+                if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
+                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
+                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
+                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
+                        EVALUATE_FLAG_EXPR_BOOL | EVALUATE_FLAG_ITERABLE_SET);
+                } else if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
+                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
+                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
+                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
+                        EVALUATE_FLAG_VARIANT_SET);
+                } else {
+                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
+                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
+                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
+                        EVALUATE_FLAG_EXPR_BOOL );
+                }
 
-               /* special thanks to 'iterable' ranges for making set block 100x more complex! */
-               if(iter->set_node == NULL) {
-                   exit_func_safe("failed to evaluate set block expression "
-                   "'%s' on item id %d", iter->ptr[1], iter->item_id);
-                   return SCRIPT_FAILED;
-               }
+                /* special thanks to 'iterable' ranges for making set block 100x more complex! */
+                if(iter->set_node == NULL) {
+                    exit_func_safe("failed to evaluate set block expression "
+                    "'%s' on item id %d", iter->ptr[1], iter->item_id);
+                    return SCRIPT_FAILED;
+                }
 
-               /* calculate a reasonable iterable range */
-               if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
-                   set = iter->set;   /* the parent is the non-variant */
+                /* calculate a reasonable iterable range */
+                if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
+                    set = iter->set;   /* the parent is the non-variant */
 
-                   /* check that the non-variant set block is linked */
-                   if(set == NULL) {
-                       exit_func_safe("failed to search non-variant set block "
-                       "for '%s' in item %d", iter->ptr[0], iter->item_id);
-                       return SCRIPT_FAILED;
-                   }
+                    /* check that the non-variant set block is linked */
+                    if(set == NULL) {
+                        exit_func_safe("failed to search non-variant set block "
+                        "for '%s' in item %d", iter->ptr[0], iter->item_id);
+                        return SCRIPT_FAILED;
+                    }
 
-                   /* check that the condition was successfully analysis */
-                   if(set->logic_tree == NULL) {
-                       exit_func_safe("failed to build logic tree for set "
-                       "expression '%s' int item %d", set->ptr[1], set->item_id);
-                   }
+                    /* check that the condition was successfully analysis */
+                    if(set->logic_tree == NULL) {
+                        exit_func_safe("failed to build logic tree for set "
+                        "expression '%s' int item %d", set->ptr[1], set->item_id);
+                    }
 
-                   /* search for the range of the set variable */
-                   iterable_range = search_tree_dependency_or(set->logic_tree, set->ptr[0], set->set_node->range);
-                   if(iterable_range == NULL) {
-                       exit_func_safe("failed to search iterable set block range '%s'"
-                       " from logic tree in item %d", set->ptr[0], set->item_id);
-                       dmpnamerange(set->logic_tree, stderr, 0);
-                       return SCRIPT_FAILED;
-                   } else {
-                       val_min = RANGE_MIN(iterable_range, set->set_node->range);
-                       val_max = RANGE_MAX(iterable_range, set->set_node->range);
-                       temp_range = iterable_range;
-                       if(IS_SUBSET_OF(set->set_node->range, iterable_range)) {
-                           switch(iter->set_node->range->min) {
-                               case -1: iterable_range = mkrange(INIT_OPERATOR, set->set_node->range->min, val_max, DONT_CARE); break;
-                               case  0: iterable_range = andrange(iterable_range, set->set_node->range); break;
-                               case  1: iterable_range = mkrange(INIT_OPERATOR, val_min, set->set_node->range->max, DONT_CARE); break;
-                               default: /* variant must evaluate to -1, 0, and 1 */
-                                   exit_func_safe("invalid variant value %d in item "
-                                   "id %d", iter->set_node->range->min, iter->item_id);
-                                   break;
-                           }
-                       } else {
-                           iterable_range = mkrange(INIT_OPERATOR, val_min, val_max, DONT_CARE); break;
-                       }
-                       freerange(temp_range);
+                    /* search for the range of the set variable */
+                    iterable_range = search_tree_dependency_or(set->logic_tree, set->ptr[0], set->set_node->range);
+                    if(iterable_range == NULL) {
+                        exit_func_safe("failed to search iterable set block range '%s'"
+                        " from logic tree in item %d", set->ptr[0], set->item_id);
+                        dmpnamerange(set->logic_tree, stderr, 0);
+                        return SCRIPT_FAILED;
+                    } else {
+                        val_min = RANGE_MIN(iterable_range, set->set_node->range);
+                        val_max = RANGE_MAX(iterable_range, set->set_node->range);
+                        temp_range = iterable_range;
+                        if(IS_SUBSET_OF(set->set_node->range, iterable_range)) {
+                            switch(iter->set_node->range->min) {
+                                case -1: iterable_range = mkrange(INIT_OPERATOR, set->set_node->range->min, val_max, DONT_CARE); break;
+                                case  0: iterable_range = andrange(iterable_range, set->set_node->range); break;
+                                case  1: iterable_range = mkrange(INIT_OPERATOR, val_min, set->set_node->range->max, DONT_CARE); break;
+                                default: /* variant must evaluate to -1, 0, and 1 */
+                                    exit_func_safe("invalid variant value %d in item "
+                                    "id %d", iter->set_node->range->min, iter->item_id);
+                                    break;
+                            }
+                        } else {
+                            iterable_range = mkrange(INIT_OPERATOR, val_min, val_max, DONT_CARE); break;
+                        }
+                        freerange(temp_range);
 
-                       /* update the set block range to be iterable range */
-                       temp_range = iter->set_node->range;
-                       iter->set_node->min = minrange(iterable_range);
-                       iter->set_node->max = maxrange(iterable_range);
-                       iter->set_node->range = iterable_range;
-                       iter->set_node->range->id_min = set->set_node->min;
-                       iter->set_node->range->id_max = set->set_node->max;
-                       freerange(temp_range);
-                   }
-               }
-               break;                                                                                              /* set */
+                        /* update the set block range to be iterable range */
+                        temp_range = iter->set_node->range;
+                        iter->set_node->min = minrange(iterable_range);
+                        iter->set_node->max = maxrange(iterable_range);
+                        iter->set_node->range = iterable_range;
+                        iter->set_node->range->id_min = set->set_node->min;
+                        iter->set_node->range->id_max = set->set_node->max;
+                        freerange(temp_range);
+                    }
+                }
+                break;                                                                                              /* set */
             case 62: break;
             case 21: /* skilleffect */
             case 22: /* specialeffect2 */
@@ -1435,7 +1442,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc) {
                     block_stack_push(block, TYPE_ENG, item->name)) {
                     /* invalid item id or block->eng stacked overflow */
                     ret = CHECK_FAILED;
-                    goto clean;
+                    goto return_type;
                 }
                 cnt++;
             }
@@ -1451,6 +1458,14 @@ clean:
     SAFE_FREE(item);
     node_free(node);
     return ret;
+
+return_type:
+    /* check whether the node has a return type of item id
+     * if so, then write that formula instead of item name */
+    if(node->return_type & ITEM_TYPE_FLAG &&
+       node->formula != NULL)
+        ret = block_stack_push(block, TYPE_ENG, node->formula);
+    goto clean;
 }
 
 int stack_eng_skill(block_r * block, char * expr, int * argc) {
@@ -1901,6 +1916,8 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
             if(MAP_WEAPON_FLAG & flag && !script_map_id(block, "weapon_type", i, &value))
                 goto found;
             if(MAP_REFINE_FLAG & flag && !script_map_id(block, "refine_location", i, &value))
+                goto found;
+            if(MAP_ITEM_INFO_FLAG & flag && !script_map_id(block, "item_info", i, &value))
                 goto found;
 
             /* failed to find resolve the id */
@@ -2604,7 +2621,7 @@ int translate_status(block_r * block) {
 
     len = block->arg_cnt;
     if(status_id(block->script->db, &status, effect->min)) {
-        printf("%d\n", effect->min);
+        printf("unimplemented status %d\n", effect->min);
         goto failed;
     }
 
@@ -3295,7 +3312,7 @@ int translate_getexp(block_r * block, int handler) {
     if(NULL == buf)
         return CHECK_FAILED;
 
-    sprintf(buf, "Gain %s %s experience.", block->eng[0], (handler == 43) ? "player" : "guild");
+    sprintf(buf, "Gain %s %s experience.", block->eng[0], (handler == 43) ? "base" : "guild");
 
     if(block_stack_reset(block, TYPE_ENG) ||
        block_stack_push(block, TYPE_ENG, buf))
@@ -3319,8 +3336,12 @@ int translate_autobonus(block_r * block, int flag) {
 
     len = block->arg_cnt;
 
-    if(script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &script) ||
-       stack_eng_int(block, block->ptr[1], 10) ||
+    if (script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &script)) {
+        script = convert_string("No bonus script.");
+        block_stack_push(block, TYPE_ENG, script);
+    }
+
+    if(stack_eng_int(block, block->ptr[1], 10) ||
        stack_eng_time(block, block->ptr[2], 1))
         return CHECK_FAILED;
 
@@ -3816,11 +3837,9 @@ failed:
 }
 
 node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, int flag) {
-    int i = 0;
-    int len = 0;
-    int temp = 0;
-    int op_cnt = 0;
+    int  i = 0;
     char c = 0;
+    int operand = 0;
 
     /* linked list builder */
     node_t * root_node = NULL;
@@ -3840,7 +3859,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             /* create subexpression node */
             if(evaluate_expression_sub(block, expr, &i, end, logic_tree, flag, &temp_node))
                 goto failed;
-            op_cnt++;
+            operand++;
         } else if(SCRIPT_BINARY(expr[i][0])) {
             /* create single or dual operator node */
             temp_node = calloc(1, sizeof(node_t));
@@ -3849,7 +3868,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
 
             /* set the operator symbol and type */
             temp_node->op = expr[i][0];
-            temp_node->type = (op_cnt) ? NODE_TYPE_OPERATOR : NODE_TYPE_UNARY;
+            temp_node->type = (operand) ? NODE_TYPE_OPERATOR : NODE_TYPE_UNARY;
 
             /* check for dual operators */
             if(NODE_TYPE_OPERATOR == temp_node->type) {
@@ -3863,7 +3882,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
                     }
                 }
                 /* reset the operand count */
-                op_cnt = 0;
+                operand = 0;
             }
         } else if(isdigit(expr[i][0])) {
             /* create numeric constant */
@@ -3874,12 +3893,12 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             temp_node->type = NODE_TYPE_OPERAND;
             temp_node->min = convert_integer(expr[i], 10);
             temp_node->max = temp_node->min;
-            op_cnt++;
+            operand++;
         } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
             /* create variables, functions, and identifiers */
             if(evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp_node))
                 goto failed;
-            op_cnt++;
+            operand++;
         } else {
             /* something has gone wrong during processing */
             exit_func_safe("invalid token '%s' in item %d", expr[i], block->item_id);
@@ -3891,8 +3910,14 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         iter_node->list = temp_node;
         temp_node->list = root_node;
 
+        /* doubly link the nodes */
+        iter_node->next = temp_node;
+        temp_node->prev = iter_node;
+        root_node->prev = temp_node;
+        temp_node->next = root_node;
+
         /* error on operator without operand */
-        if(op_cnt > 1) {
+        if(operand > 1) {
             exit_func_safe("operand '%s' without operator in item %d", expr[i], block->item_id);
             goto failed;
         }
@@ -3908,13 +3933,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
            NULL == temp_node->range)
             temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
 
-        /* doubly link the nodes */
-        iter_node->next = temp_node;
-        temp_node->prev = iter_node;
-        root_node->prev = temp_node;
-        temp_node->next = root_node;
-
-        /* set the tail */
+        /* iterator set to the tail */
         iter_node = temp_node;
 
         /* reset the temp_node reference */
@@ -3929,26 +3948,11 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
      * to copy any value we want to return using the root
      * node */
     if(node_structure(root_node) ||
-       node_evaluate(root_node->next, node_dbg, logic_tree, flag)) {
+       node_evaluate(root_node->next, node_dbg, logic_tree, flag) ||
+       node_steal(root_node->next, root_node)) {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed;
     }
-
-    if(root_node->next->id != NULL)
-        /*if(id_write(root_node, "%s", root_node->next->id))
-            goto failed;*/
-    /* simple function and variable parenthesis is meaningless, i.e. (getrefine()) */
-    root_node->type = (root_node->next->type == NODE_TYPE_OPERATOR) ?
-        NODE_TYPE_SUB : root_node->next->type;
-    root_node->min = root_node->next->min;
-    root_node->max = root_node->next->max;
-    root_node->range = copyrange(root_node->next->range);
-    /* copy the logical tree if it exist */
-    if(root_node->cond == NULL && root_node->next->cond != NULL)
-        root_node->cond = copy_any_tree(root_node->next->cond);
-    root_node->cond_cnt = root_node->next->cond_cnt;
-    /*if(expression_write(root_node, "%s", root_node->next->formula))
-        goto failed;*/
 
     /* free every node except the root */
     iter_node = root_node->list;
@@ -4079,9 +4083,19 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
                 goto failed;
             }
 
-            /* evaluate the function */
-            if(evaluate_function(block, expr, *start + 1, i, &var, _node))
-                goto failed;
+            /* set the functions return type */
+            _node->return_type |= var.type;
+
+            if(var.flag & FUNC_CONST_FLAG) {
+                /* function uses a static min, max, and desc */
+                _node->formula = convert_string(var.desc);
+                _node->min = var.min;
+                _node->max = var.max;
+            } else {
+                /* evaluate the function */
+                if(evaluate_function(block, expr, *start + 1, i, &var, _node))
+                    goto failed;
+            }
 
             /* skip the function's argument list */
             *start = i;
@@ -4195,6 +4209,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);            break; /* getskilllv */
         case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                  break; /* rand */
         case 8: ret = evaluate_function_getiteminfo(block, arg_off, arg_cnt, func, node);           break; /* getiteminfo */
+        case 9: ret = evaluate_function_getequipid(block, arg_off, arg_cnt, func, node);            break; /* getequipid */
         case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
         case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
@@ -4211,6 +4226,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     for(i = eng_off; i < block->eng_cnt;)
         if(block_stack_pop(block, TYPE_ENG))
             return CHECK_FAILED;
+
 clean:
     SAFE_FREE(token);
     return ret;
@@ -4245,14 +4261,11 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
             node->max = RANGE_MAX(operand_1->range, operand_2->range);
             break;
         default:
-            return exit_func_safe("invalid argument count to"
-            " function '%s' in %d", func->id, block->item_id);
+            return exit_func_safe("invalid argument count to "
+            "function '%s' in %d", func->name, block->item_id);
     }
 
-    /* set the new formula and write dependency identifer */
-    /*if( expression_write(node, "random") ||
-        id_write(node, "random"))
-        goto failed;*/
+    node->formula = convert_string("random");
 
 clean:
     node_free(operand_1);
@@ -4323,8 +4336,8 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
 
             break;
         default:
-            return exit_func_safe("invalid argument count to"
-            " function '%s' in %d", func->id, block->item_id);
+            return exit_func_safe("invalid argument count to "
+            "function '%s' in %d", func->name, block->item_id);
     }
 
 clean:
@@ -4345,16 +4358,15 @@ int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * fun
 
     /* error on invalid argument count */
     if(1 != cnt)
-        return exit_func_safe("invalid argument count to"
-        " function '%s' in %d", func->id, block->item_id);
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
 
     /* write the dependency */
     if (stack_eng_map(block, block->ptr[off], MAP_READPARAM_FLAG, &argc) ||
         argc != 1)
         goto failed;
-       /*expression_write(node, block->eng[block->eng_cnt - 1]) ||
-       id_write(node, block->eng[block->eng_cnt - 1]))
-        goto failed;*/
+
+    node->formula = convert_string(block->eng[block->eng_cnt - 1]);
 
     /* readparam is a fixed range */
     node->min = func->min;
@@ -4369,6 +4381,7 @@ failed:
 
 int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * func, node_t * node) {
     int ret = 0;
+    int len = 0;
     skill_t skill;
     node_t * id = NULL;
 
@@ -4377,8 +4390,8 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
 
     /* error on invalid argument count */
     if(1 != cnt)
-        return exit_func_safe("invalid argument count to"
-        " function '%s' in %d", func->id, block->item_id);
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
 
     /* search for skill by name */
     if( SCRIPT_STRING(block->ptr[off][0]) &&
@@ -4398,11 +4411,11 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
         goto failed;
 
 found:
-    /* skill level is a fixed range */
-    /*if( expression_write(node, "%s Level", skill.desc) ||
-        id_write(node, "%s Level", skill.desc))
-        goto failed;*/
-
+    len = strlen(skill.desc) + 16;
+    node->formula = calloc(len, sizeof(char));
+    if(NULL == node->formula)
+        goto failed;
+    sprintf(node->formula, "%s Level", skill.desc);
     node->min = 0;
     node->max = skill.maxlv;
 
@@ -4428,8 +4441,8 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
 
     /* error on invalid argument count */
     if(0 == cnt)
-        return exit_func_safe("invalid argument count to"
-        " function '%s' in %d", func->id, block->item_id);
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
 
     /* push item names into the block->eng stack */
     len = block->arg_cnt;
@@ -4458,19 +4471,12 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
     offset += sprintf(&buf[offset], " is equipped");
 
     /* isequipped is a boolean function */
-    /*if( expression_write(node, "%s", buf) ||
-        id_write(node, "%s", buf))
-        goto failed;*/
-
+    node->formula = convert_string(buf);
     node->min = 0;
     node->max = 1;
 
-//clean:
     SAFE_FREE(buf);
     return ret;
-//failed:
-//    ret = CHECK_FAILED;
-//    goto clean;
 }
 
 int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var_res * func, node_t * node) {
@@ -4484,8 +4490,8 @@ int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var
 
     /* error on invalid argument count */
     if(1 != cnt)
-        return exit_func_safe("invalid argument count to"
-        " function '%s' in %d", func->id, block->item_id);
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
 
     /* push equip location into the block->eng stack */
     len = block->arg_cnt;
@@ -4501,29 +4507,83 @@ int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var
     sprintf(buf, "%s's %s", block->eng[block->eng_cnt - 1], node->id);
 
     /* refine rate is a fixed range */
-    /*if( expression_write(node, "%s", buf) ||
-        id_write(node, buf))
-        goto failed;*/
-
+    node->formula = convert_string(buf);
     node->min = func->min;
     node->max = func->max;
 
-//clean:
     SAFE_FREE(buf);
     return ret;
-//failed:
-//    ret = CHECK_FAILED;
-//    goto clean;
 }
 
 int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    goto failed;
-clean:
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    int len = 0;
+    int argc = 0;
+    char * buf = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, func, node);
+
+    if(2 != cnt)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    /* evaluate the item info type */
+    len = block->arg_cnt;
+    if(stack_eng_item(block, block->ptr[off], &argc) || argc != 1 ||
+       stack_eng_map(block, block->ptr[off+1], MAP_ITEM_INFO_FLAG, &argc) || argc != 1)
+        return CHECK_FAILED;
+    len = (block->arg_cnt - len) + 32;
+
+    node->formula = calloc(len, sizeof(char));
+    if(NULL == node->formula)
+        return CHECK_FAILED;
+
+    sprintf(node->formula, "%s's %s", block->eng[block->eng_cnt - 2], block->eng[block->eng_cnt - 1]);
+    node->min = func->min;
+    node->max = func->max;
+
+    return CHECK_PASSED;
+}
+
+int evaluate_function_getequipid(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int argc = 0;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, func, node);
+
+    if(1 != cnt)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &argc) ||
+       argc != 1)
+        return CHECK_FAILED;
+
+    node->formula = convert_string(block->eng[block->eng_cnt - 1]);
+    node->min = func->min;
+    node->max = func->max;
+
+    return CHECK_PASSED;
+}
+
+int node_steal(node_t * src, node_t * des) {
+    exit_null_safe(2, src, des);
+
+    des->id = src->id;
+    des->formula = src->formula;
+    des->cond = src->cond;
+    des->range = src->range;
+    des->min = minrange(des->range);
+    des->max = maxrange(des->range);
+    des->cond_cnt = src->cond_cnt;
+    des->type = (src->type == NODE_TYPE_OPERATOR) ? NODE_TYPE_SUB : src->type;
+    des->return_type |= src->return_type;
+
+    src->id = NULL;
+    src->formula = NULL;
+    src->cond = NULL;
+    src->range = NULL;
+    return CHECK_PASSED;
 }
 
 int node_structure(node_t * root_node) {
@@ -4716,13 +4776,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
             default: return SCRIPT_FAILED;
         }
 
-        /* create a condition node that can be added to a logic tree */
-        if(node->left->cond != NULL)
-            node->cond = make_cond(node->left->cond->var, node->left->cond->name, node->range, node->left->cond);
-
-        /* track total number of conditions */
-        node->cond_cnt += node->left->cond_cnt;
-
+        node_inherit(node);
     /* handle binary operator nodes */
     } else if(node->type & NODE_TYPE_OPERATOR) {
         /* error on invalid nodes */
@@ -4845,7 +4899,19 @@ int node_inherit(node_t * node) {
             node->range,
             node->right->cond);
 
+    } else if(node->left == node->right && node->left->cond != NULL) {
+        /* inherit for unary operator */
+        node->cond = make_cond(
+            node->left->cond->var,
+            node->left->cond->name,
+            node->range,
+            node->left->cond);
     }
+
+    /* inherit the return type */
+    node->return_type |= node->left->return_type;
+    node->return_type |= node->right->return_type;
+
     return SCRIPT_PASSED;
 }
 
@@ -4887,6 +4953,7 @@ void node_dump(node_t * node, FILE * stream) {
         }
         fprintf(stream," Variable: %d\n", node->var);
         fprintf(stream,"  Formula: %s\n", node->formula);
+        fprintf(stream,"   R-Type: %d\n", node->return_type);
         dmprange(node->range, stream, "Range; ");
         dmpnamerange(node->cond, stream, 0);
         fprintf(stream,"\n");
