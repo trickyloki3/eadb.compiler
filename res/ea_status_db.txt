@@ -16,4 +16,17 @@
 61,sc_atkpotion,1,"Increase attack strength %s ATK","",1,n,0,0,0,1,0,0,0
 62,sc_matkpotion,1,"Increase magical power %s MATK","",1,n,0,0,0,1,0,0,0
 63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0
-
+64 ,sc_slowdown,1,"Decrease movement speed","",0,0,0,0,0,0,0,0,0
+105,sc_armor_element,2,"Increase water resistance by %s%%, fire resistance by %s%%, wind resistance by %s%%, and earth resistance by %s%%","",4,n,n,n,n,1,2,3,4
+186,sc_intravision,1,"Grant ability to detect hidden enemies","",0,0,0,0,0,0,0,0,0
+203,sc_strfood,1,"Increase strength %s STR","",1,n,0,0,0,1,0,0,0
+204,sc_agifood,1,"Increase agility %s AGI","",1,n,0,0,0,1,0,0,0
+205,sc_vitfood,1,"Increase vitality %s VIT","",1,n,0,0,0,1,0,0,0
+206,sc_intfood,1,"Increase intelligence %s INT","",1,n,0,0,0,1,0,0,0
+207,sc_dexfood,1,"Increase dexterity %s DEX","",1,n,0,0,0,1,0,0,0
+208,sc_lukfood,1,"Increase luck %s LUK","",1,n,0,0,0,1,0,0,0
+209,sc_hitfood,1,"Increase hit rate %s HIT","",1,n,0,0,0,1,0,0,0
+210,sc_food_basichit,1,"Increase hit rate %s HIT","",1,n,0,0,0,1,0,0,0
+211,sc_batkfood,1,"Increase attack strength %s ATK","",1,n,0,0,0,1,0,0,0
+213,sc_matkfood,1,"Increase magical power %s MATK","",1,n,0,0,0,1,0,0,0
+215,sc_xmas,1,"Change a Santa Suit costume","",0,0,0,0,0,0,0,0,0

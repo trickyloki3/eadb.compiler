@@ -1033,7 +1033,7 @@ int script_translate(script_t * script) {
             case 12: ret = translate_itemskill(iter); break;                                                        /* itemskill */
             case 13: ret = translate_skill_block(iter, iter->type); break;                                          /* unitskilluseid */
             case 14: ret = translate_status(iter); break;                                                           /* sc_start */
-            case 15: ret = exit_func_safe("maintenance"); break;                                                    /* sc_start4 */
+            case 15: ret = translate_status(iter); break;                                                           /* sc_start4 */
             case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
             case 17: ret = translate_getitem(iter); break;                                                          /* getitem */
             case 18: ret = translate_rentitem(iter); break;                                                         /* rentitem */
@@ -1047,7 +1047,7 @@ int script_translate(script_t * script) {
             case 33: ret = translate_misc(iter, "warp"); break;                                                     /* warp */
             case 35: ret = translate_write(iter, "Hatch a pet egg.", 1); break;                                     /* bpet */
             case 34: ret = translate_pet_egg(iter); break;                                                          /* pet */
-            case 36: ret = translate_hire_merc(iter, iter->type); break;                                            /* mercenary_create */
+            case 36: ret = translate_hire_mercenary(iter); break;                                                   /* mercenary_create */
             case 37: ret = translate_heal(iter); break;                                                             /* mercenary_heal */
             case 38: ret = exit_func_safe("maintenance"); break;                                                    /* mercenary_sc_status */
             case 39: ret = translate_produce(iter, iter->type); break;                                              /* produce */
@@ -1465,6 +1465,9 @@ return_type:
     if(node->return_type & ITEM_TYPE_FLAG &&
        node->formula != NULL)
         ret = block_stack_push(block, TYPE_ENG, node->formula);
+    /* print an error when fallback does not work */
+    if(ret)
+        exit_func_safe("failed to find item id %d in item id %d", i, block->item_id);
     goto clean;
 }
 
@@ -1918,6 +1921,8 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
             if(MAP_REFINE_FLAG & flag && !script_map_id(block, "refine_location", i, &value))
                 goto found;
             if(MAP_ITEM_INFO_FLAG & flag && !script_map_id(block, "item_info", i, &value))
+                goto found;
+            if(MAP_TIME_FLAG & flag && !script_map_id(block, "time_type", i, &value))
                 goto found;
 
             /* failed to find resolve the id */
@@ -2663,8 +2668,20 @@ int translate_status(block_r * block) {
         goto failed;
 
     switch(status.vcnt) {
-        case 0: off += sprintf(&buf[off], status.scfmt); break;
-        case 1: off += sprintf(&buf[off], status.scfmt, block->eng[status.voff[0]]); break;
+        case 0:
+            off += sprintf(&buf[off], status.scfmt);
+            break;
+        case 1:
+            off += sprintf(&buf[off], status.scfmt,
+                block->eng[status.voff[0]]);
+            break;
+        case 4:
+            off += sprintf(&buf[off], status.scfmt,
+                block->eng[status.voff[0]],
+                block->eng[status.voff[1]],
+                block->eng[status.voff[2]],
+                block->eng[status.voff[3]]);
+            break;
         default:
             exit_func_safe("unsupport status argument coun"
             "t %d in item %d", status.vcnt, block->item_id);
@@ -2676,6 +2693,9 @@ int translate_status(block_r * block) {
     if(block_stack_reset(block, TYPE_ENG) ||
        block_stack_push(block, TYPE_ENG, buf))
         goto failed;
+
+    if(status.scid == 0)
+        printf("%s\n", buf);
 
 clean:
     SAFE_FREE(buf);
@@ -3372,6 +3392,33 @@ int translate_autobonus(block_r * block, int flag) {
     return ret;
 }
 
+int translate_hire_mercenary(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    char * buf = NULL;
+    int argc = 0;
+
+    len = block->arg_cnt;
+    if(stack_eng_db(block, block->ptr[0], DB_MERC_ID, &argc) ||
+       argc != 1 ||
+       stack_eng_time(block, block->ptr[1], 1))
+        return CHECK_FAILED;
+    len = block->arg_cnt - len + 32;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "Hire mercenary %s for %s.", block->eng[0], block->eng[1]);
+
+    if(block_stack_reset(block, TYPE_ENG) ||
+       block_stack_push(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
+}
+
 int translate_searchstore(block_r * block) {
 
     /* check for null references */
@@ -3458,20 +3505,6 @@ int translate_bstore(block_r * block, int handler) {
     translate_write(block, buf, 1);
     node_free(slots);
     return SCRIPT_PASSED;
-}
-
-int translate_hire_merc(block_r * block, int handler) {
-    /*int offset = 0;
-    char buf[BUF_SIZE];
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    if(translate_id(block, block->ptr[0], 0x04) ||
-        stack_eng_time(block, block->ptr[1], 1))
-        return SCRIPT_FAILED;
-    offset = sprintf(buf,"Hire %s for %s.", block->eng[0], block->eng[2]);
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);*/
-    return exit_abt_safe("maintenance");
 }
 
 int translate_transform(block_r * block) {
@@ -4210,7 +4243,9 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                  break; /* rand */
         case 8: ret = evaluate_function_getiteminfo(block, arg_off, arg_cnt, func, node);           break; /* getiteminfo */
         case 9: ret = evaluate_function_getequipid(block, arg_off, arg_cnt, func, node);            break; /* getequipid */
+        case 10: ret = evaluate_function_gettime(block, arg_off, arg_cnt, func, node);              break; /* gettime */
         case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
+        case 26: ret = evaluate_function_callfunc(block, arg_off, arg_cnt, func, node);             break; /* callfunc */
         case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
             exit_func_safe("unsupported function '%s' in item %d", func->name, block->item_id);
@@ -4298,12 +4333,14 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
                 goto failed;
 
             /* group id must be a constant */
-            if(group_id->range->min != group_id->range->max)
+            if(group_id->min != group_id->max)
                 goto failed;
 
             memset(&item_group, 0, sizeof(item_group_t));
-            if(item_group_id(block->script->db, &item_group, group_id->range->min))
+            if(item_group_id(block->script->db, &item_group, group_id->min)) {
+                exit_func_safe("failed to search for group id '%d' in item id %d", group_id->min, block->item_id);
                 goto failed;
+            }
 
             if(0 >= item_group.size)
                 goto failed;
@@ -4315,11 +4352,12 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
             }
 
             /* build linked list of discontinous item id in item group */
-            min = item_group.item_id[i];
-            for(i = 1; i < item_group.size - 1; i++) {
-                /* create a new range for each discontinous item id */
-                if(item_group.item_id[i] + 1 != item_group.item_id[i + 1]) {
-                    if(node->range == NULL) {
+            min = item_group.item_id[0];
+            for (i = 0; i < item_group.size; i++) {
+                /* build linked list of discontinous item id in item group */
+                if (((i + 1) < item_group.size && item_group.item_id[i] + 1 != item_group.item_id[i + 1]) ||
+                    ((i + 1) >= item_group.size)) {
+                    if (node->range == NULL) {
                         iter = node->range = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
                     } else {
                         temp = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
@@ -4329,11 +4367,11 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
                         temp->prev = iter;
                         iter = temp;
                     }
-                    min = item_group.item_id[i + 1];
+
+                    if((i + 1) < item_group.size)
+                        min = item_group.item_id[i + 1];
                 }
             }
-
-
             break;
         default:
             return exit_func_safe("invalid argument count to "
@@ -4564,6 +4602,107 @@ int evaluate_function_getequipid(block_r * block, int off, int cnt, var_res * fu
     node->max = func->max;
 
     return CHECK_PASSED;
+}
+
+int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    node_t * type = NULL;
+    char * time_type = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, func, node);
+
+    if(1 != cnt)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    type = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == type ||
+       type->min != type->max)
+        goto failed;
+
+    /* get the time type string */
+    script_map_id(block, "time_type", type->min, &node->formula);
+    if(NULL == node->formula)
+        goto failed;
+
+    /* different time type has different limits */
+    switch(type->min) {
+        case 1: node->min = 0; node->max = 60; break;
+        case 2: node->min = 0; node->max = 60; break;
+        case 3: node->min = 0; node->max = 24; break;
+        case 4: node->min = 1; node->max = 7; break;
+        case 5: node->min = 1; node->max = 7; break;
+        case 6: node->min = 1; node->max = 12; break;
+        case 7: node->min = 0; node->max = 9999; break;
+        case 8: node->min = 0; node->max = 365; break;
+    }
+
+    return CHECK_PASSED;
+
+clean:
+    node_free(type);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int i = 0;
+    int ret = 0;
+    node_t * count = NULL;
+    node_t * result = NULL;
+    range_t * temp = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, func, node);
+
+    /* <function name>, <count>, <0> to <count arguments */
+    if(0 == ncs_strcmp(block->ptr[off], "F_Rand") ||
+       0 == ncs_strcmp(block->ptr[off], "F_RandMes")) {
+        count = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
+        if(NULL == count ||
+           count->min != count->max)
+            goto failed;
+
+        /* check whether the number of argument match the actual argument list */
+        if(count->min != cnt - 2) {
+            exit_func_safe("argument mismatch for '%s' in item id %d", block->ptr[off], block->item_id);
+            goto failed;
+        }
+
+        /* evaluate all the arguments */
+        for(i = 0; i < count->min; i++) {
+            result = evaluate_expression(block, block->ptr[off + 2 + i], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == result)
+                goto failed;
+
+            /* combine the ranges for all arguments */
+            if(node->range == NULL) {
+                node->range = copyrange(result->range);
+            } else {
+                temp = node->range;
+                node->range = orrange(node->range, result->range);
+                freerange(temp);
+            }
+        }
+
+        node->formula = convert_string("random");
+        node->min = minrange(node->range);
+        node->max = maxrange(node->range);
+        goto clean;
+    }
+
+    goto failed;
+
+clean:
+    node_free(count);
+    node_free(result);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int node_steal(node_t * src, node_t * des) {

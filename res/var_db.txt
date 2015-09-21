@@ -53,8 +53,8 @@
 
 //non-condition functions
 26,0x0,0x2,0,         0,                 callfunc,"Function";
-27,0x0,0x2,0,         0,         getrandgroupitem,"Group Item";
-49,0x0,0x2,0,         0,            groupranditem,"Item Group";
+27,0x1,0x2,0,         0,         getrandgroupitem,"Group Item";
+49,0x1,0x2,0,         0,            groupranditem,"Item Group";
 
 //complex functions
 8 ,0x0,0x2,0,2147483647,              getiteminfo,"Item Info";

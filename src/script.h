@@ -198,6 +198,7 @@
     #define MAP_WEAPON_FLAG                0x08000
     #define MAP_REFINE_FLAG                0x10000
     #define MAP_ITEM_INFO_FLAG             0x40000
+    #define MAP_TIME_FLAG                  0x80000
     #define MAP_NO_ERROR                   0x20000
 
     /* stack_eng_db bitmask flags */
@@ -275,11 +276,11 @@
     /* revised */ int translate_petskillsupport(block_r *);
     /* revised */ int translate_getexp(block_r *, int);
     /* revised */ int translate_autobonus(block_r *, int);
+    /* revised */ int translate_hire_mercenary(block_r *);
 
     int translate_searchstore(block_r *);
     int translate_buyingstore(block_r *);
     int translate_getrandgroup(block_r *, int);
-    int translate_hire_merc(block_r *, int);
     int translate_transform(block_r *);
     int translate_skill_block(block_r *, int);
     int translate_misc(block_r *, char *);
@@ -324,6 +325,8 @@
     /* revised; const  */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_gettime(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01

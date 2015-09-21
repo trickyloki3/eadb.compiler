@@ -350,6 +350,17 @@ target_flag = {
     [3] = "on self and random skill level";
 }
 
+time_type = {
+    [1] = "Seconds";
+    [2] = "Minutes";
+    [3] = "Hours";
+    [4] = "Weeks";
+    [5] = "Day";
+    [6] = "Month";
+    [7] = "Year";
+    [8] = "Day of Year";
+}
+
 weapon_type = {
     [0] = "Fist";
     [1] = "Dagger";
