@@ -22,7 +22,7 @@ int main(int argc, char * argv[]) {
             /* comments can be problematic */
             if (script[i + 1] != '\0' && script[i] == '/' && script[i + 1] == '*') {
                 level++;
-            } else if (script[i] != '\0' < len && script[i] == '*' && script[i + 1] == '/') {
+            } else if (script[i] != '\0'  && script[i] == '*' && script[i + 1] == '/') {
                 level--;
                 i += 2;
             }
@@ -37,7 +37,7 @@ int main(int argc, char * argv[]) {
         if (script_lexical(&context->token, context->item.script) ||
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
-            context->item.id == 0 ||
+            context->item.id == 14597 ||
             script_block_free_all(context)) {
             goto failed;
         }

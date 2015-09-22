@@ -277,12 +277,12 @@
     /* revised */ int translate_getexp(block_r *, int);
     /* revised */ int translate_autobonus(block_r *, int);
     /* revised */ int translate_hire_mercenary(block_r *);
+    /* revised */ int translate_buyingstore(block_r *);
+    /* revised */ int translate_searchstore(block_r *);
+    /* revised */ int translate_skill_block(block_r *);
 
-    int translate_searchstore(block_r *);
-    int translate_buyingstore(block_r *);
     int translate_getrandgroup(block_r *, int);
     int translate_transform(block_r *);
-    int translate_skill_block(block_r *, int);
     int translate_misc(block_r *, char *);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
@@ -327,6 +327,7 @@
     /* revised; const  */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_gettime(block_r *, int, int, var_res *, node_t *);
     /* revised; const  */ int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
+    /* revised; const  */ int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01
