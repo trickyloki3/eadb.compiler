@@ -37,7 +37,7 @@ int main(int argc, char * argv[]) {
         if (script_lexical(&context->token, context->item.script) ||
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
-            context->item.id == 14597 ||
+            context->item.id == 0 ||
             script_block_free_all(context)) {
             goto failed;
         }

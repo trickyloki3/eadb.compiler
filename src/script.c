@@ -2617,6 +2617,8 @@ int translate_status(block_r * block) {
     int argc = 0;
     char * buf = NULL;
     node_t * effect = NULL;
+    node_t * itemid = NULL;
+    item_t * item = NULL;
     status_res status;
 
     if(block->ptr_cnt < 3)
@@ -2646,9 +2648,22 @@ int translate_status(block_r * block) {
     /* handle special case for sc_itemscript */
     if(status.scid == 289) {
         /* get item script from item id */
-        /* compile the item script recursively */
-        exit_abt_safe("not implemented");
-        goto failed;
+        itemid = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE);
+        if( NULL == itemid ||
+            itemid->min != itemid->max)
+            goto failed;
+
+        item = calloc(1, sizeof(item_t));
+        if(NULL == item)
+            goto failed;
+
+        if(item_id(block->script->db, item, itemid->min) ||
+           script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buf) ||
+           block_stack_reset(block, TYPE_ENG) ||
+           block_stack_push(block, TYPE_ENG, buf))
+            goto failed;
+
+        goto clean;
     } else {
         /* translate the extra arguments */
         for(i = 0; i < status.vcnt; i++) {
@@ -2725,6 +2740,8 @@ int translate_status(block_r * block) {
 
 clean:
     SAFE_FREE(buf);
+    SAFE_FREE(item);
+    node_free(itemid);
     node_free(effect);
     return ret;
 
