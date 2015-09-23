@@ -1194,10 +1194,10 @@ int script_translate(script_t * script) {
     return SCRIPT_PASSED;
 }
 
-int script_generate(script_t * script, char * buffer, int * offset) {
+int script_generate(script_t * script) {
     block_r * iter = NULL;
 
-    exit_null_safe(3, script, buffer, offset);
+    exit_null_safe(1, script);
 
     iter = script->blocks;
     do {
@@ -1217,7 +1217,7 @@ int script_generate(script_t * script, char * buffer, int * offset) {
             default:
                 if(iter->eng_cnt != 1)
                     return CHECK_FAILED;
-                *offset += sprintf(&buffer[*offset], "%s", iter->eng[0]);
+                script->offset += sprintf(&script->buffer[script->offset], "%s", iter->eng[0]);
         }
         iter = iter->next;
     } while (iter != script->blocks && !iter->free);
@@ -1303,7 +1303,7 @@ compile:
     if( script_lexical(&script->token, subscript) ||
         script_analysis(script, &script->token, NULL, NULL) ||
         script_translate(script) ||
-        script_generate(script, script->buffer, &script->offset))
+        script_generate(script))
         goto failed;
 
     /* copy the translated script to output */

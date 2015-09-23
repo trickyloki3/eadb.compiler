@@ -175,7 +175,7 @@
     /* revised */ int check_loop_expression(script_t *, char *, char *);
     /* revised */ int script_parse(token_r *, int *, block_r *, char, char, int);
     /* revised */ int script_translate(script_t *);
-    int script_generate(script_t *, char *, int *);
+    int script_generate(script_t *);
     int script_combo(int, char *, int *, db_t *, int);
     /* revised */ int script_recursive(db_t *, int, lua_State *, char *, char **);
 
