@@ -12,7 +12,8 @@ logic_node_t * make_cond(int var, char * name, range_t * range, logic_node_t * f
     int name_len = 0;
     logic_node_t * new_node = NULL;
     /* check null name and range */
-    exit_null_safe(2, name, range);
+    if(NULL == name || NULL == range)
+        return NULL;
 
     /* make the condition node */
     name_len = strlen(name);
@@ -52,7 +53,8 @@ logic_node_t * new_cond(int logic_node_type, logic_node_t * left, logic_node_t *
         return NULL;
     }
 
-    exit_null_safe(2, left, right);
+    if(NULL == left || NULL == right)
+        return NULL;
 
     if(COND_COND_CASE(left, right)) {
         root = base_cond_cond(logic_node_type, left, right);

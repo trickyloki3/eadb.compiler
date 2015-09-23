@@ -3,40 +3,24 @@ CCompiler = gcc
 CFlags = -std=c99 -pedantic -Wall -g
 
 # db library variables
-HDRDIR = -Ihdr/
+HDRDIR = -Isrc/
 OBJDIR = obj/
 SRCDIR = src/
 LIB = -lsqlite3 -ldl -lpthread -lm -llua
-_OBJ = util.o load.o range.o name_range.o table.o db_eathena.o db_rathena.o db_hercules.o db_resources.o db_search.o script.o format.o
+_OBJ = util.o range.o name_range.o db_search.o script.o
 OBJ = $(patsubst %,$(OBJDIR)%,$(_OBJ))
 
-# hercule item database require libconfig
-HE_HDRDIR = -I../lib
-HE_LIBDIR = ../lib/hconfig.a
-
 # compile all applications or projects
-all: 
+all:
 	make lclean
-	make iteml
-	make itemc
+	make ic
 
-memchk: itemc
-	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./itemc
+mem: ic
+	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=mem.log -v ./ic
 
-memiteml: iteml	
-	valgrind --leak-check=full --show-reachable=yes --track-origins=yes --log-file=itemc_mem_check.log -v ./iteml
+ic: src/ic.c $(OBJ)
+	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(LIB)
 
-itemc: src/itemc.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
-
-iteml: src/iteml.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
-
-flavour: src/flavour.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
-
-loki: src/loki.c $(OBJ)
-	$(CCompiler) -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR) $(LIB) $(HE_LIBDIR)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
 	$(CCompiler) -c -o $@ $(CFlags) $^ $(HDRDIR) $(HE_HDRDIR)
@@ -46,15 +30,8 @@ $(OBJDIR)%.o: $(SRCDIR)%.c
 lclean:
 	rm -rf obj
 	mkdir obj
-	rm -f itemc
-	rm -f iteml
-	rm -f flavour
-	rm -f dump.txt
-	rm -f item.txt
-	rm -f itemc_mem_check.log
-	rm -rf *.dSYM
-	rm -f loki
-	
+
+
 wclean:
 	rmdir obj /S /Q
 	mkdir obj

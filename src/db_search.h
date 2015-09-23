@@ -307,8 +307,8 @@
     #define BIND_NUMBER 0x2
     int exec_db_query(sqlite3 *, sql_t *, ...);
     int bind_db_query(sqlite3 *, sqlite3_stmt *, va_list);
-    int bind_db_string(sqlite3 *, sqlite3_stmt *, int, va_list *);
-    int bind_db_number(sqlite3 *, sqlite3_stmt *, int, va_list *);
+    int bind_db_string(sqlite3 *, sqlite3_stmt *, int, va_list);
+    int bind_db_number(sqlite3 *, sqlite3_stmt *, int, va_list);
 
     /* resource sqlite3 database queries */
     int opt_name(db_t *, option_res *, const char *, int);

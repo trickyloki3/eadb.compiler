@@ -14,6 +14,7 @@
     #include <string.h>
     #include <errno.h>
     #include <ctype.h>
+    #include <math.h>
  	#include "setting.h"
 
  	#define ENABLE_EXIT 0	/* set to 1 for debugging */

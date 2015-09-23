@@ -261,7 +261,6 @@ int exec_db_query(sqlite3 * db, sql_t * sql, ...) {
 }
 
 int bind_db_query(sqlite3 * db, sqlite3_stmt * stmt, va_list args) {
-    int i = 0;
     int type = 0;
     int count = 0;
 
@@ -276,11 +275,11 @@ int bind_db_query(sqlite3 * db, sqlite3_stmt * stmt, va_list args) {
         type = va_arg(args, int);
         switch(type) {
             case BIND_STRING:
-                if(bind_db_string(db, stmt, i, &args))
+                if(bind_db_string(db, stmt, i, args))
                     return CHECK_FAILED;
                 break;
             case BIND_NUMBER:
-                if(bind_db_number(db, stmt, i, &args))
+                if(bind_db_number(db, stmt, i, args))
                     return CHECK_FAILED;
                 break;
             default:
@@ -291,13 +290,12 @@ int bind_db_query(sqlite3 * db, sqlite3_stmt * stmt, va_list args) {
     return CHECK_PASSED;
 }
 
-int bind_db_string(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) {
+int bind_db_string(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list args) {
     int len = 0;
     const char * name = NULL;
-    va_list _args = *args;
 
-    name = va_arg(_args, const char *);
-    len = va_arg(_args, int);
+    name = va_arg(args, const char *);
+    len = va_arg(args, int);
 
     if(SQLITE_OK != sqlite3_bind_text(stmt, bind, name, len, SQLITE_STATIC)) {
         fprintf(stderr, "[fail]: failed to bind the name '%s' "
@@ -305,15 +303,13 @@ int bind_db_string(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) 
         return CHECK_FAILED;
     }
 
-    *args = _args;
     return CHECK_PASSED;
 }
 
-int bind_db_number(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) {
+int bind_db_number(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list args) {
     int id = 0;
-    va_list _args = *args;
 
-    id = va_arg(_args, int);
+    id = va_arg(args, int);
 
     if(SQLITE_OK != sqlite3_bind_int(stmt, bind, id)) {
         fprintf(stderr, "[fail]: failed to bind the "
@@ -321,7 +317,6 @@ int bind_db_number(sqlite3 * db, sqlite3_stmt * stmt, int bind, va_list * args) 
         return CHECK_FAILED;
     }
 
-    *args = _args;
     return CHECK_PASSED;
 }
 
@@ -409,8 +404,8 @@ int status_id(db_t * db, status_res * status, int id) {
     strncopy(status->scfmt, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 3));
     strncopy(status->scend, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 4));
     status->vcnt = sqlite3_column_int(stmt, 5);
-    if (convert_integer_delimit_static(sqlite3_column_text(stmt, 6), ":", status->vmod, 4, &cnt) ||
-        convert_integer_delimit_static(sqlite3_column_text(stmt, 7), ":", status->voff, 4, &cnt))
+    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 6), ":", status->vmod, 4, &cnt) ||
+        convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 7), ":", status->voff, 4, &cnt))
         return CHECK_FAILED;
     return CHECK_PASSED;
 }
@@ -808,7 +803,6 @@ int produce_free(produce_t ** produces) {
 
 int item_group_id(db_t * db, item_group_t * item_group, int id) {
     int i = 0;
-    int size = 0;
     sqlite3_stmt * stmt = NULL;
 
     /* get the group size for the group id */

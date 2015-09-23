@@ -1,13 +1,11 @@
 #include <script.h>
 
-#define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\opt.db"
-#define EA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\ea.db"
-#define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
+#define RE_PATH     "opt.db"
+#define EA_PATH     "ea.db"
+#define MAP_PATH    "res/athena_db.txt"
 
 int main(int argc, char * argv[]) {
     int i = 0;
-    int len = 0;
-    int ret = 0;
     int level = 0;
     char * script = NULL;
     script_t * context = NULL;
@@ -32,7 +30,6 @@ int main(int argc, char * argv[]) {
         continue;
 
     compile:
-
         /* compile the item script */
         if (script_lexical(&context->token, context->item.script) ||
             script_analysis(context, &context->token, NULL, NULL) ||

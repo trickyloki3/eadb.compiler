@@ -269,11 +269,11 @@ int block_stack_dump(block_r * block, FILE * stream) {
                 "   arg stack: %d\n"
                 "   eng stack: %d\n",
                 iter->item_id,
-                iter,
+                (void *) iter,
                 iter->name,
                 iter->type,
-                iter->link,
-                iter->set,
+                (void *) iter->link,
+                (void *) iter->set,
                 iter->ptr_cnt,
                 iter->eng_cnt);
             /* dump the stack */
@@ -598,7 +598,6 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     int i = 0;
     int j = 0;
     int len = 0;
-    int ret = 0;
     int block_cnt = 0;
     char ** token = NULL;
     int token_cnt = 0;
@@ -993,7 +992,6 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
 int script_translate(script_t * script) {
     int ret = 0;
     block_r * iter = NULL;
-    block_r * end = NULL;
     block_r * set = NULL;
     node_t * node = NULL;
     logic_node_t * logic_tree = NULL;
@@ -1052,7 +1050,7 @@ int script_translate(script_t * script) {
             case 38: ret = translate_status(iter); break;                                                           /* mercenary_sc_status */
             case 39: ret = translate_produce(iter, iter->type); break;                                              /* produce */
             case 40: ret = translate_produce(iter, iter->type); break;                                              /* cooking */
-            case 41: ret = exit_func_safe("maintenance"); break;                                                    /* makerune */
+            case 41: ret = exit_abt_safe("maintenance"); break;                                                    /* makerune */
             case 42: ret = translate_getexp(iter, iter->type); break;                                               /* getguildexp */
             case 43: ret = translate_getexp(iter, iter->type); break;                                               /* getexp */
             case 44: ret = translate_misc(iter, "monster"); break;                                                  /* monster */
@@ -1065,7 +1063,7 @@ int script_translate(script_t * script) {
             case 51: ret = translate_bonus_script(iter); break;                                                     /* bonus_script */
             case 52: ret = translate_write(iter, "Play another background song.", 1); break;                        /* playbgm */
             case 53: ret = translate_transform(iter); break;                                                        /* transform */
-            case 54: ret = exit_func_safe("maintenance"); break;                                                    /* sc_start2 */
+            case 54: ret = exit_abt_safe("maintenance"); break;                                                    /* sc_start2 */
             case 55: ret = translate_petloot(iter); break;                                                          /* petloot */
             case 56: ret = translate_petrecovery(iter); break;                                                      /* petrecovery */
             case 57: ret = translate_petskillbonus(iter); break;                                                    /* petskillbonus */
@@ -1199,6 +1197,9 @@ int script_generate(script_t * script) {
 
     exit_null_safe(1, script);
 
+    script->offset = 0;
+    script->buffer[0] = '\0';
+
     iter = script->blocks;
     do {
         switch(iter->type) {
@@ -1215,7 +1216,7 @@ int script_generate(script_t * script) {
             case 32: /* end */
                 break;
             default:
-                if(iter->eng_cnt != 1)
+                if(iter->eng_cnt != 1 || iter->eng[0] == NULL)
                     return CHECK_FAILED;
                 script->offset += sprintf(&script->buffer[script->offset], "%s", iter->eng[0]);
         }
@@ -1311,7 +1312,7 @@ compile:
 
 clean:
     /* free the block list */
-    script_block_free_all(script);
+    script_block_release(script);
     /* free the sub-script context */
     SAFE_FREE(script);
     return ret;
@@ -2114,6 +2115,9 @@ int stack_eng_item_group_name(block_r * block, char * expr, int * argc) {
 
     exit_null_safe(3, block, expr, argc);
 
+    /* initialize the item group */
+    memset(&item_group, 0, sizeof(item_group_t));
+
     top = block->eng_cnt;
 
     /* group id must evaluate to a integer */
@@ -2131,6 +2135,7 @@ int stack_eng_item_group_name(block_r * block, char * expr, int * argc) {
 
 clean:
     *argc = block->eng_cnt - top;
+    item_group_free(&item_group);
     node_free(group_id);
     return ret;
 
@@ -2308,10 +2313,7 @@ failed:
 }
 
 int stack_eng_script(block_r * block, char * script) {
-    int i = 0;
     int ret = 0;
-    int len = 0;
-    int cnt = 0;
     char * buf = NULL;
 
     /* error on invalid reference */
@@ -2564,7 +2566,6 @@ int translate_heal(block_r * block) {
 
 int translate_produce(block_r * block, int handler) {
     int i = 0;
-    int ret = 0;
     int len = 0;
     int off = 0;
     char * buf = NULL;
@@ -2798,7 +2799,6 @@ failed:
 }
 
 int translate_pet_egg(block_r * block) {
-    int i = 0;
     int ret = 0;
     int off = 0;
     int len = 0;
@@ -3068,6 +3068,7 @@ int translate_skill(block_r * block) {
 
 clean:
     node_free(flag);
+    SAFE_FREE(buf);
     return ret;
 failed:
     ret = CHECK_FAILED;
@@ -3075,10 +3076,8 @@ failed:
 }
 
 int translate_itemskill(block_r * block) {
-    int i = 0;
     int ret = 0;
     int cnt = 0;
-    int off = 0;
     int len = 0;
     char * buf = 0;
 
@@ -3150,7 +3149,6 @@ int translate_petloot(block_r * block) {
 int translate_petheal(block_r * block) {
     int ret = 0;
     int len = 0;
-    int off = 0;
     char * buf = NULL;
 
     /* error on invalid reference and empty argument */
@@ -3251,7 +3249,6 @@ int translate_petskillbonus(block_r * block) {
 int translate_petskillattack(block_r * block) {
     int ret = 0;
     int len = 0;
-    int off = 0;
     int argc = 0;
     char * buf = NULL;
 
@@ -3287,7 +3284,6 @@ int translate_petskillattack(block_r * block) {
 int translate_petskillattack2(block_r * block) {
     int ret = 0;
     int len = 0;
-    int off = 0;
     int argc = 0;
     char * buf = NULL;
 
@@ -3324,7 +3320,6 @@ int translate_petskillsupport(block_r * block) {
     int ret = 0;
     int len = 0;
     int cnt = 0;
-    int off = 0;
     char * buf = NULL;
 
     /* error on invalid reference and empty argument */
@@ -3389,9 +3384,9 @@ int translate_getexp(block_r * block, int handler) {
 int translate_autobonus(block_r * block, int flag) {
     int ret = 0;
     int len = 0;
-    int off = 0;
     char * buf = NULL;
     char * script = NULL;
+    char zero[2];
 
     exit_null_safe(1, block);
 
@@ -3400,26 +3395,29 @@ int translate_autobonus(block_r * block, int flag) {
 
     len = block->arg_cnt;
 
-    if(script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &script) ||
-       stack_eng_int(block, block->ptr[1], 10) ||
-       stack_eng_time(block, block->ptr[2], 1))
+    if(script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &script))
         return CHECK_FAILED;
 
+    if(stack_eng_int(block, block->ptr[1], 10) ||
+       stack_eng_time(block, block->ptr[2], 1))
+        goto failed;
 
     if(block->ptr_cnt > 3) {
        if(stack_eng_trigger_bt(block, block->ptr[3]))
-            return CHECK_FAILED;
+            goto failed;
     } else {
+        zero[0] = '0';
+        zero[1] = 0;
         /* evaluates to default bf flags */
-        if(stack_eng_trigger_bt(block, "0"))
-            return CHECK_FAILED;
+        if(stack_eng_trigger_bt(block, zero))
+            goto failed;
     }
 
     len = (block->arg_cnt - len) + strlen(script) + 256;
 
     buf = calloc(len, sizeof(char));
     if(NULL == buf)
-        return CHECK_FAILED;
+        goto failed;
 
     sprintf(buf, "Add %s chance to activate %s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], script);
 
@@ -3427,6 +3425,7 @@ int translate_autobonus(block_r * block, int flag) {
        block_stack_push(block, TYPE_ENG, buf))
         ret = CHECK_FAILED;
 
+failed:
     SAFE_FREE(buf);
     SAFE_FREE(script);
     return ret;
@@ -3611,7 +3610,7 @@ int translate_getrandgroup(block_r * block, int handler) {
     translate_write(block, buf, 1);
     if(group_id != NULL) node_free(group_id);
     if(group_amount != NULL) node_free(group_amount);*/
-    return exit_func_safe("maintenance");
+    return exit_abt_safe("maintenance");
 }
 
 int translate_transform(block_r * block) {
@@ -3853,35 +3852,42 @@ int translate_overwrite(block_r * block, char * desc, int position) {
  * stack_eng_* and evaluate_function_* are both one
  * level above */
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
-    int i = 0;
     node_t * result = NULL;
-    token_r tokens;
+    token_r * tokens = NULL;
 
     /* check null */
     if (NULL == block || expr == NULL)
         return NULL;
 
+    tokens = calloc(1, sizeof(token_r));
+    if(NULL == tokens)
+        return NULL;
+
     /* check division by zero */
     if (modifier == 0) {
         exit_func_safe("modifier is zero in item %d", block->item_id);
-        return NULL;
+        goto clean;
     }
 
     /* tokenize the expression */
-    if (script_lexical(&tokens, expr) || tokens.script_cnt <= 0) {
+    if (script_lexical(tokens, expr) || tokens->script_cnt <= 0) {
         exit_func_safe("failed to tokenize '%s' in item %d", expr, block->item_id);
-        return NULL;
+        goto clean;
     }
 
     /* evaluate expression */
-    result = evaluate_expression_recursive(block, tokens.script_ptr, 0, tokens.script_cnt, block->logic_tree, flag);
+    result = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic_tree, flag);
     if (result == NULL) {
         exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
-        return NULL;
+        goto clean;
     }
 
     /* post expression handling of node */
-    return evaluate_expression_(block, result, modifier, flag);
+    result = evaluate_expression_(block, result, modifier, flag);
+
+clean:
+    SAFE_FREE(tokens);
+    return result;
 }
 
 /* handle specific flags before returning to the caller */
@@ -3911,7 +3917,7 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
             sprintf(buf, "%d", min / modifier);
     } else {
         /* write multiple values */
-        len = (min > 0 && (min / modifier) == 0 || max > 0 && (max / modifier) == 0) ?
+        len = ((min > 0 && (min / modifier) == 0) || (max > 0 && (max / modifier) == 0)) ?
             sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
             sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
     }
@@ -4317,7 +4323,8 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
 
     /* push function arguments onto the block->ptr stack */
     arg_off = block->ptr_cnt;
-    if(ret = stack_ptr_call_(block, token, &arg_cnt))
+    ret = stack_ptr_call_(block, token, &arg_cnt);
+    if(ret)
         goto clean;
 
     /* execute the proper handler for the function */
@@ -4410,6 +4417,9 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
 
     /* error on invalid references */
     exit_null_safe(3, block, func, node);
+
+    /* initialize the item group */
+    memset(&item_group, 0, sizeof(item_group_t));
 
     switch(cnt) {
         case 1:
@@ -4642,7 +4652,6 @@ int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var
 int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
     int len = 0;
     int argc = 0;
-    char * buf = NULL;
 
     /* error on invalid references */
     exit_null_safe(3, block, func, node);
@@ -4693,7 +4702,6 @@ int evaluate_function_getequipid(block_r * block, int off, int cnt, var_res * fu
 int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func, node_t * node) {
     int ret = 0;
     node_t * type = NULL;
-    char * time_type = NULL;
 
     /* error on invalid references */
     exit_null_safe(3, block, func, node);
@@ -4723,8 +4731,6 @@ int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func,
         case 7: node->min = 0; node->max = 9999; break;
         case 8: node->min = 0; node->max = 365; break;
     }
-
-    return CHECK_PASSED;
 
 clean:
     node_free(type);
@@ -4776,6 +4782,9 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
                 node->range = orrange(node->range, result->range);
                 freerange(temp);
             }
+
+            node_free(result);
+            result = NULL;
         }
 
         node->formula = convert_string("random");
