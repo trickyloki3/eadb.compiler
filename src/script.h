@@ -175,7 +175,7 @@
     /* revised */ int check_loop_expression(script_t *, char *, char *);
     /* revised */ int script_parse(token_r *, int *, block_r *, char, char, int);
     /* revised */ int script_translate(script_t *);
-    int script_generate(script_t *);
+    /* revised */ int script_generate(script_t *);
     int script_combo(int, char *, int *, db_t *, int);
     /* revised */ int script_recursive(db_t *, int, lua_State *, char *, char **);
 
@@ -280,14 +280,14 @@
     /* revised */ int translate_buyingstore(block_r *);
     /* revised */ int translate_searchstore(block_r *);
     /* revised */ int translate_skill_block(block_r *);
+    /* revised */ int translate_warp(block_r *);
+    /* revised */ int translate_monster(block_r *);
+    /* revised */ int translate_callfunc(block_r *);
 
     int translate_getrandgroup(block_r *, int);
     int translate_transform(block_r *);
-    int translate_misc(block_r *, char *);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);
-    int translate_write(block_r *, char *, int);
-    int translate_overwrite(block_r *, char *, int);
 
     /* evaluate_expression bitmask flags */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */

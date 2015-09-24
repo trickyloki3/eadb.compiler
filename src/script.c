@@ -1016,61 +1016,61 @@ int script_translate(script_t * script) {
          * block numbers are define in the block_db.txt;
          * for example, 0 = bonus, 1 = bonus2, etc. */
         switch(iter->type) {
-            case 0: ret = translate_bonus(iter, "bonus"); break;                                                    /* bonus */
-            case 1: ret = translate_bonus(iter, "bonus2"); break;                                                   /* bonus2 */
-            case 2: ret = translate_bonus(iter, "bonus3"); break;                                                   /* bonus3 */
-            case 3: ret = translate_bonus(iter, "bonus4"); break;                                                   /* bonus4 */
-            case 4: ret = translate_bonus(iter, "bonus5"); break;                                                   /* bonus5 */
-            case 5: ret = translate_autobonus(iter, 0x01); break;                                                   /* autobonus */
-            case 6: ret = translate_autobonus(iter, 0x02); break;                                                   /* autobonus2 */
-            case 7: ret = translate_autobonus(iter, 0x04); break;                                                   /* autobonus3 */
-            case 8: ret = translate_heal(iter); break;                                                              /* heal */
-            case 9: ret = translate_heal(iter); break;                                                              /* percentheal */
-            case 10: ret = translate_heal(iter); break;                                                             /* itemheal */
-            case 11: ret = translate_skill(iter); break;                                                            /* skill */
-            case 12: ret = translate_itemskill(iter); break;                                                        /* itemskill */
-            case 13: ret = translate_skill_block(iter); break;                                                      /* unitskilluseid */
-            case 14: ret = translate_status(iter); break;                                                           /* sc_start */
-            case 15: ret = translate_status(iter); break;                                                           /* sc_start4 */
-            case 16: ret = translate_status_end(iter); break;                                                       /* sc_end */
-            case 17: ret = translate_getitem(iter); break;                                                          /* getitem */
-            case 18: ret = translate_rentitem(iter); break;                                                         /* rentitem */
-            case 19: ret = translate_delitem(iter); break;                                                          /* delitem */
-            case 20: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getrandgroupitem */
-            case 23: ret = translate_write(iter, "Set new font.", 1); break;                                        /* setfont */
-            case 24: ret = translate_buyingstore(iter); break;                                                      /* buyingstore */
-            case 25: ret = translate_searchstore(iter); break;                                                      /* searchstores */
-            case 30: ret = translate_write(iter, "Send a message through the announcement system.", 1); break;      /* announce */
-            case 31: ret = translate_misc(iter, "callfunc"); break;                                                 /* callfunc */
-            case 33: ret = translate_misc(iter, "warp"); break;                                                     /* warp */
-            case 35: ret = translate_write(iter, "Hatch a pet egg.", 1); break;                                     /* bpet */
-            case 34: ret = translate_pet_egg(iter); break;                                                          /* pet */
-            case 36: ret = translate_hire_mercenary(iter); break;                                                   /* mercenary_create */
-            case 37: ret = translate_heal(iter); break;                                                             /* mercenary_heal */
-            case 38: ret = translate_status(iter); break;                                                           /* mercenary_sc_status */
-            case 39: ret = translate_produce(iter, iter->type); break;                                              /* produce */
-            case 40: ret = translate_produce(iter, iter->type); break;                                              /* cooking */
-            case 41: ret = exit_abt_safe("maintenance"); break;                                                    /* makerune */
-            case 42: ret = translate_getexp(iter, iter->type); break;                                               /* getguildexp */
-            case 43: ret = translate_getexp(iter, iter->type); break;                                               /* getexp */
-            case 44: ret = translate_misc(iter, "monster"); break;                                                  /* monster */
-            case 45: ret = translate_write(iter, "Evolve homunculus when requirements are met.", 1); break;         /* homevolution */
-            case 46: ret = translate_write(iter, "Change to Summer Outfit when worn.", 1); break;                   /* setoption */
-            case 47: ret = translate_write(iter, "Summon a creature to mount. [Work for all classes].", 1); break;  /* setmounting */
-            case 48: ret = translate_setfalcon(iter); break;                                                        /* setfalcon */
-            case 49: ret = translate_getrandgroup(iter, iter->type); break;                                         /* getgroupitem */
-            case 50: ret = translate_write(iter, "Reset all status points.", 1); break;                             /* resetstatus */
-            case 51: ret = translate_bonus_script(iter); break;                                                     /* bonus_script */
-            case 52: ret = translate_write(iter, "Play another background song.", 1); break;                        /* playbgm */
-            case 53: ret = translate_transform(iter); break;                                                        /* transform */
-            case 54: ret = exit_abt_safe("maintenance"); break;                                                    /* sc_start2 */
-            case 55: ret = translate_petloot(iter); break;                                                          /* petloot */
-            case 56: ret = translate_petrecovery(iter); break;                                                      /* petrecovery */
-            case 57: ret = translate_petskillbonus(iter); break;                                                    /* petskillbonus */
-            case 58: ret = translate_petskillattack(iter); break;                                                   /* petskillattack */
-            case 59: ret = translate_petskillattack2(iter); break;                                                  /* petskillattack2 */
-            case 60: ret = translate_petskillsupport(iter); break;                                                  /* petskillsupport */
-            case 61: ret = translate_petheal(iter); break;                                                          /* petheal */
+            case 0: ret = translate_bonus(iter, "bonus"); break;                                                            /* bonus */
+            case 1: ret = translate_bonus(iter, "bonus2"); break;                                                           /* bonus2 */
+            case 2: ret = translate_bonus(iter, "bonus3"); break;                                                           /* bonus3 */
+            case 3: ret = translate_bonus(iter, "bonus4"); break;                                                           /* bonus4 */
+            case 4: ret = translate_bonus(iter, "bonus5"); break;                                                           /* bonus5 */
+            case 5: ret = translate_autobonus(iter, 0x01); break;                                                           /* autobonus */
+            case 6: ret = translate_autobonus(iter, 0x02); break;                                                           /* autobonus2 */
+            case 7: ret = translate_autobonus(iter, 0x04); break;                                                           /* autobonus3 */
+            case 8: ret = translate_heal(iter); break;                                                                      /* heal */
+            case 9: ret = translate_heal(iter); break;                                                                      /* percentheal */
+            case 10: ret = translate_heal(iter); break;                                                                     /* itemheal */
+            case 11: ret = translate_skill(iter); break;                                                                    /* skill */
+            case 12: ret = translate_itemskill(iter); break;                                                                /* itemskill */
+            case 13: ret = translate_skill_block(iter); break;                                                              /* unitskilluseid */
+            case 14: ret = translate_status(iter); break;                                                                   /* sc_start */
+            case 15: ret = translate_status(iter); break;                                                                   /* sc_start4 */
+            case 16: ret = translate_status_end(iter); break;                                                               /* sc_end */
+            case 17: ret = translate_getitem(iter); break;                                                                  /* getitem */
+            case 18: ret = translate_rentitem(iter); break;                                                                 /* rentitem */
+            case 19: ret = translate_delitem(iter); break;                                                                  /* delitem */
+            case 20: ret = translate_getrandgroup(iter, iter->type); break;                                                 /* getrandgroupitem */
+            case 23: ret = block_stack_push(iter, TYPE_ENG, "Set new font."); break;                                        /* setfont */
+            case 24: ret = translate_buyingstore(iter); break;                                                              /* buyingstore */
+            case 25: ret = translate_searchstore(iter); break;                                                              /* searchstores */
+            case 30: ret = block_stack_push(iter, TYPE_ENG, "Send a message through the announcement system."); break;      /* announce */
+            case 31: ret = translate_callfunc(iter); break;                                                                 /* callfunc */
+            case 33: ret = translate_warp(iter); break;                                                                     /* warp */
+            case 35: ret = block_stack_push(iter, TYPE_ENG, "Hatch a pet egg."); break;                                     /* bpet */
+            case 34: ret = translate_pet_egg(iter); break;                                                                  /* pet */
+            case 36: ret = translate_hire_mercenary(iter); break;                                                           /* mercenary_create */
+            case 37: ret = translate_heal(iter); break;                                                                     /* mercenary_heal */
+            case 38: ret = translate_status(iter); break;                                                                   /* mercenary_sc_status */
+            case 39: ret = translate_produce(iter, iter->type); break;                                                      /* produce */
+            case 40: ret = translate_produce(iter, iter->type); break;                                                      /* cooking */
+            case 41: ret = exit_abt_safe("maintenance"); break;                                                             /* makerune */
+            case 42: ret = translate_getexp(iter, iter->type); break;                                                       /* getguildexp */
+            case 43: ret = translate_getexp(iter, iter->type); break;                                                       /* getexp */
+            case 44: ret = translate_monster(iter); break;                                                                  /* monster */
+            case 45: ret = block_stack_push(iter, TYPE_ENG, "Evolve homunculus when requirements are met."); break;         /* homevolution */
+            case 46: ret = block_stack_push(iter, TYPE_ENG, "Change to Summer Outfit when worn."); break;                   /* setoption */
+            case 47: ret = block_stack_push(iter, TYPE_ENG, "Summon a creature to mount. [Work for all classes]."); break;  /* setmounting */
+            case 48: ret = translate_setfalcon(iter); break;                                                                /* setfalcon */
+            case 49: ret = translate_getrandgroup(iter, iter->type); break;                                                 /* getgroupitem */
+            case 50: ret = block_stack_push(iter, TYPE_ENG, "Reset all status points."); break;                             /* resetstatus */
+            case 51: ret = translate_bonus_script(iter); break;                                                             /* bonus_script */
+            case 52: ret = block_stack_push(iter, TYPE_ENG, "Play another background song."); break;                        /* playbgm */
+            case 53: ret = translate_transform(iter); break;                                                                /* transform */
+            case 54: ret = exit_abt_safe("maintenance"); break;                                                             /* sc_start2 */
+            case 55: ret = translate_petloot(iter); break;                                                                  /* petloot */
+            case 56: ret = translate_petrecovery(iter); break;                                                              /* petrecovery */
+            case 57: ret = translate_petskillbonus(iter); break;                                                            /* petskillbonus */
+            case 58: ret = translate_petskillattack(iter); break;                                                           /* petskillattack */
+            case 59: ret = translate_petskillattack2(iter); break;                                                          /* petskillattack2 */
+            case 60: ret = translate_petskillsupport(iter); break;                                                          /* petskillsupport */
+            case 61: ret = translate_petheal(iter); break;                                                                  /* petheal */
             /* non-simple structures */
             case 26:
                 node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
@@ -1218,7 +1218,7 @@ int script_generate(script_t * script) {
             default:
                 if(iter->eng_cnt != 1 || iter->eng[0] == NULL)
                     return CHECK_FAILED;
-                script->offset += sprintf(&script->buffer[script->offset], "%s", iter->eng[0]);
+                script->offset += sprintf(&script->buffer[script->offset], "%s.\n", iter->eng[0]);
         }
         iter = iter->next;
     } while (iter != script->blocks && !iter->free);
@@ -2074,9 +2074,28 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
                 if(NULL == map)
                     goto failed;
 
-                if(map_id(block->script->db, map, i) ||
-                   block_stack_push(block, TYPE_ENG, map->name))
-                    goto failed;
+                switch(i) {
+                    case -1:
+                        if(block_stack_push(block, TYPE_ENG, "random monster"))
+                            goto failed;
+                        break;
+                    case -2:
+                        if(block_stack_push(block, TYPE_ENG, "random poring monster"))
+                            goto failed;
+                        break;
+                    case -3:
+                        if(block_stack_push(block, TYPE_ENG, "random MVP monster"))
+                            goto failed;
+                        break;
+                    case -4:
+                        if(block_stack_push(block, TYPE_ENG, "random monster"))
+                            goto failed;
+                        break;
+                    default:
+                        if( map_id(block->script->db, map, i) ||
+                            block_stack_push(block, TYPE_ENG, map->name))
+                            goto failed;
+                }
 
                 SAFE_FREE(map);
                 continue;
@@ -3561,291 +3580,183 @@ int translate_skill_block(block_r * block) {
     return ret;
 }
 
-/* implemented only for rathena and hercules
- * but the implementations are different */
-int translate_getrandgroup(block_r * block, int handler) {
-    /*int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * group_id = NULL;
-    node_t * group_amount = NULL;
+int translate_warp(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int argc = 0;
+    char * buf = NULL;
 
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
+    exit_null_safe(1, block);
 
-    if(handler == 20) {
-        if(block->ptr_cnt == 1) {
-            if(script_extend_paramater(block, block->ptr[0]) ||
-               translate_const(block, block->ptr[1], 0x20))
-                return SCRIPT_FAILED;
-            group_id = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(group_id == NULL) return SCRIPT_FAILED;
-            offset = sprintf(buf,"Collect %s item%s from %s.", block->eng[1],
-                (convert_integer(block->eng[1], 10) > 1)?"s":"", block->eng[0]);
-        } else if(block->ptr_cnt == 2) {
-            group_id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-            group_amount = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(group_id == NULL || group_amount == NULL) {
-                if(group_id != NULL) node_free(group_id);
-                if(group_amount != NULL) node_free(group_amount);
-                return SCRIPT_FAILED;
-            }
-            if(translate_const(block, block->eng[0], 0x20))
-                return SCRIPT_FAILED;
-            offset = sprintf(buf,"Collect %s item%s from %s.", block->eng[1],
-                (convert_integer(block->eng[1], 10) > 1)?"s":"", block->eng[2]);
+    if(3 > block->ptr_cnt)
+        return exit_func_safe("wrap is missing map name, x coo"
+        "rdinate, or y coordinate in item %d", block->item_id);
+
+    len = block->arg_cnt;
+    if( stack_eng_db(block, block->ptr[0], DB_MAP_ID, &argc) ||
+        argc != 1||
+        stack_eng_int(block, block->ptr[1], 1) ||
+        stack_eng_int(block, block->ptr[2], 2))
+        return CHECK_FAILED;
+    len = block->arg_cnt - len + 32;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "Warp to %s on (%s, %s) coordinate.", block->eng[0], block->eng[1], block->eng[2]);
+
+    if(block_stack_reset(block, TYPE_ENG) ||
+       block_stack_push(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
+}
+
+int translate_monster(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int argc = 0;
+    char * buf = NULL;
+
+    exit_null_safe(1, block);
+
+    if(6 > block->ptr_cnt)
+        return exit_func_safe("monster is missing map name, x coordinate, "
+        "y coordinate, name, mob id, or amount in item %d", block->item_id);
+
+    /* evaluate map name and coordinates */
+    len = block->arg_cnt;
+    if (0 == ncs_strcmp(block->ptr[0], "this")) {
+        if(block_stack_push(block, TYPE_ENG, "current map"))
+            return CHECK_FAILED;
+    } else if(stack_eng_db(block, block->ptr[0], DB_MAP_ID, &argc) || argc != 1)
+        return CHECK_FAILED;
+
+    if(stack_eng_int(block, block->ptr[1], 1))
+        return CHECK_FAILED;
+    if(0 == ncs_strcmp(block->eng[1], "-1"))
+        if(block_stack_pop(block, TYPE_ENG) ||
+           block_stack_push(block, TYPE_ENG, "random"))
+            return CHECK_FAILED;
+
+    if(stack_eng_int(block, block->ptr[2], 1))
+        return CHECK_FAILED;
+    if(0 == ncs_strcmp(block->eng[2], "-1"))
+        if(block_stack_pop(block, TYPE_ENG) ||
+           block_stack_push(block, TYPE_ENG, "random"))
+            return CHECK_FAILED;
+
+    /* evaluate amount and mob name */
+    if( stack_eng_db(block, block->ptr[4], DB_MAP_ID, &argc) ||
+        argc != 1 ||
+        stack_eng_int(block, block->ptr[5], 1))
+        return CHECK_FAILED;
+    len = block->arg_cnt - len + 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    sprintf(buf, "Summon %s %s on %s on (%s, %s) coordinates.",
+    block->eng[4], block->eng[3], block->eng[0], block->eng[1],
+    block->eng[2]);
+
+    if(block_stack_reset(block, TYPE_ENG) ||
+       block_stack_push(block, TYPE_ENG, buf))
+        ret = CHECK_FAILED;
+
+    SAFE_FREE(buf);
+    return ret;
+}
+
+int translate_callfunc(block_r * block) {
+    char * buf = NULL;
+    node_t * result = NULL;
+
+    exit_null_safe(1, block);
+
+   if(0 == ncs_strcmp(block->ptr[0],"F_CashCity")) {
+        result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+        if(NULL == result ||
+           result->min != result->max)
+             return CHECK_FAILED;
+        switch(result->min) {
+             case 1: buf = "Teleport to any town or city."; break;
+             case 2: buf = "Teleport to Juno, Lighthalzen, Einbroch, or Hugel."; break;
+             case 3: buf = "Teleport to Rachel or Veins."; break;
+             case 4: buf = "Teleport to Ayothaya, Amatsu, Louyang, or Kunlun."; break;
+             case 5: buf = "Teleport to any town, city, etc."; break;
+             default:
+                 return exit_func_safe("unsupported F_CashCity argume"
+                 "nt %d in item id %d", result->min, block->item_id);
         }
-    } else if(handler == 49) {
-        if(script_extend_paramater(block, block->ptr[0]))
-            return SCRIPT_FAILED;
-        group_id = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(group_id == NULL) return SCRIPT_FAILED;
-        if(translate_const(block, block->eng[0], 0x20))
-            return SCRIPT_FAILED;
-        offset = sprintf(buf,"Collect 1 item from %s.", block->eng[1]);
+   } else if(0 == ncs_strcmp(block->ptr[0],"F_CashTele")) {
+        result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+        if(NULL == result ||
+           result->min != result->max)
+            return CHECK_FAILED;
+        switch(result->min) {
+            case 1: buf = "Teleport to the Save Point, Prontera, Geffen, Al De Baran or Izlude."; break;
+            case 2: buf = "Teleport to the Save Point, Payon, Alberta, Morocc or Comodo Island."; break;
+            case 3: buf = "Teleport to the Save Point, Dragon City, Gonryun, Amatsu or Ayothaya."; break;
+            case 4: buf = "Teleport to the Save Point, Lutie, Umbala, or Niflheim."; break;
+            case 5: buf = "Teleport to the Save Point, Juno, Einbroch, Lighthalzen, or Hugel."; break;
+            case 6: buf = "Teleport to the Save Point, Rachel, or Veins."; break;
+            default:
+                return exit_func_safe("unsupported F_CashTele argume"
+                "nt %d in item id %d", result->min, block->item_id);
+        }
+    } else if(0 == ncs_strcmp(block->ptr[0], "F_CashStore")) {
+        buf = "Emergency Kafra service dispatch.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_CashDungeon")) {
+        buf = "Teleport directly to a dungeon of choice.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_CashPartyCall")) {
+        buf = "Allows to teleport many people at once to random areas when used "
+              "by party master. All the party members in the same map will move "
+              " to the location where the party leader is sent.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_CashReset")) {
+        buf = "Resets the Skill Tree and gives the corresponding number of Skill Points. "
+              "This item can only be used in town, and the character must carry 0 weight,"
+              " and can not be equipped with a Pushcart, Falcon, or PecoPeco. Can not be "
+              "used by Novice Class.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_Snowball")) {
+        buf = "Random effect of Restore, Endure, or Wing of Butterfly.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_CashSeigeTele")) {
+        buf = "Teleport to a specific castle in any guild grounds.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_Cat_Hard_Biscuit")) {
+        buf = "An unforgetable taste! May recover HP or SP.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"F_Rice_Weevil_Bug")) {
+        buf = "An unforgetable taste! May recover HP or SP.";
+    } else if(0 == ncs_strcmp(block->ptr[0],"SetPalete")) {
+        buf = "Set palete to %s", block->ptr[1];
     } else {
-        exit_func_safe("non-implemented getrandgroup in item %d", block->item_id);
-        return SCRIPT_FAILED;
+        return exit_func_safe("unsupported callfunc '%"
+        "s' in item %d", block->ptr[0], block->item_id);
     }
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);
-    if(group_id != NULL) node_free(group_id);
-    if(group_amount != NULL) node_free(group_amount);*/
+
+    if(block_stack_reset(block, TYPE_ENG) ||
+       block_stack_push(block, TYPE_ENG, buf))
+        return CHECK_FAILED;
+
+    return CHECK_PASSED;
+}
+
+int translate_getrandgroup(block_r * block, int handler) {
     return exit_abt_safe("maintenance");
 }
 
 int translate_transform(block_r * block) {
-    /*int offset = 0;
-    char buf[BUF_SIZE];
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    if(isdigit(block->ptr[0][0])) {
-        if(translate_id(block, block->ptr[0], 0x01) ||
-            stack_eng_time(block, block->ptr[1], 1))
-            return SCRIPT_FAILED;
-        offset = sprintf(buf, "Transform into a %s for %s.", block->eng[0], block->eng[2]);
-    } else {
-        if(translate_write(block, block->ptr[0], 1) ||
-            stack_eng_time(block, block->ptr[1], 1))
-            return SCRIPT_FAILED;
-        offset = sprintf(buf, "Transform into a %s for %s.", block->eng[0], block->eng[2]);
-    }
-    buf[offset] = '\0';
-    translate_write(block, buf, 1);*/
     return exit_abt_safe("maintenance");
-}
-
-int translate_misc(block_r * block, char * expr) {
-    int type;
-    int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * result = NULL;
-    /* check null paramater */
-    exit_null_safe(2, block, expr);
-
-    if(ncs_strcmp(expr,"warp") == 0) {
-        if(ncs_strcmp(block->ptr[0],"bif_fild01") == 0)
-            offset = sprintf(buf,"Warp to Bifrost Field.");
-        else if(ncs_strcmp(block->ptr[0],"malangdo") == 0)
-            offset = sprintf(buf,"Warp to Malangdo.");
-        else if(ncs_strcmp(block->ptr[0],"malaya") == 0)
-            offset = sprintf(buf,"Warp to Malaya.");
-        else if(ncs_strcmp(block->ptr[0],"pvp_n_room") == 0)
-            offset = sprintf(buf,"Warp to PVP Room.");
-        else if(ncs_strcmp(block->ptr[0],"yuno_fild09") == 0)
-            offset = sprintf(buf,"Warp to Yuno Field 9.");
-        else if(ncs_strcmp(block->ptr[0],"niflheim") == 0)
-            offset = sprintf(buf,"Warp to Niflheim.");
-        else {
-            exit_func_safe("unsupported warp map %s in %d", block->ptr[0], block->item_id);
-            return SCRIPT_FAILED;
-        }
-        buf[offset] = '\0';
-        translate_write(block, buf, 1);
-    }
-
-    if(ncs_strcmp(expr,"monster") == 0) {
-        result = evaluate_expression(block, block->ptr[4], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(result == NULL) return SCRIPT_FAILED;
-        type = result->max;
-        if(type < 0) type *= -1;
-        if(type >= 1324 && type <= 1363)
-            offset = sprintf(buf,"Summon a treasure box.");
-        else
-            switch(type) {
-                case 1: offset = sprintf(buf,"Summon a random monster."); break;
-                case 2: offset = sprintf(buf,"Summon a random poring monster."); break;
-                case 3: offset = sprintf(buf,"Summon a random MVP monster."); break;
-                case 4: offset = sprintf(buf,"Summon a random monster."); break;
-                case 1904: offset = sprintf(buf,"Summon a bomb poring."); break;
-                default:
-                    exit_func_safe("unsupported monster type %d in %d", type, block->item_id);
-                    return SCRIPT_FAILED;
-            }
-        buf[offset] = '\0';
-        translate_write(block, buf, 1);
-    }
-
-    if(ncs_strcmp(expr,"callfunc") == 0) {
-        if(ncs_strcmp(block->ptr[0],"F_CashCity") == 0) {
-            result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(result == NULL) return SCRIPT_FAILED;
-            type = result->max;
-            switch(type) {
-                case 1: offset = sprintf(buf,"Teleport to any town, city, etc."); break;
-                case 2: offset = sprintf(buf,"Teleport to Juno, Lighthalzen, Einbroch, or Hugel."); break;
-                case 3: offset = sprintf(buf,"Teleport to Rachel or Veins."); break;
-                case 4: offset = sprintf(buf,"Teleport to Ayothaya, Amatsu, Louyang, or Kunlun."); break;
-                case 5: offset = sprintf(buf,"Teleport to any town, city, etc."); break;
-                default: break;
-            }
-        } else if(ncs_strcmp(block->ptr[0],"F_CashStore") == 0) {
-            offset = sprintf(buf,"Emergency Kafra service dispatch.");
-        } else if(ncs_strcmp(block->ptr[0],"F_CashTele") == 0) {
-            result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(result == NULL) return SCRIPT_FAILED;
-            type = result->max;
-            switch(type) {
-                case 1: offset = sprintf(buf,"Teleport to the Save Point, Prontera, Geffen, Al De Baran or Izlude."); break;
-                case 2: offset = sprintf(buf,"Teleport to the Save Point, Payon, Alberta, Morocc or Comodo Island."); break;
-                case 3: offset = sprintf(buf,"Teleport to the Save Point, Dragon City, Gonryun, Amatsu or Ayothaya."); break;
-                case 4: offset = sprintf(buf,"Teleport to the Save Point, Lutie, Umbala, or Niflheim."); break;
-                case 5: offset = sprintf(buf,"Teleport to the Save Point, Juno, Einbroch, Lighthalzen, or Hugel."); break;
-                case 6: offset = sprintf(buf,"Teleport to the Save Point, Rachel, or Veins."); break;
-                default: break;
-            }
-        } else if(ncs_strcmp(block->ptr[0],"F_CashDungeon") == 0) {
-            offset = sprintf(buf,"Teleport directly to a dungeon of choice.");
-        } else if(ncs_strcmp(block->ptr[0],"F_CashPartyCall") == 0) {
-            offset = sprintf(buf,"Allows to teleport many people at once to random areas when used by party master. All the party members in the same map will move to the location where the party leader is sent.");
-        } else if(ncs_strcmp(block->ptr[0],"F_CashReset") == 0) {
-            offset = sprintf(buf,"Resets the Skill Tree and gives the corresponding number of Skill Points. This item can only be used in town, and the character must carry 0 weight, and can not be equipped with a Pushcart, Falcon, or PecoPeco. Can not be used by Novice Class.");
-        } else if(ncs_strcmp(block->ptr[0],"F_Snowball") == 0) {
-            offset = sprintf(buf,"Random effect of Restore, Endure, or Wing of Butterfly.");
-        } else if(ncs_strcmp(block->ptr[0],"F_CashSeigeTele") == 0) {
-            offset = sprintf(buf,"Teleport to a specific castle in any guild grounds.");
-        } else if(ncs_strcmp(block->ptr[0],"F_Cat_Hard_Biscuit") == 0) {
-            offset = sprintf(buf,"An unforgetable taste! May recover HP or SP.");
-        } else if(ncs_strcmp(block->ptr[0],"F_Rice_Weevil_Bug") == 0) {
-            offset = sprintf(buf,"An unforgetable taste! May recover HP or SP.");
-        } else if(ncs_strcmp(block->ptr[0],"SetPalete") == 0) {
-            offset = sprintf(buf,"Set palete to %s", block->ptr[1]);
-        } else {
-            exit_func_safe("unsupported callfunc function %s in item %d", block->ptr[0], block->item_id);
-            return SCRIPT_FAILED;
-        }
-        buf[offset] = '\0';
-        translate_write(block, buf, 1);
-    }
-    if(result != NULL) node_free(result);
-    return SCRIPT_PASSED;
 }
 
 int translate_bonus_script(block_r * block) {
-    int offset = 0;
-    char buf[BUF_SIZE];
-    node_t * duration = NULL;
-    node_t * type = NULL;
-    node_t * flag = NULL;
-    /* check null paramater */
-    exit_null_safe(1, block);
-
-    duration = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(duration == NULL) return SCRIPT_FAILED;
-    if(duration->min != duration->max) {
-        node_free(duration);
-        exit_func_safe("unsupported expression; duration dependence; %d item id", block->item_id);
-        return SCRIPT_FAILED;
-    }
-    offset += sprintf(buf + offset,"Unstackable bonus lasting for %d seconds ", duration->min);
-    if(block->ptr_cnt >= 3) {
-        type = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE); /* flag */
-        if(type == NULL) {
-            node_free(duration);
-            return SCRIPT_FAILED;
-        }
-        if(type->min != type->max) {
-            exit_func_safe("unsupported expression; type dependence; %d item id.", block->item_id);
-            node_free(duration);
-            node_free(type);
-            return SCRIPT_FAILED;
-        }
-        if(type->min > 0) {
-            offset += sprintf(buf + offset, "[");
-            if(type->min & 1) offset += sprintf(buf + offset, "%s", "Remove when dead");
-            if(type->min - 1 > 0) offset += sprintf(buf + offset, " | ");
-            if(type->min & 2) offset += sprintf(buf + offset, "%s", "Removable by dispell");
-            if(type->min - 2 > 0) offset += sprintf(buf + offset, " | ");
-            if(type->min & 4) offset += sprintf(buf + offset, "%s", "Removable by Clearance");
-            if(type->min - 4 > 0) offset += sprintf(buf + offset, " | ");
-            if(type->min & 8) offset += sprintf(buf + offset, "%s", "Remove when logout");
-            offset += sprintf(buf + offset, "] ");
-        }
-    }
-    if(block->ptr_cnt >= 4) {
-        flag = evaluate_expression(block, block->ptr[3], 1, EVALUATE_FLAG_KEEP_NODE); /* type */
-        if(flag == NULL) {
-            node_free(duration);
-            node_free(type);
-            return SCRIPT_FAILED;
-        }
-        if(flag->min != flag->max) {
-            exit_func_safe("unsupported expression; flag dependence; %d item id", block->item_id);
-            node_free(duration);
-            node_free(type);
-            node_free(flag);
-            return SCRIPT_FAILED;
-        }
-        switch(flag->min) {
-            case 1: offset += sprintf(buf + offset, "[Buff] "); break;
-            case 2: offset += sprintf(buf + offset, "[Debuff] "); break;
-            default: break;
-        }
-    }
-    translate_write(block, buf, 1);
-    if(duration != NULL) node_free(duration);
-    if(type != NULL) node_free(type);
-    if(flag != NULL) node_free(flag);
-    return SCRIPT_PASSED;
-}
-
-int translate_setfalcon(block_r * block) {
-    /*int ret = 0;
-    node_t * result = NULL;
-    if(exit_null_safe(1, block))
-        return SCRIPT_FAILED;
-    result = evaluate_argument(block, block->ptr[0]);
-    ret = (result != NULL) ? SCRIPT_PASSED : SCRIPT_FAILED;
-    if(ret == SCRIPT_PASSED) {
-        (result->max == 0) ?
-            translate_write(block, "Recall a falcon.", 1):
-            translate_write(block, "Summon a falcon.", 1);
-    }
-    if(result != NULL) node_free(result);*/
     return exit_abt_safe("maintenance");
 }
 
-int translate_write(block_r * block, char * desc, int flag) {
-    return block_stack_push(block, TYPE_ENG, desc);
-}
-
-int translate_overwrite(block_r * block, char * desc, int position) {
-    int length = 0;
-
-    exit_null_safe(2, block, desc);
-
-    /* write the translation on the buffer and assign pointer to the start */
-    block->eng[position] = &block->arg[block->arg_cnt];
-    /* select the proper format to write the argument */
-    length = sprintf(&block->arg[block->arg_cnt],"%s",desc);
-    block->arg[block->arg_cnt + length] = '\0';
-    /* check that the write was successful */
-    if(length <= 0) {
-        exit_func_safe("failed to write translation (%s) on item %d", desc, block->item_id);
-        return SCRIPT_FAILED;
-    }
-    /* extend the buffer to the next length */
-    block->arg_cnt += length + 1;
-    return SCRIPT_PASSED;
+int translate_setfalcon(block_r * block) {
+    return exit_abt_safe("maintenance");
 }
 
 /* lowest level function for evaluating expressions
