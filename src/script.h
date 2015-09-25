@@ -121,36 +121,36 @@
     } script_t;
 
     /* block list interface */
-    /* revised */ int block_init(block_r **);                                   /* allocate a new block */
-    /* revised */ int block_append(block_r *, block_r *);                       /* add the block to the list */
-    /* revised */ int block_remove(block_r *);                                  /* remove the block from the list */
-    /* revised */ int block_reset(block_r *);                                   /* free the block's fields */
-    /* revised */ int block_deit(block_r **);                                   /* free the block memory */
+    int block_init(block_r **);                                                 /* allocate a new block */
+    int block_append(block_r *, block_r *);                                     /* add the block to the list */
+    int block_remove(block_r *);                                                /* remove the block from the list */
+    int block_reset(block_r *);                                                 /* free the block's fields */
+    int block_deit(block_r **);                                                 /* free the block memory */
 
     /* block stack interface */
     #define TYPE_PTR 1                                                          /* block->ptr stack */
     #define TYPE_ENG 2                                                          /* block->eng stack */
-    /* revised */ int block_stack_push(block_r *, int, const char *);           /* push a string to the block->ptr or block->eng stack */
-    /* revised */ int block_stack_pop(block_r *, int);                          /* pop a string from the block->ptr or block->eng stack */
-    /* revised */ int block_stack_reset(block_r *, int);                        /* reset the stack; don't intermix block->ptr and block->eng stack */
-    /* revised */ int block_stack_formula(block_r *, int, node_t *, char **);   /* concatenate a node's formula string with block->eng stack string */
-    /* revised */ int block_stack_dump(block_r *, FILE *);
+    int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
+    int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
+    int block_stack_reset(block_r *, int);                                      /* reset the stack; don't intermix block->ptr and block->eng stack */
+    int block_stack_formula(block_r *, int, node_t *, char **);                 /* concatenate a node's formula string with block->eng stack string */
+    int block_stack_dump(block_r *, FILE *);
     #define script_block_dump(script, stream) block_stack_dump((script->blocks), (stream))
 
     /* high level block list interface */
-    /* revised */ int script_block_new(script_t *, block_r **);                 /* create a new block or reused a free block and append to head */
-    /* revised */ int script_block_free(script_t *, block_r **);                /* free the block and append to tail */
-    /* revised */ int script_block_free_all(script_t *);                        /* free every block on the list without reordering blocks */
-    /* revised */ int script_block_release(script_t *);                         /* free the block list from memory */
+    int script_block_new(script_t *, block_r **);                               /* create a new block or reused a free block and append to head */
+    int script_block_free(script_t *, block_r **);                              /* free the block and append to tail */
+    int script_block_free_all(script_t *);                                      /* free every block on the list without reordering blocks */
+    int script_block_release(script_t *);                                       /* free the block list from memory */
 
     /* lua script table interface maps integers to string */
-    /* revised */ int script_map_init(script_t *, const char *);                /* create a lua stack containing the tables */
-    /* revised */ int script_map_id(block_r *, char *, int, char **);           /* resolve integer id to string values */
-    /* revised */ int script_map_deit(script_t *);                              /* destroy the lua stack */
+    int script_map_init(script_t *, const char *);                              /* create a lua stack containing the tables */
+    int script_map_id(block_r *, char *, int, char **);                         /* resolve integer id to string values */
+    int script_map_deit(script_t *);                                            /* destroy the lua stack */
 
     /* public script interface */
-    /* revised */ int script_init(script_t **, const char *, const char *, const char *, int);
-    /* revised */ int script_deit(script_t **);
+    int script_init(script_t **, const char *, const char *, const char *, int);
+    int script_deit(script_t **);
 
 
     /* script lexer macros used by script_lexical */
@@ -169,15 +169,15 @@
     #define FLAG_PARSE_ALL_FLAGS           0x07
 
     /* script core interface */
-    /* revised */ int script_lexical(token_r *, char *);
-    /* revised */ int script_analysis(script_t *, token_r *, block_r *, block_r **);
-    /* revised */ int script_analysis_(script_t *, char *, block_r *, block_r **);
-    /* revised */ int check_loop_expression(script_t *, char *, char *);
-    /* revised */ int script_parse(token_r *, int *, block_r *, char, char, int);
-    /* revised */ int script_translate(script_t *);
-    /* revised */ int script_generate(script_t *);
+    int script_lexical(token_r *, char *);
+    int script_analysis(script_t *, token_r *, block_r *, block_r **);
+    int script_analysis_(script_t *, char *, block_r *, block_r **);
+    int check_loop_expression(script_t *, char *, char *);
+    int script_parse(token_r *, int *, block_r *, char, char, int);
+    int script_translate(script_t *);
+    int script_generate(script_t *);
     int script_combo(int, char *, int *, db_t *, int);
-    /* revised */ int script_recursive(db_t *, int, lua_State *, char *, char **);
+    int script_recursive(db_t *, int, lua_State *, char *, char **);
 
     /* stack_eng_map bitmask flags */
     #define MAP_AMMO_FLAG                  0x00001
@@ -231,59 +231,62 @@
     #define ATF_MISC                       0x40
     #define ATF_SKILL                      0x60
 
+    /* stack_eng_int_* bitmask flags */
+    #define FORMAT_RATIO                   0x01
+
     /* stack limits */
     #define MAX_ITEM_LIST                  5
 
     /* script stack functions */
-    /* revised */ int stack_ptr_call(block_r *, char *, int *);
-    /* revised */ int stack_ptr_call_(block_r *, token_r *, int *);
-    /* revised */ int stack_eng_item(block_r *, char *, int *);
-    /* revised */ int stack_eng_skill(block_r *, char *, int *);
-    /* revised */ int stack_eng_grid(block_r *, char *);
-    /* revised */ int stack_eng_int(block_r *, char *, int);
-    /* revised */ int stack_eng_int_signed(block_r *, char *, int, const char *, const char *);
-    /* revised */ int stack_eng_time(block_r *, char *, int);
-    /* revised */ int stack_eng_produce(block_r *, char *, int *);
-    /* revised */ int stack_eng_map(block_r *, char *, int, int *);
-    /* revised */ int stack_eng_db(block_r *, char *, int, int *);
-    /* revised */ int stack_eng_item_group_name(block_r *, char *, int *);
-    /* revised */ int stack_eng_trigger_bt(block_r *, char *);
-    /* revised */ int stack_eng_trigger_atf(block_r *, char *);
-    /* revised */ int stack_eng_script(block_r *, char *);
-    /* revised */ int stack_aux_formula(block_r *, node_t *, char *);
+    int stack_ptr_call(block_r *, char *, int *);
+    int stack_ptr_call_(block_r *, token_r *, int *);
+    int stack_eng_item(block_r *, char *, int *);
+    int stack_eng_skill(block_r *, char *, int *);
+    int stack_eng_grid(block_r *, char *);
+    int stack_eng_int(block_r *, char *, int, int);
+    int stack_eng_int_signed(block_r *, char *, int, const char *, const char *, int);
+    int stack_eng_int_bonus(block_r *, char *, int, int, int);
+    int stack_eng_time(block_r *, char *, int);
+    int stack_eng_produce(block_r *, char *, int *);
+    int stack_eng_map(block_r *, char *, int, int *);
+    int stack_eng_db(block_r *, char *, int, int *);
+    int stack_eng_item_group_name(block_r *, char *, int *);
+    int stack_eng_trigger_bt(block_r *, char *);
+    int stack_eng_trigger_atf(block_r *, char *);
+    int stack_eng_script(block_r *, char *);
+    int stack_aux_formula(block_r *, node_t *, char *);
 
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */
-    /* revised */ int translate_id_amount(block_r *, int *, int *, const char *);
+    int translate_id_amount(block_r *, int *, int *, const char *);
     /* script translation functions */
-    /* revised */ int translate_getitem(block_r *);
-    /* revised */ int translate_delitem(block_r *);
-    /* revised */ int translate_rentitem(block_r *);
-    /* revised */ int translate_heal(block_r *);
-    /* revised */ int translate_produce(block_r *, int);
-    /* revised */ int translate_status(block_r *);
-    /* revised */ int translate_status_end(block_r *);
-    /* revised */ int translate_pet_egg(block_r *);
-    /* revised */ int translate_bonus(block_r *, char *);
-    /* revised */ int translate_skill(block_r *);
-    /* revised */ int translate_itemskill(block_r *);
-    /* revised */ int translate_petloot(block_r *);
-    /* revised */ int translate_petheal(block_r *);
-    /* revised */ int translate_petrecovery(block_r *);
-    /* revised */ int translate_petskillbonus(block_r *);
-    /* revised */ int translate_petskillattack(block_r *);
-    /* revised */ int translate_petskillattack2(block_r *);
-    /* revised */ int translate_petskillsupport(block_r *);
-    /* revised */ int translate_getexp(block_r *, int);
-    /* revised */ int translate_autobonus(block_r *, int);
-    /* revised */ int translate_hire_mercenary(block_r *);
-    /* revised */ int translate_buyingstore(block_r *);
-    /* revised */ int translate_searchstore(block_r *);
-    /* revised */ int translate_skill_block(block_r *);
-    /* revised */ int translate_warp(block_r *);
-    /* revised */ int translate_monster(block_r *);
-    /* revised */ int translate_callfunc(block_r *);
-
+    int translate_getitem(block_r *);
+    int translate_delitem(block_r *);
+    int translate_rentitem(block_r *);
+    int translate_heal(block_r *);
+    int translate_produce(block_r *, int);
+    int translate_status(block_r *);
+    int translate_status_end(block_r *);
+    int translate_pet_egg(block_r *);
+    int translate_bonus(block_r *, char *);
+    int translate_skill(block_r *);
+    int translate_itemskill(block_r *);
+    int translate_petloot(block_r *);
+    int translate_petheal(block_r *);
+    int translate_petrecovery(block_r *);
+    int translate_petskillbonus(block_r *);
+    int translate_petskillattack(block_r *);
+    int translate_petskillattack2(block_r *);
+    int translate_petskillsupport(block_r *);
+    int translate_getexp(block_r *, int);
+    int translate_autobonus(block_r *, int);
+    int translate_hire_mercenary(block_r *);
+    int translate_buyingstore(block_r *);
+    int translate_searchstore(block_r *);
+    int translate_skill_block(block_r *);
+    int translate_warp(block_r *);
+    int translate_monster(block_r *);
+    int translate_callfunc(block_r *);
     int translate_getrandgroup(block_r *, int);
     int translate_transform(block_r *);
     int translate_bonus_script(block_r *);
@@ -301,11 +304,11 @@
     #define EVALUATE_FLAG_WRITE_STACK      0x100
 
     /* evaluate an expression */
-    /* revised */ node_t * evaluate_expression(block_r *, char *, int, int);
-    /* revised */ node_t * evaluate_expression_(block_r *, node_t *, int, int);
-    /* revised */ node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
-    /* revised */ int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
-    /* revised */ int evaluate_expression_var(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
+    node_t * evaluate_expression(block_r *, char *, int, int);
+    node_t * evaluate_expression_(block_r *, node_t *, int, int);
+    node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
+    int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
+    int evaluate_expression_var(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
 
     /* evaluate a function with the expression
      *
@@ -316,18 +319,18 @@
      * vararg - variable support
      * const  - constant support
      */
-    /* revised;        */ int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
-    /* revised; vararg */ int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
-    /* revised; vararg */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
-    /* revised; vararg */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_gettime(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
-    /* revised; const  */ int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
+    int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_getequipid(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_gettime(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01
@@ -339,10 +342,10 @@
     #define NODE_TYPE_CONSTANT             0x20  /* const.txt */
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
-    /* revised */ int node_steal(node_t *, node_t *);
-    /* revised */ int node_structure(node_t *);
-    /* revised */ int node_evaluate(node_t *, FILE *, logic_node_t *, int);
-    /* revised */ int node_inherit(node_t *);
-    /* revised */ void node_free(node_t *);
-    /* revised */ void node_dump(node_t *, FILE *);
+    int node_steal(node_t *, node_t *);
+    int node_structure(node_t *);
+    int node_evaluate(node_t *, FILE *, logic_node_t *, int);
+    int node_inherit(node_t *);
+    void node_free(node_t *);
+    void node_dump(node_t *, FILE *);
 #endif

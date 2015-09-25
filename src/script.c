@@ -1077,7 +1077,7 @@ int script_translate(script_t * script) {
                 if(NULL == node)
                     return CHECK_FAILED;
                 node_free(node);
-                break;                                                                                              /* if */
+                break;                                                                                                      /* if */
             case 27: /* invert the linked logic tree; only the top needs to be inverted */
                 if(iter->logic_tree != NULL) {
                     logic_tree = iter->logic_tree;
@@ -1093,7 +1093,7 @@ int script_translate(script_t * script) {
                         return CHECK_FAILED;
                     node_free(node);
                 }
-               break;                                                                                              /* else */
+               break;                                                                                                       /* else */
             case 28:
                 if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
                     iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
@@ -1172,7 +1172,7 @@ int script_translate(script_t * script) {
                         freerange(temp_range);
                     }
                 }
-                break;                                                                                              /* set */
+                break;                                                                                                      /* set */
             case 62: break;
             case 21: /* skilleffect */
             case 22: /* specialeffect2 */
@@ -1226,33 +1226,7 @@ int script_generate(script_t * script) {
 }
 
 int script_combo(int item_id, char * buffer, int * offset, db_t * db, int mode) {
-    //char * item_desc = NULL;
-    //combo_t * item_combo_list = NULL;
-    //combo_t * item_combo_iter = NULL;
-
-    ///* eathena does not have item combos */
-    //if(EATHENA == mode)
-    //    return CHECK_PASSED;
-
-    ///* search the item id for combos */
-    //if(!item_combo_id(db, &item_combo_list, item_id)) {
-    //    item_combo_iter = item_combo_list;
-    //    while(item_combo_iter != NULL) {
-    //        *offset += sprintf(buffer + *offset, "%s\n", item_combo_iter->group);
-    //        /* compile each script write to buffer */
-    //        item_desc = script_compile(item_combo_iter->script, item_id, db, mode);
-    //        if(item_desc != NULL) {
-    //            *offset += sprintf(buffer + *offset, "%s", item_desc);
-    //            free(item_desc);
-    //        }
-    //        item_combo_iter = item_combo_iter->next;
-    //    }
-    //    buffer[*offset] = '\0';
-    //    /* free the list of item combo */
-    //    if(item_combo_list != NULL)
-    //        item_combo_free(&item_combo_list);
-    //}
-    return SCRIPT_PASSED;
+    return exit_abt_safe("maintenance");
 }
 
 int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, char ** value) {
@@ -1601,20 +1575,49 @@ failed:
  * if the expression is "getrefine() + 10" then
  *      block->eng[n + 0] = "10 ~ 25 (refine rate)"
  */
-int stack_eng_int(block_r * block, char * expr, int modifier) {
-    int flag = 0;
+int stack_eng_int(block_r * block, char * expr, int modifier, int flags) {
+    int ret = 0;
+    int min = 0;
+    int max = 0;
+    char buf[64];
+    char * symbol = NULL;
     node_t * node = NULL;
 
     exit_null_safe(2, block, expr);
 
-    /* push the integer result on the stack */
-    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK;
-    node = evaluate_expression(block, expr, modifier, flag);
-    if (node == NULL)
+    /* error on division by zero */
+    if(modifier == 0)
         return CHECK_FAILED;
 
+    /* evaluate integer expression */
+    node = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
+    if (NULL == node)
+        return CHECK_FAILED;
+
+    /* percentage postfix */
+    symbol = (flags & FORMAT_RATIO) ? "%" : "";
+
+    min = node->min / modifier;
+    max = node->max / modifier;
+
+    /* automatic float detection */
+    if(node->min != 0 && min == 0 ||
+       node->max != 0 && max == 0) {
+        (node->min == node->max) ?
+            sprintf(buf, "%.2f%s", ((double) node->min) / modifier, symbol):
+            sprintf(buf, "%.2f%s ~ %.2f%s", ((double) node->min) / modifier, symbol, ((double) node->max) / modifier, symbol);
+    } else {
+        (node->min == node->max) ?
+            sprintf(buf, "%d%s", node->min, symbol):
+            sprintf(buf, "%d%s ~ %d%s", node->min, symbol, node->max, symbol);
+    }
+
+    /* write buffer with formula */
+    if(stack_aux_formula(block, node, buf))
+        ret = CHECK_FAILED;
+
     node_free(node);
-    return CHECK_PASSED;
+    return ret;
 }
 
 /* evaluate an expression and select the prefix
@@ -1635,13 +1638,17 @@ int stack_eng_int(block_r * block, char * expr, int modifier) {
  *      block->eng[n + 0] = "negative 10"
  *      *argc = 1;
  */
-int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char * pos, const char * neg) {
+int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char * pos, const char * neg, int flags) {
     int ret = 0;
     int min = 0;
     int max = 0;
     int len = 0;
     char * buf = NULL;
+    char * symbol = NULL;
     node_t * node = NULL;
+
+    double fmin = 0;
+    double fmax = 0;
 
     /* error on invalid reference */
     exit_null_safe(4, block, expr, pos, neg);
@@ -1656,26 +1663,47 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     if (node == NULL)
         goto failed;
 
-    min = node->min;
-    max = node->max;
+    min = node->min / modifier;
+    max = node->max / modifier;
 
-    /* failed on the odd case */
-    if(0 == min && 0 == max)
-        goto failed;
+    /* use percentage symbol as postfix */
+    symbol = (flags & FORMAT_RATIO) ? "%" : "";
 
-    /* write the positive and negative ranges */
-    if(min > 0 && max > 0) {
-        (min == max) ?
-            sprintf(buf, "%s %d", pos, min):
-            sprintf(buf, "%s %d ~ %d", pos, min, max);
-    } else if(min < 0 && max > 0) {
-        sprintf(buf, "%s 0 ~ %d or %s 0 ~ %d", neg, min * -1, pos, max);
-    } else if(min > 0 && max < 0) {
-        sprintf(buf, "%s 0 ~ %d or %s 0 ~ %d", pos, min, neg, max * -1);
+    /* automatic float detection */
+    if(node->min != 0 && min == 0 ||
+       node->max != 0 && max == 0) {
+        fmin = ((double) node->min) / modifier;
+        fmax = ((double) node->max) / modifier;
+
+        /* write the positive and negative ranges */
+        if(min > 0 && max > 0) {
+            (min == max) ?
+                sprintf(buf, "%s %.2f%s", pos, fmin, symbol):
+                sprintf(buf, "%s %.2f%s ~ %.2f%s", pos, fmin, symbol, fmax, symbol);
+        } else if(min < 0 && max > 0) {
+            sprintf(buf, "%s 0 ~ %.2f%s or %s 0 ~ %.2f%s", neg, fabs(fmin), symbol, pos, fmax, symbol);
+        } else if(min > 0 && max < 0) {
+            sprintf(buf, "%s 0 ~ %.2f%s or %s 0 ~ %.2f%s", pos, fmin, symbol, neg, fabs(fmin), symbol);
+        } else {
+            (min == max) ?
+                sprintf(buf, "%s %.2f%s", neg, fabs(fmin), symbol):
+                sprintf(buf, "%s %.2f%s ~ %.2f%s", neg, fabs(fmin), symbol, fabs(fmin), symbol);
+        }
     } else {
-        (min == max) ?
-            sprintf(buf, "%s %d", neg, min):
-            sprintf(buf, "%s %d ~ %d", neg, min, max);
+        /* write the positive and negative ranges */
+        if(min > 0 && max > 0) {
+            (min == max) ?
+                sprintf(buf, "%s %d%s", pos, min, symbol):
+                sprintf(buf, "%s %d%s ~ %d%s", pos, min, symbol, max, symbol);
+        } else if(min < 0 && max > 0) {
+            sprintf(buf, "%s 0 ~ %d%s or %s 0 ~ %d%s", neg, abs(min), symbol, pos, max, symbol);
+        } else if(min > 0 && max < 0) {
+            sprintf(buf, "%s 0 ~ %d%s or %s 0 ~ %d%s", pos, min, symbol, neg, abs(max), symbol);
+        } else {
+            (min == max) ?
+                sprintf(buf, "%s %d%s", neg, abs(min), symbol):
+                sprintf(buf, "%s %d%s ~ %d%s", neg, abs(min), symbol, abs(max), symbol);
+        }
     }
 
     /* write buffer with formula */
@@ -1686,9 +1714,61 @@ clean:
     node_free(node);
     SAFE_FREE(buf);
     return ret;
+
 failed:
     ret = CHECK_FAILED;
     goto clean;
+}
+
+int stack_eng_int_bonus(block_r * block, char * expr, int modifier, int attr, int arg) {
+    int ret = 0;
+    switch(attr) {
+        case 7:
+        case 8:  ret = stack_eng_int_signed(block, expr, modifier, "Regain", "Drain", 0); break;
+        case 10: ret = stack_eng_int_signed(block, expr, modifier, "Receive", "Reduce", FORMAT_RATIO); break;
+        case 6:
+        case 9:
+        case 11:
+        case 30: ret = stack_eng_int(block, expr, modifier, FORMAT_RATIO); break;
+        case 3:
+        case 14: ret = stack_eng_int_signed(block, expr, modifier, "Increase", "Decrease", FORMAT_RATIO); break;
+        case 2:
+        case 15:
+        case 17:
+        case 26:
+        case 28: ret = stack_eng_int_signed(block, expr, modifier, "Add", "Reduce", FORMAT_RATIO); break;
+        case 5:
+        case 18:
+        case 29: ret = stack_eng_int(block, expr, modifier, 0); break;
+        case 24:
+            switch(arg) {
+                case 0:  ret = stack_eng_int_signed(block, expr, modifier, "Add", "Reduce", FORMAT_RATIO); break;
+                case 1:  ret = stack_eng_int(block, expr, modifier, FORMAT_RATIO); break;
+                default: ret = stack_eng_int(block, expr, modifier, 0);
+            }
+            break;
+        case 27:
+            switch(arg) {
+                case 2:  ret = stack_eng_int_signed(block, expr, modifier, "Add", "Reduce", FORMAT_RATIO); break;
+                default: ret = stack_eng_int(block, expr, modifier, 0);
+            }
+            break;
+        /* examiner later */
+        case 1:
+        case 4:
+        case 12:
+        case 13:
+        case 16:
+        case 19:
+        case 20:
+        case 21:
+        case 22:
+        case 23:
+        case 25:
+        default: ret = stack_eng_int(block, expr, modifier, 0);
+    }
+
+    return ret;
 }
 
 /* evaluate the expression for a single or multiple item id
@@ -2407,7 +2487,7 @@ int translate_id_amount(block_r * block, int * argc, int * size, const char * fu
     /* evaluate the item id and amount expression */
     _size = block->arg_cnt;
     if( stack_eng_item(block, block->ptr[block->ptr_cnt - 2], &_argc) ||
-        stack_eng_int(block, block->ptr[block->ptr_cnt - 1], 1))
+        stack_eng_int(block, block->ptr[block->ptr_cnt - 1], 1, 0))
         return CHECK_FAILED;
 
     /* return the total length and count of
@@ -2561,8 +2641,9 @@ int translate_heal(block_r * block) {
         return exit_func_safe("missing hp or sp argument for %s in item %d", block->name, block->item_id);
 
     len = block->arg_cnt;
-    stack_eng_int_signed(block, block->ptr[0], 1, "Recover HP by", "Drain HP by");
-    stack_eng_int_signed(block, block->ptr[1], 1, "Recover SP by", "Drain SP by");
+    if( stack_eng_int_signed(block, block->ptr[0], 1, "Recover HP by", "Drain HP by", 0) ||
+        stack_eng_int_signed(block, block->ptr[1], 1, "Recover SP by", "Drain SP by", 0))
+        return CHECK_FAILED;
     if(block->eng_cnt == 0)
         return CHECK_FAILED;
 
@@ -2656,10 +2737,8 @@ int translate_status(block_r * block) {
         goto failed;
 
     len = block->arg_cnt;
-    if(status_id(block->script->db, &status, effect->min)) {
-        printf("unimplemented status %d\n", effect->min);
-        return CHECK_PASSED;
-    }
+    if(status_id(block->script->db, &status, effect->min))
+        return exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
 
     /* translate the tick */
     if (stack_eng_time(block, block->ptr[1], 1))
@@ -2689,12 +2768,12 @@ int translate_status(block_r * block) {
         for(i = 0; i < status.vcnt; i++) {
             /* status argument types are different from bonus argument types */
             switch(status.vmod[i]) {
-                case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1);                         break;    /* integer */
-                case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1);                         break;    /* skill level */
-                case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1);                         break;    /* integer percentage */
-                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);    break;    /* effect */
-                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);   break;    /* element */
-                case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1);                        break;    /* regen */
+                case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* integer */
+                case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* skill level */
+                case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* integer percentage */
+                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);        break;    /* effect */
+                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);       break;    /* element */
+                case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                        break;    /* regen */
                 default:
                     exit_func_safe("unsupported status argment type "
                     "%c in item %d", status.vmod[i], block->item_id);
@@ -2920,33 +2999,33 @@ int translate_bonus(block_r * block, char * prefix) {
 
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
-            case 'n': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Integer Value */
-            case 'p': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Integer Percentage */
+            case 'n': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Integer Value */
+            case 'p': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Integer Percentage */
             case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
             case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
             case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
             case 'z':                                                                                   break; /* Meaningless */
             case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                 break; /* Effect */
-            case 'q': ret = stack_eng_int(block, block->ptr[j], 100);                                   break; /* Integer Percentage / 100 */
+            case 'q': ret = stack_eng_int_bonus(block, block->ptr[j], 100, bonus->attr, i);             break; /* Integer Percentage / 100 */
             case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                                break; /* Skill */
             case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                   break; /* Size */
             case 'c': ret = stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt);                        break; /* Monster Class & Job ID * Monster ID */
-            case 'o': ret = stack_eng_int(block, block->ptr[j], 10);                                    break; /* Integer Percentage / 10 */
+            case 'o': ret = stack_eng_int_bonus(block, block->ptr[j], 10, bonus->attr, i);              break; /* Integer Percentage / 10 */
             case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                       break; /* Item ID */
-            case 'x': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Level */
+            case 'x': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Level */
             case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                  break; /* Regen */
-            case 'a': ret = stack_eng_int(block, block->ptr[j], 1000);                                  break; /* Millisecond */
-            case 'h': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* SP Gain Bool */
+            case 'a': ret = stack_eng_int_bonus(block, block->ptr[j], 1000, bonus->attr, i);            break; /* Millisecond */
+            case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
             case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
             case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                                 break; /* Trigger BT */
             case 'y': ret = (stack_eng_item_group_name(block, block->ptr[j], &cnt)
                             && stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt));                   break; /* Item Group */
             case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                                break; /* Triger ATF */
-            case 'f': ret = stack_eng_int(block, block->ptr[j], 1);                                     break; /* Cell */
+            case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
             case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                 break; /* Flag Bitfield */
             case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                 break; /* Weapon Type */
             case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
-                             && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                  break; /* Class Group & Monster */
+                             && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                   break; /* Class Group & Monster */
             default: break;
         }
 
@@ -3014,6 +3093,9 @@ int translate_bonus(block_r * block, char * prefix) {
        block_stack_push(block, TYPE_ENG, buf))
         goto failed;
 
+    if(bonus->attr == 21)
+        printf("%s\n", buf);
+
 clean:
     SAFE_FREE(buf);
     SAFE_FREE(bonus);
@@ -3042,7 +3124,7 @@ int translate_skill(block_r * block) {
     len = block->arg_cnt;
     if(stack_eng_skill(block, block->ptr[0], &cnt) ||
        cnt > 1 || /* skill id must be constant */
-       stack_eng_int(block, block->ptr[1], 1))
+       stack_eng_int(block, block->ptr[1], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3110,7 +3192,7 @@ int translate_itemskill(block_r * block) {
     len = block->arg_cnt;
     if(stack_eng_skill(block, block->ptr[0], &cnt) ||
        cnt > 1 || /* skill id must be a constant */
-       stack_eng_int(block, block->ptr[1], 1))
+       stack_eng_int(block, block->ptr[1], 1, 0))
         goto failed;
     len = (block->arg_cnt - len) + 32;
 
@@ -3145,7 +3227,7 @@ int translate_petloot(block_r * block) {
         return CHECK_FAILED;
 
     len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1))
+    if(stack_eng_int(block, block->ptr[0], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3177,10 +3259,10 @@ int translate_petheal(block_r * block) {
         return CHECK_FAILED;
 
     len = block->arg_cnt;
-    if( stack_eng_int(block, block->ptr[0], 1) ||
-        stack_eng_int(block, block->ptr[1], 1) ||
-        stack_eng_int(block, block->ptr[2], 1) ||
-        stack_eng_int(block, block->ptr[3], 1))
+    if( stack_eng_int(block, block->ptr[0], 1, 0) ||
+        stack_eng_int(block, block->ptr[1], 1, 0) ||
+        stack_eng_int(block, block->ptr[2], 1, 0) ||
+        stack_eng_int(block, block->ptr[3], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3211,7 +3293,7 @@ int translate_petrecovery(block_r * block) {
 
     len  = block->arg_cnt;
     if(translate_status_end(block) ||
-       stack_eng_int(block, block->ptr[0], 1))
+       stack_eng_int(block, block->ptr[0], 1, 0))
         return CHECK_FAILED;
     len  = (block->arg_cnt - len) + 128;
 
@@ -3245,8 +3327,8 @@ int translate_petskillbonus(block_r * block) {
 
     len = block->arg_cnt;
     if( translate_bonus(block, "bonus") ||
-        stack_eng_int(block, block->ptr[2], 1) ||
-        stack_eng_int(block, block->ptr[3], 1))
+        stack_eng_int(block, block->ptr[2], 1, 0) ||
+        stack_eng_int(block, block->ptr[3], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3278,10 +3360,10 @@ int translate_petskillattack(block_r * block) {
         return CHECK_FAILED;
 
     len = block->arg_cnt;
-    if( stack_eng_skill(block, block->ptr[0], &argc) || /* skill name */
-        stack_eng_int(block, block->ptr[1], 1) ||       /* skill level */
-        stack_eng_int(block, block->ptr[2], 1) ||       /* normal rate */
-        stack_eng_int(block, block->ptr[3], 1))         /* loyalty rate */
+    if( stack_eng_skill(block, block->ptr[0], &argc) ||     /* skill name */
+        stack_eng_int(block, block->ptr[1], 1, 0) ||        /* skill level */
+        stack_eng_int(block, block->ptr[2], 1, 0) ||        /* normal rate */
+        stack_eng_int(block, block->ptr[3], 1, 0))          /* loyalty rate */
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3312,11 +3394,11 @@ int translate_petskillattack2(block_r * block) {
         return CHECK_FAILED;
 
     len = block->arg_cnt;
-    if( stack_eng_skill(block, block->ptr[0], &argc) || /* skill name */
-        stack_eng_int(block, block->ptr[1], 1) ||       /* damage */
-        stack_eng_int(block, block->ptr[2], 1) ||       /* number of attacks */
-        stack_eng_int(block, block->ptr[3], 1) ||       /* normal rate */
-        stack_eng_int(block, block->ptr[4], 1))         /* loyalty rate */
+    if( stack_eng_skill(block, block->ptr[0], &argc) ||     /* skill name */
+        stack_eng_int(block, block->ptr[1], 1, 0) ||        /* damage */
+        stack_eng_int(block, block->ptr[2], 1, 0) ||        /* number of attacks */
+        stack_eng_int(block, block->ptr[3], 1, 0) ||        /* normal rate */
+        stack_eng_int(block, block->ptr[4], 1, 0))          /* loyalty rate */
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3349,10 +3431,10 @@ int translate_petskillsupport(block_r * block) {
 
     len = block->arg_cnt;
     if( stack_eng_skill(block, block->ptr[0], &cnt) ||
-        stack_eng_int(block, block->ptr[1], 1) ||
-        stack_eng_int(block, block->ptr[2], 1) ||
-        stack_eng_int(block, block->ptr[3], 1) ||
-        stack_eng_int(block, block->ptr[4], 1))
+        stack_eng_int(block, block->ptr[1], 1, 0) ||
+        stack_eng_int(block, block->ptr[2], 1, 0) ||
+        stack_eng_int(block, block->ptr[3], 1, 0) ||
+        stack_eng_int(block, block->ptr[4], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -3382,7 +3464,7 @@ int translate_getexp(block_r * block, int handler) {
         return CHECK_FAILED;
 
     len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1))
+    if(stack_eng_int(block, block->ptr[0], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 32;
 
@@ -3417,7 +3499,7 @@ int translate_autobonus(block_r * block, int flag) {
     if(script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &script))
         return CHECK_FAILED;
 
-    if(stack_eng_int(block, block->ptr[1], 10) ||
+    if(stack_eng_int(block, block->ptr[1], 10, 0) ||
        stack_eng_time(block, block->ptr[2], 1))
         goto failed;
 
@@ -3491,7 +3573,7 @@ int translate_buyingstore(block_r * block) {
         " type argument in item %d", block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1))
+    if(stack_eng_int(block, block->ptr[0], 1, 0))
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 32;
 
@@ -3524,7 +3606,7 @@ int translate_searchstore(block_r * block) {
         "amount or effect in item %d", block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1) ||
+    if(stack_eng_int(block, block->ptr[0], 1, 0) ||
        stack_eng_map(block, block->ptr[1], MAP_SEARCHSTORE_FLAG, &argc) ||
        argc != 1)
         return CHECK_FAILED;
@@ -3562,7 +3644,7 @@ int translate_skill_block(block_r * block) {
     len = block->arg_cnt;
     if( stack_eng_skill(block, block->ptr[1], &argc) ||
         argc != 1 ||
-        stack_eng_int(block, block->ptr[2], 1))
+        stack_eng_int(block, block->ptr[2], 1, 0))
         return CHECK_FAILED;
     len = block->arg_cnt - len + 32;
 
@@ -3595,8 +3677,8 @@ int translate_warp(block_r * block) {
     len = block->arg_cnt;
     if( stack_eng_db(block, block->ptr[0], DB_MAP_ID, &argc) ||
         argc != 1||
-        stack_eng_int(block, block->ptr[1], 1) ||
-        stack_eng_int(block, block->ptr[2], 2))
+        stack_eng_int(block, block->ptr[1], 1, 0) ||
+        stack_eng_int(block, block->ptr[2], 2, 0))
         return CHECK_FAILED;
     len = block->arg_cnt - len + 32;
 
@@ -3634,14 +3716,14 @@ int translate_monster(block_r * block) {
     } else if(stack_eng_db(block, block->ptr[0], DB_MAP_ID, &argc) || argc != 1)
         return CHECK_FAILED;
 
-    if(stack_eng_int(block, block->ptr[1], 1))
+    if(stack_eng_int(block, block->ptr[1], 1, 0))
         return CHECK_FAILED;
     if(0 == ncs_strcmp(block->eng[1], "-1"))
         if(block_stack_pop(block, TYPE_ENG) ||
            block_stack_push(block, TYPE_ENG, "random"))
             return CHECK_FAILED;
 
-    if(stack_eng_int(block, block->ptr[2], 1))
+    if(stack_eng_int(block, block->ptr[2], 1, 0))
         return CHECK_FAILED;
     if(0 == ncs_strcmp(block->eng[2], "-1"))
         if(block_stack_pop(block, TYPE_ENG) ||
@@ -3651,7 +3733,7 @@ int translate_monster(block_r * block) {
     /* evaluate amount and mob name */
     if( stack_eng_db(block, block->ptr[4], DB_MAP_ID, &argc) ||
         argc != 1 ||
-        stack_eng_int(block, block->ptr[5], 1))
+        stack_eng_int(block, block->ptr[5], 1, 0))
         return CHECK_FAILED;
     len = block->arg_cnt - len + 128;
 
@@ -3774,12 +3856,6 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     if(NULL == tokens)
         return NULL;
 
-    /* check division by zero */
-    if (modifier == 0) {
-        exit_func_safe("modifier is zero in item %d", block->item_id);
-        goto clean;
-    }
-
     /* tokenize the expression */
     if (script_lexical(tokens, expr) || tokens->script_cnt <= 0) {
         exit_func_safe("failed to tokenize '%s' in item %d", expr, block->item_id);
@@ -3816,48 +3892,50 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
         return NULL;
     }
 
-    /* get the min and max value */
-    min = root_node->min;
-    max = root_node->max;
+    if(flag & (EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK)) {
+        /* get the min and max value */
+        min = root_node->min;
+        max = root_node->max;
 
-    /* check whether min and max can be divided by the modifier */
-    if (min == max) {
-        /* write a single value */
-        len = (min > 0 && (min / modifier) == 0) ?
-            sprintf(buf, "%.2f", (double) min / modifier) :
-            sprintf(buf, "%d", min / modifier);
-    } else {
-        /* write multiple values */
-        len = ((min > 0 && (min / modifier) == 0) || (max > 0 && (max / modifier) == 0)) ?
-            sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
-            sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
-    }
-
-    /* write formula if dependencies exist and only when flag is set */
-    if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
-        if(block_stack_push(block, TYPE_ENG, buf) ||
-           block_stack_formula(block, block->eng_cnt - 1, root_node, &formula) ||
-           block_stack_pop(block, TYPE_ENG) ||
-           block_stack_push(block, TYPE_ENG, formula))
-            goto failed;
-        SAFE_FREE(formula);
-    } else if(EVALUATE_FLAG_WRITE_STACK & flag) {
-        if(block_stack_push(block, TYPE_ENG, buf))
-            goto failed;
-    }
-
-    /* keep logic tree in node */
-    if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
-        if (root_node->cond != NULL) {
-            if (block->logic_tree == NULL) {
-                block->logic_tree = copy_deep_any_tree(root_node->cond);
-            } else {
-                /* new logic trees are stack onot the previous logic tree */
-                temp = block->logic_tree;
-                block->logic_tree = copy_deep_any_tree(root_node->cond);
-                block->logic_tree->stack = temp;
-            }
+        /* check whether min and max can be divided by the modifier */
+        if (min == max) {
+            /* write a single value */
+            len = (min > 0 && (min / modifier) == 0) ?
+                sprintf(buf, "%.2f", (double) min / modifier) :
+                sprintf(buf, "%d", min / modifier);
+        } else {
+            /* write multiple values */
+            len = ((min > 0 && (min / modifier) == 0) || (max > 0 && (max / modifier) == 0)) ?
+                sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
+                sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
         }
+
+        /* write formula if dependencies exist and only when flag is set */
+        if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
+            if(block_stack_push(block, TYPE_ENG, buf) ||
+               block_stack_formula(block, block->eng_cnt - 1, root_node, &formula) ||
+               block_stack_pop(block, TYPE_ENG) ||
+               block_stack_push(block, TYPE_ENG, formula))
+                goto failed;
+            SAFE_FREE(formula);
+        } else if(EVALUATE_FLAG_WRITE_STACK & flag) {
+            if(block_stack_push(block, TYPE_ENG, buf))
+                goto failed;
+        }
+
+        /* keep logic tree in node */
+        if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
+            if (root_node->cond != NULL) {
+                if (block->logic_tree == NULL) {
+                    block->logic_tree = copy_deep_any_tree(root_node->cond);
+                } else {
+                    /* new logic trees are stack onot the previous logic tree */
+                    temp = block->logic_tree;
+                    block->logic_tree = copy_deep_any_tree(root_node->cond);
+                    block->logic_tree->stack = temp;
+                }
+            }
+    }
 
     /* return the root node */
     if (EVALUATE_FLAG_KEEP_NODE & flag)

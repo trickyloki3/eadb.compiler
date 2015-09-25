@@ -36,7 +36,7 @@ int main(int argc, char * argv[]) {
             script_translate(context) ||
             script_generate(context) ||
             context->item.id == 0) {
-            fprintf(stderr, "item: %d\n", context->item.id);
+            goto failed;
         }
 
         script_block_free_all(context);
