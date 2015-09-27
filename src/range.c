@@ -75,7 +75,7 @@ range_t * mkrange(int operator, int min, int max, int val) {
             tmp_2->next = NULL;
          }
          break;
-      default: 
+      default:
          /* non relational or equality operator invocation is fatal error */
          fprintf(stderr,"range_mk; invalid operator; %d\n", operator);
          exit(EXIT_FAILURE);
@@ -141,8 +141,8 @@ range_t * orrange(range_t * range_1, range_t * range_2) {
             if(SET_DEBUG)
                fprintf(stderr,"orrange X[%d ~ %d] and Y[%d ~ %d]; X same as Y; [%d ~ %d] union.\n",
                iter_1->min, iter_1->max, iter_2->min, iter_2->max, temp->min, temp->max);
-         /* [x1 ~ x2] and [y1 ~ y2], where y1 <= x1 and x2 <= y2 
-          * union range must therefore be y1 to y2; the 
+         /* [x1 ~ x2] and [y1 ~ y2], where y1 <= x1 and x2 <= y2
+          * union range must therefore be y1 to y2; the
           * larger of the two. */
          } else if(IS_SUBSET_OF(iter_1, iter_2)) {
             temp = calloc(1, sizeof(range_t));
@@ -158,7 +158,7 @@ range_t * orrange(range_t * range_1, range_t * range_2) {
             if(SET_DEBUG)
                fprintf(stderr,"orrange X[%d ~ %d] and Y[%d ~ %d]; Y subset X; [%d ~ %d] union.\n",
                iter_1->min, iter_1->max, iter_2->min, iter_2->max, temp->min, temp->max);
-         /* check if overlap on the left, i.e. 
+         /* check if overlap on the left, i.e.
           * [x1 ~ x2] and [y1 ~ y2] where y1 <= x1 <= y2
           * union range must therefore be x1 to y2 */
          } else if(IS_OVERLAP_LEFT(iter_1, iter_2)) {
@@ -282,8 +282,8 @@ range_t * andrange(range_t * range_1, range_t * range_2) {
             if(SET_DEBUG)
                fprintf(stderr,"andrange X[%d ~ %d] and Y[%d ~ %d]; X same as Y; [%d ~ %d] intersect.\n",
                iter_1->min, iter_1->max, iter_2->min, iter_2->max, temp->min, temp->max);
-         /* [x1 ~ x2] and [y1 ~ y2], where y1 <= x1 and x2 <= y2 
-          * intersect range must therefore be x1 to x2; the 
+         /* [x1 ~ x2] and [y1 ~ y2], where y1 <= x1 and x2 <= y2
+          * intersect range must therefore be x1 to x2; the
           * smaller of the two. */
          } else if(IS_SUBSET_OF(iter_1, iter_2)) {
             temp = calloc(1, sizeof(range_t));
@@ -299,7 +299,7 @@ range_t * andrange(range_t * range_1, range_t * range_2) {
             if(SET_DEBUG)
                fprintf(stderr,"andrange X[%d ~ %d] and Y[%d ~ %d]; Y subset X; [%d ~ %d] intersect.\n",
                iter_1->min, iter_1->max, iter_2->min, iter_2->max, temp->min, temp->max);
-         /* check if overlap on the left, i.e. 
+         /* check if overlap on the left, i.e.
           * [x1 ~ x2] and [y1 ~ y2] where y1 <= x1 <= y2
           * intersect range must therefore be x1 to y2 */
          } else if(IS_OVERLAP_LEFT(iter_1, iter_2)) {
@@ -363,7 +363,7 @@ range_t * notrange(range_t * root) {
    range_t * right = NULL;
 
    /* ignore if the root is NULL */
-   if(root == NULL) 
+   if(root == NULL)
       return NULL;
    else
       iter = root;
@@ -389,7 +389,7 @@ range_t * notrange(range_t * root) {
          left->min = 1;
          left->max = 1;
          left->id_min = 0;
-         left->id_max = 1;  
+         left->id_max = 1;
       }
 
       /* special case; the inverse of the entire set equals no set */
@@ -434,14 +434,14 @@ range_t * notrange(range_t * root) {
       temp->id_min = iter->id_min;
       temp->id_max = iter->id_max;
       /* add the node to the new list */
-      if(new_root == NULL) 
+      if(new_root == NULL)
          new_root_iter = new_root = temp;
       else
          new_root_iter = new_root_iter->next = temp;
       /* evaluate the next node */
       iter = iter->next;
    }
-   
+
    /* handle the tail node */
    if(iter->max < iter->id_max) {
       right = calloc(1, sizeof(range_t));
@@ -563,7 +563,7 @@ void mergerange(range_t * root) {
    while(iter != NULL) {
       if(iter->next != NULL && iter->max >= iter->next->min) {
          if(SET_DEBUG)
-            printf("mergerange; [%d ~ %d] merging with [%d ~ %d]\n", 
+            printf("mergerange; [%d ~ %d] merging with [%d ~ %d]\n",
             iter->min, iter->max, iter->next->min, iter->next->max);
          temp = iter->next;
          iter->max = (iter->max < iter->next->max)?iter->next->max:iter->max;
@@ -574,13 +574,13 @@ void mergerange(range_t * root) {
          if(iter->next->next != NULL) {
             iter->next = iter->next->next;
             iter->next->prev = iter;
-            if(SET_DEBUG) 
-               printf("iter->next: %p\niter->next->prev: %p\n", 
+            if(SET_DEBUG)
+               printf("iter->next: %p\niter->next->prev: %p\n",
                (void *) iter->next, (void *) iter->next->prev);
          } else {
             iter->next = NULL;
          }
-         
+
          free(temp);
       } else {
          iter = iter->next;
@@ -595,7 +595,7 @@ range_t * iter = NULL;
    while(iter != NULL) {
       if(iter->next != NULL && IS_BOUNDARY(iter, iter->next)) {
          if(SET_DEBUG)
-            printf("mergerange; [%d ~ %d] merging with [%d ~ %d]\n", 
+            printf("mergerange; [%d ~ %d] merging with [%d ~ %d]\n",
             iter->min, iter->max, iter->next->min, iter->next->max);
          temp = iter->next;
          iter->max = iter->next->max;
@@ -606,18 +606,18 @@ range_t * iter = NULL;
          if(iter->next->next != NULL) {
             iter->next = iter->next->next;
             iter->next->prev = iter;
-            if(SET_DEBUG) 
-               printf("iter->next: %p\niter->next->prev: %p\n", 
+            if(SET_DEBUG)
+               printf("iter->next: %p\niter->next->prev: %p\n",
                (void *) iter->next, (void *) iter->next->prev);
          } else {
             iter->next = NULL;
          }
-         
+
          free(temp);
       } else {
          iter = iter->next;
       }
-   }  
+   }
 }
 int minrange(range_t * root) {
    range_t * iter = root;
@@ -677,7 +677,7 @@ void dmprange(range_t * range_1, FILE * stm, char * tag) {
       for(iter = range_1; iter != NULL; iter = iter->next)
          /*fprintf(stm,"[%d ~ %d | (%d ~ %d)](%p)%s", iter->id_min, iter->id_max, iter->min, iter->max, (void *) iter, (iter->next == NULL)?"\n":" U ");*/
          fprintf(stm,"(%d ~ %d) %s", iter->min, iter->max, (iter->next == NULL)?"\n":" U ");
-   } 
+   }
    /*else {
       fprintf(stderr,"fatal: null range in dmprange.\n");
       exit(EXIT_FAILURE);
@@ -712,17 +712,17 @@ range_t * calcrange(int operator, range_t * range_1, range_t * range_2) {
    switch(operator) {
       /* require min and max iteration */
       /* commutative; a + b = b + a*/
-      case '*': 
-      case '/': 
-      case '+': 
-      case '-': 
-      case '&': 
+      case '*':
+      case '/':
+      case '+':
+      case '-':
+      case '&':
       case '|':
          /* perform calculation on respective min and max */
          calcrangemin(operator, range_1, min_2);
          calcrangemax(operator, range_1, max_2);
          result = copyrange(range_1);
-         break; 
+         break;
       case '<':
       case '<' + '=':
          temp_1 = mkrange(operator, min_g, max_g, min_2);

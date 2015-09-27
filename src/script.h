@@ -28,7 +28,6 @@
     #define SCRIPT_FAILED                         CHECK_FAILED
     #define BUF_SIZE                              4096                         /* total size of script, stack, and etc */
     #define PTR_SIZE                              4096                         /* =.=; total number of possible tokens */
-    #define ARG_SIZE                              64                           /* total argument to keep track of */
 
     /* set this file stream to get node debug output;
      * node_dbg is passed to top level evaluate_node,
@@ -259,6 +258,7 @@
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */
     int translate_id_amount(block_r *, int *, int *, const char *);
+
     /* script translation functions */
     int translate_getitem(block_r *);
     int translate_delitem(block_r *);

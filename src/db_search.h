@@ -249,7 +249,7 @@
     #define HE_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
     #define EA_ITEM_GROUP_ID_SEARCH "SELECT group_id, size FROM item_group_ea WHERE group_id = ?;"
     #define EA_ITEM_GROUP_ID_RECORD "SELECT item_id, rate FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
-    #define RA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate FROM item_group_ra WHERE group_id = ?;"
+    #define RA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate, amount, random, announced, duration, guid, bound, named FROM item_package_ra WHERE group_id = ?;"
     #define RA_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
     #define HE_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
 

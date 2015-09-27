@@ -21,7 +21,7 @@
     #define CHECK_BRACKET      0x1  /* check bracket delimiter for database with scripted fields */
     #define CHECK_QUOTE        0x2  /* check quote delimiter for databases with quoted fields */
     #define SKIP_NEXT_WS       0x4  /* skip whitespace at the start of each field */
-    #define CHECK_FIELD_COUNT  0x8  /* check the field count for each record */    
+    #define CHECK_FIELD_COUNT  0x8  /* check the field count for each record */
 
     /* type definition for native configuration */
     typedef int (*RECORD_LOADER)(void * db, int row, int col, char * val);

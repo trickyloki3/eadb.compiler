@@ -139,7 +139,7 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
    int index_col = 0;  /* column index */
    int index_row = 0;  /* row index */
    int line_size = 0;  /* size of line */
-   
+
    /* special handling columns */
    int bracket = 0;
    int quote = 0;
@@ -173,7 +173,7 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
                for(i = offset_fld - 1; i >= 0; i--)
                   if(isspace(fld[i]))
                      offset_fld--;
-                  else 
+                  else
                      break;
 
             /* write the column field */
@@ -183,7 +183,7 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
 
             /* skip all beginning whitespace for the next field */
             if(config->flag & SKIP_NEXT_WS)
-               while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0') 
+               while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0')
                   offset_buf++;
          } else {
             if(!(isspace(buf[offset_buf]) && offset_fld <= 0) && buf[offset_buf] != '\"') {
@@ -197,11 +197,11 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
       }
 
       /* report syntax errors */
-      if(bracket) 
+      if(bracket)
          exit_func_safe("missing closing bracket.\n[warn]: %s\n", buf);
-      if(quote) 
+      if(quote)
          exit_func_safe("missing closing quote[%d]; %s\n", quote, buf);
-      if(config->flag & CHECK_FIELD_COUNT && config->field_count != index_col) 
+      if(config->flag & CHECK_FIELD_COUNT && config->field_count != index_col)
          exit_func_safe("missing fields; expected %d fields but got %d fields.\n[warn]: %s\n[warn]: %s", config->field_count, index_col, buf, &buf[offset_buf]);
 
       index_row++;

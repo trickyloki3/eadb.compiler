@@ -1,7 +1,7 @@
 #include <script.h>
 
-#define RE_PATH     "C:/Users/trickyloki3/Desktop/git/eadb.compiler/out/opt.db"
-#define RA_PATH     "C:/Users/trickyloki3/Desktop/git/eadb.compiler/out/ra.db"
+#define RE_PATH     "C:/Users/trickyloki3/Desktop/git/eadb.compiler/out/resource.db"
+#define RA_PATH     "C:/Users/trickyloki3/Desktop/git/eadb.compiler/out/rathena.db"
 #define MAP_PATH    "C:/Users/trickyloki3/Desktop/git/eadb.compiler/res/athena_db.txt"
 
 int main(int argc, char * argv[]) {
@@ -38,6 +38,7 @@ int main(int argc, char * argv[]) {
             context->item.id == 0) {
             goto failed;
         }
+
         /*printf("%s", context->buffer);*/
         script_block_free_all(context);
     }
