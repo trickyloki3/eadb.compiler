@@ -54,56 +54,97 @@ int exit_func(const char * file_name, const char * function_name, const int line
 #endif
 }
 
-/* collect -o, --output and -p, --path options */
+/* option interface */
 char * opt[26];
 
-char * getopt(char c) {
-    return opt[c % 26];
+char * get_argv(char option) {
+    return opt[option % 26];
 }
 
-int getopts(int argc, char ** argv) {
-	int i = 0;
-	int j = 0;
-	int len = 0;
+int parse_argv(char ** argv, int argc) {
+    int i = 0;          /* iterate the total number of arguments in argv array */
+    int j = 0;          /* iterate the characters for a single option */
+    int len = 0;        /* length of STRING */
+    char * str = NULL;
 
-	memset(opt, 0, sizeof(char *) * 26);
+    /* initialize the string array */
+    memset(opt, 0, sizeof(char *) * 26);
 
-	for (i = 1; i < argc; i++) {
-		len = strlen(argv[i]);
-		if (len > 2 && '-' == argv[i][0] && '-' == argv[i][1]) {
-			/* long option matching */
-			if (strcmp(&argv[i][2], "path") == 0) {
-				if (i + 1 >= argc)
-					return CHECK_FAILED;
-				opt['p' % 26] = argv[i + 1];
-			} else if (strcmp(&argv[i][2], "output") == 0) {
-				if (i + 1 >= argc)
-					return CHECK_FAILED;
-				opt['o' % 26] = argv[i + 1];
-			} else {
-				return CHECK_FAILED;
-			}
-		} else if('-' == argv[i][0]) {
-			/* single option matching */
-			for (j = 1; j < len; j++) {
-				switch (argv[i][j]) {
-					case 'p':
-						if (i + 1 >= argc)
-							return CHECK_FAILED;
-						opt['p' % 26] = argv[i + 1];
-						break;
-					case 'o':
-						if (i + 1 >= argc)
-							return CHECK_FAILED;
-						opt['o' % 26] = argv[i + 1];
-						break;
-					default:
-						return CHECK_FAILED;
-				}
-			}
-		}
-	}
-	return CHECK_PASSED;
+    /* parse each argument string from argv */
+    for (i = 1; i < argc; i++) {
+        len = strlen(argv[i]);
+        str = argv[i];
+
+        /* check for double -- hypens for long option matching */
+        if(2 < len && '-' == str[0] && '-' == str[1]) {
+            /* check the argument exist for the long option */
+            if(i + 1 >= argc)
+                return exit_func_safe("missing %s argument", str);
+
+            /* map the letter to argument */
+            if(0 == ncs_strcmp(&str[2], "path")) {
+                opt['p' % 26] = argv[++i];
+            } else if(0 == ncs_strcmp(&str[2], "output")) {
+                opt['o' % 26] = argv[++i];
+            } else if(0 == ncs_strcmp(&str[2], "mode")) {
+                opt['m' % 26] = argv[++i];
+            } else {
+                return exit_func_safe("invalid long option %s", &str[2]);
+            }
+        /* check for single hypen for short option matching */
+        } else if(1 < len && '-' == str[0]) {
+            /* check the argument exist for the short option */
+            if(i + 1 >= argc)
+                return exit_func_safe("missing %s argument", str);
+
+            /* map the letter to argument */
+            for(j = 1; j < len; j++) {
+                switch(str[j]) {
+                    case 'p': opt['p' % 26] = argv[++i]; break;
+                    case 'o': opt['o' % 26] = argv[++i]; break;
+                    case 'm': opt['m' % 26] = argv[++i]; break;
+                    default:  return exit_func_safe("invalid short option %c", str[1]);
+                }
+            }
+        }
+    }
+
+    return CHECK_PASSED;
+}
+
+int path_concat(char * path, size_t len, size_t max, const char * sub_path) {
+    size_t i = 0;
+    size_t ret = 0;
+    size_t sub_len = 0;
+    char separator = '/';
+
+    exit_null_safe(2, path, sub_path);
+
+    /* get the directory separator */
+    for(i = len - 1; i >= 0; i--)
+        if(path[i] == '/' || path[i] == '\\') {
+            separator = path[i];
+            break;
+        }
+
+    /* write the directory separator */
+    ret = snprintf(&path[len], max - len, "%c", separator);
+    if(sizeof(char) != ret)
+        return exit_func_safe("failed concatenate %s an"
+        "d %c on %d buffer size", path, separator, max);
+
+    /* error on empty sub-path string */
+    sub_len = strlen(sub_path);
+    if(0 >= sub_len)
+        return exit_abt_safe("sub path is an empty string");
+
+    /* write the sub path with directory separator accounted for */
+    ret = snprintf(&path[len + ret], max - len + ret, "%s", sub_path);
+    if(sub_len != ret)
+        return exit_func_safe("failed concatenate %s and"
+        " %s on %d buffer size", path, sub_path, max);
+
+    return CHECK_PASSED;
 }
 
 /* generate random alpha-digit string */
@@ -137,7 +178,7 @@ void strncopy(char * buf, int size, const unsigned char * str) {
    /* check null */
    if (NULL == buf)
        return;
-   
+
    if(str == NULL)
       return;
 
@@ -230,12 +271,12 @@ int convert_integer(const char * str, int base) {
    /* check empty string */
    len = strlen(str);
    if (len <= 0)
-	   /*return exit_abt_safe("empty string");*/
-	   return 0;
+       /*return exit_abt_safe("empty string");*/
+       return 0;
 
    /* check octal or hexidecimal */
    if(str[0] == '0' && len > 1) {
-	  if (str[1] == 'x' && len > 2) {
+      if (str[1] == 'x' && len > 2) {
          base = 16;  /* hexidecimal */
       } else {
          base = 8;   /* octal */
@@ -272,30 +313,30 @@ void convert_integer_delimit(char * src, char * delimiters, int argc, ...) {
    va_start(argv, argc);
 
    if(NULL != src && NULL != delimiters) {
-	   /* check source string is greater than 0 */
-	  len = strlen(src);
-	  if (len > 0) {
-		  for (i = 0, ptr = src; i < argc; i++) {
-			  /* copy substring from source buffer until delimiter */
-			  ptr = substr_delimit(ptr, buf, delimiters);
+       /* check source string is greater than 0 */
+      len = strlen(src);
+      if (len > 0) {
+          for (i = 0, ptr = src; i < argc; i++) {
+              /* copy substring from source buffer until delimiter */
+              ptr = substr_delimit(ptr, buf, delimiters);
 
-			  /* convert substring to integer */
-			  *va_arg(argv, int *) = convert_integer(buf, 10);
+              /* convert substring to integer */
+              *va_arg(argv, int *) = convert_integer(buf, 10);
 
-			  /* check end of source buffer */
-			  if (*ptr == '\0') {
-				  i++;
-				  break;
-			  }
+              /* check end of source buffer */
+              if (*ptr == '\0') {
+                  i++;
+                  break;
+              }
 
-			  /* skip delimiter */
-			  ptr++;
-		  }
+              /* skip delimiter */
+              ptr++;
+          }
 
-		  /* check if entire string is parsed */
-		  if (*ptr != '\0')
-			  exit_func_safe("failed to completely parsed string %s", src);
-	  }
+          /* check if entire string is parsed */
+          if (*ptr != '\0')
+              exit_func_safe("failed to completely parsed string %s", src);
+      }
    }
 
    /* default any arguments without value to zero */
@@ -379,7 +420,7 @@ int convert_uinteger(const char * str, int base) {
    len = strlen(str);
    if(len <= 0)
       /*return exit_abt_safe("empty string");*/
-	  return 0;
+      return 0;
 
    /* check octal or hexidecimal */
    if(str[0] == '0') {
@@ -450,24 +491,6 @@ char * convert_stringn(const char * str, int * size) {
    return tmp;
 }
 
-char * concatenate_string(char ** strs, int start, int end, char sep) {
-	int i = 0;
-	int off = 0;
-	char buf[BUF_SIZE];
-
-	/* concatenate string separated by character */
-	for (i = start; i < end; i++)
-		off += sprintf(&buf[off], "%s%c", strs[i], sep);
-
-	/* check empty string */
-	if (off <= 0) {
-		exit_func_safe("empty string from %d to %d", start, end);
-		return NULL;
-	}
-	/* return string */
-	return convert_string(buf);
-}
-
 /* count all the delimters in the source buffer */
 int count_delimit(const char * src, const char * delimiters) {
    int i = 0;
@@ -499,12 +522,12 @@ const char * substr_delimit(const char * src, char * des, const char * delimiter
 
    /* check empty source buffer or delimiter */
    if (*src == '\0') {
-	   exit_abt_safe("source is an empty string");
-	   return NULL;
+       exit_abt_safe("source is an empty string");
+       return NULL;
    }
    if (*delimiters == '\0') {
-	   exit_abt_safe("delimiter is an empty string");
-	   return NULL;
+       exit_abt_safe("delimiter is an empty string");
+       return NULL;
    }
 
    /* copy the substring from source to destination buffer until delimiter */
@@ -550,12 +573,12 @@ int array_field_cnt(char * buf) {
 }
 
 int aeiou(char letter) {
-	switch (letter) {
-		case 'a': case 'e': case 'i': case 'o': case 'u':
-			return CHECK_PASSED;
-		default:
-			return CHECK_FAILED;
-	}
+    switch (letter) {
+        case 'a': case 'e': case 'i': case 'o': case 'u':
+            return CHECK_PASSED;
+        default:
+            return CHECK_FAILED;
+    }
 }
 
 void sift_down(void * list, size_t start, size_t end, swap_t * cb) {
@@ -564,8 +587,8 @@ void sift_down(void * list, size_t start, size_t end, swap_t * cb) {
     size_t child = 0;
 
     /* left child node index is computed by (root node index * 2) + 1,
-    * but if left child node index > array size then the root node is
-    * a leaf node with no child nodes. */
+     * but if left child node index > array size then the root node is
+     * a leaf node with no child nodes. */
     while (root * 2 + 1 <= end) {
         /* set the left child node */
         child = root * 2 + 1;
@@ -642,7 +665,7 @@ void pivot_sedgwick(void * list, size_t min, size_t max, swap_t * cb) {
     size_t mid = 0;
 
     /* (min + max) / 2 can cause integer overflow for large
-    * min and max; https://en.wikipedia.org/wiki/Quicksort */
+     * min and max; https://en.wikipedia.org/wiki/Quicksort */
     mid = min + (max - min) / 2;
     mid = mof3(list, min, mid, max, cb);
     cb->swap(list, mid, min);
@@ -653,9 +676,9 @@ void pivot_ninther(void * list, size_t min, size_t max, size_t size, swap_t * cb
     size_t mid = 0;
 
     /* divide the region from min to max into eight regions, then
-    * calculate the three mof3 over the lower, middle, and upper
-    * regions separate by the nine existing boundary points, and
-    * then calculate the mof3 of the three mof3 */
+     * calculate the three mof3 over the lower, middle, and upper
+     * regions separate by the nine existing boundary points, and
+     * then calculate the mof3 of the three mof3 */
     dif = size / 8;
     mid = min + size / 2;
     mid = mof3(list,
@@ -738,24 +761,24 @@ int _quick_sort(void * list, size_t min, size_t max, size_t max_depth, swap_t * 
     size = max - min + 1;
 
     /* heap sort
-    * asymptotic time complexity is O(nlg(n))
-    * heap sort  is used as a fallback for  quick sort
-    * to guarantee a time complexity of O(nlg(n)) when
-    * quick's depth is greater than lg(n) * 2.
-    */
+     * asymptotic time complexity is O(nlg(n))
+     * heap sort  is used as a fallback for  quick sort
+     * to guarantee a time complexity of O(nlg(n)) when
+     * quick's depth is greater than lg(n) * 2.
+     */
     if (max_depth == 0)
         return heap_sort(list, size, cb);
 
     if (size < 8)
         /* insertion sort
-        * asymptotic time complexity is O(n^2)
-        * 1. efficient for n < 8 due to less overhead
-        * 2. efficient for sorted list O(n)
-        * 3. keep original order for equal elements
-        * used in quicksort as an optimization for n < 8 to
-        * eliminate the overhead and provide O(n) asymptotic
-        * time complexity since partitions are nearly sorted
-        */
+         * asymptotic time complexity is O(n^2)
+         * 1. efficient for n < 8 due to less overhead
+         * 2. efficient for sorted list O(n)
+         * 3. keep original order for equal elements
+         * used in quicksort as an optimization for n < 8 to
+         * eliminate the overhead and provide O(n) asymptotic
+         * time complexity since partitions are nearly sorted
+         */
         return insertion_sort(list, min, max, cb);
     else if (size <= 40)
         pivot_sedgwick(list, min, max, cb);
@@ -770,7 +793,7 @@ int _quick_sort(void * list, size_t min, size_t max, size_t max_depth, swap_t * 
 
 int quick_sort(void * list, size_t size, swap_t * cb) {
     if (size == 1) return 0;
-    size_t max_depth = (size_t)log(size) * 2;
+    size_t max_depth = (size_t) log(size) * 2;
     _quick_sort(list, 0, size - 1, max_depth, cb);
     return 0;
 }

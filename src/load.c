@@ -89,7 +89,7 @@ char * trim(const char * file_name, int * file_line, DB_TRIM file_trim) {
 int trim_general(FILE * file_stm, FILE * trim_stm) {
    int line_count = 0;
    char buf[BUF_SIZE];
-   if(exit_null_safe(2, file_stm, trim_stm)) return 0;
+   exit_null_safe(2, file_stm, trim_stm);
    while(fgets(buf, sizeof(buf), file_stm) != NULL)
       if(strlen(buf) > 0)          /* check if empty */
          if(!isspace(buf[0]))      /* check if whitespace */
@@ -103,7 +103,7 @@ int trim_general(FILE * file_stm, FILE * trim_stm) {
 int trim_numeric(FILE * file_stm, FILE * trim_stm) {
    int line_count = 0;
    char buf[BUF_SIZE];
-   if(exit_null_safe(2, file_stm, trim_stm)) return 0;
+   exit_null_safe(2, file_stm, trim_stm);
    while(fgets(buf, sizeof(buf), file_stm) != NULL)
       if(strlen(buf) > 0)            /* check if empty */
          if(!isspace(buf[0]))        /* check if whitespace */
@@ -118,7 +118,7 @@ int trim_numeric(FILE * file_stm, FILE * trim_stm) {
 int trim_alpha(FILE * file_stm, FILE * trim_stm) {
    int line_count = 0;
    char buf[BUF_SIZE];
-   if(exit_null_safe(2, file_stm, trim_stm)) return 0;
+   exit_null_safe(2, file_stm, trim_stm);
    while(fgets(buf, sizeof(buf), file_stm) != NULL)
       if(strlen(buf) > 0)            /* check if empty */
          if(!isspace(buf[0]))        /* check if whitespace */
@@ -220,8 +220,7 @@ int load_native(const char * file_name, DB_TRIM file_trim, NATIVE_DB_LOAD file_l
    int trim_size = 0;
 
    /* check for invalid paramaters */
-   if(exit_null_safe(5, file_name, file_trim, file_load, native, config))
-      return CHECK_FAILED;
+   exit_null_safe(5, file_name, file_trim, file_load, native, config);
 
    /* check the record size */
    if(config->record_size <= 0) {

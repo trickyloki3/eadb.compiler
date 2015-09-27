@@ -1036,7 +1036,7 @@ int script_translate(script_t * script) {
             case 17: ret = translate_getitem(iter); break;                                                                  /* getitem */
             case 18: ret = translate_rentitem(iter); break;                                                                 /* rentitem */
             case 19: ret = translate_delitem(iter); break;                                                                  /* delitem */
-            case 20: ret = translate_getrandgroup(iter, iter->type); break;                                                 /* getrandgroupitem */
+            case 20: ret = translate_getrandgroupitem(iter); break;                                                         /* getrandgroupitem */
             case 23: ret = block_stack_push(iter, TYPE_ENG, "Set new font."); break;                                        /* setfont */
             case 24: ret = translate_buyingstore(iter); break;                                                              /* buyingstore */
             case 25: ret = translate_searchstore(iter); break;                                                              /* searchstores */
@@ -1058,7 +1058,7 @@ int script_translate(script_t * script) {
             case 46: ret = block_stack_push(iter, TYPE_ENG, "Change to Summer Outfit when worn."); break;                   /* setoption */
             case 47: ret = block_stack_push(iter, TYPE_ENG, "Summon a creature to mount. [Work for all classes]."); break;  /* setmounting */
             case 48: ret = translate_setfalcon(iter); break;                                                                /* setfalcon */
-            case 49: ret = translate_getrandgroup(iter, iter->type); break;                                                 /* getgroupitem */
+            case 49: ret = exit_abt_safe("maintenance"); break;                                                             /* getgroupitem */
             case 50: ret = block_stack_push(iter, TYPE_ENG, "Reset all status points."); break;                             /* resetstatus */
             case 51: ret = translate_bonus_script(iter); break;                                                             /* bonus_script */
             case 52: ret = block_stack_push(iter, TYPE_ENG, "Play another background song."); break;                        /* playbgm */
@@ -1218,7 +1218,7 @@ int script_generate(script_t * script) {
             default:
                 if(iter->eng_cnt != 1 || iter->eng[0] == NULL)
                     return CHECK_FAILED;
-                script->offset += sprintf(&script->buffer[script->offset], "%s.\n", iter->eng[0]);
+                script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->eng[0]);
         }
         iter = iter->next;
     } while (iter != script->blocks && !iter->free);
@@ -2154,6 +2154,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
                 if(NULL == map)
                     goto failed;
 
+                /* negative map id is special map */
                 switch(i) {
                     case -1:
                         if(block_stack_push(block, TYPE_ENG, "random monster"))
@@ -3093,9 +3094,6 @@ int translate_bonus(block_r * block, char * prefix) {
        block_stack_push(block, TYPE_ENG, buf))
         goto failed;
 
-    if(bonus->attr == 21)
-        printf("%s\n", buf);
-
 clean:
     SAFE_FREE(buf);
     SAFE_FREE(bonus);
@@ -3825,7 +3823,8 @@ int translate_callfunc(block_r * block) {
     return CHECK_PASSED;
 }
 
-int translate_getrandgroup(block_r * block, int handler) {
+int translate_getrandgroupitem(block_r * block) {
+
     return exit_abt_safe("maintenance");
 }
 

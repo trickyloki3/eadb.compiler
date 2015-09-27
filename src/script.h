@@ -287,7 +287,7 @@
     int translate_warp(block_r *);
     int translate_monster(block_r *);
     int translate_callfunc(block_r *);
-    int translate_getrandgroup(block_r *, int);
+    int translate_getrandgroupitem(block_r *);
     int translate_transform(block_r *);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);

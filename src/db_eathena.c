@@ -51,28 +51,28 @@ swap_t qsort_item_group = {
 int item_ea_load(void * db, int row, int col, char * val) {
     item_ea * record = &((item_ea *) db)[row];
     switch(col) {
-        case 0:   record->id = convert_integer(val, 10);                 break;
-        case 1:   strnload(record->aegis, MAX_NAME_SIZE, val);             break;
-        case 2:   strnload(record->eathena, MAX_NAME_SIZE, val);         break;
-        case 3:   record->type = convert_integer(val, 10);                 break;
-        case 4:   record->buy = convert_integer(val, 10);                 break;
-        case 5:   record->sell = convert_integer(val, 10);                 break;
-        case 6:   record->weight = convert_integer(val, 10);             break;
-        case 7:   record->atk = convert_integer(val, 10);                 break;
-        case 8:   record->def = convert_integer(val, 10);                 break;
+        case 0:   record->id = convert_integer(val, 10);                break;
+        case 1:   strnload(record->aegis, MAX_NAME_SIZE, val);          break;
+        case 2:   strnload(record->eathena, MAX_NAME_SIZE, val);        break;
+        case 3:   record->type = convert_integer(val, 10);              break;
+        case 4:   record->buy = convert_integer(val, 10);               break;
+        case 5:   record->sell = convert_integer(val, 10);              break;
+        case 6:   record->weight = convert_integer(val, 10);            break;
+        case 7:   record->atk = convert_integer(val, 10);               break;
+        case 8:   record->def = convert_integer(val, 10);               break;
         case 9:   record->range = convert_integer(val, 10);             break;
         case 10:  record->slots = convert_integer(val, 10);             break;
-        case 11:  record->job = convert_uinteger(val, 16);                 break;
+        case 11:  record->job = convert_uinteger(val, 16);              break;
         case 12:  record->upper = convert_integer(val, 10);             break;
-        case 13:  record->gender = convert_integer(val, 10);             break;
-        case 14:  record->loc = convert_integer(val, 10);                 break;
-        case 15:  record->wlv = convert_integer(val, 10);                 break;
-        case 16:  record->elv = convert_integer(val, 10);                 break;
-        case 17:  record->refineable = convert_integer(val, 10);         break;
-        case 18:  record->view = convert_integer(val, 10);                 break;
-        case 19:  strnload(record->script, MAX_SCRIPT_SIZE, val);         break;
-        case 20:  strnload(record->onequip, MAX_SCRIPT_SIZE, val);         break;
-        case 21:  strnload(record->onunequip, MAX_SCRIPT_SIZE, val);     break;
+        case 13:  record->gender = convert_integer(val, 10);            break;
+        case 14:  record->loc = convert_integer(val, 10);               break;
+        case 15:  record->wlv = convert_integer(val, 10);               break;
+        case 16:  record->elv = convert_integer(val, 10);               break;
+        case 17:  record->refineable = convert_integer(val, 10);        break;
+        case 18:  record->view = convert_integer(val, 10);              break;
+        case 19:  strnload(record->script, MAX_SCRIPT_SIZE, val);       break;
+        case 20:  strnload(record->onequip, MAX_SCRIPT_SIZE, val);      break;
+        case 21:  strnload(record->onunequip, MAX_SCRIPT_SIZE, val);    break;
         default:  exit_func_safe("invalid column field %d in eathena item database.\n", col);
     }
     return 0;
@@ -81,64 +81,64 @@ int item_ea_load(void * db, int row, int col, char * val) {
 int mob_ea_load(void * db, int row, int col, char * val) {
     mob_ea * record = &((mob_ea *) db)[row];
     switch(col) {
-        case 0: record->id = convert_integer(val,10);                  break;
-        case 1: strnload(record->sprite, MAX_NAME_SIZE, val);        break;
-        case 2: strnload(record->kro, MAX_NAME_SIZE, val);            break;
-        case 3: strnload(record->iro, MAX_NAME_SIZE, val);            break;
-        case 4: record->lv = convert_integer(val,10);                  break;
-        case 5: record->hp = convert_integer(val,10);                  break;
-        case 6: record->sp = convert_integer(val,10);                  break;
-        case 7: record->exp = convert_integer(val,10);                 break;
-        case 8: record->jexp = convert_integer(val,10);                break;
-        case 9: record->range = convert_integer(val,10);               break;
-        case 10: record->atk1 = convert_integer(val,10);               break;
-        case 11: record->atk2 = convert_integer(val,10);               break;
-        case 12: record->def = convert_integer(val,10);                break;
-        case 13: record->mdef = convert_integer(val,10);               break;
-        case 14: record->str = convert_integer(val,10);                break;
-        case 15: record->agi = convert_integer(val,10);                break;
-        case 16: record->vit = convert_integer(val,10);                break;
-        case 17: record->intr = convert_integer(val,10);               break;
-        case 18: record->dex = convert_integer(val,10);                break;
-        case 19: record->luk = convert_integer(val,10);                break;
-        case 20: record->range2 = convert_integer(val,10);             break;
-        case 21: record->range3 = convert_integer(val,10);             break;
-        case 22: record->scale = convert_integer(val,10);              break;
-        case 23: record->race = convert_integer(val,10);               break;
-        case 24: record->element = convert_integer(val,10);            break;
-        case 25: record->mode = convert_uinteger(val,16);              break;
-        case 26: record->speed = convert_integer(val,10);              break;
-        case 27: record->adelay = convert_integer(val,10);             break;
-        case 28: record->amotion = convert_integer(val,10);            break;
-        case 29: record->dmotion = convert_integer(val,10);            break;
-        case 30: record->mexp = convert_integer(val,10);               break;
-        case 31: record->expper = convert_integer(val,10);             break;
-        case 32: record->mvp1id = convert_integer(val,10);             break;
-        case 33: record->mvp1per = convert_integer(val,10);            break;
-        case 34: record->mvp2id = convert_integer(val,10);             break;
-        case 35: record->mvp2per = convert_integer(val,10);            break;
-        case 36: record->mvp3id = convert_integer(val,10);             break;
-        case 37: record->mvp3per = convert_integer(val,10);            break;
-        case 38: record->drop1id = convert_integer(val,10);            break;
-        case 39: record->drop1per = convert_integer(val,10);           break;
-        case 40: record->drop2id = convert_integer(val,10);            break;
-        case 41: record->drop2per = convert_integer(val,10);           break;
-        case 42: record->drop3id = convert_integer(val,10);            break;
-        case 43: record->drop3per = convert_integer(val,10);           break;
-        case 44: record->drop4id = convert_integer(val,10);            break;
-        case 45: record->drop4per = convert_integer(val,10);           break;
-        case 46: record->drop5id = convert_integer(val,10);            break;
-        case 47: record->drop5per = convert_integer(val,10);           break;
-        case 48: record->drop6id = convert_integer(val,10);            break;
-        case 49: record->drop6per = convert_integer(val,10);           break;
-        case 50: record->drop7id = convert_integer(val,10);            break;
-        case 51: record->drop7per = convert_integer(val,10);           break;
-        case 52: record->drop8id = convert_integer(val,10);            break;
-        case 53: record->drop8per = convert_integer(val,10);           break;
-        case 54: record->drop9id = convert_integer(val,10);            break;
-        case 55: record->drop9per = convert_integer(val,10);           break;
-        case 56: record->dropcardid = convert_integer(val,10);         break;
-        case 57: record->dropcardper = convert_integer(val,10);        break;
+        case 0: record->id = convert_integer(val,10);               break;
+        case 1: strnload(record->sprite, MAX_NAME_SIZE, val);       break;
+        case 2: strnload(record->kro, MAX_NAME_SIZE, val);          break;
+        case 3: strnload(record->iro, MAX_NAME_SIZE, val);          break;
+        case 4: record->lv = convert_integer(val,10);               break;
+        case 5: record->hp = convert_integer(val,10);               break;
+        case 6: record->sp = convert_integer(val,10);               break;
+        case 7: record->exp = convert_integer(val,10);              break;
+        case 8: record->jexp = convert_integer(val,10);             break;
+        case 9: record->range = convert_integer(val,10);            break;
+        case 10: record->atk1 = convert_integer(val,10);            break;
+        case 11: record->atk2 = convert_integer(val,10);            break;
+        case 12: record->def = convert_integer(val,10);             break;
+        case 13: record->mdef = convert_integer(val,10);            break;
+        case 14: record->str = convert_integer(val,10);             break;
+        case 15: record->agi = convert_integer(val,10);             break;
+        case 16: record->vit = convert_integer(val,10);             break;
+        case 17: record->intr = convert_integer(val,10);            break;
+        case 18: record->dex = convert_integer(val,10);             break;
+        case 19: record->luk = convert_integer(val,10);             break;
+        case 20: record->range2 = convert_integer(val,10);          break;
+        case 21: record->range3 = convert_integer(val,10);          break;
+        case 22: record->scale = convert_integer(val,10);           break;
+        case 23: record->race = convert_integer(val,10);            break;
+        case 24: record->element = convert_integer(val,10);         break;
+        case 25: record->mode = convert_uinteger(val,16);           break;
+        case 26: record->speed = convert_integer(val,10);           break;
+        case 27: record->adelay = convert_integer(val,10);          break;
+        case 28: record->amotion = convert_integer(val,10);         break;
+        case 29: record->dmotion = convert_integer(val,10);         break;
+        case 30: record->mexp = convert_integer(val,10);            break;
+        case 31: record->expper = convert_integer(val,10);          break;
+        case 32: record->mvp1id = convert_integer(val,10);          break;
+        case 33: record->mvp1per = convert_integer(val,10);         break;
+        case 34: record->mvp2id = convert_integer(val,10);          break;
+        case 35: record->mvp2per = convert_integer(val,10);         break;
+        case 36: record->mvp3id = convert_integer(val,10);          break;
+        case 37: record->mvp3per = convert_integer(val,10);         break;
+        case 38: record->drop1id = convert_integer(val,10);         break;
+        case 39: record->drop1per = convert_integer(val,10);        break;
+        case 40: record->drop2id = convert_integer(val,10);         break;
+        case 41: record->drop2per = convert_integer(val,10);        break;
+        case 42: record->drop3id = convert_integer(val,10);         break;
+        case 43: record->drop3per = convert_integer(val,10);        break;
+        case 44: record->drop4id = convert_integer(val,10);         break;
+        case 45: record->drop4per = convert_integer(val,10);        break;
+        case 46: record->drop5id = convert_integer(val,10);         break;
+        case 47: record->drop5per = convert_integer(val,10);        break;
+        case 48: record->drop6id = convert_integer(val,10);         break;
+        case 49: record->drop6per = convert_integer(val,10);        break;
+        case 50: record->drop7id = convert_integer(val,10);         break;
+        case 51: record->drop7per = convert_integer(val,10);        break;
+        case 52: record->drop8id = convert_integer(val,10);         break;
+        case 53: record->drop8per = convert_integer(val,10);        break;
+        case 54: record->drop9id = convert_integer(val,10);         break;
+        case 55: record->drop9per = convert_integer(val,10);        break;
+        case 56: record->dropcardid = convert_integer(val,10);      break;
+        case 57: record->dropcardper = convert_integer(val,10);     break;
         default: exit_func_safe("invalid column field %d in eathena mob database.\n", col);
     }
     return 0;
@@ -147,23 +147,23 @@ int mob_ea_load(void * db, int row, int col, char * val) {
 int skill_ea_load(void * db, int row, int col, char * val) {
     skill_ea * record = &((skill_ea *) db)[row];
     switch(col) {
-        case 0: record->id = convert_integer(val,10);                         break;
-        case 1: strnload(record->range.str, MAX_VARARG_SIZE, val);             break;
-        case 2: record->hit = convert_integer(val,10);                         break;
-        case 3: record->inf = convert_integer(val,10);                         break;
-        case 4: strnload(record->element.str, MAX_VARARG_SIZE, val);         break;
-        case 5: record->nk = convert_uinteger(val,16);                         break;
+        case 0: record->id = convert_integer(val,10);                       break;
+        case 1: strnload(record->range.str, MAX_VARARG_SIZE, val);          break;
+        case 2: record->hit = convert_integer(val,10);                      break;
+        case 3: record->inf = convert_integer(val,10);                      break;
+        case 4: strnload(record->element.str, MAX_VARARG_SIZE, val);        break;
+        case 5: record->nk = convert_uinteger(val,16);                      break;
         case 6: strnload(record->splash.str, MAX_VARARG_SIZE, val);         break;
-        case 7: record->maxlv = convert_integer(val,10);                     break;
+        case 7: record->maxlv = convert_integer(val,10);                    break;
         case 8: strnload(record->hit_amount.str, MAX_VARARG_SIZE, val);     break;
-        case 9: strnload(record->cast_cancel, MAX_NAME_SIZE, val);             break;
-        case 10: record->cast_def_reduce_rate = convert_integer(val,10);     break;
-        case 11: record->inf2 = convert_uinteger(val,16);                     break;
-        case 12: strnload(record->maxcount.str, MAX_VARARG_SIZE, val);         break;
-        case 13: strnload(record->type, MAX_NAME_SIZE, val);                 break;
-        case 14: strnload(record->blow_count.str, MAX_VARARG_SIZE, val);     break;
+        case 9: strnload(record->cast_cancel, MAX_NAME_SIZE, val);          break;
+        case 10: record->cast_def_reduce_rate = convert_integer(val,10);    break;
+        case 11: record->inf2 = convert_uinteger(val,16);                   break;
+        case 12: strnload(record->maxcount.str, MAX_VARARG_SIZE, val);      break;
+        case 13: strnload(record->type, MAX_NAME_SIZE, val);                break;
+        case 14: strnload(record->blow_count.str, MAX_VARARG_SIZE, val);    break;
         case 15: strnload(record->name, MAX_NAME_SIZE, val);                break;
-        case 16: strnload(record->desc, MAX_NAME_SIZE, val);                 break;
+        case 16: strnload(record->desc, MAX_NAME_SIZE, val);                break;
         default: exit_func_safe("invalid column field %d in eathena skill database.\n", col);
     }
     return 0;
@@ -178,16 +178,16 @@ int produce_ea_load(void * db, int row, int col, char * val) {
         case 0:
             material_cnt = 0;
             alternate = 0;
-            record->item_id = convert_integer(val,10);                            break;
-        case 1: record->item_lv = convert_integer(val,10);                         break;
-        case 2: record->skill_id = convert_integer(val,10);                     break;
-        case 3: record->skill_lv = convert_integer(val,10);                     break;
+            record->item_id = convert_integer(val,10);                      break;
+        case 1: record->item_lv = convert_integer(val,10);                  break;
+        case 2: record->skill_id = convert_integer(val,10);                 break;
+        case 3: record->skill_lv = convert_integer(val,10);                 break;
         default:
             (!alternate) ?
                 (record->item_id_req[material_cnt] = convert_integer(val,10)):
                 (record->item_amount_req[material_cnt++] = convert_integer(val,10));
             alternate = !alternate;
-            record->ingredient_count = material_cnt;                            break;
+            record->ingredient_count = material_cnt;                        break;
     }
     return 0;
 }
@@ -195,31 +195,31 @@ int produce_ea_load(void * db, int row, int col, char * val) {
 int mercenary_ea_load(void * db, int row, int col, char * val) {
     mercenary_ea * record = &((mercenary_ea *) db)[row];
     switch(col) {
-        case 0: record->id = convert_integer(val, 10);                 break;
-        case 1: strnload(record->sprite, MAX_NAME_SIZE, val);         break;
+        case 0: record->id = convert_integer(val, 10);              break;
+        case 1: strnload(record->sprite, MAX_NAME_SIZE, val);       break;
         case 2: strnload(record->name, MAX_NAME_SIZE, val);         break;
-        case 3: record->lv = convert_integer(val, 10);                 break;
-        case 4: record->hp = convert_integer(val, 10);                 break;
-        case 5: record->sp = convert_integer(val, 10);                 break;
-        case 6: record->range1 = convert_integer(val, 10);             break;
-        case 7: record->atk1 = convert_integer(val, 10);             break;
-        case 8: record->atk2 = convert_integer(val, 10);             break;
+        case 3: record->lv = convert_integer(val, 10);              break;
+        case 4: record->hp = convert_integer(val, 10);              break;
+        case 5: record->sp = convert_integer(val, 10);              break;
+        case 6: record->range1 = convert_integer(val, 10);          break;
+        case 7: record->atk1 = convert_integer(val, 10);            break;
+        case 8: record->atk2 = convert_integer(val, 10);            break;
         case 9: record->def = convert_integer(val, 10);             break;
-        case 10: record->mdef = convert_integer(val, 10);             break;
-        case 11: record->str = convert_integer(val, 10);             break;
-        case 12: record->agi = convert_integer(val, 10);             break;
-        case 13: record->vit = convert_integer(val, 10);             break;
-        case 14: record->intr = convert_integer(val, 10);             break;
-        case 15: record->dex = convert_integer(val, 10);             break;
-        case 16: record->luk = convert_integer(val, 10);             break;
+        case 10: record->mdef = convert_integer(val, 10);           break;
+        case 11: record->str = convert_integer(val, 10);            break;
+        case 12: record->agi = convert_integer(val, 10);            break;
+        case 13: record->vit = convert_integer(val, 10);            break;
+        case 14: record->intr = convert_integer(val, 10);           break;
+        case 15: record->dex = convert_integer(val, 10);            break;
+        case 16: record->luk = convert_integer(val, 10);            break;
         case 17: record->range2 = convert_integer(val, 10);         break;
         case 18: record->range3 = convert_integer(val, 10);         break;
-        case 19: record->scale = convert_integer(val, 10);             break;
-        case 20: record->race = convert_integer(val, 10);             break;
-        case 21: record->element = convert_integer(val, 10);         break;
-        case 22: record->speed = convert_integer(val, 10);             break;
+        case 19: record->scale = convert_integer(val, 10);          break;
+        case 20: record->race = convert_integer(val, 10);           break;
+        case 21: record->element = convert_integer(val, 10);        break;
+        case 22: record->speed = convert_integer(val, 10);          break;
         case 23: record->adelay = convert_integer(val, 10);         break;
-        case 24: record->amotion = convert_integer(val, 10);         break;
+        case 24: record->amotion = convert_integer(val, 10);        break;
         case 25: record->dmotion = convert_integer(val, 10);         break;
         default: exit_func_safe("invalid column field %d in eathena mercenary database.\n", col);
     }
@@ -229,28 +229,28 @@ int mercenary_ea_load(void * db, int row, int col, char * val) {
 int pet_ea_load(void * db, int row, int col, char * val) {
     pet_ea * record = &((pet_ea *) db)[row];
     switch(col) {
-        case 0: record->mob_id = convert_integer(val,10);                 break;
-        case 1: strnload(record->name, MAX_NAME_SIZE, val);             break;
-        case 2: strnload(record->jname, MAX_NAME_SIZE, val);             break;
-        case 3: record->lure_id = convert_integer(val,10);                 break;
-        case 4: record->egg_id = convert_integer(val,10);                 break;
-        case 5: record->equip_id = convert_integer(val,10);             break;
-        case 6: record->food_id = convert_integer(val,10);                 break;
-        case 7: record->fullness = convert_integer(val,10);             break;
-        case 8: record->hungry_delay = convert_integer(val,10);         break;
-        case 9: record->r_hungry = convert_integer(val,10);             break;
-        case 10: record->r_full = convert_integer(val,10);                 break;
-        case 11: record->intimate = convert_integer(val,10);             break;
-        case 12: record->die = convert_integer(val,10);                 break;
-        case 13: record->capture = convert_integer(val,10);             break;
-        case 14: record->speed = convert_integer(val,10);                 break;
-        case 15: record->s_performance = convert_integer(val,10);         break;
-        case 16: record->talk_convert = convert_integer(val,10);         break;
-        case 17: record->attack_rate = convert_integer(val,10);         break;
-        case 18: record->defence_attack_rate = convert_integer(val,10); break;
-        case 19: record->change_target_rate = convert_integer(val,10);     break;
-        case 20: strnload(record->pet_script, MAX_SCRIPT_SIZE, val);    break;
-        case 21: strnload(record->loyal_script, MAX_SCRIPT_SIZE, val);    break;
+        case 0: record->mob_id = convert_integer(val,10);                   break;
+        case 1: strnload(record->name, MAX_NAME_SIZE, val);                 break;
+        case 2: strnload(record->jname, MAX_NAME_SIZE, val);                break;
+        case 3: record->lure_id = convert_integer(val,10);                  break;
+        case 4: record->egg_id = convert_integer(val,10);                   break;
+        case 5: record->equip_id = convert_integer(val,10);                 break;
+        case 6: record->food_id = convert_integer(val,10);                  break;
+        case 7: record->fullness = convert_integer(val,10);                 break;
+        case 8: record->hungry_delay = convert_integer(val,10);             break;
+        case 9: record->r_hungry = convert_integer(val,10);                 break;
+        case 10: record->r_full = convert_integer(val,10);                  break;
+        case 11: record->intimate = convert_integer(val,10);                break;
+        case 12: record->die = convert_integer(val,10);                     break;
+        case 13: record->capture = convert_integer(val,10);                 break;
+        case 14: record->speed = convert_integer(val,10);                   break;
+        case 15: record->s_performance = convert_integer(val,10);           break;
+        case 16: record->talk_convert = convert_integer(val,10);            break;
+        case 17: record->attack_rate = convert_integer(val,10);             break;
+        case 18: record->defence_attack_rate = convert_integer(val,10);     break;
+        case 19: record->change_target_rate = convert_integer(val,10);      break;
+        case 20: strnload(record->pet_script, MAX_SCRIPT_SIZE, val);        break;
+        case 21: strnload(record->loyal_script, MAX_SCRIPT_SIZE, val);      break;
         default: exit_func_safe("invalid column field %d in eathena pet database.\n", col);
     }
     return 0;
@@ -275,8 +275,8 @@ int const_ea_load(void * db, int row, int col, char * val) {
             /* constant can be represented as hexadecimal or decimal */
             record->value = (strlen(val) > 2 && val[0] == '0' && val[1] == 'x') ?
                 convert_integer(val, 16):
-                convert_integer(val, 10);                                                break;
-        case 2: record->type = convert_integer(val, 10);                                 break;
+                convert_integer(val, 10);                                               break;
+        case 2: record->type = convert_integer(val, 10);                                break;
         default: exit_func_safe("invalid column field %d in eathena const database.\n", col);
     }
     return 0;
@@ -286,8 +286,7 @@ int ea_db_init(ea_db_t ** ea, const char * path) {
     char * error = NULL;
     ea_db_t * _ea = NULL;
 
-    if(exit_null_safe(2, ea, path))
-        return CHECK_FAILED;
+    exit_null_safe(2, ea, path);
 
     _ea = calloc(1, sizeof(ea_db_t));
     if(NULL == _ea)
@@ -299,7 +298,7 @@ int ea_db_init(ea_db_t ** ea, const char * path) {
         goto failed;
     }
 
-    if(    SQLITE_OK != sqlite3_exec(_ea->db,
+    if( SQLITE_OK != sqlite3_exec(_ea->db,
         EA_ITEM_DELETE
         EA_ITEM_CREATE
         EA_MOB_DELETE
@@ -326,7 +325,7 @@ int ea_db_init(ea_db_t ** ea, const char * path) {
         goto failed;
     }
 
-    if(    SQLITE_OK != sqlite3_prepare_v2(_ea->db, EA_ITEM_INSERT, strlen(EA_ITEM_INSERT), &_ea->item_ea_sql_insert, NULL) ||
+    if( SQLITE_OK != sqlite3_prepare_v2(_ea->db, EA_ITEM_INSERT, strlen(EA_ITEM_INSERT), &_ea->item_ea_sql_insert, NULL) ||
         SQLITE_OK != sqlite3_prepare_v2(_ea->db, EA_MOB_INSERT, strlen(EA_MOB_INSERT), &_ea->mob_ea_sql_insert, NULL) ||
         SQLITE_OK != sqlite3_prepare_v2(_ea->db, EA_SKILL_INSERT, strlen(EA_SKILL_INSERT), &_ea->skill_ea_sql_insert, NULL) ||
         SQLITE_OK != sqlite3_prepare_v2(_ea->db, EA_PRODUCE_INSERT, strlen(EA_PRODUCE_INSERT), &_ea->produce_ea_sql_insert, NULL) ||
@@ -350,8 +349,7 @@ failed:
 int ea_db_deit(ea_db_t ** ea) {
     ea_db_t * _ea = NULL;
 
-    if(exit_null_safe(2, ea, *ea))
-        return CHECK_FAILED;
+    exit_null_safe(2, ea, *ea);
 
     _ea = *ea;
     if( SQLITE_OK != sqlite3_finalize(_ea->item_ea_sql_insert) ||
@@ -411,7 +409,7 @@ int ea_db_item_load_record(item_ea * items, int size, sqlite3_stmt * sql) {
 
     for(i = 0; i < size; i++) {
         item = &items[i];
-        if(    SQLITE_OK != sqlite3_clear_bindings(sql) ||
+        if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, item->id) ||
             SQLITE_OK != sqlite3_bind_text(sql, 2, item->aegis, strlen(item->aegis), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_text(sql, 3, item->eathena, strlen(item->eathena), SQLITE_STATIC) ||
@@ -441,8 +439,6 @@ int ea_db_item_load_record(item_ea * items, int size, sqlite3_stmt * sql) {
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, item->aegis);
         }
     }
     return CHECK_PASSED;
@@ -474,7 +470,7 @@ int ea_db_mob_load_record(mob_ea * mobs, int size, sqlite3_stmt * sql) {
     mob_ea * mob = NULL;
     for(i = 0; i < size; i++) {
         mob = &mobs[i];
-        if(    SQLITE_OK != sqlite3_clear_bindings(sql) ||
+        if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, mob->id) ||
             SQLITE_OK != sqlite3_bind_text(sql, 2, mob->sprite, strlen(mob->sprite), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_text(sql, 3, mob->kro, strlen(mob->kro), SQLITE_STATIC) ||
@@ -540,8 +536,6 @@ int ea_db_mob_load_record(mob_ea * mobs, int size, sqlite3_stmt * sql) {
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, mob->iro);
         }
     }
 
@@ -574,7 +568,7 @@ int ea_db_skill_load_record(skill_ea * skills, int size, sqlite3_stmt * sql) {
     skill_ea * skill = NULL;
     for(i = 0; i < size; i++) {
         skill = &skills[i];
-        if(    SQLITE_OK != sqlite3_clear_bindings(sql) ||
+        if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, skill->id) ||
             SQLITE_OK != sqlite3_bind_text(sql, 2, skill->range.str, strlen(skill->range.str), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 3, skill->hit) ||
@@ -599,8 +593,6 @@ int ea_db_skill_load_record(skill_ea * skills, int size, sqlite3_stmt * sql) {
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, skill->name);
         }
     }
     return CHECK_PASSED;
@@ -650,8 +642,6 @@ int ea_db_produce_load_record(produce_ea * produces, int size, sqlite3_stmt * sq
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100d\r", i, size, produce->item_id);
         }
     }
 
@@ -686,7 +676,7 @@ int ea_db_merc_load_record(mercenary_ea * mercs, int size, sqlite3_stmt * sql) {
 
     for(i = 0; i < size; i++) {
         merc = &mercs[i];
-        if(    SQLITE_OK != sqlite3_clear_bindings(sql) ||
+        if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, merc->id) ||
             SQLITE_OK != sqlite3_bind_text(sql, 2, merc->sprite, strlen(merc->sprite), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_text(sql, 3, merc->name, strlen(merc->name), SQLITE_STATIC) ||
@@ -720,8 +710,6 @@ int ea_db_merc_load_record(mercenary_ea * mercs, int size, sqlite3_stmt * sql) {
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, merc->name);
         }
     }
     return CHECK_PASSED;
@@ -754,7 +742,7 @@ int ea_db_pet_load_record(pet_ea * pets, int size, sqlite3_stmt * sql) {
 
     for(i = 0; i < size; i++) {
         pet = &pets[i];
-        if(    SQLITE_OK != sqlite3_clear_bindings(sql) ||
+        if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, pet->mob_id) ||
             SQLITE_OK != sqlite3_bind_text(sql, 2, pet->name, strlen(pet->name), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_text(sql, 3, pet->jname, strlen(pet->jname), SQLITE_STATIC) ||
@@ -784,8 +772,6 @@ int ea_db_pet_load_record(pet_ea * pets, int size, sqlite3_stmt * sql) {
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, pet->name);
         }
     }
 
@@ -909,7 +895,7 @@ int ea_db_const_load_record(const_ea * constants, int size, sqlite3_stmt * sql) 
     const_ea * constant = NULL;
     for(i = 0; i < size; i++) {
         constant = &constants[i];
-        if(    SQLITE_OK != sqlite3_clear_bindings(sql) ||
+        if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_text(sql, 1, constant->name, strlen(constant->name), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 2, constant->value) ||
             SQLITE_OK != sqlite3_bind_int(sql, 3, constant->type) ||
@@ -920,8 +906,6 @@ int ea_db_const_load_record(const_ea * constants, int size, sqlite3_stmt * sql) 
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
             }
-        } else {
-            fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, constant->name);
         }
     }
     return CHECK_PASSED;

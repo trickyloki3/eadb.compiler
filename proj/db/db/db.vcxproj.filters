@@ -15,30 +15,48 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\db_rathena.h">
+    <ClInclude Include="..\..\..\src\db_eathena.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\load.h">
+    <ClInclude Include="..\..\..\src\db_hercules.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\setting.h">
+    <ClInclude Include="..\..\..\src\db_rathena.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\util.h">
+    <ClInclude Include="..\..\..\src\db_resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\load.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\setting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\db_rathena.c">
+    <ClCompile Include="..\..\..\src\db.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\load.c">
+    <ClCompile Include="..\..\..\src\db_eathena.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\util.c">
+    <ClCompile Include="..\..\..\src\db_hercules.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ra_sql.c">
+    <ClCompile Include="..\..\..\src\db_rathena.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\db_resources.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

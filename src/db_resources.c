@@ -144,8 +144,7 @@ int opt_db_init(opt_db_t ** opt, const char * path) {
    char * error = NULL;
    opt_db_t * _opt = NULL;
 
-   if(exit_null_safe(2, opt, path))
-      return CHECK_FAILED;
+   exit_null_safe(2, opt, path);
 
    _opt = calloc(1, sizeof(opt_db_t));
    if(NULL == _opt)
@@ -205,8 +204,7 @@ failed:
 int opt_db_deit(opt_db_t ** opt) {
    opt_db_t * _opt = NULL;
 
-   if(exit_null_safe(2, opt, *opt))
-      return CHECK_FAILED;
+   exit_null_safe(2, opt, *opt);
 
    _opt = *opt;
    if( SQLITE_OK != sqlite3_finalize(_opt->option_sql_insert) ||
@@ -276,8 +274,6 @@ int opt_db_res_load_record(option_res * options, int size, sqlite3_stmt * sql) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, option->option);
       }
    }
    return CHECK_PASSED;
@@ -321,8 +317,6 @@ int opt_db_map_load_record(map_res * maps, int size, sqlite3_stmt * sql) {
                 fprintf(stderr, "[load]: failed to reset sql statement.\n");
                 return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, map->map);
       }
    }
    return CHECK_PASSED;
@@ -377,10 +371,7 @@ int opt_db_bns_load_record(bonus_res * bonuses, int size, sqlite3_stmt * sql) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, bonus->bonus);
       }
-
    }
    return CHECK_PASSED;
 }
@@ -432,10 +423,7 @@ int opt_db_sta_load_record(status_res * statuses, int size, sqlite3_stmt * sql) 
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, status->scstr);
       }
-
    }
    return CHECK_PASSED;
 }
@@ -483,10 +471,7 @@ int opt_db_var_load_record(var_res * vars, int size, sqlite3_stmt * sql) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, var->name);
       }
-
    }
    return CHECK_PASSED;
 }
@@ -529,8 +514,6 @@ int opt_db_blk_load_record(block_res * blocks, int size, sqlite3_stmt * sql) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, block->name);
       }
    }
    return CHECK_PASSED;
@@ -573,8 +556,6 @@ int opt_db_rid_load_record(nid_res * rids, int size, sqlite3_stmt * sql) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, rid->res);
       }
    }
    return CHECK_PASSED;
@@ -618,8 +599,6 @@ int opt_db_nid_load_record(nid_res * nids, int size, sqlite3_stmt * sql) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;
           }
-      } else {
-         fprintf(stderr,"[load]: %d/%d ... %-100s\r", i, size, nid->res);
       }
    }
    return CHECK_PASSED;
