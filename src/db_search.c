@@ -99,7 +99,8 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
                init_db_prep_sql(_db->db, &_db->pet_id, RA_PET_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->produce_id, RA_PRODUCE_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_id, RA_ITEM_GROUP_ID_SEARCH) ||
-               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH))
+               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_id_meta, RA_ITEM_GROUP_ID_META_SEARCH))
                 goto failed;
             break;
         case HERCULE:
@@ -136,7 +137,8 @@ int deit_db_load(db_t ** db) {
     exit_null_safe(2, db, *db);
 
     _db = *db;
-    if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
+    if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_group_id_meta)) ||
+       (_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
        (_db->item_group_record && deit_db_prep_sql(_db->db, &_db->item_group_record)) ||
        (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
        (_db->produce_id && deit_db_prep_sql(_db->db, &_db->produce_id)) ||
@@ -903,5 +905,34 @@ int item_combo_free(combo_t ** item_combos) {
     }
 
     *item_combos = NULL;
+    return CHECK_PASSED;
+}
+
+int item_group_id_meta(db_t * db, item_group_meta_t * meta, int group_id, int subgroup_id) {
+    sqlite3_stmt * stmt = NULL;
+
+    exit_null_safe(2, db, meta);
+
+    if(exec_db_query(db->db, db->item_group_id_meta, 2, BIND_NUMBER, group_id, BIND_NUMBER, subgroup_id))
+        return CHECK_FAILED;
+
+    stmt = db->item_group_id_meta->stmt;
+    meta->group_id = sqlite3_column_int(stmt, 0);
+    meta->subgroup_id = sqlite3_column_int(stmt, 1);
+    meta->item = sqlite3_column_int(stmt, 2);
+    meta->heal = sqlite3_column_int(stmt, 3);
+    meta->usable = sqlite3_column_int(stmt, 4);
+    meta->etc = sqlite3_column_int(stmt, 5);
+    meta->armor = sqlite3_column_int(stmt, 6);
+    meta->weapon = sqlite3_column_int(stmt, 7);
+    meta->card = sqlite3_column_int(stmt, 8);
+    meta->pet = sqlite3_column_int(stmt, 9);
+    meta->pet_equip = sqlite3_column_int(stmt, 10);
+    meta->ammo = sqlite3_column_int(stmt, 11);
+    meta->delay_usable = sqlite3_column_int(stmt, 12);
+    meta->shadow = sqlite3_column_int(stmt, 13);
+    meta->confirm_usable = sqlite3_column_int(stmt, 14);
+    meta->bind = sqlite3_column_int(stmt, 15);
+    meta->rent = sqlite3_column_int(stmt, 16);
     return CHECK_PASSED;
 }

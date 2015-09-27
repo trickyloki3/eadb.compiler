@@ -150,7 +150,8 @@ int main(int argc, char * argv[]) {
            path_concat(server_path, server_len, PATH_MAX, "db/re/item_package.txt") ||
            ra_db_item_package_load(rathena, server_path) ||
            path_concat(server_path, server_len, PATH_MAX, "db/re/item_combo_db.txt") ||
-           ra_db_item_combo_load(rathena, server_path)) {
+           ra_db_item_combo_load(rathena, server_path) ||
+           ra_db_item_package_meta(rathena)) {
             fprintf(stderr, "failed to load rathena databases.\n");
             goto clean;
         }

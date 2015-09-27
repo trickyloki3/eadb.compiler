@@ -198,6 +198,28 @@
         struct combo_t * next;
     } combo_t;
 
+    typedef struct item_group_meta_t {
+        int group_id;
+        int subgroup_id;
+        int item;                   /* item count */
+        /* item type count */
+        int heal;                   /* 0 */
+        int usable;                 /* 2 */
+        int etc;                    /* 3 */
+        int armor;                  /* 4 */
+        int weapon;                 /* 5 */
+        int card;                   /* 6 */
+        int pet;                    /* 7 */
+        int pet_equip;              /* 8 */
+        int ammo;                   /* 10 */
+        int delay_usable;           /* 11 */
+        int shadow;                 /* 12 */
+        int confirm_usable;         /* 18 */
+        /* item group count */
+        int bind;                   /* bind count */
+        int rent;                   /* rent count */
+    } item_group_meta_t;
+
     /* resource database queries */
     #define RE_OPT_NAME_SEARCH      "SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
     #define RE_MAP_NAME_SEARCH      "SELECT * FROM map_res WHERE map = ?;"
@@ -250,8 +272,10 @@
     #define EA_ITEM_GROUP_ID_SEARCH "SELECT group_id, size FROM item_group_ea WHERE group_id = ?;"
     #define EA_ITEM_GROUP_ID_RECORD "SELECT item_id, rate FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
     #define RA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate, amount, random, announced, duration, guid, bound, named FROM item_package_ra WHERE group_id = ?;"
+    #define RA_ITEM_GROUP_ID_META_SEARCH "SELECT * FROM item_package_meta_ra WHERE group_id = ? AND subgroup_id = ?;"
     #define RA_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
     #define HE_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
+
 
     typedef struct sql_t {
         char * query;
@@ -286,6 +310,8 @@
         sql_t * item_group_id;
         sql_t * item_group_record;
         sql_t * item_combo;
+        /* server meta table search */
+        sql_t * item_group_id_meta;
         /* server item database iterate */
         sql_t * item_db;
     } db_t;
@@ -343,4 +369,5 @@
     int item_group_free(item_group_t *);
     int item_combo_id(db_t *, combo_t **, int);
     int item_combo_free(combo_t **);
+    int item_group_id_meta(db_t *, item_group_meta_t *, int, int);
 #endif

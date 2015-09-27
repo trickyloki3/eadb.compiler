@@ -49,7 +49,7 @@
     } item_ra;
 
     #define RA_ITEM_SEARCH_NAME     "SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
-    #define RA_ITEM_SEARCH_ID       "SELECT id, eathena, script FROM item_ra WHERE id = ? COLLATE NOCASE;"
+    #define RA_ITEM_SEARCH_ID       "SELECT id, eathena, script, type FROM item_ra WHERE id = ? COLLATE NOCASE;"
     #define RA_ITEM_INSERT          "INSERT INTO item_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_ITEM_CREATE          "CREATE TABLE IF NOT EXISTS item_ra("\
                                     "   id INTEGER PRIMARY KEY,"\
@@ -416,8 +416,8 @@
         int item_id;
         int rate;
     } item_group_ra;
-    #define RA_ITEM_GROUP_INSERT    "INSERT INTO item_package_ra VALUES(?, ?, ?, 0, 0, 0, 0, 0, 0, 0);"
 
+    #define RA_ITEM_GROUP_INSERT    "INSERT INTO item_package_ra VALUES(?, ?, ?, 0, 1, 0, 0, 0, 0, 0);"
     #define RA_ITEM_PACKAGE_INSERT  "INSERT INTO item_package_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_ITEM_PACKAGE_CREATE  "CREATE TABLE IF NOT EXISTS item_package_ra("\
                                     "   group_id INTEGER,"\
@@ -447,6 +447,51 @@
                                     ");"
     #define RA_ITEM_COMBO_DELETE    "DROP TABLE IF EXISTS item_combo_ra;"
 
+    typedef struct {
+        int group_id;
+        int subgroup_id;
+        int item;                   /* item count */
+        /* item type count */
+        int heal;                   /* 0 */
+        int usable;                 /* 2 */
+        int etc;                    /* 3 */
+        int armor;                  /* 4 */
+        int weapon;                 /* 5 */
+        int card;                   /* 6 */
+        int pet;                    /* 7 */
+        int pet_equip;              /* 8 */
+        int ammo;                   /* 10 */
+        int delay_usable;           /* 11 */
+        int shadow;                 /* 12 */
+        int confirm_usable;         /* 18 */
+        /* item group count */
+        int bind;                   /* bind count */
+        int rent;                   /* rent count */
+    } package_meta_ra;
+
+    #define RA_ITEM_PACKAGE_META_CREATE "CREATE TABLE IF NOT EXISTS item_package_meta_ra("\
+                                        "group_id INTEGER,"\
+                                        "subgroup_id INTEGER,"\
+                                        "item INTEGER,"\
+                                        "heal INTEGER,"\
+                                        "usable INTEGER,"\
+                                        "etc INTEGER,"\
+                                        "armor INTEGER,"\
+                                        "weapon INTEGER,"\
+                                        "card INTEGER,"\
+                                        "pet INTEGER,"\
+                                        "pet_equip INTEGER,"\
+                                        "ammo INTEGER,"\
+                                        "delay_usable INTEGER,"\
+                                        "shadow INTEGER,"\
+                                        "confirm_usable INTEGER,"\
+                                        "bind INTEGER,"\
+                                        "rent INTEGER,"\
+                                        "PRIMARY KEY(group_id, subgroup_id));"
+    #define RA_ITEM_PACKAGE_META_DELETE "DROP TABLE IF EXISTS item_package_meta_ra;"
+    #define RA_ITEM_PACKAGE_META_INSERT "INSERT INTO item_package_meta_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+    #define RA_ITEM_PACKAGE_QUERY       "SELECT * FROM item_package_ra ORDER BY group_id, random;"
+
     typedef struct ra_db_t {
         sqlite3 * db;
         /* insert */
@@ -464,6 +509,9 @@
         sqlite3_stmt * const_ra_name_search;
         sqlite3_stmt * item_ra_name_search;
         sqlite3_stmt * item_ra_id_search;
+        /* meta */
+        sqlite3_stmt * item_package_meta_insert;
+        sqlite3_stmt * item_package_query;
     } ra_db_t;
 
     /* rathena native database loading */
@@ -506,4 +554,8 @@
     int ra_db_item_group_package_record(ra_db_t *, package_ra *, int);
     int ra_db_item_combo_load(ra_db_t *, const char *);
     int ra_db_item_combo_load_record(ra_db_t *, combo_ra *, int);
+
+    /* metadata tables for item groups */
+    int ra_db_item_package_meta(ra_db_t *);
+    int ra_db_item_package_meta_insert(sqlite3_stmt *, package_meta_ra *);
 #endif

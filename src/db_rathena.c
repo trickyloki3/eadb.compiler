@@ -319,7 +319,9 @@ int ra_db_init(ra_db_t ** ra, const char * path) {
         RA_ITEM_PACKAGE_DELETE
         RA_ITEM_PACKAGE_CREATE
         RA_ITEM_COMBO_DELETE
-        RA_ITEM_COMBO_CREATE,
+        RA_ITEM_COMBO_CREATE
+        RA_ITEM_PACKAGE_META_DELETE
+        RA_ITEM_PACKAGE_META_CREATE,
         NULL, NULL, &error)) {
         if(NULL != error) {
             fprintf(stderr, "[load]: failed to load schema %s; %s.\n", path, error);
@@ -340,7 +342,9 @@ int ra_db_init(ra_db_t ** ra, const char * path) {
         SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_CONST_SEARCH, strlen(RA_CONST_SEARCH), &_ra->const_ra_name_search, NULL) ||
         SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_NAME, strlen(RA_ITEM_SEARCH_NAME), &_ra->item_ra_name_search, NULL) ||
         SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_ID, strlen(RA_ITEM_SEARCH_ID), &_ra->item_ra_id_search, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_INSERT, strlen(RA_ITEM_PACKAGE_INSERT), &_ra->item_package_ra_sql_insert, NULL)) {
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_INSERT, strlen(RA_ITEM_PACKAGE_INSERT), &_ra->item_package_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_META_INSERT, strlen(RA_ITEM_PACKAGE_META_INSERT), &_ra->item_package_meta_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_QUERY, strlen(RA_ITEM_PACKAGE_QUERY), &_ra->item_package_query, NULL)) {
         fprintf(stderr, "[load]: failed prepare sql statments; %s.\n", sqlite3_errmsg(_ra->db));
         goto failed;
     }
@@ -371,6 +375,8 @@ int ra_db_deit(ra_db_t ** ra) {
         SQLITE_OK != sqlite3_finalize(_ra->const_ra_name_search) ||
         SQLITE_OK != sqlite3_finalize(_ra->item_ra_name_search) ||
         SQLITE_OK != sqlite3_finalize(_ra->item_ra_id_search) ||
+        SQLITE_OK != sqlite3_finalize(_ra->item_package_meta_insert) ||
+        SQLITE_OK != sqlite3_finalize(_ra->item_package_query) ||
         SQLITE_OK != sqlite3_close(_ra->db)) {
         exit(EXIT_FAILURE);
     }
@@ -893,7 +899,7 @@ int item_ra_id_search(sqlite3_stmt * sql, int item_id, item_ra * item) {
     item->id = sqlite3_column_int(sql, 0);
     strncopy(item->eathena, MAX_NAME_SIZE, sqlite3_column_text(sql, 1));
     strncopy(item->script, MAX_SCRIPT_SIZE, sqlite3_column_text(sql, 2));
-
+    item->type = sqlite3_column_int(sql, 3);
     sqlite3_reset(sql);
     return CHECK_PASSED;
 }
@@ -1079,5 +1085,120 @@ int ra_db_item_combo_load_record(ra_db_t * ra, combo_ra * combos, int size) {
         }
     }
 
+    return CHECK_PASSED;
+}
+
+int ra_db_item_package_meta(ra_db_t * ra) {
+    int ret = 0;
+    int cnt = 0;
+    item_ra item;
+    package_ra package;
+    package_meta_ra meta;
+    sqlite3_stmt * stmt = NULL;
+
+    /* error on invalid reference */
+    exit_null_safe(1, ra);
+
+    /* setup the local stack buffers */
+    memset(&item, 0, sizeof(item_ra));
+    memset(&package, 0, sizeof(package_ra));
+    memset(&meta, 0, sizeof(package_meta_ra));
+    stmt = ra->item_package_query;
+
+    /* query each item package record */
+    ret = sqlite3_step(stmt);
+    if(SQLITE_DONE == ret)
+        return exit_abt_safe("item package table is empty");
+
+    while(SQLITE_ROW == ret) {
+        package.group_id = sqlite3_column_int(stmt, 0);
+        package.item_id = sqlite3_column_int(stmt, 1);
+        package.rate = sqlite3_column_int(stmt, 2);
+        package.amount = sqlite3_column_int(stmt, 3);
+        package.random = sqlite3_column_int(stmt, 4);
+        package.announced = sqlite3_column_int(stmt, 5);
+        package.duration = sqlite3_column_int(stmt, 6);
+        package.guid = sqlite3_column_int(stmt, 7);
+        package.bound = sqlite3_column_int(stmt, 8);
+        package.named = sqlite3_column_int(stmt, 9);
+
+        /* setup the package meta record */
+        if(0 == cnt) {
+            meta.group_id = package.group_id;
+            meta.subgroup_id = package.random;
+        } else if(meta.group_id != package.group_id ||
+                  meta.subgroup_id != package.random) {
+            /* write the current package meta record to database */
+            if(ra_db_item_package_meta_insert(ra->item_package_meta_insert, &meta))
+                return CHECK_FAILED;
+            memset(&meta, 0, sizeof(package_meta_ra));
+            meta.group_id = package.group_id;
+            meta.subgroup_id = package.random;
+        }
+
+        /* item count */
+        meta.item++;
+
+        /* item type count */
+        if(item_ra_id_search(ra->item_ra_id_search, package.item_id, &item))
+            return exit_func_safe("item id %d does not exist", package.item_id);
+        switch(item.type) {
+            case 0: meta.heal++; break;
+            case 2: meta.usable++; break;
+            case 3: meta.etc++; break;
+            case 4: meta.armor++; break;
+            case 5: meta.weapon++; break;
+            case 6: meta.card++; break;
+            case 7: meta.pet++; break;
+            case 8: meta.pet_equip++; break;
+            case 10: meta.ammo++; break;
+            case 11: meta.delay_usable++; break;
+            case 12: meta.shadow++; break;
+            case 18: meta.confirm_usable++; break;
+            default:
+                return exit_func_safe("invalid item type %d for item id %d", item.type, item.id);
+        }
+
+        /* item group count */
+        if(package.bound > 0)
+            meta.bind++;
+        if(package.duration > 0)
+            meta.rent++;
+
+        ret = sqlite3_step(stmt);
+        cnt++;
+    }
+
+    /* write the last package meta record to database */
+    if(ra_db_item_package_meta_insert(ra->item_package_meta_insert, &meta))
+        return CHECK_FAILED;
+
+    fprintf(stdout, "[load]: created item package meta table.\n");
+    return CHECK_PASSED;
+}
+
+int ra_db_item_package_meta_insert(sqlite3_stmt * stmt, package_meta_ra * meta) {
+    if(SQLITE_OK != sqlite3_reset(stmt) ||
+       SQLITE_OK != sqlite3_clear_bindings(stmt) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 1, meta->group_id) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 2, meta->subgroup_id) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 3, meta->item) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 4, meta->heal) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 5, meta->usable) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 6, meta->etc) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 7, meta->armor) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 8, meta->weapon) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 9, meta->card) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 10, meta->pet) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 11, meta->pet_equip) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 12, meta->ammo) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 13, meta->delay_usable) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 14, meta->shadow) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 15, meta->confirm_usable) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 16, meta->bind) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 17, meta->rent) ||
+       SQLITE_DONE != sqlite3_step(stmt))
+        return exit_func_safe("failed to add item package meta fo"
+        "r group %d subgroup %d", meta->group_id, meta->subgroup_id);
     return CHECK_PASSED;
 }
