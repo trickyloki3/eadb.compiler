@@ -35,9 +35,7 @@ int main(int argc, char * argv[]) {
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
             script_generate(context) ||
-            context->item.id == 0) {
-            goto failed;
-        }
+            context->item.id == 0);
 
         /*printf("%s", context->buffer);*/
         script_block_free_all(context);
@@ -48,7 +46,7 @@ clean:
     return 0;
 
 failed:
-    fprintf(stderr, " script: %s\n", context->item.script);
+    fprintf(stderr, "item id: %d\nscript: %s\n", context->item.id, context->item.script);
     script_block_dump(context, stderr);
     goto clean;
 }

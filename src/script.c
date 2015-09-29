@@ -93,6 +93,26 @@ int block_deit(block_r ** block) {
     return CHECK_PASSED;
 }
 
+int block_stack_concat(block_r * block, int type, const char * str, char delimit) {
+    int ret = 0;
+    /* error on invalid references */
+    exit_null_safe(2, block, str);
+
+    /* error on invalid top string */
+    if(block->arg_cnt < 0)
+        return CHECK_FAILED;
+
+    /* replace the null character with delimit and push to stack */
+    block->arg[block->arg_cnt - 1] = delimit;
+    ret = block_stack_push(block, type, str);
+
+    switch (type) {
+        case TYPE_PTR: --block->ptr_cnt; break;
+        case TYPE_ENG: --block->eng_cnt; break;
+    }
+    return ret;
+}
+
 int block_stack_push(block_r * block, int type, const char * str) {
     int ret = 0;
     int cnt = 0;
@@ -3823,9 +3843,190 @@ int translate_callfunc(block_r * block) {
     return CHECK_PASSED;
 }
 
+/* =.=;; */
 int translate_getrandgroupitem(block_r * block) {
+    int ret = 0;
+    int len = 0;
+    int off = 0;
+    int argc = 0;
+    char * buf = NULL;
+    node_t * group_id = NULL;
+    node_t * quantity = NULL;
+    node_t * subgroup_id = NULL;
+    item_group_meta_t * meta = NULL;
 
-    return exit_abt_safe("maintenance");
+    /* auxiliary buffer */
+    char aux[256];
+
+    /* error on invalid references */
+    exit_null_safe(1, block);
+
+    /* add support for hercules later */
+    if(block->script->mode != RATHENA)
+        return exit_abt_safe("getrandgroupitem is only supported for rathena");
+
+    if(1 > block->ptr_cnt)
+        return exit_func_safe("getrandgroupitem is missing group "
+        "id, quantity, or subgroup id in item %d", block->item_id);
+
+    /* getrandgroupitem may use function call syntax */
+    if(block->ptr[0][0] == '(')
+        if(stack_ptr_call(block, block->ptr[0], &argc))
+            goto failed;
+        else
+            /* starting group id, quantity, and subgroup id starts at
+             * offset 1 because 0 contains the function call syntax */
+            off = 1;
+
+    /* evaluate group id */
+    group_id = evaluate_expression(block, block->ptr[0 + off], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == group_id)
+        goto failed;
+
+    /* default quantity to zero */
+    if(1 + off >= block->ptr_cnt)
+        if(block_stack_push(block, TYPE_PTR, "0"))
+            goto failed;
+
+    /* evaluate quantity */
+    quantity = evaluate_expression(block, block->ptr[1 + off], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == quantity)
+        goto failed;
+
+    /* default subgroup id to one */
+    if(2 + off >= block->ptr_cnt)
+        if(block_stack_push(block, TYPE_PTR, "1"))
+            goto failed;
+
+    subgroup_id = evaluate_expression(block, block->ptr[2 + off], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == subgroup_id)
+        goto failed;
+
+    /* support only constants */
+    if(group_id->min    != group_id->max ||
+       subgroup_id->min != subgroup_id->max)
+        goto failed;
+
+    /* search for the item group meta information */
+    meta = calloc(1, sizeof(item_group_meta_t));
+    if(NULL == meta)
+        goto failed;
+
+    if(item_group_id_meta(block->script->db, meta, group_id->min, subgroup_id->min)) {
+        exit_func_safe("failed to find group id %d and subgroup id %d fo"
+        "r item id %d", group_id->min, subgroup_id->min, block->item_id);
+        goto failed;
+    }
+
+    /* error empty item groups */
+    if(0 >= meta->item) {
+        exit_func_safe("group id %d and subgroup id %d is empty for "
+        "item id %d", group_id->min, subgroup_id->min, block->item_id);
+        goto failed;
+    }
+
+    /* write item type and item group count to the stack */
+    if(0 == quantity->max && 0 == quantity->min) {
+        sprintf(aux, "Add a random amount of items from item group %d to your inventory.", group_id->min);
+    } else {
+        if(stack_eng_int(block, block->ptr[1 + off], 1, 0))
+            goto failed;
+        sprintf(aux, "Add %s item(s) from item group %d to your inventory.", block->eng[0], group_id->min);
+        if(block_stack_pop(block, TYPE_ENG))
+            goto failed;
+    }
+    if(block_stack_push(block, TYPE_ENG, aux))
+            goto failed;
+
+    if(meta->item > MAX_ITEM_LIST) {
+        if(meta->heal) {
+            sprintf(aux, " * %d healing items", meta->heal);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->usable) {
+            sprintf(aux, " * %d usable items", meta->usable);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->etc) {
+            sprintf(aux, " * %d etc items", meta->etc);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->armor) {
+            sprintf(aux, " * %d armor items", meta->armor);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->weapon) {
+            sprintf(aux, " * %d weapon items", meta->weapon);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->card) {
+            sprintf(aux, " * %d card items", meta->card);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->pet) {
+            sprintf(aux, " * %d pet items", meta->pet);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->pet_equip) {
+            sprintf(aux, " * %d pet_equip items", meta->pet_equip);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->ammo) {
+            sprintf(aux, " * %d ammo items", meta->ammo);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->delay_usable) {
+            sprintf(aux, " * %d delay usable items", meta->delay_usable);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->shadow) {
+            sprintf(aux, " * %d shadow equipment items", meta->shadow);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->confirm_usable) {
+            sprintf(aux, " * %d confirm usable items", meta->confirm_usable);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->bind) {
+            sprintf(aux, " * %d bounded items", meta->bind);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+        if(meta->rent) {
+            sprintf(aux, " * %d rental items", meta->rent);
+            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
+                goto clean;
+        }
+
+    } else {
+        /* search for item id from item group sorted by subgroup */
+        /* special handling for subgroup 0 */
+        /* write item name and type */
+        exit_abt_safe("not implemented");
+        goto failed;
+    }
+
+clean:
+    node_free(group_id);
+    node_free(quantity);
+    node_free(subgroup_id);
+    SAFE_FREE(meta);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int translate_transform(block_r * block) {

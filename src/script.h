@@ -129,6 +129,7 @@
     /* block stack interface */
     #define TYPE_PTR 1                                                          /* block->ptr stack */
     #define TYPE_ENG 2                                                          /* block->eng stack */
+    int block_stack_concat(block_r *, int, const char *, char);
     int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
     int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
     int block_stack_reset(block_r *, int);                                      /* reset the stack; don't intermix block->ptr and block->eng stack */
@@ -234,7 +235,7 @@
     #define FORMAT_RATIO                   0x01
 
     /* stack limits */
-    #define MAX_ITEM_LIST                  5
+    #define MAX_ITEM_LIST                  10
 
     /* script stack functions */
     int stack_ptr_call(block_r *, char *, int *);
