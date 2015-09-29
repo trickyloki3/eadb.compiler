@@ -1115,6 +1115,7 @@ int script_translate(script_t * script) {
                 }
                break;                                                                                                       /* else */
             case 28:
+                return CHECK_FAILED;
                 if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
                     iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
                         EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
@@ -1621,8 +1622,8 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flags) {
     max = node->max / modifier;
 
     /* automatic float detection */
-    if(node->min != 0 && min == 0 ||
-       node->max != 0 && max == 0) {
+    if((node->min != 0 && min == 0) ||
+       (node->max != 0 && max == 0)) {
         (node->min == node->max) ?
             sprintf(buf, "%.2f%s", ((double) node->min) / modifier, symbol):
             sprintf(buf, "%.2f%s ~ %.2f%s", ((double) node->min) / modifier, symbol, ((double) node->max) / modifier, symbol);
@@ -1690,8 +1691,8 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     symbol = (flags & FORMAT_RATIO) ? "%" : "";
 
     /* automatic float detection */
-    if(node->min != 0 && min == 0 ||
-       node->max != 0 && max == 0) {
+    if((node->min != 0 && min == 0) ||
+       (node->max != 0 && max == 0)) {
         fmin = ((double) node->min) / modifier;
         fmax = ((double) node->max) / modifier;
 
@@ -2758,8 +2759,10 @@ int translate_status(block_r * block) {
         goto failed;
 
     len = block->arg_cnt;
-    if(status_id(block->script->db, &status, effect->min))
-        return exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
+    if(status_id(block->script->db, &status, effect->min)) {
+        exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
+        goto failed;
+    }
 
     /* translate the tick */
     if (stack_eng_time(block, block->ptr[1], 1))
@@ -3830,7 +3833,7 @@ int translate_callfunc(block_r * block) {
     } else if(0 == ncs_strcmp(block->ptr[0],"F_Rice_Weevil_Bug")) {
         buf = "An unforgetable taste! May recover HP or SP.";
     } else if(0 == ncs_strcmp(block->ptr[0],"SetPalete")) {
-        buf = "Set palete to %s", block->ptr[1];
+        buf = "Set palete";
     } else {
         return exit_func_safe("unsupported callfunc '%"
         "s' in item %d", block->ptr[0], block->item_id);
@@ -3840,16 +3843,15 @@ int translate_callfunc(block_r * block) {
        block_stack_push(block, TYPE_ENG, buf))
         return CHECK_FAILED;
 
+    node_free(result);
     return CHECK_PASSED;
 }
 
 /* =.=;; */
 int translate_getrandgroupitem(block_r * block) {
     int ret = 0;
-    int len = 0;
     int off = 0;
     int argc = 0;
-    char * buf = NULL;
     node_t * group_id = NULL;
     node_t * quantity = NULL;
     node_t * subgroup_id = NULL;
@@ -3870,13 +3872,14 @@ int translate_getrandgroupitem(block_r * block) {
         "id, quantity, or subgroup id in item %d", block->item_id);
 
     /* getrandgroupitem may use function call syntax */
-    if(block->ptr[0][0] == '(')
+    if(block->ptr[0][0] == '(') {
         if(stack_ptr_call(block, block->ptr[0], &argc))
             goto failed;
         else
             /* starting group id, quantity, and subgroup id starts at
              * offset 1 because 0 contains the function call syntax */
             off = 1;
+    }
 
     /* evaluate group id */
     group_id = evaluate_expression(block, block->ptr[0 + off], 1, EVALUATE_FLAG_KEEP_NODE);
@@ -5210,6 +5213,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                 node->range = copyrange(result);
                 node->min = minrange(node->range);
                 node->max = maxrange(node->range);
+                freerange(result);
                 freerange(temp);
             }
         }

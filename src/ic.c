@@ -1,8 +1,8 @@
 #include <script.h>
 
-#define RE_PATH     "C:/Users/trickyloki3/Desktop/git/eadb.compiler/out/resource.db"
-#define RA_PATH     "C:/Users/trickyloki3/Desktop/git/eadb.compiler/out/rathena.db"
-#define MAP_PATH    "C:/Users/trickyloki3/Desktop/git/eadb.compiler/res/athena_db.txt"
+#define RE_PATH     "resource.db"
+#define RA_PATH     "rathena.db"
+#define MAP_PATH    "res/athena_db.txt"
 
 int main(int argc, char * argv[]) {
     int i = 0;
@@ -35,18 +35,22 @@ int main(int argc, char * argv[]) {
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
             script_generate(context) ||
-            context->item.id == 0);
+            context->item.id == 0) {
+            ;
+        }
 
         /*printf("%s", context->buffer);*/
         script_block_free_all(context);
     }
 
+    goto clean;
+
 clean:
     script_deit(&context);
     return 0;
 
-failed:
-    fprintf(stderr, "item id: %d\nscript: %s\n", context->item.id, context->item.script);
+/*failed:
+    fprintf(stderr, " script: %s\n", context->item.script);
     script_block_dump(context, stderr);
-    goto clean;
+    goto clean;*/
 }

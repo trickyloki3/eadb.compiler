@@ -279,13 +279,17 @@ int bind_db_query(sqlite3 * db, sqlite3_stmt * stmt, va_list args) {
             case BIND_STRING:
                 if(bind_db_string(db, stmt, i, args))
                     return CHECK_FAILED;
+#if defined(_WIN32) || defined(_WIN64)
                 va_arg(args, const char *);
                 va_arg(args, int);
+#endif
                 break;
             case BIND_NUMBER:
                 if(bind_db_number(db, stmt, i, args))
                     return CHECK_FAILED;
+#if defined(_WIN32) || defined(_WIN64)
                 va_arg(args, int);
+#endif
                 break;
             default:
                 return CHECK_FAILED;
