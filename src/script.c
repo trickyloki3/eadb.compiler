@@ -4942,47 +4942,79 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
     /* error on invalid references */
     exit_null_safe(3, block, func, node);
 
-    /* <function name>, <count>, <0> to <count arguments */
-    if(0 == ncs_strcmp(block->ptr[off], "F_Rand") ||
-       0 == ncs_strcmp(block->ptr[off], "F_RandMes")) {
-        if(cnt < 2)
-            return exit_func_safe("invalid argument count to "
-            "function '%s' in %d", func->name, block->item_id);
+    if(block->script->mode == EATHENA) {
+        /* <function name>, <count>, <0> to <count arguments */
+        if(0 == ncs_strcmp(block->ptr[off], "F_Rand") ||
+           0 == ncs_strcmp(block->ptr[off], "F_RandMes")) {
+            if(cnt < 2)
+                return exit_func_safe("invalid argument count to "
+                "function '%s' in %d", func->name, block->item_id);
 
-        count = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(NULL == count ||
-           count->min != count->max)
-            goto failed;
-
-        /* check whether the number of argument match the actual argument list */
-        if(count->min != cnt - 2) {
-            exit_func_safe("argument mismatch for '%s' in item id %d", block->ptr[off], block->item_id);
-            goto failed;
-        }
-
-        /* evaluate all the arguments */
-        for(i = 0; i < count->min; i++) {
-            result = evaluate_expression(block, block->ptr[off + 2 + i], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == result)
+            count = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
+            if(NULL == count ||
+               count->min != count->max)
                 goto failed;
 
-            /* combine the ranges for all arguments */
-            if(node->range == NULL) {
-                node->range = copyrange(result->range);
-            } else {
-                temp = node->range;
-                node->range = orrange(node->range, result->range);
-                freerange(temp);
+            /* check whether the number of argument match the actual argument list */
+            if(count->min != cnt - 2) {
+                exit_func_safe("argument mismatch for '%s' in item id %d", block->ptr[off], block->item_id);
+                goto failed;
             }
 
-            node_free(result);
-            result = NULL;
-        }
+            /* evaluate all the arguments */
+            for(i = 0; i < count->min; i++) {
+                result = evaluate_expression(block, block->ptr[off + 2 + i], 1, EVALUATE_FLAG_KEEP_NODE);
+                if(NULL == result)
+                    goto failed;
 
-        node->formula = convert_string("random");
-        node->min = minrange(node->range);
-        node->max = maxrange(node->range);
-        goto clean;
+                /* combine the ranges for all arguments */
+                if(node->range == NULL) {
+                    node->range = copyrange(result->range);
+                } else {
+                    temp = node->range;
+                    node->range = orrange(node->range, result->range);
+                    freerange(temp);
+                }
+
+                node_free(result);
+                result = NULL;
+            }
+
+            node->formula = convert_string("random");
+            node->min = minrange(node->range);
+            node->max = maxrange(node->range);
+            goto clean;
+        }
+    } else if(block->script->mode == RATHENA) {
+        if(0 == ncs_strcmp(block->ptr[off], "F_Rand")) {
+            if(cnt < 1)
+                return exit_func_safe("invalid argument count to "
+                "function '%s' in %d", func->name, block->item_id);
+
+            /* evaluate all the arguments */
+            for(i = 1; i < cnt; i++) {
+                result = evaluate_expression(block, block->ptr[off + i], 1, EVALUATE_FLAG_KEEP_NODE);
+                if(NULL == result)
+                    goto failed;
+
+                /* combine the ranges for all arguments */
+                if(node->range == NULL) {
+                    node->range = copyrange(result->range);
+                } else {
+                    temp = node->range;
+                    node->range = orrange(node->range, result->range);
+                    freerange(temp);
+                }
+
+                node_free(result);
+                result = NULL;
+            }
+
+            node->formula = convert_string("random");
+            node->min = minrange(node->range);
+            node->max = maxrange(node->range);
+            goto clean;
+        }
     }
 
     goto failed;

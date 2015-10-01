@@ -112,7 +112,7 @@
         token_r token;                                                          /* script token stack */
         char buffer[BUF_SIZE];                                                  /* script translation */
         int offset;                                                             /* script buffer size */
-        block_r * blocks;                                                       /* block list */
+        block_r * blocks;
         /* invariant */
         db_t * db;                                                              /* compiler and athena databases */
         int mode;                                                               /* EATHENA, RATHENA, or HERCULES */
