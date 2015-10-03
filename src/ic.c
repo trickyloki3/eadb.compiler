@@ -5,6 +5,10 @@
 #define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
+    /*script_t * context = NULL;
+    if (script_init(&context, RE_PATH, RA_PATH, MAP_PATH, RATHENA))
+        return 0;
+    script_deit(&context);*/
     int i = 0;
     int level = 0;
     char * script = NULL;
@@ -36,10 +40,11 @@ int main(int argc, char * argv[]) {
             script_translate(context) ||
             script_generate(context) ||
             context->item.id == 0) {
-            
+            /*goto failed;*/
         }
 
-        /*printf("%s", context->buffer);*/
+        /*printf("%s", context->buffer);
+        script_block_dump(context, stderr);*/
         script_block_free_all(context);
     }
 

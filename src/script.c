@@ -53,7 +53,7 @@ int block_reset(block_r * block) {
 
     /* reset block and item id */
     block->item_id = 0;
-    block->name = NULL;
+    SAFE_FREE(block->name);
     block->type = 0;
 
     /* reset block stack */
@@ -95,6 +95,7 @@ int block_deit(block_r ** block) {
 
 int block_stack_concat(block_r * block, int type, const char * str, char delimit) {
     int ret = 0;
+
     /* error on invalid references */
     exit_null_safe(2, block, str);
 
@@ -102,7 +103,8 @@ int block_stack_concat(block_r * block, int type, const char * str, char delimit
     if(block->arg_cnt < 0)
         return CHECK_FAILED;
 
-    /* replace the null character with delimit and push to stack */
+    /* replace the null character with delimit and push to stack
+     * which to be honest, is just a very checp hack =.= */
     block->arg[block->arg_cnt - 1] = delimit;
     ret = block_stack_push(block, type, str);
 
@@ -110,6 +112,7 @@ int block_stack_concat(block_r * block, int type, const char * str, char delimit
         case TYPE_PTR: --block->ptr_cnt; break;
         case TYPE_ENG: --block->eng_cnt; break;
     }
+
     return ret;
 }
 
@@ -326,18 +329,26 @@ int script_block_new(script_t * script, block_r ** block) {
 
     exit_null_safe(2, script, block);
 
-    if(script->blocks->prev->free) {
-        /* tail of the list is a free block */
-        _block = script->blocks->prev;
+    if(NULL != script->free_blocks) {
+        /* grab a block from the free list */
+        _block = script->free_blocks->next;
+        if(block_remove(_block))
+            return CHECK_FAILED;
+        /* last block was grab from the free list */
+        if(_block == script->free_blocks)
+            script->free_blocks = NULL;
     } else {
-        /* create a new block and append to block list */
-        if(block_init(&_block) ||
-           block_append(_block, script->blocks))
+        /* create a new block */
+        if(block_init(&_block))
             return CHECK_FAILED;
     }
 
-    /* the root block is either set to a new block or
-     * a free block from the tail of the block list */
+    /* add the block to the used list */
+    if(NULL != script->blocks)
+        block_append(script->blocks, _block);
+
+    /* script->blocks->next is the start of the list
+     * and the script->blocks is the end of the list */
     script->blocks = _block;
     script->blocks->free = 0;
 
@@ -352,39 +363,39 @@ int script_block_free(script_t * script, block_r ** block) {
 
     _block = *block;
 
-    /* special case when freeing the root block */
     if(script->blocks == _block) {
-        /* free blocks are on the tail and used
-         * blocks are on the head, we will move
-         * the root block to a used block */
-        script->blocks = script->blocks->next;
+        /* move the tail to the last added block */
+        script->blocks = script->blocks->prev;
+        /* if no blocks are added, then set empty list */
+        if(script->blocks == _block)
+            script->blocks = NULL;
     }
 
     /* reset and remove the block
      * then append to the tail of
      * the block list */
     if( block_reset(_block) ||
-        block_remove(_block) ||
-        block_append(_block, script->blocks))
+        block_remove(_block))
         return CHECK_FAILED;
+
+    if(NULL != script->free_blocks)
+        block_append(script->free_blocks, _block);
+    script->free_blocks = _block;
 
     *block = NULL;
     return CHECK_PASSED;
 }
 
 int script_block_free_all(script_t * script) {
-    block_r * iter = NULL;
+    block_r * temp = NULL;
 
     exit_null_safe(1, script);
 
-    /* iterate from the root block until
-     * the root block or the free blocks */
-    iter = script->blocks;
-    do {
-        if(block_reset(iter))
-            return CHECK_FAILED;
-        iter = iter->next;
-    } while(iter != script->blocks && !iter->free);
+    /* free all the blocks */
+    while(script->blocks) {
+        temp = script->blocks;
+        script_block_free(script, &temp);
+    }
 
     return CHECK_PASSED;
 }
@@ -398,8 +409,11 @@ int script_block_release(script_t * script) {
     if(script_block_free_all(script))
         return CHECK_FAILED;
 
-    iter = script->blocks->next;
-    while(iter != script->blocks) {
+    if(NULL == script->free_blocks)
+        return CHECK_PASSED;
+
+    iter = script->free_blocks->next;
+    while(iter != script->free_blocks) {
         temp = iter;
         iter = iter->next;
         /* remove the block from the
@@ -410,7 +424,7 @@ int script_block_release(script_t * script) {
     }
 
     /* free the root block */
-    return block_deit(&script->blocks);
+    return block_deit(&script->free_blocks);
 }
 
 int script_map_init(script_t * script, const char * map_path) {
@@ -473,11 +487,11 @@ int script_init(script_t ** script, const char * rdb_path, const char * sdb_path
     script_t * _script = NULL;
 
     /* error on invalid reference */
-    exit_null_safe(3, script, rdb_path, sdb_path);
+    exit_null_safe(4, script, rdb_path, sdb_path, map_path);
 
     /* error on invalid server mode */
     if(!(mode & DB_MODE))
-        return CHECK_FAILED;
+        return exit_func_safe("%d is an invalid mode", mode);
 
     /* construct script struct */
     _script = calloc(1, sizeof(script_t));
@@ -488,8 +502,7 @@ int script_init(script_t ** script, const char * rdb_path, const char * sdb_path
     _script->mode = mode;
 
     /* initialize resource and server databases and mapping tables */
-    if (block_init(&_script->blocks) ||
-        init_db_load(&_script->db, rdb_path, sdb_path, _script->mode) ||
+    if (init_db_load(&_script->db, rdb_path, sdb_path, _script->mode) ||
         script_map_init(_script, map_path)) {
         script_deit(&_script);
         return CHECK_FAILED;
@@ -651,7 +664,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             if(script_block_new(script, &block))
                 return SCRIPT_FAILED;
 
-            block->name = token[i];
+            block->name = convert_string(token[i]);
             block->item_id = script->item.id;
             block->type = block_type.id;
 
@@ -683,16 +696,18 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     if( token[i+1][0] != '(' ||
                         script_parse(token_list, &i, block, '\0', ')', FLAG_PARSE_LAST_TOKEN) ||
                         token[i][0] != ')')
-                        return SCRIPT_FAILED;
+                        return exit_abt_safe("failed to parsed the if condition");
 
                     /* compound or simple statement and perform
                      * script_analysis to create create the new
                      * blocks */
-                    if((token[i+1][0] == '{') ?
+
+                    if( ((token[i+1][0] == '{') ?
                         script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
-                        script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA) ||
-                        script_analysis_(script, block->ptr[1], block, &set))
-                        return SCRIPT_FAILED;
+                        script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)) ||
+                        script_analysis_(script, block->ptr[1], block, &set)) {
+                        return exit_abt_safe("failed to extend if block");
+                    }
                     break;
                 case 27: /* parse else blocks */
                     /* link else-if and else blocks */
@@ -711,9 +726,9 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                         /* compound or simple statement and perform
                          * script_analysis to create create the new
                          * blocks */
-                        if((token[i+1][0] == '{') ?
+                        if( ((token[i+1][0] == '{') ?
                             script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
-                            script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA) ||
+                            script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)) ||
                             script_analysis_(script, block->ptr[1], block, &set))
                             return SCRIPT_FAILED;
 
@@ -721,14 +736,10 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                         link = block;
                     } else {
                         /* compound or simple statement */
-                        if((token[i+1][0] == '{') ?
+                        if( ((token[i+1][0] == '{') ?
                             script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
-                            script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)
-                            == SCRIPT_FAILED)
-                            return SCRIPT_FAILED;
-
-                        /* extend the block list by using subscript */
-                        if(script_analysis_(script, block->ptr[0], block, &set))
+                            script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA)) ||
+                            script_analysis_(script, block->ptr[0], block, &set))
                             return SCRIPT_FAILED;
 
                         /* else ends the local linking */
@@ -1025,8 +1036,11 @@ int script_translate(script_t * script) {
     /* check null paramaters */
     exit_null_safe(1, script);
 
+    if (NULL == script->blocks)
+        return CHECK_FAILED;
+
     /* translate each block */
-    iter = script->blocks;
+    iter = script->blocks->next;
     do {
         /* linked child block inherits logic tree from parent block */
         if(iter->link != NULL && iter->link->logic_tree != NULL)
@@ -1115,7 +1129,6 @@ int script_translate(script_t * script) {
                 }
                break;                                                                                                       /* else */
             case 28:
-                return CHECK_FAILED;
                 if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
                     iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
                         EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
@@ -1221,7 +1234,10 @@ int script_generate(script_t * script) {
     script->offset = 0;
     script->buffer[0] = '\0';
 
-    iter = script->blocks;
+    if (NULL == script->blocks)
+        return CHECK_FAILED;
+
+    iter = script->blocks->next;
     do {
         switch(iter->type) {
             case 26: /* if */
@@ -1269,10 +1285,6 @@ int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, cha
     script->db = db;
     script->mode = mode;
     script->map = map;
-
-    /* allocate block list */
-    if(block_init(&script->blocks))
-        goto failed;
 
     /* set the initial buffer state */
     script->offset = 0;

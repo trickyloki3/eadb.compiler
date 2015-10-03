@@ -113,6 +113,7 @@
         char buffer[BUF_SIZE];                                                  /* script translation */
         int offset;                                                             /* script buffer size */
         block_r * blocks;
+        block_r * free_blocks;
         /* invariant */
         db_t * db;                                                              /* compiler and athena databases */
         int mode;                                                               /* EATHENA, RATHENA, or HERCULES */
@@ -135,7 +136,7 @@
     int block_stack_reset(block_r *, int);                                      /* reset the stack; don't intermix block->ptr and block->eng stack */
     int block_stack_formula(block_r *, int, node_t *, char **);                 /* concatenate a node's formula string with block->eng stack string */
     int block_stack_dump(block_r *, FILE *);
-    #define script_block_dump(script, stream) block_stack_dump((script->blocks), (stream))
+    #define script_block_dump(script, stream) block_stack_dump((script->blocks->next), (stream))
 
     /* high level block list interface */
     int script_block_new(script_t *, block_r **);                               /* create a new block or reused a free block and append to head */
