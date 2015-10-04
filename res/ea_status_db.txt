@@ -28,6 +28,7 @@
 74,sc_cp_armor,1,"Prevent armor from being strip","",0,0,0,0,0,0,0,0,0
 75,sc_cp_helm,1,"Prevent helm from being strip","",0,0,0,0,0,0,0,0,0
 97,sc_waterweapon,1,"Enchant weapon with Water [Lv.%s] property","",1,m,0,0,0,1,0,0,0
+98,sc_windweapon,1,"Enchant weapon with Wind [Lv.%s] property","",1,m,0,0,0,1,0,0,0
 105,sc_armor_element,2,"Increase water resistance by %s%%, fire resistance by %s%%, wind resistance by %s%%, and earth resistance by %s%%","",4,n,n,n,n,1,2,3,4
 115,sc_assumptio,1,"Cast Assumptio [Lv.%s]","",1,m,0,0,0,1,0,0,0
 121,sc_windwalk,1,"Cast Windwalk [Lv.%s]","",1,m,0,0,0,1,0,0,0

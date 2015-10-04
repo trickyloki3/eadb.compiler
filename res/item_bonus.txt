@@ -8,8 +8,8 @@
 7,0x00000000,5,bonus,bAllStats,"All Stat %s",1,n,1,0
 8,0x00000000,5,bonus,bAgiVit,"AGI, VIT %s",1,n,1,0
 9,0x00000000,5,bonus,bAgiDexStr,"STR, AGI, DEX %s",1,n,1,0
-10,0x00000000,5,bonus,bMaxHP,"MaxHP %s",1,n,1,0
-11,0x00000000,5,bonus,bMaxSP,"MaxSP %s",1,n,1,0
+10,0x00000000,6,bonus,bMaxHP,"MaxHP %s",1,n,1,0
+11,0x00000000,6,bonus,bMaxSP,"MaxSP %s",1,n,1,0
 12,0x00000000,5,bonus,bAtk,"ATK %s",1,n,1,0
 13,0x00000000,5,bonus,bAtk2,"ATK %s",1,n,1,0
 14,0x00000000,5,bonus,bBaseAtk,"ATK %s",1,n,1,0
@@ -24,20 +24,20 @@
 23,0x00000000,5,bonus,bAtkRange,"Attack Range %s.",1,n,1,0
 24,0x00000000,5,bonus,bCritical,"CRIT %s",1,n,1,0
 25,0x00000000,5,bonus,bAspd,"Attack Speed: %s",1,n,1,0
-26,0x00000000,5,bonus,bMaxHPrate,"MaxHP %s",1,p,1,0
-27,0x00000000,5,bonus,bMaxSPrate,"MaxSP %s",1,p,1,0
-28,0x00000000,5,bonus,bAtkRate,"ATK %s",1,p,1,0
-29,0x00000000,5,bonus,bSpeedAddRate,"Movement Speed %s",1,p,1,0
-30,0x00000000,5,bonus,bMatkRate,"MATK %s",1,p,1,0
-31,0x00000000,5,bonus,bDefRate,"DEF %s",1,p,1,0
-32,0x00000000,5,bonus,bDef2Rate,"DEF %s",1,p,1,0
-33,0x00000000,5,bonus,bMdefRate,"MDEF %s",1,p,1,0
-34,0x00000000,5,bonus,bMdef2Rate,"MDEF %s",1,p,1,0
-35,0x00000000,5,bonus,bHitRate,"HIT %s",1,p,1,0
-36,0x00000000,5,bonus,bCriticalRate,"CRIT %s",1,p,1,0
-37,0x00000000,5,bonus,bFleeRate,"FLEE %s",1,p,1,0
-38,0x00000000,5,bonus,bFlee2Rate,"Perfect Dogde %s",1,p,1,0
-39,0x00000000,5,bonus,bAspdRate,"ASPD %s",1,p,1,0
+26,0x00000000,6,bonus,bMaxHPrate,"MaxHP %s",1,p,1,0
+27,0x00000000,6,bonus,bMaxSPrate,"MaxSP %s",1,p,1,0
+28,0x00000000,6,bonus,bAtkRate,"ATK %s",1,p,1,0
+29,0x00000000,6,bonus,bSpeedAddRate,"Movement Speed %s",1,p,1,0
+30,0x00000000,6,bonus,bMatkRate,"MATK %s",1,p,1,0
+31,0x00000000,6,bonus,bDefRate,"DEF %s",1,p,1,0
+32,0x00000000,6,bonus,bDef2Rate,"DEF %s",1,p,1,0
+33,0x00000000,6,bonus,bMdefRate,"MDEF %s",1,p,1,0
+34,0x00000000,6,bonus,bMdef2Rate,"MDEF %s",1,p,1,0
+35,0x00000000,6,bonus,bHitRate,"HIT %s",1,p,1,0
+36,0x00000000,6,bonus,bCriticalRate,"CRIT %s",1,p,1,0
+37,0x00000000,6,bonus,bFleeRate,"FLEE %s",1,p,1,0
+38,0x00000000,6,bonus,bFlee2Rate,"Perfect Dogde %s",1,p,1,0
+39,0x00000000,6,bonus,bAspdRate,"ASPD %s",1,p,1,0
 40,0x00000000,3,bonus,bLongAtkRate,"%s long ranged damage.",1,p,1,0
 41,0x00000000,3,bonus,bCritAtkRate,"%s critical damage.",1,p,1,0
 42,0x00000000,17,bonus,bClassChange,"%s chance of transforming a monster while fighting.",1,q,1,0
@@ -211,3 +211,5 @@
 208,0x00000000,0,bonus,bNoCastCancel2,"Grant ability to cast magic without interruption.",1,z,1,0
 209,0x00000000,9,bonus2,bComaClass,"Add %s chance of inflicting coma on %s enemy.",2,j,q,2,1,0
 210,0x00000000,9,bonus2,bComaRace,"Add %s chance of inflicting coma on %s enemy.",2,r,q,2,1,0
+211,0x00000000,2,bonus2,bSubDefEle,"%s resistance against %s enemies.",2,l,p,2,1,0
+212,0x00000000,6,bonus,bAbsorbDmgMaxHP,"Any damage over %s of max HP will be reduce by %s of max hp.",2,p,z,2,0,0

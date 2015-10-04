@@ -4770,8 +4770,6 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
     if( SCRIPT_STRING(block->ptr[off][0]) &&
         !skill_name(block->script->db, &skill, block->ptr[off], strlen(block->ptr[off])))
         goto found;
-    else
-        return CHECK_FAILED;
 
     /* fallback by evaluating expression for skill id */
     id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
