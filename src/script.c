@@ -2239,7 +2239,7 @@ failed:
     goto clean;
 }
 
-int stack_eng_item_group_name(block_r * block, char * expr, int * argc) {
+int stack_eng_item_group(block_r * block, char * expr, int * argc) {
     int ret = 0;
     int top = 0;
     node_t * group_id = NULL;
@@ -3054,7 +3054,7 @@ int translate_bonus(block_r * block, char * prefix) {
             case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
             case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
             case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                                 break; /* Trigger BT */
-            case 'y': ret = (stack_eng_item_group_name(block, block->ptr[j], &cnt)
+            case 'y': ret = (stack_eng_item_group(block, block->ptr[j], &cnt)
                             && stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt));                   break; /* Item Group */
             case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                                break; /* Triger ATF */
             case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
@@ -3954,6 +3954,7 @@ int translate_getrandgroupitem(block_r * block) {
             goto failed;
 
     if(meta->item > MAX_ITEM_LIST) {
+        /* write a summary of items when max item list is exceeded */
         if(meta->heal) {
             sprintf(aux, " * %d healing items", meta->heal);
             if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
@@ -4537,6 +4538,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);             break; /* readparam */
         case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);            break; /* getskilllv */
         case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                  break; /* rand */
+        case 6: ret = evaluate_function_pow(block, arg_off, arg_cnt, func, node);                   break; /* pow */
         case 8: ret = evaluate_function_getiteminfo(block, arg_off, arg_cnt, func, node);           break; /* getiteminfo */
         case 9: ret = evaluate_function_getequipid(block, arg_off, arg_cnt, func, node);            break; /* getequipid */
         case 10: ret = evaluate_function_gettime(block, arg_off, arg_cnt, func, node);              break; /* gettime */
@@ -5064,8 +5066,59 @@ int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * fun
     sprintf(node->formula, "%s Count", block->eng[block->eng_cnt - 1]);
     node->min = func->min;
     node->max = func->max;
+    /*node->type = NODE_TYPE_CONSTANT;*/
 
     return CHECK_PASSED;
+}
+
+int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    int len = 0;
+    int flag = 0;
+    node_t * base = NULL;
+    node_t * expo = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, func, node);
+
+    if(cnt != 2)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    len = block->arg_cnt;
+    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK;
+    base = evaluate_expression(block, block->ptr[off], 1, flag);
+    if(NULL == base)
+        goto failed;
+
+    expo = evaluate_expression(block, block->ptr[off + 1], 1, flag);
+    if(NULL == expo)
+        goto failed;
+
+    len = block->arg_cnt - len + 128;
+    node->formula = calloc(len, sizeof(char));
+    if(NULL == node->formula)
+        goto failed;
+
+    if(expo->min == expo->max &&
+       expo->min == 1)
+        sprintf(node->formula, "%s",
+                block->eng[block->eng_cnt - 2]);
+    else
+        sprintf(node->formula, "(%s)^%s",
+                block->eng[block->eng_cnt - 2],
+                block->eng[block->eng_cnt - 1]);
+
+    node->min = (int) pow(base->min, expo->min);
+    node->max = (int) pow(base->max, expo->max);
+
+clean:
+    node_free(base);
+    node_free(expo);
+    return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int node_steal(node_t * src, node_t * des) {

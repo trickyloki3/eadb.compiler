@@ -251,7 +251,7 @@
     int stack_eng_produce(block_r *, char *, int *);
     int stack_eng_map(block_r *, char *, int, int *);
     int stack_eng_db(block_r *, char *, int, int *);
-    int stack_eng_item_group_name(block_r *, char *, int *);
+    int stack_eng_item_group(block_r *, char *, int *);
     int stack_eng_trigger_bt(block_r *, char *);
     int stack_eng_trigger_atf(block_r *, char *);
     int stack_eng_script(block_r *, char *);
@@ -320,6 +320,8 @@
      *
      * vararg - variable support
      * const  - constant support
+     *
+     * =.= forgot to add back the documentation
      */
     int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
     int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
@@ -333,6 +335,7 @@
     int evaluate_function_gettime(block_r *, int, int, var_res *, node_t *);
     int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
     int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_pow(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01

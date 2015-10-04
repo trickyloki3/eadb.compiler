@@ -312,6 +312,7 @@
         sql_t * item_combo;
         /* server meta table search */
         sql_t * item_group_id_meta;
+        sql_t * item_group_id_meta_query;
         /* server item database iterate */
         sql_t * item_db;
     } db_t;

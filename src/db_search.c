@@ -817,11 +817,10 @@ int item_group_id(db_t * db, item_group_t * item_group, int id) {
     /* get the group size for the group id */
     exit_null_safe(2, db, item_group);
 
-    if(exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
-        return CHECK_FAILED;
-
     switch(db->server_type) {
         case EATHENA:
+            if(exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
+                return CHECK_FAILED;
             stmt = db->item_group_id->stmt;
             item_group->group_id = sqlite3_column_int(stmt, 0);
             item_group->size = sqlite3_column_int(stmt, 1);
@@ -831,20 +830,15 @@ int item_group_id(db_t * db, item_group_t * item_group, int id) {
                 return CHECK_FAILED;
 
             item_group->item_id = malloc(item_group->size * sizeof(int));
-            if(NULL == item_group->item_id) {
-                item_group_free(item_group);
-                return CHECK_FAILED;
-            }
             item_group->rate = malloc(item_group->size * sizeof(int));
-            if(NULL == item_group->rate) {
+            if(NULL == item_group->item_id ||
+               NULL == item_group->rate ||
+               exec_db_query(db->db, db->item_group_record, 1, BIND_NUMBER, id)) {
                 item_group_free(item_group);
                 return CHECK_FAILED;
             }
 
-            /* get the group records */
-            if(exec_db_query(db->db, db->item_group_record, 1, BIND_NUMBER, id))
-                return CHECK_FAILED;
-
+            /* write all item id and rate into array */
             stmt = db->item_group_record->stmt;
             do {
                 item_group->item_id[i] = sqlite3_column_int(stmt, 0);
@@ -853,6 +847,7 @@ int item_group_id(db_t * db, item_group_t * item_group, int id) {
             } while(SQLITE_DONE != sqlite3_step(stmt));
             break;
         case RATHENA:
+
             break;
         default:
             return exit_func_safe("item group search is not implemented for server type %d", db->server_type);
