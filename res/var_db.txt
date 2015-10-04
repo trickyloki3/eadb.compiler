@@ -60,3 +60,4 @@
 8 ,0x0,0x2,0,2147483647,              getiteminfo,"Item Info";
 9 ,0x1,0x2,0,2147483647,               getequipid,"Equip ID";
 29,0x0,0x2,0,2147483647,              strcharinfo,"String Type";
+50,0x0,0x6,0,2147483647,                  eaclass,"Class";

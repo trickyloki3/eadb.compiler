@@ -23,10 +23,10 @@
 62,sc_matkpotion,1,"Increase %s MATK","",1,n,0,0,0,1,0,0,0
 63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0
 64,sc_slowdown,1,"Decrease movement speed","",0,0,0,0,0,0,0,0,0
-72,sc_cp_weapon,1,"Prevent weapon from being strip","",0,0,0,0,0,0,0,0,0
-73,sc_cp_shield,1,"Prevent shield from being strip","",0,0,0,0,0,0,0,0,0
-74,sc_cp_armor,1,"Prevent armor from being strip","",0,0,0,0,0,0,0,0,0
-75,sc_cp_helm,1,"Prevent helm from being strip","",0,0,0,0,0,0,0,0,0
+72,sc_cp_weapon,1,"Prevent weapon from being stripped","",0,0,0,0,0,0,0,0,0
+73,sc_cp_shield,1,"Prevent shield from being stripped","",0,0,0,0,0,0,0,0,0
+74,sc_cp_armor,1,"Prevent armor from being stripped","",0,0,0,0,0,0,0,0,0
+75,sc_cp_helm,1,"Prevent helm from being stripped","",0,0,0,0,0,0,0,0,0
 97,sc_waterweapon,1,"Enchant weapon with Water [Lv.%s] property","",1,m,0,0,0,1,0,0,0
 98,sc_windweapon,1,"Enchant weapon with Wind [Lv.%s] property","",1,m,0,0,0,1,0,0,0
 105,sc_armor_element,2,"Increase water resistance by %s%%, fire resistance by %s%%, wind resistance by %s%%, and earth resistance by %s%%","",4,n,n,n,n,1,2,3,4

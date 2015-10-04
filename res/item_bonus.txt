@@ -213,3 +213,4 @@
 210,0x00000000,9,bonus2,bComaRace,"Add %s chance of inflicting coma on %s enemy.",2,r,q,2,1,0
 211,0x00000000,2,bonus2,bSubDefEle,"%s resistance against %s enemies.",2,l,p,2,1,0
 212,0x00000000,6,bonus,bAbsorbDmgMaxHP,"Any damage over %s of max HP will be reduce by %s of max hp.",2,p,z,2,0,0
+213,0x00000000,2,bonus2,bSubSkill,"%s resistance against %s.",2,k,p,2,1,0

@@ -128,15 +128,19 @@
     int block_deit(block_r **);                                                 /* free the block memory */
 
     /* block stack interface */
-    #define TYPE_PTR 1                                                          /* block->ptr stack */
-    #define TYPE_ENG 2                                                          /* block->eng stack */
-    int block_stack_concat(block_r *, int, const char *, char);
+    #define TYPE_PTR 0x1                                                        /* block->ptr stack */
+    #define TYPE_ENG 0x2                                                        /* block->eng stack */
     int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
     int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
     int block_stack_reset(block_r *, int);                                      /* reset the stack; don't intermix block->ptr and block->eng stack */
     int block_stack_formula(block_r *, int, node_t *, char **);                 /* concatenate a node's formula string with block->eng stack string */
     int block_stack_dump(block_r *, FILE *);
     #define script_block_dump(script, stream) block_stack_dump((script->blocks->next), (stream))
+
+    /* higher level block stack interface */
+    #define FLAG_CONCAT 0x4
+    int block_stack_concat(block_r *, int, const char *, char);
+    int block_stack_vararg(block_r *, int, const char *, ...);
 
     /* high level block list interface */
     int script_block_new(script_t *, block_r **);                               /* create a new block or reused a free block and append to head */
@@ -305,6 +309,9 @@
     #define EVALUATE_FLAG_ITERABLE_SET     0x040
     #define EVALUATE_FLAG_VARIANT_SET      0x080
     #define EVALUATE_FLAG_WRITE_STACK      0x100
+
+    /* higher level wrappers over evaluate expression */
+    int evaluate_numeric_constant(block_r *, char *, int, int *);
 
     /* evaluate an expression */
     node_t * evaluate_expression(block_r *, char *, int, int);

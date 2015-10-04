@@ -93,29 +93,6 @@ int block_deit(block_r ** block) {
     return CHECK_PASSED;
 }
 
-int block_stack_concat(block_r * block, int type, const char * str, char delimit) {
-    int ret = 0;
-
-    /* error on invalid references */
-    exit_null_safe(2, block, str);
-
-    /* error on invalid top string */
-    if(block->arg_cnt < 0)
-        return CHECK_FAILED;
-
-    /* replace the null character with delimit and push to stack
-     * which to be honest, is just a very checp hack =.= */
-    block->arg[block->arg_cnt - 1] = delimit;
-    ret = block_stack_push(block, type, str);
-
-    switch (type) {
-        case TYPE_PTR: --block->ptr_cnt; break;
-        case TYPE_ENG: --block->eng_cnt; break;
-    }
-
-    return ret;
-}
-
 int block_stack_push(block_r * block, int type, const char * str) {
     int ret = 0;
     int cnt = 0;
@@ -321,6 +298,77 @@ int block_stack_dump(block_r * block, FILE * stream) {
         iter = iter->next;
     } while(iter != block);
 
+    return CHECK_PASSED;
+}
+
+int block_stack_concat(block_r * block, int type, const char * str, char delimit) {
+    int ret = 0;
+
+    /* error on invalid references */
+    exit_null_safe(2, block, str);
+
+    /* error on invalid top string */
+    if(block->arg_cnt < 0)
+        return CHECK_FAILED;
+
+    /* replace the null character with delimit and push to stack
+     * which to be honest, is just a very cheap hack =.= */
+    block->arg[block->arg_cnt - 1] = delimit;
+    ret = block_stack_push(block, type, str);
+
+    switch (type) {
+        case TYPE_PTR: --block->ptr_cnt; break;
+        case TYPE_ENG: --block->eng_cnt; break;
+    }
+
+    return ret;
+}
+
+int block_stack_vararg(block_r * block, int type, const char * format, ...) {
+    int len = 0;
+    int cnt = 0;
+    va_list args;
+
+    /* write the formatted arguments */
+    va_start(args, format);
+    cnt = BUF_SIZE - block->arg_cnt;
+    len = vsnprintf(&block->arg[block->arg_cnt], cnt, format, args);
+    va_end(args);
+
+    /* check whether the arguments is truncated */
+    if(len >= cnt)
+        return exit_func_safe("truncated formatted a"
+        "rgument string in item %d", block->item_id);
+
+    /* replace the previous null with newline */
+    if(type & FLAG_CONCAT) {
+        block->arg[block->arg_cnt - 1] = '\n';
+    } else {
+        /* set the stack pointers */
+        switch (type & 0x3) {
+            case TYPE_PTR:
+                cnt = block->ptr_cnt;
+                if (cnt >= PTR_SIZE)
+                    return exit_func_safe("exceed translated string ar"
+                    "ray size %d in item %d", PTR_SIZE, block->item_id);
+                block->ptr[cnt] = &block->arg[block->arg_cnt];
+                block->ptr_cnt++;
+                break;
+            case TYPE_ENG:
+                cnt = block->eng_cnt;
+                if (cnt >= PTR_SIZE)
+                    return exit_func_safe("exceed argument string arr"
+                    "ay size %d in item %d", PTR_SIZE, block->item_id);
+                block->eng[cnt] = &block->arg[block->arg_cnt];
+                block->eng_cnt++;
+                break;
+            default:
+                return exit_func_safe("invalid type %d in item %d", type, block->item_id);
+        }
+    }
+
+    /* set the new stack top */
+    block->arg_cnt += (len + 1);
     return CHECK_PASSED;
 }
 
@@ -3891,189 +3939,118 @@ int translate_callfunc(block_r * block) {
     return CHECK_PASSED;
 }
 
-/* =.=;; */
+/* getrandgroupitem require special attention because of
+ * how item group works for rathena and hercules and how
+ * items are randomly selected; the code looks confusing
+ * but if you understand the stack, then it shouldn't be
+ * a problem... e.e sorry */
 int translate_getrandgroupitem(block_r * block) {
-    int ret = 0;
-    int off = 0;
-    int argc = 0;
-    node_t * group_id = NULL;
-    node_t * quantity = NULL;
-    node_t * subgroup_id = NULL;
-    item_group_meta_t * meta = NULL;
+    int err = 0;
+    int arg_cnt = 0;
+    int arg_off = 0;
 
-    /* auxiliary buffer */
-    char aux[256];
+    /* getrandgroupitem arguments */
+    int group_id = 0;
+    int quantity = 0;
+    int subgroup_id = 0;
+
+    /* item group metadata */
+    item_group_meta_t * meta = NULL;
 
     /* error on invalid references */
     exit_null_safe(1, block);
 
-    /* add support for hercules later */
-    if(block->script->mode != RATHENA)
-        return exit_abt_safe("getrandgroupitem is only supported for rathena");
-
-    if(1 > block->ptr_cnt)
+    /* error on invalid arguments */
+    if(0 >= block->ptr_cnt)
         return exit_func_safe("getrandgroupitem is missing group "
         "id, quantity, or subgroup id in item %d", block->item_id);
 
-    /* getrandgroupitem may use function call syntax */
+    /* getrandgroupitem supports function call syntax, i.e.
+     * getrandgroupitem x, y or getrandgroupitem(x, y) =.= */
     if(block->ptr[0][0] == '(') {
-        if(stack_ptr_call(block, block->ptr[0], &argc))
-            goto failed;
-        else
-            /* starting group id, quantity, and subgroup id starts at
-             * offset 1 because 0 contains the function call syntax */
-            off = 1;
+        /* getrandgroupitem(x, y, z) form */
+        if(stack_ptr_call(block, block->ptr[0], &arg_cnt))
+            return exit_func_safe("invalid function call synta"
+            "x '%s' in item %d", block->ptr[0], block->item_id);
+        /* starting group id, quantity, and subgroup id starts at
+         * offset 1 because 0 contains the function call syntax */
+        arg_off = 1;
+    } else {
+        /* getrandgroupitem x, y, z; form */
+        arg_cnt = block->ptr_cnt;
+        arg_off = 0;
     }
 
-    /* evaluate group id */
-    group_id = evaluate_expression(block, block->ptr[0 + off], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == group_id)
-        goto failed;
+    /* use default quantity and subgroup id if not specified */
+    switch(arg_cnt) {
+        case 1: err = block_stack_push(block, TYPE_PTR, "0"); /* default quantity is 0 */
+        case 2: err = block_stack_push(block, TYPE_PTR, "1"); /* default subgroup id is 1 */
+    }
+    if(err)
+        return exit_func_safe("failed to push defa"
+        "ult arguments in item %d", block->item_id);
 
-    /* default quantity to zero */
-    if(1 + off >= block->ptr_cnt)
-        if(block_stack_push(block, TYPE_PTR, "0"))
-            goto failed;
+    /* get the group id, quantity, and subgroup id constants */
+    if( evaluate_numeric_constant(block, block->ptr[arg_off + 0], 1, &group_id) ||
+        evaluate_numeric_constant(block, block->ptr[arg_off + 1], 1, &quantity) ||
+        evaluate_numeric_constant(block, block->ptr[arg_off + 2], 1, &subgroup_id))
+        return exit_func_safe("failed to evaluate group id, q"
+        "uantity, or subgroup id in item %d", block->item_id);
 
-    /* evaluate quantity */
-    quantity = evaluate_expression(block, block->ptr[1 + off], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == quantity)
-        goto failed;
+    /* get the group name and quantity (w/ formula if exist) very
+     * inefficient since group id and quantity is evaluated twice */
+    if(stack_eng_item_group(block, block->ptr[arg_off + 0]) ||
+       stack_eng_int(block, block->ptr[arg_off + 1], 1, 0))
+        return exit_func_safe("failed to get group name in item %d", block->item_id);
 
-    /* default subgroup id to one */
-    if(2 + off >= block->ptr_cnt)
-        if(block_stack_push(block, TYPE_PTR, "1"))
-            goto failed;
-
-    subgroup_id = evaluate_expression(block, block->ptr[2 + off], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == subgroup_id)
-        goto failed;
-
-    /* support only constants */
-    if(group_id->min    != group_id->max ||
-       subgroup_id->min != subgroup_id->max)
-        goto failed;
-
-    /* search for the item group meta information */
+    /* query item group metadata */
     meta = calloc(1, sizeof(item_group_meta_t));
     if(NULL == meta)
         goto failed;
-
-    if(item_group_id_meta(block->script->db, meta, group_id->min, subgroup_id->min)) {
-        exit_func_safe("failed to find group id %d and subgroup id %d fo"
-        "r item id %d", group_id->min, subgroup_id->min, block->item_id);
+    if(item_group_id_meta(block->script->db, meta, group_id, subgroup_id)) {
+        exit_func_safe("failed to find group id %d and subgroup id "
+        "%d for item id %d", group_id, subgroup_id, block->item_id);
         goto failed;
     }
-
-    /* error empty item groups */
     if(0 >= meta->item) {
-        exit_func_safe("group id %d and subgroup id %d is empty for "
-        "item id %d", group_id->min, subgroup_id->min, block->item_id);
+        exit_func_safe("group id %d and subgroup id %d has no ite"
+        "ms in item id %d", group_id, subgroup_id, block->item_id);
         goto failed;
     }
 
-    /* write item type and item group count to the stack */
-    if(0 == quantity->max && 0 == quantity->min) {
-        sprintf(aux, "Add a random amount of items from item group %d to your inventory.", group_id->min);
-    } else {
-        if(stack_eng_int(block, block->ptr[1 + off], 1, 0))
-            goto failed;
-        sprintf(aux, "Add %s item(s) from item group %d to your inventory.", block->eng[0], group_id->min);
-        if(block_stack_pop(block, TYPE_ENG))
-            goto failed;
-    }
-    if(block_stack_push(block, TYPE_ENG, aux))
-            goto failed;
+    /* write the group name and quantity */
+    if( block_stack_vararg(block, TYPE_ENG, "Select %s item%s from %s.", block->eng\
+    [block->eng_cnt - 1], (quantity > 1) ? "s" : "", block->eng[block->eng_cnt - 2]))
+        goto failed;
 
+    /* write either the item group summary or the list of items */
     if(meta->item > MAX_ITEM_LIST) {
-        /* write a summary of items when max item list is exceeded */
-        if(meta->heal) {
-            sprintf(aux, " * %d healing items", meta->heal);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->usable) {
-            sprintf(aux, " * %d usable items", meta->usable);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->etc) {
-            sprintf(aux, " * %d etc items", meta->etc);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->armor) {
-            sprintf(aux, " * %d armor items", meta->armor);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->weapon) {
-            sprintf(aux, " * %d weapon items", meta->weapon);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->card) {
-            sprintf(aux, " * %d card items", meta->card);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->pet) {
-            sprintf(aux, " * %d pet items", meta->pet);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->pet_equip) {
-            sprintf(aux, " * %d pet_equip items", meta->pet_equip);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->ammo) {
-            sprintf(aux, " * %d ammo items", meta->ammo);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->delay_usable) {
-            sprintf(aux, " * %d delay usable items", meta->delay_usable);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->shadow) {
-            sprintf(aux, " * %d shadow equipment items", meta->shadow);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->confirm_usable) {
-            sprintf(aux, " * %d confirm usable items", meta->confirm_usable);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->bind) {
-            sprintf(aux, " * %d bounded items", meta->bind);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-        if(meta->rent) {
-            sprintf(aux, " * %d rental items", meta->rent);
-            if(block_stack_concat(block, TYPE_ENG, aux, '\n'))
-                goto clean;
-        }
-
+        if(meta->heal) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d healing items", meta->heal);
+        if(meta->usable) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d usable items", meta->usable);
+        if(meta->etc) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d etc items", meta->etc);
+        if(meta->armor) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d armor items", meta->armor);
+        if(meta->weapon) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d weapon items", meta->weapon);
+        if(meta->card) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d card items", meta->card);
+        if(meta->pet) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d pet items", meta->pet);
+        if(meta->pet_equip) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d pet equipment items", meta->pet_equip);
+        if(meta->ammo) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d ammo items", meta->ammo);
+        if(meta->delay_usable) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d delay usable items", meta->delay_usable);
+        if(meta->shadow) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d shadow equipment items", meta->shadow);
+        if(meta->confirm_usable) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d confirm usable items", meta->confirm_usable);
+        if(meta->bind) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d bounded items", meta->bind);
+        if(meta->rent) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d rental items", meta->rent);
+        if(err)
+            goto failed;
     } else {
-        /* search for item id from item group sorted by subgroup */
-        /* special handling for subgroup 0 */
-        /* write item name and type */
         exit_abt_safe("not implemented");
         goto failed;
     }
 
 clean:
-    node_free(group_id);
-    node_free(quantity);
-    node_free(subgroup_id);
     SAFE_FREE(meta);
-    return ret;
+    return err;
 failed:
-    ret = CHECK_FAILED;
+    err = CHECK_FAILED;
     goto clean;
 }
 
@@ -4087,6 +4064,26 @@ int translate_bonus_script(block_r * block) {
 
 int translate_setfalcon(block_r * block) {
     return exit_abt_safe("maintenance");
+}
+
+int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * constant) {
+    node_t * result = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, expr, constant);
+
+    /* evaluate the constant expression */
+    result = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == result)
+        return CHECK_FAILED;
+
+    if(result->min != result->max)
+        return exit_func_safe("%s evaluated to a non-constant value in item %d", expr, block->item_id);
+
+    /* set the constant value */
+    *constant = result->min;
+
+    return CHECK_PASSED;
 }
 
 /* lowest level function for evaluating expressions
