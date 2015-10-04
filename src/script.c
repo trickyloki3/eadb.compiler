@@ -93,6 +93,58 @@ int block_deit(block_r ** block) {
     return CHECK_PASSED;
 }
 
+int block_stack_vararg(block_r * block, int type, const char * format, ...) {
+    int len = 0;
+    int cnt = 0;
+    va_list args;
+
+    /* write the formatted arguments */
+    va_start(args, format);
+    cnt = BUF_SIZE - block->arg_cnt;
+    len = vsnprintf(&block->arg[block->arg_cnt], cnt, format, args);
+    va_end(args);
+
+    /* check whether the arguments is truncated */
+    if(len >= cnt)
+        return exit_func_safe("truncated formatted a"
+        "rgument string in item %d", block->item_id);
+
+    /* replace the previous null with newline */
+    if(type & FLAG_CONCAT) {
+        /* error on invalid top string */
+        if(block->arg_cnt < 0)
+            return CHECK_FAILED;
+
+        block->arg[block->arg_cnt - 1] = '\n';
+    } else {
+        /* set the stack pointers */
+        switch (type & 0x3) {
+            case TYPE_PTR:
+                cnt = block->ptr_cnt;
+                if (cnt >= PTR_SIZE)
+                    return exit_func_safe("exceed translated string ar"
+                    "ray size %d in item %d", PTR_SIZE, block->item_id);
+                block->ptr[cnt] = &block->arg[block->arg_cnt];
+                block->ptr_cnt++;
+                break;
+            case TYPE_ENG:
+                cnt = block->eng_cnt;
+                if (cnt >= PTR_SIZE)
+                    return exit_func_safe("exceed argument string arr"
+                    "ay size %d in item %d", PTR_SIZE, block->item_id);
+                block->eng[cnt] = &block->arg[block->arg_cnt];
+                block->eng_cnt++;
+                break;
+            default:
+                return exit_func_safe("invalid type %d in item %d", type, block->item_id);
+        }
+    }
+
+    /* set the new stack top */
+    block->arg_cnt += (len + 1);
+    return CHECK_PASSED;
+}
+
 int block_stack_push(block_r * block, int type, const char * str) {
     int ret = 0;
     int cnt = 0;
@@ -298,77 +350,6 @@ int block_stack_dump(block_r * block, FILE * stream) {
         iter = iter->next;
     } while(iter != block);
 
-    return CHECK_PASSED;
-}
-
-int block_stack_concat(block_r * block, int type, const char * str, char delimit) {
-    int ret = 0;
-
-    /* error on invalid references */
-    exit_null_safe(2, block, str);
-
-    /* error on invalid top string */
-    if(block->arg_cnt < 0)
-        return CHECK_FAILED;
-
-    /* replace the null character with delimit and push to stack
-     * which to be honest, is just a very cheap hack =.= */
-    block->arg[block->arg_cnt - 1] = delimit;
-    ret = block_stack_push(block, type, str);
-
-    switch (type) {
-        case TYPE_PTR: --block->ptr_cnt; break;
-        case TYPE_ENG: --block->eng_cnt; break;
-    }
-
-    return ret;
-}
-
-int block_stack_vararg(block_r * block, int type, const char * format, ...) {
-    int len = 0;
-    int cnt = 0;
-    va_list args;
-
-    /* write the formatted arguments */
-    va_start(args, format);
-    cnt = BUF_SIZE - block->arg_cnt;
-    len = vsnprintf(&block->arg[block->arg_cnt], cnt, format, args);
-    va_end(args);
-
-    /* check whether the arguments is truncated */
-    if(len >= cnt)
-        return exit_func_safe("truncated formatted a"
-        "rgument string in item %d", block->item_id);
-
-    /* replace the previous null with newline */
-    if(type & FLAG_CONCAT) {
-        block->arg[block->arg_cnt - 1] = '\n';
-    } else {
-        /* set the stack pointers */
-        switch (type & 0x3) {
-            case TYPE_PTR:
-                cnt = block->ptr_cnt;
-                if (cnt >= PTR_SIZE)
-                    return exit_func_safe("exceed translated string ar"
-                    "ray size %d in item %d", PTR_SIZE, block->item_id);
-                block->ptr[cnt] = &block->arg[block->arg_cnt];
-                block->ptr_cnt++;
-                break;
-            case TYPE_ENG:
-                cnt = block->eng_cnt;
-                if (cnt >= PTR_SIZE)
-                    return exit_func_safe("exceed argument string arr"
-                    "ay size %d in item %d", PTR_SIZE, block->item_id);
-                block->eng[cnt] = &block->arg[block->arg_cnt];
-                block->eng_cnt++;
-                break;
-            default:
-                return exit_func_safe("invalid type %d in item %d", type, block->item_id);
-        }
-    }
-
-    /* set the new stack top */
-    block->arg_cnt += (len + 1);
     return CHECK_PASSED;
 }
 
@@ -1275,6 +1256,7 @@ int script_translate(script_t * script) {
 }
 
 int script_generate(script_t * script) {
+    int top = 0;
     block_r * iter = NULL;
 
     exit_null_safe(1, script);
@@ -1301,9 +1283,10 @@ int script_generate(script_t * script) {
             case 32: /* end */
                 break;
             default:
-                if(iter->eng_cnt != 1 || iter->eng[0] == NULL)
-                    return CHECK_FAILED;
-                script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->eng[0]);
+                top = iter->eng_cnt - 1;
+                if(NULL == iter->eng[top])
+                    return exit_func_safe("invalid translated string in item %d", iter->item_id);
+                script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->eng[top]);
         }
         iter = iter->next;
     } while (iter != script->blocks && !iter->free);
