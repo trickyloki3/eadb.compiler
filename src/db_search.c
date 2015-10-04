@@ -82,6 +82,7 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
                init_db_prep_sql(_db->db, &_db->merc_id, EA_MERC_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->pet_id, EA_PET_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->produce_id, EA_PRODUCE_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_name, EA_ITEM_GROUP_NAME_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_id, EA_ITEM_GROUP_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_record, EA_ITEM_GROUP_ID_RECORD))
                 goto failed;
@@ -98,9 +99,10 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
                init_db_prep_sql(_db->db, &_db->merc_id, RA_MERC_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->pet_id, RA_PET_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->produce_id, RA_PRODUCE_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_name, RA_ITEM_GROUP_NAME_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_id, RA_ITEM_GROUP_ID_SEARCH) ||
-               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH) ||
-               init_db_prep_sql(_db->db, &_db->item_group_id_meta, RA_ITEM_GROUP_ID_META_SEARCH))
+               init_db_prep_sql(_db->db, &_db->item_group_id_meta, RA_ITEM_GROUP_ID_META_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH))
                 goto failed;
             break;
         case HERCULE:
@@ -141,6 +143,7 @@ int deit_db_load(db_t ** db) {
        (_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
        (_db->item_group_record && deit_db_prep_sql(_db->db, &_db->item_group_record)) ||
        (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
+       (_db->item_group_name && deit_db_prep_sql(_db->db, &_db->item_group_name)) ||
        (_db->produce_id && deit_db_prep_sql(_db->db, &_db->produce_id)) ||
        (_db->pet_id && deit_db_prep_sql(_db->db, &_db->pet_id)) ||
        (_db->merc_id && deit_db_prep_sql(_db->db, &_db->merc_id)) ||
@@ -807,6 +810,22 @@ int produce_free(produce_t ** produces) {
         free(temporary);
     }
     *produces = NULL;
+    return CHECK_PASSED;
+}
+
+int item_group_name(db_t * db, const_t * group_name, int group_id) {
+    sqlite3_stmt * stmt = NULL;
+
+    /* error on invalid reference */
+    exit_null_safe(2, db, group_name);
+
+    if(exec_db_query(db->db, db->item_group_name, 1, BIND_NUMBER, group_id))
+        return CHECK_FAILED;
+
+    stmt = db->item_group_name->stmt;
+    strncopy(group_name->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
+    group_name->value = sqlite3_column_int(stmt, 1);
+    group_name->type = sqlite3_column_int(stmt, 2);
     return CHECK_PASSED;
 }
 

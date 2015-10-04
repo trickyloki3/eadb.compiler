@@ -181,26 +181,27 @@
     int script_recursive(db_t *, int, lua_State *, char *, char **);
 
     /* stack_eng_map bitmask flags */
-    #define MAP_AMMO_FLAG                  0x00001
-    #define MAP_CAST_FLAG                  0x00002
-    #define MAP_CLASS_FLAG                 0x00004
-    #define MAP_EFFECT_FLAG                0x00008
-    #define MAP_ELEMENT_FLAG               0x00010
-    #define MAP_LOCATION_FLAG              0x00020
-    #define MAP_ITEM_FLAG                  0x00040
-    #define MAP_JOB_FLAG                   0x00080
-    #define MAP_RACE_FLAG                  0x00100
-    #define MAP_READPARAM_FLAG             0x00200
-    #define MAP_REGEN_FLAG                 0x00400
-    #define MAP_SEARCHSTORE_FLAG           0x00800
-    #define MAP_SIZE_FLAG                  0x01000
-    #define MAP_SP_FLAG                    0x02000
-    #define MAP_TARGET_FLAG                0x04000
-    #define MAP_WEAPON_FLAG                0x08000
-    #define MAP_REFINE_FLAG                0x10000
-    #define MAP_ITEM_INFO_FLAG             0x40000
-    #define MAP_TIME_FLAG                  0x80000
-    #define MAP_NO_ERROR                   0x20000
+    #define MAP_AMMO_FLAG                  0x000001
+    #define MAP_CAST_FLAG                  0x000002
+    #define MAP_CLASS_FLAG                 0x000004
+    #define MAP_EFFECT_FLAG                0x000008
+    #define MAP_ELEMENT_FLAG               0x000010
+    #define MAP_LOCATION_FLAG              0x000020
+    #define MAP_ITEM_FLAG                  0x000040
+    #define MAP_JOB_FLAG                   0x000080
+    #define MAP_RACE_FLAG                  0x000100
+    #define MAP_READPARAM_FLAG             0x000200
+    #define MAP_REGEN_FLAG                 0x000400
+    #define MAP_SEARCHSTORE_FLAG           0x000800
+    #define MAP_SIZE_FLAG                  0x001000
+    #define MAP_SP_FLAG                    0x002000
+    #define MAP_TARGET_FLAG                0x004000
+    #define MAP_WEAPON_FLAG                0x008000
+    #define MAP_REFINE_FLAG                0x010000
+    #define MAP_NO_ERROR                   0x020000
+    #define MAP_ITEM_INFO_FLAG             0x040000
+    #define MAP_TIME_FLAG                  0x080000
+    #define MAP_STRCHARINFO_FLAG           0x100000
 
     /* stack_eng_db bitmask flags */
     #define DB_SKILL_ID                    0x01
@@ -251,7 +252,7 @@
     int stack_eng_produce(block_r *, char *, int *);
     int stack_eng_map(block_r *, char *, int, int *);
     int stack_eng_db(block_r *, char *, int, int *);
-    int stack_eng_item_group(block_r *, char *, int *);
+    int stack_eng_item_group(block_r *, char *);
     int stack_eng_trigger_bt(block_r *, char *);
     int stack_eng_trigger_atf(block_r *, char *);
     int stack_eng_script(block_r *, char *);
@@ -336,6 +337,7 @@
     int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
     int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
     int evaluate_function_pow(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01

@@ -221,60 +221,62 @@
     } item_group_meta_t;
 
     /* resource database queries */
-    #define RE_OPT_NAME_SEARCH      "SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
-    #define RE_MAP_NAME_SEARCH      "SELECT * FROM map_res WHERE map = ?;"
-    #define RE_MAP_ID_SEARCH        "SELECT * FROM map_res WHERE id = ?;"
-    #define RE_BONUS_NAME_SEARCH    "SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
-    #define RE_STATUS_NAME_SEARCH   "SELECT * FROM status_res WHERE scid = ? COLLATE NOCASE;"
-    #define RE_VAR_NAME_SEARCH      "SELECT * FROM var_res WHERE name = ? COLLATE NOCASE;"
-    #define RE_BLOCK_NAME_SEARCH    "SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
-    #define RE_SPR_ID_SEARCH        "SELECT * FROM id_res WHERE id = ?;"
-    #define RE_NSPR_ID_SEARCH       "SELECT * FROM numid_res WHERE id = ?;"
+    #define RE_OPT_NAME_SEARCH              "SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
+    #define RE_MAP_NAME_SEARCH              "SELECT * FROM map_res WHERE map = ?;"
+    #define RE_MAP_ID_SEARCH                "SELECT * FROM map_res WHERE id = ?;"
+    #define RE_BONUS_NAME_SEARCH            "SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
+    #define RE_STATUS_NAME_SEARCH           "SELECT * FROM status_res WHERE scid = ? COLLATE NOCASE;"
+    #define RE_VAR_NAME_SEARCH              "SELECT * FROM var_res WHERE name = ? COLLATE NOCASE;"
+    #define RE_BLOCK_NAME_SEARCH            "SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
+    #define RE_SPR_ID_SEARCH                "SELECT * FROM id_res WHERE id = ?;"
+    #define RE_NSPR_ID_SEARCH               "SELECT * FROM numid_res WHERE id = ?;"
 
     /* server item database queries */
-    #define EA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
-    #define RA_ITEM_ITERATE         "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
-    #define HE_ITEM_ITERATE         "SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
-                                    "BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
-                                    "StackAmount, StackType from item_he;"
+    #define EA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
+    #define RA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
+    #define HE_ITEM_ITERATE                 "SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
+                                            "BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
+                                            "StackAmount, StackType from item_he;"
 
     /* server database queries */
-    #define EA_CONST_NAME_SEARCH    "SELECT * FROM const_ea WHERE name = ? COLLATE NOCASE;"
-    #define RA_CONST_NAME_SEARCH    "SELECT * FROM const_ra WHERE name = ? COLLATE NOCASE;"
-    #define HE_CONST_NAME_SEARCH    "SELECT * FROM const_he WHERE name = ? COLLATE NOCASE;"
-    #define EA_CONST_ID_SEARCH      "SELECT * FROM const_ea WHERE value = ?;"
-    #define RA_CONST_ID_SEARCH      "SELECT * FROM const_ra WHERE value = ?;"
-    #define HE_CONST_ID_SEARCH      "SELECT * FROM const_he WHERE value = ?;"
-    #define EA_SKILL_NAME_SEARCH    "SELECT id, max, name, desc FROM skill_ea WHERE name = ? COLLATE NOCASE;"
-    #define RA_SKILL_NAME_SEARCH    "SELECT id, max, name, desc FROM skill_ra WHERE name = ? COLLATE NOCASE;"
-    #define HE_SKILL_NAME_SEARCH    "SELECT id, max, name, desc FROM skill_he WHERE name = ? COLLATE NOCASE;"
-    #define EA_SKILL_ID_SEARCH      "SELECT id, max, name, desc FROM skill_ea WHERE id = ?;"
-    #define RA_SKILL_ID_SEARCH      "SELECT id, max, name, desc FROM skill_ra WHERE id = ?;"
-    #define HE_SKILL_ID_SEARCH      "SELECT id, max, name, desc FROM skill_he WHERE id = ?;"
-    #define EA_ITEM_NAME_SEARCH     "SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
-    #define RA_ITEM_NAME_SEARCH     "SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
-    #define HE_ITEM_NAME_SEARCH     "SELECT Id, Name, Script FROM item_he WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"
-    #define EA_ITEM_ID_SEARCH       "SELECT id, eathena, script FROM item_ea WHERE id = ?;"
-    #define RA_ITEM_ID_SEARCH       "SELECT id, eathena, script FROM item_ra WHERE id = ?;"
-    #define HE_ITEM_ID_SEARCH       "SELECT Id, Name, Script FROM item_he WHERE id = ?;"
-    #define EA_MOB_ID_SEARCH        "SELECT id, iro FROM mob_ea WHERE id = ?;"
-    #define RA_MOB_ID_SEARCH        "SELECT id, iro FROM mob_ra WHERE id = ?;"
-    #define HE_MOB_ID_SEARCH        "SELECT id, iro FROM mob_he WHERE id = ?;"
-    #define EA_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_ea WHERE id = ?;"
-    #define RA_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_ra WHERE id = ?;"
-    #define HE_MERC_ID_SEARCH       "SELECT id, name FROM mercenary_he WHERE id = ?;"
-    #define EA_PET_ID_SEARCH        "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_ea WHERE mob_id = ?;"
-    #define RA_PET_ID_SEARCH        "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_ra WHERE mob_id = ?;"
-    #define HE_PET_ID_SEARCH        "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_he WHERE mob_id = ?;"
-    #define EA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
-    #define RA_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
-    #define HE_PRODUCE_ID_SEARCH    "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
-    #define EA_ITEM_GROUP_ID_SEARCH "SELECT group_id, size FROM item_group_ea WHERE group_id = ?;"
-    #define EA_ITEM_GROUP_ID_RECORD "SELECT item_id, rate FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
-    #define RA_ITEM_GROUP_ID_SEARCH "SELECT group_id, item_id, rate, amount, random, announced, duration, guid, bound, named FROM item_package_ra WHERE group_id = ?;"
-    #define RA_ITEM_GROUP_ID_META_SEARCH "SELECT * FROM item_package_meta_ra WHERE group_id = ? AND subgroup_id = ?;"
-    #define RA_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
-    #define HE_ITEM_COMBO_ID_SEARCH "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
+    #define EA_CONST_NAME_SEARCH            "SELECT * FROM const_ea WHERE name = ? COLLATE NOCASE;"
+    #define RA_CONST_NAME_SEARCH            "SELECT * FROM const_ra WHERE name = ? COLLATE NOCASE;"
+    #define HE_CONST_NAME_SEARCH            "SELECT * FROM const_he WHERE name = ? COLLATE NOCASE;"
+    #define EA_CONST_ID_SEARCH              "SELECT * FROM const_ea WHERE value = ?;"
+    #define RA_CONST_ID_SEARCH              "SELECT * FROM const_ra WHERE value = ?;"
+    #define HE_CONST_ID_SEARCH              "SELECT * FROM const_he WHERE value = ?;"
+    #define EA_SKILL_NAME_SEARCH            "SELECT id, max, name, desc FROM skill_ea WHERE name = ? COLLATE NOCASE;"
+    #define RA_SKILL_NAME_SEARCH            "SELECT id, max, name, desc FROM skill_ra WHERE name = ? COLLATE NOCASE;"
+    #define HE_SKILL_NAME_SEARCH            "SELECT id, max, name, desc FROM skill_he WHERE name = ? COLLATE NOCASE;"
+    #define EA_SKILL_ID_SEARCH              "SELECT id, max, name, desc FROM skill_ea WHERE id = ?;"
+    #define RA_SKILL_ID_SEARCH              "SELECT id, max, name, desc FROM skill_ra WHERE id = ?;"
+    #define HE_SKILL_ID_SEARCH              "SELECT id, max, name, desc FROM skill_he WHERE id = ?;"
+    #define EA_ITEM_NAME_SEARCH             "SELECT id, eathena, script FROM item_ea WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
+    #define RA_ITEM_NAME_SEARCH             "SELECT id, eathena, script FROM item_ra WHERE eathena = ? OR aegis = ? COLLATE NOCASE;"
+    #define HE_ITEM_NAME_SEARCH             "SELECT Id, Name, Script FROM item_he WHERE Name = ? OR AegisName = ? COLLATE NOCASE;"
+    #define EA_ITEM_ID_SEARCH               "SELECT id, eathena, script FROM item_ea WHERE id = ?;"
+    #define RA_ITEM_ID_SEARCH               "SELECT id, eathena, script FROM item_ra WHERE id = ?;"
+    #define HE_ITEM_ID_SEARCH               "SELECT Id, Name, Script FROM item_he WHERE id = ?;"
+    #define EA_MOB_ID_SEARCH                "SELECT id, iro FROM mob_ea WHERE id = ?;"
+    #define RA_MOB_ID_SEARCH                "SELECT id, iro FROM mob_ra WHERE id = ?;"
+    #define HE_MOB_ID_SEARCH                "SELECT id, iro FROM mob_he WHERE id = ?;"
+    #define EA_MERC_ID_SEARCH               "SELECT id, name FROM mercenary_ea WHERE id = ?;"
+    #define RA_MERC_ID_SEARCH               "SELECT id, name FROM mercenary_ra WHERE id = ?;"
+    #define HE_MERC_ID_SEARCH               "SELECT id, name FROM mercenary_he WHERE id = ?;"
+    #define EA_PET_ID_SEARCH                "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_ea WHERE mob_id = ?;"
+    #define RA_PET_ID_SEARCH                "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_ra WHERE mob_id = ?;"
+    #define HE_PET_ID_SEARCH                "SELECT mob_id, pet_jname, pet_script, loyal_script FROM pet_he WHERE mob_id = ?;"
+    #define EA_PRODUCE_ID_SEARCH            "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
+    #define RA_PRODUCE_ID_SEARCH            "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
+    #define HE_PRODUCE_ID_SEARCH            "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
+    #define EA_ITEM_GROUP_NAME_SEARCH       "SELECT * FROM const_ea WHERE value = ? and name like 'IG_%'"
+    #define EA_ITEM_GROUP_ID_SEARCH         "SELECT group_id, size FROM item_group_ea WHERE group_id = ?;"
+    #define EA_ITEM_GROUP_ID_RECORD         "SELECT item_id, rate FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
+    #define RA_ITEM_GROUP_NAME_SEARCH       "SELECT * FROM const_ra WHERE value = ? and name like 'IG_%'"
+    #define RA_ITEM_GROUP_ID_SEARCH         "SELECT group_id, item_id, rate, amount, random, announced, duration, guid, bound, named FROM item_package_ra WHERE group_id = ?;"
+    #define RA_ITEM_GROUP_ID_META_SEARCH    "SELECT * FROM item_package_meta_ra WHERE group_id = ? AND subgroup_id = ?;"
+    #define RA_ITEM_COMBO_ID_SEARCH         "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
+    #define HE_ITEM_COMBO_ID_SEARCH         "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
 
 
     typedef struct sql_t {
@@ -307,10 +309,11 @@
         sql_t * merc_id;
         sql_t * pet_id;
         sql_t * produce_id;
+        sql_t * item_group_name;
         sql_t * item_group_id;
         sql_t * item_group_record;
         sql_t * item_combo;
-        /* server meta table search */
+        /* rathena item package */
         sql_t * item_group_id_meta;
         sql_t * item_group_id_meta_query;
         /* server item database iterate */
@@ -366,6 +369,7 @@
     int pet_id(db_t *, pet_t *, int);
     int produce_id(db_t *, produce_t **, int);
     int produce_free(produce_t **);
+    int item_group_name(db_t *, const_t *, int);
     int item_group_id(db_t *, item_group_t *, int);
     int item_group_free(item_group_t *);
     int item_combo_id(db_t *, combo_t **, int);

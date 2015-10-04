@@ -344,6 +344,13 @@ sp_flag = {
     [1] = "drain SP";
 }
 
+strcharinfo = {
+    [0] = "character";
+    [1] = "party";
+    [2] = "guild";
+    [3] = "map";
+}
+
 target_flag = {
     [1] = "on self";
     [2] = "random skill level";

@@ -7,10 +7,11 @@
 8,sc_blind,1,"Inflict blind","blind",0,0,0,0,0,0,0,0,0
 9,sc_blooding,1,"Inflict bleed","bleed",0,0,0,0,0,0,0,0,0
 10,sc_dpoison,1,"Inflict poison","poison",0,0,0,0,0,0,0,0,0
-30 ,sc_blessing,1,"Cast Blessing [Lv.%s]","",1,m,0,0,0,1,0,0,0
-32 ,sc_inc_agi,1,"Cast Increase Agility [Lv.%s]","",1,m,0,0,0,1,0,0,0
-38 ,sc_benedictio,1,"Enchant armor with Holy property","",0,0,0,0,0,0,0,0,0
-43 ,sc_adrenaline,0,"Cast Adrenaline [Lv.%s]","",1,m,0,0,0,1,0,0,0
+30,sc_blessing,1,"Cast Blessing [Lv.%s]","",1,m,0,0,0,1,0,0,0
+32,sc_inc_agi,1,"Cast Increase Agility [Lv.%s]","",1,m,0,0,0,1,0,0,0
+37,sc_aspersio,1,"Cast Aspersio [Lv.%s]","",1,m,0,0,0,1,0,0,0
+38,sc_benedictio,1,"Enchant armor with Holy property","",0,0,0,0,0,0,0,0,0
+43,sc_adrenaline,0,"Cast Adrenaline [Lv.%s]","",1,m,0,0,0,1,0,0,0
 52,sc_hallucination,0,"Inflict hallucination","hallucination",0,0,0,0,0,0,0,0,0
 55,sc_aspdpotion0,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
 56,sc_aspdpotion1,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
@@ -21,12 +22,12 @@
 61,sc_atkpotion,1,"Increase %s ATK","",1,n,0,0,0,1,0,0,0
 62,sc_matkpotion,1,"Increase %s MATK","",1,n,0,0,0,1,0,0,0
 63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0
-64 ,sc_slowdown,1,"Decrease movement speed","",0,0,0,0,0,0,0,0,0
-72 ,sc_cp_weapon,1,"Prevent weapon from being strip","",0,0,0,0,0,0,0,0,0
-73 ,sc_cp_shield,1,"Prevent shield from being strip","",0,0,0,0,0,0,0,0,0
-74 ,sc_cp_armor,1,"Prevent armor from being strip","",0,0,0,0,0,0,0,0,0
-75 ,sc_cp_helm,1,"Prevent helm from being strip","",0,0,0,0,0,0,0,0,0
-97 ,sc_waterweapon,1,"Enchant weapon with Water [Lv.%s] property","",1,m,0,0,0,1,0,0,0
+64,sc_slowdown,1,"Decrease movement speed","",0,0,0,0,0,0,0,0,0
+72,sc_cp_weapon,1,"Prevent weapon from being strip","",0,0,0,0,0,0,0,0,0
+73,sc_cp_shield,1,"Prevent shield from being strip","",0,0,0,0,0,0,0,0,0
+74,sc_cp_armor,1,"Prevent armor from being strip","",0,0,0,0,0,0,0,0,0
+75,sc_cp_helm,1,"Prevent helm from being strip","",0,0,0,0,0,0,0,0,0
+97,sc_waterweapon,1,"Enchant weapon with Water [Lv.%s] property","",1,m,0,0,0,1,0,0,0
 105,sc_armor_element,2,"Increase water resistance by %s%%, fire resistance by %s%%, wind resistance by %s%%, and earth resistance by %s%%","",4,n,n,n,n,1,2,3,4
 115,sc_assumptio,1,"Cast Assumptio [Lv.%s]","",1,m,0,0,0,1,0,0,0
 121,sc_windwalk,1,"Cast Windwalk [Lv.%s]","",1,m,0,0,0,1,0,0,0

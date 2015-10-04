@@ -209,3 +209,5 @@
 206,0x00000000,0,bonus,bIntravision,"Grant ability to see hidden characters.",1,z,1,0
 207,0x00000000,0,bonus,bNoCastCancel,"Grant ability to cast magic without interruption.",1,z,1,0
 208,0x00000000,0,bonus,bNoCastCancel2,"Grant ability to cast magic without interruption.",1,z,1,0
+209,0x00000000,9,bonus2,bComaClass,"Add %s chance of inflicting coma on %s enemy.",2,j,q,2,1,0
+210,0x00000000,9,bonus2,bComaRace,"Add %s chance of inflicting coma on %s enemy.",2,r,q,2,1,0

@@ -2058,6 +2058,8 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
                 goto found;
             if(MAP_TIME_FLAG & flag && !script_map_id(block, "time_type", i, &value))
                 goto found;
+            if(MAP_STRCHARINFO_FLAG & flag && !script_map_id(block, "strcharinfo", i, &value))
+                goto found;
 
             /* failed to find resolve the id */
             if(!(flag & MAP_NO_ERROR))
@@ -2239,39 +2241,69 @@ failed:
     goto clean;
 }
 
-int stack_eng_item_group(block_r * block, char * expr, int * argc) {
+int stack_eng_item_group(block_r * block, char * expr) {
+    int i = 0;
+    int j = 0;
     int ret = 0;
-    int top = 0;
+    int len = 0;
+    char * buf = NULL;
+    char * name = NULL;
     node_t * group_id = NULL;
-    item_group_t item_group;
-    char buf[64];
+    const_t group_str;
 
-    exit_null_safe(3, block, expr, argc);
-
-    /* initialize the item group */
-    memset(&item_group, 0, sizeof(item_group_t));
-
-    top = block->eng_cnt;
-
-    /* group id must evaluate to a integer */
+    /* evaluate the expression to a group id */
     group_id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(NULL == group_id ||
-       group_id->min != group_id->max ||
-       item_group_id(block->script->db, &item_group, group_id->min) ||
-       0 >= item_group.size)
-        goto failed;
+       group_id->min != group_id->max)
+        return CHECK_FAILED;
 
-    sprintf(buf, "group %d (%d items)", group_id->min, item_group.size);
+    switch(block->script->mode) {
+        case EATHENA:
+        case RATHENA:
+            /* search for the group name */
+            memset(&group_str, 0, sizeof(const_t));
+            if(item_group_name(block->script->db, &group_str, group_id->min)) {
+                exit_func_safe("failed to get group name for group"
+                " id %d in item %d", group_id->min, block->item_id);
+                goto failed;
+            } else {
+                name = group_str.name;
+            }
 
-    if(block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
+            /* error on empty group name */
+            len = strlen(name);
+            if(0 >= len)
+                goto failed;
+
+            /* parse the group name;
+             * skip the initial IG_ */
+            buf = calloc(len * 3, sizeof(char));
+            if(NULL == buf)
+                goto failed;
+
+            for(i = 3; i < len; i++) {
+                /* converts RWCItem to RWC Item or RedPotion to Red Potion
+                 * but assume the first character is a capital letter */
+                if(i != 3 && i + 1 < len && islower(name[i + 1]) && isupper(name[i]))
+                    buf[j++] = ' ';
+                buf[j++] = tolower(name[i]);
+            }
+
+            /* append the 'group' postfix and push to stack */
+            buf[j++] = ' ';
+            sprintf(&buf[j], "group");
+
+            if(block_stack_push(block, TYPE_ENG, buf))
+                goto failed;
+            break;
+        default:
+            goto failed;
+    }
 
 clean:
-    *argc = block->eng_cnt - top;
-    item_group_free(&item_group);
+    SAFE_FREE(buf);
     node_free(group_id);
     return ret;
-
 failed:
     ret = CHECK_FAILED;
     goto clean;
@@ -2807,8 +2839,8 @@ int translate_status(block_r * block) {
                 case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* integer */
                 case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* skill level */
                 case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* integer percentage */
-                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);        break;    /* effect */
-                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);       break;    /* element */
+                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);       break;    /* effect */
+                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);      break;    /* element */
                 case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                        break;    /* regen */
                 default:
                     exit_func_safe("unsupported status argment type "
@@ -3054,8 +3086,8 @@ int translate_bonus(block_r * block, char * prefix) {
             case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
             case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
             case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                                 break; /* Trigger BT */
-            case 'y': ret = (stack_eng_item_group(block, block->ptr[j], &cnt)
-                            && stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt));                   break; /* Item Group */
+            case 'y': ret = (stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt)
+                            && stack_eng_item_group(block, block->ptr[j]));                             break; /* Item Group */
             case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                                break; /* Triger ATF */
             case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
             case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                 break; /* Flag Bitfield */
@@ -4544,6 +4576,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 10: ret = evaluate_function_gettime(block, arg_off, arg_cnt, func, node);              break; /* gettime */
         case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
         case 26: ret = evaluate_function_callfunc(block, arg_off, arg_cnt, func, node);             break; /* callfunc */
+        case 29: ret = evaluate_function_strcharinfo(block, arg_off, arg_cnt, func, node);          break; /* strcharinfo */
         case 30: ret = evaluate_function_countitem(block, arg_off, arg_cnt, func, node);            break; /* countitem */
         case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
@@ -5119,6 +5152,34 @@ clean:
 failed:
     ret = CHECK_FAILED;
     goto clean;
+}
+
+int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int ret = 0;
+    int len = 0;
+    int argc = 0;
+
+    /* error on invalid references */
+    exit_null_safe(3, block, func, node);
+
+    if(1 > cnt || 2 < cnt)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    len = block->arg_cnt;
+    if(stack_eng_map(block, block->ptr[off], MAP_STRCHARINFO_FLAG, &argc))
+        return CHECK_FAILED;
+    len = block->arg_cnt - len;
+
+    node->formula = calloc(len, sizeof(char));
+    if(NULL == node->formula)
+        return CHECK_FAILED;
+
+    sprintf(node->formula, "%s", block->eng[block->eng_cnt - 1]);
+    node->min = func->min;
+    node->max = func->max;
+
+    return CHECK_PASSED;
 }
 
 int node_steal(node_t * src, node_t * des) {
