@@ -269,14 +269,14 @@
     #define EA_PRODUCE_ID_SEARCH            "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ea WHERE item_lv = ?;"
     #define RA_PRODUCE_ID_SEARCH            "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_ra WHERE item_lv = ?;"
     #define HE_PRODUCE_ID_SEARCH            "SELECT item_id, item_lv, req_skill, req_skill_lv, material, amount FROM produce_he WHERE item_lv = ?;"
-    #define EA_ITEM_GROUP_NAME_SEARCH       "SELECT * FROM const_ea WHERE value = ? and name like 'IG_%'"
-    #define EA_ITEM_GROUP_ID_SEARCH         "SELECT group_id, size FROM item_group_ea WHERE group_id = ?;"
-    #define EA_ITEM_GROUP_ID_RECORD         "SELECT item_id, rate FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
-    #define RA_ITEM_GROUP_NAME_SEARCH       "SELECT * FROM const_ra WHERE value = ? and name like 'IG_%'"
-    #define RA_ITEM_GROUP_ID_SEARCH         "SELECT group_id, item_id, rate, amount, random, announced, duration, guid, bound, named FROM item_package_ra WHERE group_id = ?;"
-    #define RA_ITEM_GROUP_ID_META_SEARCH    "SELECT * FROM item_package_meta_ra WHERE group_id = ? AND subgroup_id = ?;"
     #define RA_ITEM_COMBO_ID_SEARCH         "SELECT script, combo_group FROM item_combo_ra WHERE id = ?;"
     #define HE_ITEM_COMBO_ID_SEARCH         "SELECT script, combo_group FROM item_combo_he WHERE id = ?;"
+    #define EA_ITEM_GROUP_NAME_SEARCH       "SELECT * FROM const_ea WHERE value = ? and name like 'IG_%'"
+    #define RA_ITEM_GROUP_NAME_SEARCH       "SELECT * FROM const_ra WHERE value = ? and name like 'IG_%'"
+    #define EA_ITEM_GROUP_ID_SEARCH         "SELECT * FROM item_group_ea WHERE group_id = ?;"
+    #define RA_ITEM_GROUP_ID_SEARCH         "SELECT * FROM item_package_meta_ra WHERE group_id = ? AND subgroup_id = ?;"
+    #define EA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
+    #define RA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_package_ra WHERE group_id = ? and random = ? ORDER BY item_id;"
 
 
     typedef struct sql_t {
@@ -310,12 +310,9 @@
         sql_t * pet_id;
         sql_t * produce_id;
         sql_t * item_group_name;
-        sql_t * item_group_id;
-        sql_t * item_group_record;
+        sql_t * item_group_id;          /* query item group metadata */
+        sql_t * item_group_record;      /* query item group records */
         sql_t * item_combo;
-        /* rathena item package */
-        sql_t * item_group_id_meta;
-        sql_t * item_group_id_meta_query;
         /* server item database iterate */
         sql_t * item_db;
     } db_t;
@@ -370,9 +367,10 @@
     int produce_id(db_t *, produce_t **, int);
     int produce_free(produce_t **);
     int item_group_name(db_t *, const_t *, int);
-    int item_group_id(db_t *, item_group_t *, int);
+    int item_group_id(db_t *, item_group_t *, int, int);
     int item_group_free(item_group_t *);
+    int item_group_id_ea(db_t *, item_group_t *, int);
+    int item_group_id_ra(db_t *, item_group_meta_t *, int, int);
     int item_combo_id(db_t *, combo_t **, int);
     int item_combo_free(combo_t **);
-    int item_group_id_meta(db_t *, item_group_meta_t *, int, int);
 #endif

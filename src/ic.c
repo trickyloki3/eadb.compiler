@@ -39,7 +39,7 @@ int main(int argc, char * argv[]) {
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
             script_generate(context) ||
-            context->item.id ==12025) {
+            context->item.id == 0) {
             goto failed;
         }
 

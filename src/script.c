@@ -2317,6 +2317,11 @@ int stack_eng_item_group(block_r * block, char * expr) {
                  * but assume the first character is a capital letter */
                 if(i != 3 && i + 1 < len && islower(name[i + 1]) && isupper(name[i]))
                     buf[j++] = ' ';
+                if((i + 1 < len && isdigit(name[i]) && !isdigit(name[i + 1])) ||
+                   (i + 1 == len && isdigit(name[i])))
+                    buf[j++] = ' ';
+                if(name[i] == '_')
+                    continue;
                 buf[j++] = tolower(name[i]);
             }
 
@@ -3928,6 +3933,7 @@ int translate_callfunc(block_r * block) {
  * but if you understand the stack, then it shouldn't be
  * a problem... e.e sorry */
 int translate_getrandgroupitem(block_r * block) {
+    int i = 0;
     int err = 0;
     int arg_cnt = 0;
     int arg_off = 0;
@@ -3939,9 +3945,14 @@ int translate_getrandgroupitem(block_r * block) {
 
     /* item group metadata */
     item_group_meta_t * meta = NULL;
+    item_group_t items;
+    item_t item;
+    range_t * iter = NULL;
 
     /* error on invalid references */
     exit_null_safe(1, block);
+    memset(&items, 0, sizeof(item_group_t));
+    memset(&item, 0, sizeof(item_t));
 
     /* error on invalid arguments */
     if(0 >= block->ptr_cnt)
@@ -3990,7 +4001,7 @@ int translate_getrandgroupitem(block_r * block) {
     meta = calloc(1, sizeof(item_group_meta_t));
     if(NULL == meta)
         goto failed;
-    if(item_group_id_meta(block->script->db, meta, group_id, subgroup_id)) {
+    if(item_group_id_ra(block->script->db, meta, group_id, subgroup_id)) {
         exit_func_safe("failed to find group id %d and subgroup id "
         "%d for item id %d", group_id, subgroup_id, block->item_id);
         goto failed;
@@ -4025,11 +4036,26 @@ int translate_getrandgroupitem(block_r * block) {
         if(err)
             goto failed;
     } else {
-        exit_abt_safe("not implemented");
-        goto failed;
+        /* get a list of all item id in item group */
+        if(item_group_id(block->script->db, &items, group_id, subgroup_id)) {
+            exit_func_safe("failed to get item id for group id %d subgro"
+            "up_id %d in item %d", group_id, subgroup_id, block->item_id);
+            goto failed;
+        }
+
+        /* write every item in the item group */
+        for(i = 0; i < items.size; i++) {
+            if(item_id(block->script->db, &item, items.item_id[i]) ||
+               block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %s", item.name)) {
+                exit_func_safe("failed to find item id %d in "
+                "item id %d", items.item_id[i], block->item_id);
+                goto failed;
+            }
+        }
     }
 
 clean:
+    item_group_free(&items);
     SAFE_FREE(meta);
     return err;
 failed:
@@ -4629,72 +4655,64 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
     int i = 0;
     int ret = 0;
     int min = 0;
-    node_t * group_id = NULL;
+    int group_id = 0;
+    int subgroup_id = 0;
+    item_group_t item_group;
     range_t * temp = NULL;
     range_t * iter = NULL;
-    item_group_t item_group;
 
     /* error on invalid references */
     exit_null_safe(3, block, func, node);
 
-    /* initialize the item group */
+    /* error on invalid argument count */
+    if(0 >= cnt)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    if(cnt == 1)
+        /* use default subgroup id 1 if none specified */
+        if(block_stack_push(block, TYPE_PTR, "1"))
+            goto failed;
+
+    /* query for item group records */
     memset(&item_group, 0, sizeof(item_group_t));
+    if( evaluate_numeric_constant(block, block->ptr[off + 0], 1, &group_id) ||
+        evaluate_numeric_constant(block, block->ptr[off + 1], 1, &subgroup_id) ||
+        item_group_id(block->script->db, &item_group, group_id, subgroup_id) ||
+        0 >= item_group.size)
+        goto failed;
 
-    switch(cnt) {
-        case 1:
-            /* group id must evaluate to a integer */
-            group_id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
-            if(NULL == group_id)
-                goto failed;
-
-            /* group id must be a constant */
-            if(group_id->min != group_id->max)
-                goto failed;
-
-            memset(&item_group, 0, sizeof(item_group_t));
-            if(item_group_id(block->script->db, &item_group, group_id->min)) {
-                exit_func_safe("failed to search for group id '%d' in item id %d", group_id->min, block->item_id);
-                goto failed;
-            }
-
-            if(0 >= item_group.size)
-                goto failed;
-
-            if(1 == item_group.size) {
-                /* evaluate_expression_recursive will make the range node */
-                node->min = item_group.item_id[0];
-                node->max = item_group.item_id[0];
-            }
-
+    if(1 == item_group.size) {
+        /* special case for one item group record */
+        node->min = item_group.item_id[0];
+        node->max = item_group.item_id[0];
+        goto clean;
+    } else {
+        /* build linked list of discontinous item id in item group */
+        min = item_group.item_id[0];
+        for (i = 0; i < item_group.size; i++) {
             /* build linked list of discontinous item id in item group */
-            min = item_group.item_id[0];
-            for (i = 0; i < item_group.size; i++) {
-                /* build linked list of discontinous item id in item group */
-                if (((i + 1) < item_group.size && item_group.item_id[i] + 1 != item_group.item_id[i + 1]) ||
-                    ((i + 1) >= item_group.size)) {
-                    if (node->range == NULL) {
-                        iter = node->range = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
-                    } else {
-                        temp = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
-
-                        /* linked the nodes */
-                        iter->next = temp;
-                        temp->prev = iter;
-                        iter = temp;
-                    }
-
-                    if((i + 1) < item_group.size)
-                        min = item_group.item_id[i + 1];
+            if (((i + 1) < item_group.size && item_group.item_id[i] + 1 != item_group.item_id[i + 1]) ||
+                ((i + 1) >= item_group.size)) {
+                if (node->range == NULL) {
+                    /* create the root range */
+                    iter = node->range = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
+                } else {
+                    /* append the new range to the list */
+                    temp = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
+                    iter->next = temp;
+                    temp->prev = iter;
+                    iter = temp;
                 }
+                if((i + 1) < item_group.size)
+                    min = item_group.item_id[i + 1];
             }
-            break;
-        default:
-            return exit_func_safe("invalid argument count to "
-            "function '%s' in %d", func->name, block->item_id);
+        }
+        node->min = minrange(node->range);
+        node->max = maxrange(node->range);
     }
 
 clean:
-    node_free(group_id);
     item_group_free(&item_group);
     return ret;
 failed:

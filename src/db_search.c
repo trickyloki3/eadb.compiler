@@ -101,7 +101,7 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
                init_db_prep_sql(_db->db, &_db->produce_id, RA_PRODUCE_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_name, RA_ITEM_GROUP_NAME_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_id, RA_ITEM_GROUP_ID_SEARCH) ||
-               init_db_prep_sql(_db->db, &_db->item_group_id_meta, RA_ITEM_GROUP_ID_META_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_group_record, RA_ITEM_GROUP_ID_RECORD) ||
                init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH))
                 goto failed;
             break;
@@ -139,8 +139,7 @@ int deit_db_load(db_t ** db) {
     exit_null_safe(2, db, *db);
 
     _db = *db;
-    if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_group_id_meta)) ||
-       (_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
+    if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
        (_db->item_group_record && deit_db_prep_sql(_db->db, &_db->item_group_record)) ||
        (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
        (_db->item_group_name && deit_db_prep_sql(_db->db, &_db->item_group_name)) ||
@@ -829,48 +828,68 @@ int item_group_name(db_t * db, const_t * group_name, int group_id) {
     return CHECK_PASSED;
 }
 
-int item_group_id(db_t * db, item_group_t * item_group, int id) {
+int item_group_id(db_t * db, item_group_t * item_group, int group_id, int subgroup_id) {
     int i = 0;
     sqlite3_stmt * stmt = NULL;
+    item_group_meta_t meta;
 
     /* get the group size for the group id */
     exit_null_safe(2, db, item_group);
 
+    /* get the item group metadata */
     switch(db->server_type) {
         case EATHENA:
-            if(exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, id))
+            if(item_group_id_ea(db, item_group, group_id))
                 return CHECK_FAILED;
-            stmt = db->item_group_id->stmt;
-            item_group->group_id = sqlite3_column_int(stmt, 0);
-            item_group->size = sqlite3_column_int(stmt, 1);
-
-            /* check whether item group is empty */
-            if(0 == item_group->size)
+            break;
+        case RATHENA:
+            memset(&meta, 0, sizeof(item_group_meta_t));
+            if(item_group_id_ra(db, &meta, group_id, subgroup_id))
                 return CHECK_FAILED;
+            item_group->group_id = meta.group_id;
+            item_group->size = meta.item;
+            break;
+        default:
+            return exit_func_safe("%d server type is not supported", db->server_type);
+    }
 
-            item_group->item_id = malloc(item_group->size * sizeof(int));
-            item_group->rate = malloc(item_group->size * sizeof(int));
-            if(NULL == item_group->item_id ||
-               NULL == item_group->rate ||
-               exec_db_query(db->db, db->item_group_record, 1, BIND_NUMBER, id)) {
+    /* error on empty item group */
+    if(0 == item_group->size)
+        return CHECK_FAILED;
+
+    /* create array for item id and rate */
+    item_group->item_id = malloc(item_group->size * sizeof(int));
+    item_group->rate = malloc(item_group->size * sizeof(int));
+    if(NULL == item_group->item_id ||
+       NULL == item_group->rate) {
+        item_group_free(item_group);
+        return CHECK_FAILED;
+    }
+
+    /* read item id and rate from item group */
+    switch(db->server_type) {
+        case EATHENA:
+            if(exec_db_query(db->db, db->item_group_record, 1, BIND_NUMBER, group_id)) {
                 item_group_free(item_group);
                 return CHECK_FAILED;
             }
-
-            /* write all item id and rate into array */
-            stmt = db->item_group_record->stmt;
-            do {
-                item_group->item_id[i] = sqlite3_column_int(stmt, 0);
-                item_group->rate[i] = sqlite3_column_int(stmt, 1);
-                i++;
-            } while(SQLITE_DONE != sqlite3_step(stmt));
             break;
         case RATHENA:
-
+            if(exec_db_query(db->db, db->item_group_record, 2, BIND_NUMBER, group_id, BIND_NUMBER, subgroup_id)) {
+                item_group_free(item_group);
+                return CHECK_FAILED;
+            }
             break;
         default:
-            return exit_func_safe("item group search is not implemented for server type %d", db->server_type);
+            return exit_func_safe("%d server type is not supported", db->server_type);
     }
+
+    stmt = db->item_group_record->stmt;
+    do {
+        item_group->item_id[i] = sqlite3_column_int(stmt, 1);
+        item_group->rate[i] = sqlite3_column_int(stmt, 2);
+        i++;
+    } while(SQLITE_DONE != sqlite3_step(stmt));
 
     return CHECK_PASSED;
 }
@@ -882,6 +901,50 @@ int item_group_free(item_group_t * item_group) {
     SAFE_FREE(item_group->rate);
     return CHECK_PASSED;
 }
+
+int item_group_id_ea(db_t * db, item_group_t * meta, int group_id) {
+    sqlite3_stmt * stmt = NULL;
+
+    exit_null_safe(2, db, meta);
+
+    if(exec_db_query(db->db, db->item_group_id, 1, BIND_NUMBER, group_id))
+        return CHECK_FAILED;
+
+    stmt = db->item_group_id->stmt;
+    meta->group_id = sqlite3_column_int(stmt, 0);
+    meta->size = sqlite3_column_int(stmt, 1);
+    return CHECK_PASSED;
+}
+
+int item_group_id_ra(db_t * db, item_group_meta_t * meta, int group_id, int subgroup_id) {
+    sqlite3_stmt * stmt = NULL;
+
+    exit_null_safe(2, db, meta);
+
+    if(exec_db_query(db->db, db->item_group_id, 2, BIND_NUMBER, group_id, BIND_NUMBER, subgroup_id))
+        return CHECK_FAILED;
+
+    stmt = db->item_group_id->stmt;
+    meta->group_id = sqlite3_column_int(stmt, 0);
+    meta->subgroup_id = sqlite3_column_int(stmt, 1);
+    meta->item = sqlite3_column_int(stmt, 2);
+    meta->heal = sqlite3_column_int(stmt, 3);
+    meta->usable = sqlite3_column_int(stmt, 4);
+    meta->etc = sqlite3_column_int(stmt, 5);
+    meta->armor = sqlite3_column_int(stmt, 6);
+    meta->weapon = sqlite3_column_int(stmt, 7);
+    meta->card = sqlite3_column_int(stmt, 8);
+    meta->pet = sqlite3_column_int(stmt, 9);
+    meta->pet_equip = sqlite3_column_int(stmt, 10);
+    meta->ammo = sqlite3_column_int(stmt, 11);
+    meta->delay_usable = sqlite3_column_int(stmt, 12);
+    meta->shadow = sqlite3_column_int(stmt, 13);
+    meta->confirm_usable = sqlite3_column_int(stmt, 14);
+    meta->bind = sqlite3_column_int(stmt, 15);
+    meta->rent = sqlite3_column_int(stmt, 16);
+    return CHECK_PASSED;
+}
+
 
 int item_combo_id(db_t * db, combo_t ** item_combos, int id) {
     sqlite3_stmt * stmt = NULL;
@@ -923,34 +986,5 @@ int item_combo_free(combo_t ** item_combos) {
     }
 
     *item_combos = NULL;
-    return CHECK_PASSED;
-}
-
-int item_group_id_meta(db_t * db, item_group_meta_t * meta, int group_id, int subgroup_id) {
-    sqlite3_stmt * stmt = NULL;
-
-    exit_null_safe(2, db, meta);
-
-    if(exec_db_query(db->db, db->item_group_id_meta, 2, BIND_NUMBER, group_id, BIND_NUMBER, subgroup_id))
-        return CHECK_FAILED;
-
-    stmt = db->item_group_id_meta->stmt;
-    meta->group_id = sqlite3_column_int(stmt, 0);
-    meta->subgroup_id = sqlite3_column_int(stmt, 1);
-    meta->item = sqlite3_column_int(stmt, 2);
-    meta->heal = sqlite3_column_int(stmt, 3);
-    meta->usable = sqlite3_column_int(stmt, 4);
-    meta->etc = sqlite3_column_int(stmt, 5);
-    meta->armor = sqlite3_column_int(stmt, 6);
-    meta->weapon = sqlite3_column_int(stmt, 7);
-    meta->card = sqlite3_column_int(stmt, 8);
-    meta->pet = sqlite3_column_int(stmt, 9);
-    meta->pet_equip = sqlite3_column_int(stmt, 10);
-    meta->ammo = sqlite3_column_int(stmt, 11);
-    meta->delay_usable = sqlite3_column_int(stmt, 12);
-    meta->shadow = sqlite3_column_int(stmt, 13);
-    meta->confirm_usable = sqlite3_column_int(stmt, 14);
-    meta->bind = sqlite3_column_int(stmt, 15);
-    meta->rent = sqlite3_column_int(stmt, 16);
     return CHECK_PASSED;
 }
