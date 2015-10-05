@@ -10,6 +10,7 @@
 
 /* global error buffer */
 char err_buf[BUF_SIZE];
+int exit_echo = 1;
 
 /* write formatted string into global error buffer */
 char * exit_msg(char * msg, char * format, ...) {
@@ -46,7 +47,8 @@ int exit_null(const char * file_name, const char * function_name, const int line
 
 /* print error message before exiting */
 int exit_func(const char * file_name, const char * function_name, const int line_number, int exitcode, const char * error) {
-   fprintf(stderr, "[warn]: %s;%s;%d; %s.\n", file_name, function_name, line_number, error);
+    if(exit_echo)
+      fprintf(stderr, "[warn]: %s;%s;%d; %s.\n", file_name, function_name, line_number, error);
 #if ENABLE_EXIT
    exit(exitcode);
 #else

@@ -40,7 +40,7 @@ int main(int argc, char * argv[]) {
             script_translate(context) ||
             script_generate(context) ||
             context->item.id == 0) {
-            goto failed;
+            /*goto failed;*/
         }
 
         /*printf("%s", context->buffer);

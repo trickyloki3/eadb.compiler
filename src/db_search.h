@@ -278,7 +278,6 @@
     #define EA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
     #define RA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_package_ra WHERE group_id = ? and random = ? ORDER BY item_id;"
 
-
     typedef struct sql_t {
         char * query;
         sqlite3_stmt * stmt;

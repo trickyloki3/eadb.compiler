@@ -154,7 +154,6 @@
     int script_init(script_t **, const char *, const char *, const char *, int);
     int script_deit(script_t **);
 
-
     /* script lexer macros used by script_lexical */
     #define SCRIPT_SYMBOL(X)               ((X) == '@' || (X) == '$' || (X) == '.' || (X) == '\'' || (X) == '#')
     #define SCRIPT_BINARY(X)               ((X) == '|' || (X) == '&' || (X) == '?' || (X) == ':' || (X) == '=' || \
@@ -238,6 +237,7 @@
     #define FORMAT_RATIO                   0x01
 
     /* stack limits */
+    #define MAX_SUB_GROUP                  4    /* set to MAX_ITEMGROUP_RANDGROUP for rathena */
     #define MAX_ITEM_LIST                  10
 
     /* script stack functions */
@@ -292,6 +292,7 @@
     int translate_monster(block_r *);
     int translate_callfunc(block_r *);
     int translate_getrandgroupitem(block_r *);
+    int translate_getgroupitem(block_r *);
     int translate_transform(block_r *);
     int translate_bonus_script(block_r *);
     int translate_setfalcon(block_r *);

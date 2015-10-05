@@ -376,6 +376,9 @@ int script_block_new(script_t * script, block_r ** block) {
     if(NULL != script->blocks)
         block_append(script->blocks, _block);
 
+    /* :D */
+    _block->script = script;
+
     /* script->blocks->next is the start of the list
      * and the script->blocks is the end of the list */
     script->blocks = _block;
@@ -696,11 +699,6 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             block->name = convert_string(token[i]);
             block->item_id = script->item.id;
             block->type = block_type.id;
-
-            /* copy the references from script to block
-             * to avoid massive rewrite for passing the
-             * references. */
-            block->script = script;
 
             /* link to parent or link else-if and else with if blocks */
             link = (link != parent && link->type != 27) ? parent : link;
@@ -1121,7 +1119,7 @@ int script_translate(script_t * script) {
             case 46: ret = block_stack_push(iter, TYPE_ENG, "Change to Summer Outfit when worn."); break;                   /* setoption */
             case 47: ret = block_stack_push(iter, TYPE_ENG, "Summon a creature to mount. [Work for all classes]."); break;  /* setmounting */
             case 48: ret = translate_setfalcon(iter); break;                                                                /* setfalcon */
-            case 49: ret = exit_abt_safe("maintenance"); break;                                                             /* getgroupitem */
+            case 49: ret = translate_getgroupitem(iter); break;                                                             /* getgroupitem */
             case 50: ret = block_stack_push(iter, TYPE_ENG, "Reset all status points."); break;                             /* resetstatus */
             case 51: ret = translate_bonus_script(iter); break;                                                             /* bonus_script */
             case 52: ret = block_stack_push(iter, TYPE_ENG, "Play another background song."); break;                        /* playbgm */
@@ -3954,6 +3952,10 @@ int translate_getrandgroupitem(block_r * block) {
     memset(&items, 0, sizeof(item_group_t));
     memset(&item, 0, sizeof(item_t));
 
+    /* support for hercules soon */
+    if(block->script->mode != RATHENA)
+        return exit_abt_safe("only supported on rathena");
+
     /* error on invalid arguments */
     if(0 >= block->ptr_cnt)
         return exit_func_safe("getrandgroupitem is missing group "
@@ -4013,9 +4015,15 @@ int translate_getrandgroupitem(block_r * block) {
     }
 
     /* write the group name and quantity */
-    if( block_stack_vararg(block, TYPE_ENG, "Select %s item%s from %s.", block->eng\
-    [block->eng_cnt - 1], (quantity > 1) ? "s" : "", block->eng[block->eng_cnt - 2]))
-        goto failed;
+    if(quantity > 0) {
+        if(block_stack_vararg(block, TYPE_ENG, "Select %s item%s from %s.", block->eng\
+        [block->eng_cnt - 1], (quantity > 1) ? "s" : "", block->eng[block->eng_cnt - 2]))
+            goto failed;
+    } else {
+        if(block_stack_vararg(block, TYPE_ENG, "Select random amou"
+           "nt of items from %s.", block->eng[block->eng_cnt - 2]))
+            goto failed;
+    }
 
     /* write either the item group summary or the list of items */
     if(meta->item > MAX_ITEM_LIST) {
@@ -4061,6 +4069,57 @@ clean:
 failed:
     err = CHECK_FAILED;
     goto clean;
+}
+
+int translate_getgroupitem(block_r * block) {
+    int i = 0;
+    int group_id = 0;
+    block_r * subgroup = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(1, block);
+
+    /* support for hercules soon */
+    if(block->script->mode != RATHENA)
+        return exit_abt_safe("only supported on rathena");
+
+    /* error on invalid arguments */
+    if(1 != block->ptr_cnt)
+        return exit_func_safe("getgroupitem is mis"
+        "sing group id in item %d", block->item_id);
+
+    if(evaluate_numeric_constant(block, block->ptr[0], 1, &group_id) ||
+       block_stack_push(block, TYPE_ENG, ""))
+        return SCRIPT_FAILED;
+
+    /* grab a empty block */
+    if(script_block_new(block->script, &subgroup))
+        return SCRIPT_FAILED;
+
+    /* cheap hack to disable error from translate_getrandgroupitem */
+    exit_echo = 0;
+    for(i = 0; i < MAX_SUB_GROUP; i++) {
+        /* block id for getrandgroupitem */
+        subgroup->name = convert_string("getrandgroupitem");
+        subgroup->item_id = block->item_id;
+        subgroup->type = 20;
+        if( block_stack_vararg(subgroup, TYPE_PTR, "%d", group_id) ||
+            block_stack_vararg(subgroup, TYPE_PTR, "0") ||
+            block_stack_vararg(subgroup, TYPE_PTR, "%d", i) ||
+            translate_getrandgroupitem(subgroup)) {
+            /* special case for sub group zero */
+            if(0 != i)
+                break;
+        } else {
+            block_stack_vararg(block, TYPE_ENG, subgroup->eng[subgroup->eng_cnt - 1]);
+        }
+        block_reset(subgroup);
+    }
+    exit_echo = 1;
+
+    /* return the block */
+    script_block_free(block->script, &subgroup);
+    return CHECK_FAILED;
 }
 
 int translate_transform(block_r * block) {
