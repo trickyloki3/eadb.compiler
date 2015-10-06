@@ -2754,7 +2754,7 @@ int translate_heal(block_r * block) {
     if(hp->min > 0)
         block_stack_vararg(block, TYPE_ENG, "%s.", block->eng[0]);
     if(sp->min > 0)
-        if((block->eng_cnt) ?
+        if((block->eng_cnt == 0) ?
             block_stack_vararg(block, TYPE_ENG, "%s.", block->eng[1]):
             block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s.", block->eng[1]))
             goto failed;
@@ -2770,9 +2770,6 @@ failed:
 
 int translate_produce(block_r * block, int handler) {
     int i = 0;
-    int len = 0;
-    int off = 0;
-    char * buf = NULL;
     int arg_off = 0;
     int arg_cnt = 0;
 
@@ -2786,38 +2783,23 @@ int translate_produce(block_r * block, int handler) {
 
     /* get total number of items pushed onto block->eng
      * stack and the length bytes written to the buffer */
-    len = block->arg_cnt;
     arg_off = block->eng_cnt;
     if(stack_eng_produce(block, block->ptr[0], &arg_cnt))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
         return CHECK_FAILED;
 
     /* write the produce recipes */
     for(i = arg_off; i < arg_cnt; i++)
-        off += sprintf(&buf[off], "%s\n", block->eng[i]);
+        if((block->eng_cnt == 0) ?
+            block_stack_vararg(block, TYPE_ENG, "%s", block->eng[i]):
+            block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", block->eng[i]))
+            return CHECK_FAILED;
 
-    for(i = arg_off; i < arg_cnt; i++)
-        block_stack_pop(block, TYPE_ENG);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf)) {
-        SAFE_FREE(buf);
-        return CHECK_FAILED;
-    }
-
-    SAFE_FREE(buf);
     return CHECK_PASSED;
 }
 
 int translate_status(block_r * block) {
     int i = 0;
     int ret = 0;
-    int len = 0;
-    int off = 0;
     int vcnt = 0;
     int argc = 0;
     char * buf = NULL;
@@ -2840,7 +2822,6 @@ int translate_status(block_r * block) {
     if(effect->min != effect->max)
         goto failed;
 
-    len = block->arg_cnt;
     if(status_id(block->script->db, &status, effect->min)) {
         exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
         goto failed;
@@ -2864,7 +2845,6 @@ int translate_status(block_r * block) {
 
         if(item_id(block->script->db, item, itemid->min) ||
            script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buf) ||
-           block_stack_reset(block, TYPE_ENG) ||
            block_stack_push(block, TYPE_ENG, buf))
             goto failed;
 
@@ -2889,13 +2869,6 @@ int translate_status(block_r * block) {
                 goto failed;
         }
     }
-    len = (block->arg_cnt - len);
-    len += strlen(status.scfmt) + 128;
-
-    /* write the format and duration */
-    buf = calloc(len + 128, sizeof(char));
-    if(NULL == buf)
-        goto failed;
 
     /* decrease the nullified argument */
     for(i = 0; i < status.vcnt; i++)
@@ -2904,25 +2877,30 @@ int translate_status(block_r * block) {
 
     switch(vcnt) {
         case 0:
-            off += sprintf(&buf[off], status.scfmt);
+            ret = block_stack_vararg(block,
+                TYPE_ENG, status.scfmt);
             break;
         case 1:
-            off += sprintf(&buf[off], status.scfmt,
+            ret = block_stack_vararg(block,
+                TYPE_ENG, status.scfmt,
                 block->eng[status.voff[0]]);
             break;
         case 2:
-            off += sprintf(&buf[off], status.scfmt,
+            ret = block_stack_vararg(block,
+                TYPE_ENG, status.scfmt,
                 block->eng[status.voff[0]],
                 block->eng[status.voff[1]]);
             break;
         case 3:
-            off += sprintf(&buf[off], status.scfmt,
+            ret = block_stack_vararg(block,
+                TYPE_ENG, status.scfmt,
                 block->eng[status.voff[0]],
                 block->eng[status.voff[1]],
                 block->eng[status.voff[2]]);
             break;
         case 4:
-            off += sprintf(&buf[off], status.scfmt,
+            ret = block_stack_vararg(block,
+                TYPE_ENG, status.scfmt,
                 block->eng[status.voff[0]],
                 block->eng[status.voff[1]],
                 block->eng[status.voff[2]],
@@ -2933,15 +2911,11 @@ int translate_status(block_r * block) {
             "t %d in item %d", status.vcnt, block->item_id);
     }
 
-    /* write the duration */
-    off += sprintf(&buf[off], " for %s.", block->eng[0]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
+    ret = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " for %s.", block->eng[0]);
+    if(ret)
         goto failed;
 
-    if(status.scid == 0)
-        printf("%s\n", buf);
+
 
 clean:
     SAFE_FREE(buf);
