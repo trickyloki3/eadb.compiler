@@ -3111,7 +3111,8 @@ int translate_bonus(block_r * block, char * prefix) {
             case 'q': ret = stack_eng_int_bonus(block, block->ptr[j], 100, bonus->attr, i);             break; /* Integer Percentage / 100 */
             case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                                break; /* Skill */
             case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                   break; /* Size */
-            case 'c': ret = stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt);                        break; /* Monster Class & Job ID * Monster ID */
+            case 'c': ret = (stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt) &&
+                            stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt));  break; /* Monster Class & Job ID * Monster ID */
             case 'o': ret = stack_eng_int_bonus(block, block->ptr[j], 10, bonus->attr, i);              break; /* Integer Percentage / 10 */
             case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                       break; /* Item ID */
             case 'x': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Level */
@@ -3132,14 +3133,18 @@ int translate_bonus(block_r * block, char * prefix) {
         }
 
         /* failed to push values onto the stack */
-        if(ret)
+        if(ret) {
+            exit_func_safe("failed to evaluate argument 'c' for item %d", bonus->type[i], block->item_id);
             goto failed;
+        }
 
         /* stack_eng_map and stack_eng_db may push
          * multiple values on the  stack, which is
          * not supported */
-        if(cnt > 1)
+        if(cnt > 1) {
+            exit_func_safe("non-constant value for item %d", block->item_id);
             goto failed;
+        }
     }
 
     /* write the bonus format */
@@ -4133,10 +4138,22 @@ int translate_getgroupitem(block_r * block) {
 }
 
 int translate_bonus_script(block_r * block) {
-    stack_eng_script(block, block->ptr[0]);
-    stack_eng_time(block, block->ptr[1], 1);
+    /* error on invalid references */
+    exit_null_safe(1, block);
 
-    return exit_abt_safe("maintenance");
+    /* error on invalid arguments */
+    if(2 > block->ptr_cnt)
+        return exit_func_safe("bonus_script is missing "
+        "script or duration in item %d", block->item_id);
+
+    /* evaluate only script and duration */
+    if( stack_eng_script(block, block->ptr[0]) ||
+        stack_eng_time(block, block->ptr[1], 1) ||
+        block_stack_vararg(block, TYPE_ENG, "Item bonus lasting for %s.", block->eng[1]) ||
+        block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", block->eng[0]))
+        return CHECK_FAILED;
+
+    return CHECK_PASSED;
 }
 
 int translate_transform(block_r * block) {
