@@ -2727,11 +2727,9 @@ int translate_rentitem(block_r * block) {
 }
 
 int translate_heal(block_r * block) {
-    int i = 0;
     int ret = 0;
-    int len = 0;
-    int off = 0;
-    char * buf = NULL;
+    node_t * hp = NULL;
+    node_t * sp = NULL;
 
     /* error on null references */
     exit_null_safe(1, block);
@@ -2740,28 +2738,34 @@ int translate_heal(block_r * block) {
     if(2 > block->ptr_cnt)
         return exit_func_safe("missing hp or sp argument for %s in item %d", block->name, block->item_id);
 
-    len = block->arg_cnt;
+    /* inefficient - hp and sp expression is evaluated twice */
+    hp = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == hp)
+        goto failed;
+
+    sp = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == sp)
+        goto failed;
+
     if( stack_eng_int_signed(block, block->ptr[0], 1, "Recover HP by", "Drain HP by", 0) ||
         stack_eng_int_signed(block, block->ptr[1], 1, "Recover SP by", "Drain SP by", 0))
         return CHECK_FAILED;
-    if(block->eng_cnt == 0)
-        return CHECK_FAILED;
 
-    len = (block->arg_cnt - len) + 128;
+    if(hp->min > 0)
+        block_stack_vararg(block, TYPE_ENG, "%s.", block->eng[0]);
+    if(sp->min > 0)
+        if((block->eng_cnt) ?
+            block_stack_vararg(block, TYPE_ENG, "%s.", block->eng[1]):
+            block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s.", block->eng[1]))
+            goto failed;
 
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
-
-    for(i = 0; i < block->eng_cnt; i++)
-        off += sprintf(&buf[off], "%s. ", block->eng[i]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
+clean:
+    node_free(hp);
+    node_free(sp);
     return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int translate_produce(block_r * block, int handler) {
