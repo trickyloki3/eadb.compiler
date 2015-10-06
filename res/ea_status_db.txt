@@ -19,8 +19,8 @@
 58,sc_aspdpotion3,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
 59,sc_speedup0,1,"Increase movement speed","",0,0,0,0,0,0,0,0,0
 60,sc_speedup1,1,"Increase movement speed","",0,0,0,0,0,0,0,0,0
-61,sc_atkpotion,1,"Increase %s ATK","",1,n,0,0,0,1,0,0,0
-62,sc_matkpotion,1,"Increase %s MATK","",1,n,0,0,0,1,0,0,0
+61,sc_atkpotion,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
+62,sc_matkpotion,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
 63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0
 64,sc_slowdown,1,"Decrease movement speed","",0,0,0,0,0,0,0,0,0
 72,sc_cp_weapon,1,"Prevent weapon from being stripped","",0,0,0,0,0,0,0,0,0
@@ -29,7 +29,7 @@
 75,sc_cp_helm,1,"Prevent helm from being stripped","",0,0,0,0,0,0,0,0,0
 97,sc_waterweapon,1,"Enchant weapon with Water [Lv.%s] property","",1,m,0,0,0,1,0,0,0
 98,sc_windweapon,1,"Enchant weapon with Wind [Lv.%s] property","",1,m,0,0,0,1,0,0,0
-105,sc_armor_element,2,"Increase water resistance by %s%%, fire resistance by %s%%, wind resistance by %s%%, and earth resistance by %s%%","",4,n,n,n,n,1,2,3,4
+105,sc_armor_element,2,"Increase water resistance by %s, fire resistance by %s, wind resistance by %s, and earth resistance by %s","",4,p,p,p,p,1,2,3,4
 115,sc_assumptio,1,"Cast Assumptio [Lv.%s]","",1,m,0,0,0,1,0,0,0
 121,sc_windwalk,1,"Cast Windwalk [Lv.%s]","",1,m,0,0,0,1,0,0,0
 165,sc_elementalchange,2,"Enchant armor with %s property","",3,n,l,n,0, 2,-1, -1,0
@@ -45,10 +45,10 @@
 194,sc_inchit,0,"Increase %s HIT","",1,n,0,0,0,1,0,0,0
 195,sc_inchitrate,0,"Increase hit rate %s HIT","",1,n,0,0,0,1,0,0,0
 196,sc_incflee,1,"Increase flee rate %s FLEE","",1,n,0,0,0,1,0,0,0
-198,sc_incmhprate,0,"Increase maximum HP by %s%%","",1,p,0,0,0,1,0,0,0
-199,sc_incmsprate,1,"Increase maximum SP by %s%%","",1,p,0,0,0,1,0,0,0
-200,sc_incatkrate,1,"Increase %s ATK","",1,n,0,0,0,1,0,0,0
-201,sc_incmatkrate,1,"Increase %s MATK","",1,n,0,0,0,1,0,0,0
+198,sc_incmhprate,0,"Increase maximum HP by %s","",1,p,0,0,0,1,0,0,0
+199,sc_incmsprate,1,"Increase maximum SP by %s","",1,p,0,0,0,1,0,0,0
+200,sc_incatkrate,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
+201,sc_incmatkrate,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
 203,sc_strfood,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
 204,sc_agifood,1,"Increase %s AGI","",1,n,0,0,0,1,0,0,0
 205,sc_vitfood,1,"Increase %s VIT","",1,n,0,0,0,1,0,0,0
@@ -57,38 +57,45 @@
 208,sc_lukfood,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
 209,sc_hitfood,1,"Increase %s HIT","",1,n,0,0,0,1,0,0,0
 210,sc_food_basichit,1,"Increase %s HIT","",1,n,0,0,0,1,0,0,0
-211,sc_batkfood,1,"Increase %s ATK","",1,n,0,0,0,1,0,0,0
-213,sc_matkfood,1,"Increase %s MATK","",1,n,0,0,0,1,0,0,0
+211,sc_batkfood,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
+213,sc_matkfood,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
 215,sc_xmas,1,"Change a Santa Suit costume","",0,0,0,0,0,0,0,0,0
 248,sc_incflee2,1,"Increase perfect dodge by +%s","",1,n,0,0,0,1,0,0,0
 256,sc_summer,1,"Change to Summer Outfit","",0,0,0,0,0,0,0,0,0
-257,sc_expboost,1,"Increase experience gained by %s%%","",1,p,0,0,0,1,0,0,0
-258,sc_itemboost,1,"Increase item drop rate by %s%%","",1,p,0,0,0,1,0,0,0
+257,sc_expboost,1,"Increase experience gained by %s","",1,p,0,0,0,1,0,0,0
+258,sc_itemboost,1,"Increase item drop rate by %s","",1,p,0,0,0,1,0,0,0
 259,sc_bossmapinfo,1,"Detect MVP monsters by indicating on mini-map","",0,0,0,0,0,0,0,0,0
 260,sc_lifeinsurance,1,"Prevent EXP loss from one KO","",0,0,0,0,0,0,0,0,0
 261,sc_inccri,1,"Increase %s CRIT","",1,n,0,0,0,1,0,0,0
-265,sc_mdef_rate,1,"Increase magical resistance by %s%%","",1,n,0,0,0,1,0,0,0
-267,sc_inchealrate,1,"Increase recovery amount from all recovery items by %s%%","",1,n,0,0,0,1,0,0,0
-271,sc_armor_resist,2,"Increase water resistance by %s%%, fire resistance by %s%%, wind resistance by %s%%, and earth resistance by %s%%","",4,n,n,n,n,1,2,3,4
-272,sc_spcost_rate,1,"Reduce SP consumption by %s%%","",1,n,0,0,0,1,0,0,0
-273,sc_atker_blood,1,"Reduce SP consumption by %s%%","",1,n,0,0,0,1,0,0,0
-275,sc_def_rate,1,"Increase physical resistance by %s%%","",1,n,0,0,0,1,0,0,0
+265,sc_mdef_rate,1,"Increase magical resistance by %s","",1,p,0,0,0,1,0,0,0
+267,sc_inchealrate,1,"Increase recovery amount from all recovery items by %s","",1,p,0,0,0,1,0,0,0
+271,sc_armor_resist,2,"Increase water resistance by %s, fire resistance by %s, wind resistance by %s, and earth resistance by %s","",4,p,p,p,p,1,2,3,4
+272,sc_spcost_rate,1,"Reduce SP consumption by %s","",1,p,0,0,0,1,0,0,0
+273,sc_atker_blood,1,"Reduce SP consumption by %s","",1,p,0,0,0,1,0,0,0
+275,sc_def_rate,1,"Increase physical resistance by %s","",1,p,0,0,0,1,0,0,0
 289,sc_itemscript,4,"","",0,0,0,0,0,0,0,0,0
-290,sc_s_lifepotion,6,"Regenerate %s%% of maximum HP every %s seconds","",2,u,n,0,0,1,2,0,0
-291,sc_l_lifepotion,6,"Regenerate %s%% of maximum HP every %s seconds","",2,u,n,0,0,1,2,0,0
-292,sc_jexpboost,1,"Increase job experience gained by %s%%","",1,n,0,0,0,1,0,0,0
-297,sc_manu_atk,1,"Increase %s%% physical damage to monsters on Manuk maps","",1,n,0,0,0,1,0,0,0
-298,sc_manu_def,1,"Decrease %s%% damage taken from monsters on Manuk maps","",1,n,0,0,0,1,0,0,0
-299,sc_spl_atk,1,"Increase %s%% physical damage to monsters on Splendide maps","",1,n,0,0,0,1,0,0,0
-300,sc_spl_def,1,"Decrease %s%% damage taken from monsters on Splendide maps","",1,n,0,0,0,1,0,0,0
-301,sc_manu_matk,1,"Increase %s%% magical damage to monsters on Manuk maps","",1,n,0,0,0,1,0,0,0
-302,sc_spl_matk,1,"Increase %s%% magical damage to monsters on Splendide maps","",1,n,0,0,0,1,0,0,0
+290,sc_s_lifepotion,6,"Regenerate %s of maximum HP every %s seconds","",2,u,p,0,0,1,2,0,0
+291,sc_l_lifepotion,6,"Regenerate %s of maximum HP every %s seconds","",2,u,p,0,0,1,2,0,0
+292,sc_jexpboost,1,"Increase job experience gained by %s","",1,p,0,0,0,1,0,0,0
+297,sc_manu_atk,1,"Increase %s physical damage to monsters on Manuk maps","",1,p,0,0,0,1,0,0,0
+298,sc_manu_def,1,"Decrease %s damage taken from monsters on Manuk maps","",1,p,0,0,0,1,0,0,0
+299,sc_spl_atk,1,"Increase %s physical damage to monsters on Splendide maps","",1,p,0,0,0,1,0,0,0
+300,sc_spl_def,1,"Decrease %s damage taken from monsters on Splendide maps","",1,p,0,0,0,1,0,0,0
+301,sc_manu_matk,1,"Increase %s magical damage to monsters on Manuk maps","",1,p,0,0,0,1,0,0,0
+302,sc_spl_matk,1,"Increase %s magical damage to monsters on Splendide maps","",1,p,0,0,0,1,0,0,0
 303,sc_food_str_cash,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
 304,sc_food_agi_cash,1,"Increase %s AGI","",1,n,0,0,0,1,0,0,0
 305,sc_food_vit_cash,1,"Increase %s VIT","",1,n,0,0,0,1,0,0,0
 306,sc_food_dex_cash,1,"Increase %s DEX","",1,n,0,0,0,1,0,0,0
 307,sc_food_int_cash,1,"Increase %s INT","",1,n,0,0,0,1,0,0,0
 308,sc_food_luk_cash,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
+438,sc_boost500,1,"Increase ASPD by %s","",1,p,0,0,0,1,0,0,0
+439,sc_full_swing_k,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
+440,sc_matkpotion,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
+441,sc_mustle_m,1,"Increase maximum HP by %s","",1,p,0,0,0,1,0,0,0
+442,sc_life_force_f,1,"Increase maximum SP by %s","",1,p,0,0,0,1,0,0,0
+443,sc_extract_white_potion_z,1,"Increase HP regeneration by %s","",1,p,0,0,0,1,0,0,0
+526,sc_incmhprate,1,"Increase maximum HP by %s","",1,n,0,0,0,1,0,0,0
 603,sc_mtf_mhp,1,"Increase Max HP by %s","",1,n,0,0,0,1,0,0,0
 604,sc_mtf_msp,1,"Increase Max SP by %s","",1,n,0,0,0,1,0,0,0
 605,sc_mtf_pumpkin,1,"Increase HP recovery of all potions by %s","",1,p,0,0,0,1,0,0,0

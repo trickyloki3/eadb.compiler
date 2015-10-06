@@ -64,7 +64,7 @@ int block_reset(block_r * block) {
     /* reset block linking */
     block->link = NULL;
     block->set = NULL;
-
+    block->flag = 0;
     /* free set block's node */
     if(NULL != block->set_node) {
         node_free(block->set_node);
@@ -1111,7 +1111,7 @@ int script_translate(script_t * script) {
             case 38: ret = translate_status(iter); break;                                                                   /* mercenary_sc_status */
             case 39: ret = translate_produce(iter, iter->type); break;                                                      /* produce */
             case 40: ret = translate_produce(iter, iter->type); break;                                                      /* cooking */
-            case 41: ret = exit_abt_safe("maintenance"); break;                                                             /* makerune */
+            case 41: ret = exit_abt_safe("makerune"); break;                                                                /* makerune */
             case 42: ret = translate_getexp(iter, iter->type); break;                                                       /* getguildexp */
             case 43: ret = translate_getexp(iter, iter->type); break;                                                       /* getexp */
             case 44: ret = translate_monster(iter); break;                                                                  /* monster */
@@ -1124,7 +1124,7 @@ int script_translate(script_t * script) {
             case 51: ret = translate_bonus_script(iter); break;                                                             /* bonus_script */
             case 52: ret = block_stack_push(iter, TYPE_ENG, "Play another background song."); break;                        /* playbgm */
             case 53: ret = translate_transform(iter); break;                                                                /* transform */
-            case 54: ret = exit_abt_safe("maintenance"); break;                                                             /* sc_start2 */
+            case 54: ret = translate_status(iter); break;                                                                   /* sc_start2 */
             case 55: ret = translate_petloot(iter); break;                                                                  /* petloot */
             case 56: ret = translate_petrecovery(iter); break;                                                              /* petrecovery */
             case 57: ret = translate_petskillbonus(iter); break;                                                            /* petskillbonus */
