@@ -89,3 +89,7 @@
 306,sc_food_dex_cash,1,"Increase %s DEX","",1,n,0,0,0,1,0,0,0
 307,sc_food_int_cash,1,"Increase %s INT","",1,n,0,0,0,1,0,0,0
 308,sc_food_luk_cash,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
+603,sc_mtf_mhp,1,"Increase Max HP by %s","",1,n,0,0,0,1,0,0,0
+604,sc_mtf_msp,1,"Increase Max SP by %s","",1,n,0,0,0,1,0,0,0
+605,sc_mtf_pumpkin,1,"Increase HP recovery of all potions by %s","",1,p,0,0,0,1,0,0,0
+606,sc_mtf_hitflee,2,"Increase %s HIT and %s FLEE","",2,n,n,0,0,1,2,0,0

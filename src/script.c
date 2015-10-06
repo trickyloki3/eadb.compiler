@@ -1136,7 +1136,7 @@ int script_translate(script_t * script) {
             case 26:
                 node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
                 if(NULL == node)
-                    return CHECK_FAILED;
+                    return exit_func_safe("failed to '%s' expression in item %d", iter->ptr[0], iter->item_id);
                 node_free(node);
                 break;                                                                                                      /* if */
             case 27: /* invert the linked logic tree; only the top needs to be inverted */
@@ -1151,7 +1151,7 @@ int script_translate(script_t * script) {
                 if(iter->ptr_cnt > 1) {
                     node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
                     if(NULL == node)
-                        return CHECK_FAILED;
+                        return exit_func_safe("failed to '%s' expression in item %d", iter->ptr[0], iter->item_id);
                     node_free(node);
                 }
                break;                                                                                                       /* else */
@@ -1248,7 +1248,7 @@ int script_translate(script_t * script) {
             return SCRIPT_FAILED;
 
         iter = iter->next;
-    } while(iter != script->blocks && !iter->free);
+    } while(iter != script->blocks->next && !iter->free);
 
     return SCRIPT_PASSED;
 }
@@ -1287,7 +1287,7 @@ int script_generate(script_t * script) {
                 script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->eng[top]);
         }
         iter = iter->next;
-    } while (iter != script->blocks && !iter->free);
+    } while (iter != script->blocks->next && !iter->free);
     return SCRIPT_PASSED;
 }
 
@@ -2140,13 +2140,13 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
     exit_null_safe(3, block, expr, argc);
 
     if (0 == flag)
-        return CHECK_FAILED;
+        return exit_func_safe("invalid flag in item %d", block->item_id);
 
     top = block->eng_cnt;
 
     id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == id)
-        return CHECK_FAILED;
+    if (NULL == id)
+        return exit_func_safe("fail to evaluate id in item %d", block->item_id);
 
     /* iterate the linked list of ranges */
     iter = id->range;
@@ -2182,9 +2182,29 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
                 if(NULL == mob)
                     goto failed;
 
-                if(mob_id(block->script->db, mob, i) ||
-                   block_stack_push(block, TYPE_ENG, mob->name))
-                    goto failed;
+                /* negative map id is special map */
+                switch (i) {
+                case -1:
+                    if (block_stack_push(block, TYPE_ENG, "random monster"))
+                        goto failed;
+                    break;
+                case -2:
+                    if (block_stack_push(block, TYPE_ENG, "random poring monster"))
+                        goto failed;
+                    break;
+                case -3:
+                    if (block_stack_push(block, TYPE_ENG, "random MVP monster"))
+                        goto failed;
+                    break;
+                case -4:
+                    if (block_stack_push(block, TYPE_ENG, "random monster"))
+                        goto failed;
+                    break;
+                default:
+                    if (mob_id(block->script->db, mob, i) ||
+                        block_stack_push(block, TYPE_ENG, mob->name))
+                        goto failed;
+                }
 
                 SAFE_FREE(mob);
                 continue;
@@ -2218,29 +2238,9 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
                 if(NULL == map)
                     goto failed;
 
-                /* negative map id is special map */
-                switch(i) {
-                    case -1:
-                        if(block_stack_push(block, TYPE_ENG, "random monster"))
-                            goto failed;
-                        break;
-                    case -2:
-                        if(block_stack_push(block, TYPE_ENG, "random poring monster"))
-                            goto failed;
-                        break;
-                    case -3:
-                        if(block_stack_push(block, TYPE_ENG, "random MVP monster"))
-                            goto failed;
-                        break;
-                    case -4:
-                        if(block_stack_push(block, TYPE_ENG, "random monster"))
-                            goto failed;
-                        break;
-                    default:
-                        if( map_id(block->script->db, map, i) ||
-                            block_stack_push(block, TYPE_ENG, map->name))
-                            goto failed;
-                }
+                if (map_id(block->script->db, map, i) ||
+                    block_stack_push(block, TYPE_ENG, map->name))
+                    goto failed;
 
                 SAFE_FREE(map);
                 continue;
@@ -2870,12 +2870,12 @@ int translate_status(block_r * block) {
         for(i = 0; i < status.vcnt; i++) {
             /* status argument types are different from bonus argument types */
             switch(status.vmod[i]) {
-                case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* integer */
-                case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* skill level */
-                case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                         break;    /* integer percentage */
-                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);       break;    /* effect */
-                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);      break;    /* element */
-                case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                        break;    /* regen */
+                case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* integer */
+                case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* skill level */
+                case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, FORMAT_RATIO);               break;    /* integer percentage */
+                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);        break;    /* effect */
+                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);       break;    /* element */
+                case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                         break;    /* regen */
                 default:
                     exit_func_safe("unsupported status argment type "
                     "%c in item %d", status.vmod[i], block->item_id);
@@ -3194,6 +3194,7 @@ int translate_bonus(block_r * block, char * prefix) {
     if(block_stack_reset(block, TYPE_ENG) ||
        block_stack_push(block, TYPE_ENG, buf))
         goto failed;
+
 
 clean:
     SAFE_FREE(buf);
@@ -3830,10 +3831,10 @@ int translate_monster(block_r * block) {
             return CHECK_FAILED;
 
     /* evaluate amount and mob name */
-    if( stack_eng_db(block, block->ptr[4], DB_MAP_ID, &argc) ||
+    if( stack_eng_db(block, block->ptr[4], DB_MOB_ID, &argc) ||
         argc != 1 ||
         stack_eng_int(block, block->ptr[5], 1, 0))
-        return CHECK_FAILED;
+        return exit_func_safe("failed to evaluate mob name or amount in item %d", block->item_id);
     len = block->arg_cnt - len + 128;
 
     buf = calloc(len, sizeof(char));
@@ -4015,15 +4016,21 @@ int translate_getrandgroupitem(block_r * block) {
     }
 
     /* write the group name and quantity */
-    if(quantity > 0) {
-        if(block_stack_vararg(block, TYPE_ENG, "Select %s item%s from %s.", block->eng\
-        [block->eng_cnt - 1], (quantity > 1) ? "s" : "", block->eng[block->eng_cnt - 2]))
-            goto failed;
+    if(group_id != 0) {
+        if(quantity > 0) {
+            if(block_stack_vararg(block, TYPE_ENG, "Select %s item%s from %s.", block->eng\
+            [block->eng_cnt - 1], (quantity > 1) ? "s" : "", block->eng[block->eng_cnt - 2]))
+                goto failed;
+        } else {
+            if(block_stack_vararg(block, TYPE_ENG, "Select random amou"
+               "nt of items from %s.", block->eng[block->eng_cnt - 2]))
+                goto failed;
+        }
     } else {
-        if(block_stack_vararg(block, TYPE_ENG, "Select random amou"
-           "nt of items from %s.", block->eng[block->eng_cnt - 2]))
+        if(block_stack_vararg(block, TYPE_ENG, "Add the items listed below to your inventory."))
             goto failed;
     }
+
 
     /* write either the item group summary or the list of items */
     if(meta->item > MAX_ITEM_LIST) {
@@ -4088,12 +4095,9 @@ int translate_getgroupitem(block_r * block) {
         return exit_func_safe("getgroupitem is mis"
         "sing group id in item %d", block->item_id);
 
-    if(evaluate_numeric_constant(block, block->ptr[0], 1, &group_id) ||
-       block_stack_push(block, TYPE_ENG, ""))
-        return SCRIPT_FAILED;
-
     /* grab a empty block */
-    if(script_block_new(block->script, &subgroup))
+    if(evaluate_numeric_constant(block, block->ptr[0], 1, &group_id) ||
+       script_block_new(block->script, &subgroup))
         return SCRIPT_FAILED;
 
     /* cheap hack to disable error from translate_getrandgroupitem */
@@ -4111,7 +4115,12 @@ int translate_getgroupitem(block_r * block) {
             if(0 != i)
                 break;
         } else {
-            block_stack_vararg(block, TYPE_ENG, subgroup->eng[subgroup->eng_cnt - 1]);
+            if( (block->eng_cnt == 0) ?
+                block_stack_vararg(block, TYPE_ENG, subgroup->eng[subgroup->eng_cnt - 1]):
+                block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, subgroup->eng[subgroup->eng_cnt - 1])) {
+                script_block_free(block->script, &subgroup);
+                return CHECK_FAILED;
+            }
         }
         block_reset(subgroup);
     }
@@ -4119,15 +4128,69 @@ int translate_getgroupitem(block_r * block) {
 
     /* return the block */
     script_block_free(block->script, &subgroup);
-    return CHECK_FAILED;
-}
 
-int translate_transform(block_r * block) {
-    return exit_abt_safe("maintenance");
+    return (block->eng_cnt > 0) ? CHECK_PASSED : CHECK_FAILED;
 }
 
 int translate_bonus_script(block_r * block) {
+    stack_eng_script(block, block->ptr[0]);
+    stack_eng_time(block, block->ptr[1], 1);
+
     return exit_abt_safe("maintenance");
+}
+
+int translate_transform(block_r * block) {
+    int err = 0;
+    int argc = 0;
+    block_r * sc_start4 = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(1, block);
+
+    /* error on invalid arguments */
+    if(3 > block->ptr_cnt)
+        return exit_func_safe("getgroupitem is missing mob "
+        "id, duration, or status in item %d", block->item_id);
+
+    /* set default status values to zero */
+    switch(block->ptr_cnt) {
+        case 3: err = block_stack_push(block, TYPE_PTR, "0");
+        case 4: err = block_stack_push(block, TYPE_PTR, "0");
+        case 5: err = block_stack_push(block, TYPE_PTR, "0");
+        case 6: err = block_stack_push(block, TYPE_PTR, "0");
+    }
+    if(err)
+        return exit_func_safe("failed to push defa"
+        "ult arguments in item %d", block->item_id);
+
+    /* push the mob name and duration */
+    if( stack_eng_db(block, block->ptr[0], DB_MOB_ID, &argc) ||
+        argc != 1 ||
+        stack_eng_time(block, block->ptr[1], 1))
+        return CHECK_FAILED;
+
+    /* grab a empty block */
+    if(script_block_new(block->script, &sc_start4))
+        return SCRIPT_FAILED;
+
+    /* setup a fake status block */
+    sc_start4->name = convert_string("sc_start4");
+    sc_start4->item_id = block->item_id;
+    sc_start4->type = 15;
+    if( block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[2]) ||
+        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[1]) ||
+        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[3]) ||
+        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[4]) ||
+        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[5]) ||
+        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[6]) ||
+        translate_status(sc_start4))
+        err = exit_func_safe("failed to evaluate status in item %d", block->item_id);
+    else if(block_stack_vararg(block, TYPE_ENG, "Transform into a %s for %s.", block->eng[0], block->eng[1]) ||
+            block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", sc_start4->eng[sc_start4->eng_cnt - 1]))
+        err = exit_func_safe("failed to write translation in item %d", block->item_id);
+
+    script_block_free(block->script, &sc_start4);
+    return err;
 }
 
 int translate_setfalcon(block_r * block) {

@@ -40,7 +40,8 @@ int main(int argc, char * argv[]) {
             script_translate(context) ||
             script_generate(context) ||
             context->item.id == 0) {
-            /*goto failed;*/
+            fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
+            goto failed;
         }
 
         /*printf("%s", context->buffer);
@@ -55,7 +56,6 @@ clean:
     return 0;
 
 failed:
-    fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
     if(NULL != context->blocks)
         script_block_dump(context, stderr);
     goto clean;

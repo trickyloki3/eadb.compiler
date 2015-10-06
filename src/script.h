@@ -293,8 +293,8 @@
     int translate_callfunc(block_r *);
     int translate_getrandgroupitem(block_r *);
     int translate_getgroupitem(block_r *);
-    int translate_transform(block_r *);
     int translate_bonus_script(block_r *);
+    int translate_transform(block_r *);
     int translate_setfalcon(block_r *);
 
     /* evaluate_expression bitmask flags */
