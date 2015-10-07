@@ -1594,7 +1594,6 @@ int stack_eng_grid(block_r * block, char * expr) {
     int off = 0;
     int splash_min = 0;
     int splash_max = 0;
-    char buf[256];
     node_t * grid = NULL;
 
     exit_null_safe(2, block, expr);
@@ -1613,22 +1612,14 @@ int stack_eng_grid(block_r * block, char * expr) {
     }
 
     if(splash_min > 0 && splash_max > 0)
-        off += sprintf(buf, "%d x %d to %d x %d", splash_min, splash_min, splash_min, splash_min);
+        ret = block_stack_vararg(block, TYPE_ENG, "%d x %d to %d x %d", splash_min, splash_min, splash_max, splash_max);
     else if(splash_min > 0)
-        off += sprintf(buf, "%d x %d", splash_min, splash_min);
+        ret = block_stack_vararg(block, TYPE_ENG, "%d x %d", splash_min, splash_min);
     else if(splash_max > 0)
-        off += sprintf(buf, "%d x %d", splash_max, splash_max);
+        ret = block_stack_vararg(block, TYPE_ENG, "%d x %d", splash_max, splash_max);
 
-    if(stack_aux_formula(block, grid, buf))
-        goto failed;
-
-clean:
     node_free(grid);
     return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
 }
 
 /* evaluate the expression and write the integer range
@@ -2799,12 +2790,12 @@ int translate_produce(block_r * block, int handler) {
 
 int translate_status(block_r * block) {
     int i = 0;
+    int id = 0;
     int ret = 0;
     int vcnt = 0;
     int argc = 0;
     char * buf = NULL;
     node_t * effect = NULL;
-    node_t * itemid = NULL;
     item_t * item = NULL;
     status_res status;
 
@@ -2833,21 +2824,14 @@ int translate_status(block_r * block) {
 
     /* handle special case for sc_itemscript */
     if(status.scid == 289) {
-        /* get item script from item id */
-        itemid = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE);
-        if( NULL == itemid ||
-            itemid->min != itemid->max)
-            goto failed;
-
+        /* translate item script from item id */
         item = calloc(1, sizeof(item_t));
-        if(NULL == item)
-            goto failed;
-
-        if(item_id(block->script->db, item, itemid->min) ||
+        if(NULL == item ||
+           evaluate_numeric_constant(block, block->ptr[2], 1, &id) ||
+           item_id(block->script->db, item, id) ||
            script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buf) ||
            block_stack_push(block, TYPE_ENG, buf))
             goto failed;
-
         goto clean;
     } else {
         /* translate the extra arguments */
@@ -2915,12 +2899,9 @@ int translate_status(block_r * block) {
     if(ret)
         goto failed;
 
-
-
 clean:
     SAFE_FREE(buf);
     SAFE_FREE(item);
-    node_free(itemid);
     node_free(effect);
     return ret;
 
