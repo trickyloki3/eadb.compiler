@@ -1112,8 +1112,8 @@ int script_translate(script_t * script) {
             case 39: ret = translate_produce(iter, iter->type); break;                                                      /* produce */
             case 40: ret = translate_produce(iter, iter->type); break;                                                      /* cooking */
             case 41: ret = exit_abt_safe("makerune"); break;                                                                /* makerune */
-            case 42: ret = translate_getexp(iter, iter->type); break;                                                       /* getguildexp */
-            case 43: ret = translate_getexp(iter, iter->type); break;                                                       /* getexp */
+            case 42: ret = translate_getguildexp(iter); break;                                                              /* getguildexp */
+            case 43: ret = translate_getexp(iter); break;                                                                   /* getexp */
             case 44: ret = translate_monster(iter); break;                                                                  /* monster */
             case 45: ret = block_stack_push(iter, TYPE_ENG, "Evolve homunculus when requirements are met."); break;         /* homevolution */
             case 46: ret = block_stack_push(iter, TYPE_ENG, "Change to Summer Outfit when worn."); break;                   /* setoption */
@@ -3244,33 +3244,58 @@ int translate_petskillsupport(block_r * block) {
     return CHECK_PASSED;
 }
 
-int translate_getexp(block_r * block, int handler) {
+int translate_getexp(block_r * block) {
     int ret = 0;
-    int len = 0;
-    char * buf = NULL;
+    int flag = 0;
+    node_t * base = NULL;
+    node_t * job = NULL;
 
-    exit_null_safe(1, block);
+    /* error on invalid argument */
+    if(2 > block->ptr_cnt)
+        return exit_func_safe("missing base exprience or job exprien"
+        "ce argument for %s in item %d", block->name, block->item_id);
 
-    if(block->ptr_cnt < 1)
-        return CHECK_FAILED;
+    /* inefficient - base and job expression is evaluated twice */
+    base = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == base)
+        goto failed;
 
-    len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 32;
+    job = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+    if(NULL == job)
+        goto failed;
 
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
+    if(stack_eng_int(block, block->ptr[0], 1, 0) ||
+       stack_eng_int(block, block->ptr[1], 1, 0))
+        goto failed;
 
-    sprintf(buf, "Gain %s %s experience.", block->eng[0], (handler == 43) ? "base" : "guild");
+    if(base->min > 0)
+        ret = block_stack_vararg(block, TYPE_ENG, "Gain %s base experience.", block->eng[0]);
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
+    if(job->min > 0) {
+        flag = TYPE_ENG | (block->eng_cnt > 0) ? FLAG_CONCAT : 0;
+        ret = block_stack_vararg(block, flag, "Gain %s job experience.", block->eng[1]);
+    }
 
-    SAFE_FREE(buf);
+clean:
+    node_free(base);
+    node_free(job);
     return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
+}
+
+int translate_getguildexp(block_r * block) {
+    /* error on invalid argument */
+    if(1 > block->ptr_cnt)
+        return exit_func_safe("missing guild exprience argum"
+        "ent for %s in item %d", block->name, block->item_id);
+
+    if(stack_eng_int(block, block->ptr[0], 1, 0) ||
+       block_stack_vararg(block, TYPE_ENG, "Gain %s guild experience.", block->eng[0]))
+        return CHECK_FAILED;
+
+    return CHECK_PASSED;
 }
 
 int translate_autobonus(block_r * block, int flag) {
