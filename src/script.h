@@ -282,6 +282,7 @@
     int translate_petskillattack(block_r *);
     int translate_petskillattack2(block_r *);
     int translate_petskillsupport(block_r *);
+
     int translate_getexp(block_r *, int);
     int translate_autobonus(block_r *, int);
     int translate_hire_mercenary(block_r *);

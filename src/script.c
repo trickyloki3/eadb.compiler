@@ -3067,351 +3067,181 @@ failed:
 }
 
 int translate_skill(block_r * block) {
-    int ret = 0;
-    int len = 0;
+    int err = 0;
     int cnt = 0;
-    int temp = 0;
-    char * buf = NULL;
-    node_t * flag = NULL;
+    int flag = 0;
 
-    /* error on invalid references
-     * and error on empty argument */
-    exit_null_safe(1, block);
+    /* error on invalid argument */
+    if(2 > block->ptr_cnt)
+        return exit_func_safe("missing skill id or level argu"
+        "ment for %s in item %d", block->name, block->item_id);
 
-    if(block->ptr_cnt < 2)
+    if(block->ptr_cnt == 2)
+        if(block_stack_push(block, TYPE_PTR, "1"))
+            return exit_func_safe("failed to push defa"
+            "ult arguments in item %d", block->item_id);
+
+    /* evaluate skill name, level, and flag */
+    if(stack_eng_skill(block, block->ptr[0], &cnt) || cnt != 1 ||
+       stack_eng_int(block, block->ptr[1], 1, 0) ||
+       evaluate_numeric_constant(block, block->ptr[2], 1, &flag))
         return CHECK_FAILED;
 
-    /* translate skill name and level */
-    len = block->arg_cnt;
-    if(stack_eng_skill(block, block->ptr[0], &cnt) ||
-       cnt > 1 || /* skill id must be constant */
-       stack_eng_int(block, block->ptr[1], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    /* translate skill flag */
-    if(block->ptr_cnt == 3) {
-        flag = evaluate_expression(block, block->ptr[2], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(NULL == flag)
-            return CHECK_FAILED;
-
-        /* flag must be a constant */
-        if(flag->min != flag->max)
-            goto failed;
-
-        temp = flag->min;
-    } else {
-        /* default is 1 */
-        temp = 1;
-    }
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        goto failed;
-
-    switch(temp) {
+    switch(flag) {
         case 0:
-            sprintf(buf, "Enable skill %s level %s.", block->eng[0], block->eng[1]);
+            err = block_stack_vararg(block, TYPE_ENG, "Enable "
+            "skill %s level %s.", block->eng[0], block->eng[1]);
             break;
         case 1:
-            sprintf(buf, "Temporarily enable skill %s level %s.", block->eng[0], block->eng[1]);
+            err = block_stack_vararg(block, TYPE_ENG, "Temporarily e"
+            "nable skill %s level %s.", block->eng[0], block->eng[1]);
             break;
         case 2:
-            sprintf(buf, "Enable skill %s level %s.\nOr add %s levels "
-            "to the skill.", block->eng[0], block->eng[1], block->eng[1]);
+            err = block_stack_vararg(block, TYPE_ENG, "Enable skill %s level %s.\nOr "
+            "add %s levels to the skill.", block->eng[0], block->eng[1], block->eng[1]);
             break;
         default:
             break;
     }
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
-
-clean:
-    node_free(flag);
-    SAFE_FREE(buf);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return err;
 }
 
 int translate_itemskill(block_r * block) {
-    int ret = 0;
     int cnt = 0;
-    int len = 0;
-    char * buf = 0;
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
-
-    if(block->ptr_cnt < 2)
-        return CHECK_FAILED;
+    /* error on invalid argument */
+    if(2 > block->ptr_cnt)
+        return exit_func_safe("missing skill id or level argu"
+        "ment for %s in item %d", block->name, block->item_id);
 
     /* get skill name and level */
-    len = block->arg_cnt;
-    if(stack_eng_skill(block, block->ptr[0], &cnt) ||
-       cnt > 1 || /* skill id must be a constant */
+    if(stack_eng_skill(block, block->ptr[0], &cnt) || cnt > 1 ||
        stack_eng_int(block, block->ptr[1], 1, 0))
-        goto failed;
-    len = (block->arg_cnt - len) + 32;
+        return CHECK_FAILED;
 
-    /* write the item skill */
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        goto failed;
-
-    sprintf(buf, "Cast %s [Lv. %s].", block->eng[0], block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
-
-clean:
-    SAFE_FREE(buf);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return block_stack_vararg(block, TYPE_ENG, "Cast %s [Lv. %s].", block->eng[0], block->eng[1]);
 }
 
 int translate_petloot(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
+    /* error on invalid argument */
+    if(0 >= block->ptr_cnt)
+        return exit_func_safe("missing pet loot amount argum"
+        "ent for %s in item %d", block->name, block->item_id);
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
-
-    if(block->ptr_cnt < 1)
+    if(stack_eng_int(block, block->ptr[0], 1, 0) ||
+       block_stack_vararg(block, TYPE_ENG, "Pet can loot and hold upto %s items"
+        ".\nUse pet performance to transfer items to inventory.", block->eng[0]))
         return CHECK_FAILED;
 
-    len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
-
-    sprintf(buf, "Pet can loot and hold upto %s items.\n"
-    "Use pet performance to transfer items to inventory.",
-    block->eng[0]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_petheal(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
+    /* error on invalid argument */
+    if(4 > block->ptr_cnt)
+        return exit_func_safe("missing heal minimum, maximum, level, or i"
+        "nterval argument for %s in item %d", block->name, block->item_id);
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
-
-    if(block->ptr_cnt < 4)
-        return CHECK_FAILED;
-
-    len = block->arg_cnt;
-    if( stack_eng_int(block, block->ptr[0], 1, 0) ||
-        stack_eng_int(block, block->ptr[1], 1, 0) ||
+    if( stack_eng_int(block, block->ptr[0], 1, FORMAT_RATIO) ||
+        stack_eng_int(block, block->ptr[1], 1, FORMAT_RATIO) ||
         stack_eng_int(block, block->ptr[2], 1, 0) ||
-        stack_eng_int(block, block->ptr[3], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+        stack_eng_int(block, block->ptr[3], 1, 0) ||
+        block_stack_vararg(block, TYPE_ENG, "[HP < %s and SP < %s]\nCast Heal [Lv. %s] fo"
+        "r every %s seconds.", block->eng[2], block->eng[3], block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
-    sprintf(buf, "[HP < %s and SP < %s]\nCast Heal [Lv. %s] for every %s "
-    "seconds.", block->eng[2], block->eng[3], block->eng[0], block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_petrecovery(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
+    /* error on invalid argument */
+    if(2 > block->ptr_cnt)
+        return exit_func_safe("missing status type or delay arg"
+        "ument for %s in item %d", block->name, block->item_id);
 
-    exit_null_safe(1, block);
-
-    if(block->ptr_cnt < 2)
-        return CHECK_FAILED;
-
-    len  = block->arg_cnt;
     if(translate_status_end(block) ||
-       stack_eng_int(block, block->ptr[0], 1, 0))
-        return CHECK_FAILED;
-    len  = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+       stack_eng_int(block, block->ptr[1], 1, 0) ||
+       block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT,"%"
+        "s every %s seconds.", block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
-    len = strlen(block->eng[0]);
-    block->eng[0][len - 1] = '\0';
-
-    sprintf(buf, "%s every %s seconds.", block->eng[0], block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_petskillbonus(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
+    /* error on invalid argument */
+    if(4 > block->ptr_cnt)
+        return exit_func_safe("missing bonus type, value, duration, or "
+        "delay argument for %s in item %d", block->name, block->item_id);
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
-
-    if(block->ptr_cnt < 4)
-        return CHECK_FAILED;
-
-    len = block->arg_cnt;
     if( translate_bonus(block, "bonus") ||
         stack_eng_int(block, block->ptr[2], 1, 0) ||
-        stack_eng_int(block, block->ptr[3], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+        stack_eng_int(block, block->ptr[3], 1, 0) ||
+        block_stack_vararg(block, TYPE_ENG, "Pet skill bonus is activated for %s second"
+        "s with a delay of %s seconds.\n%s", block->eng[1], block->eng[2], block->eng[0]))
         return CHECK_FAILED;
 
-    sprintf(buf, "Pet skill bonus is activated for %s seconds with a del"
-    "ay of %s seconds.\n%s", block->eng[1], block->eng[2], block->eng[0]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_petskillattack(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    int argc = 0;
-    char * buf = NULL;
+    int cnt = 0;
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
+    /* error on invalid argment */
+    if(4 > block->ptr_cnt)
+        return exit_func_safe("missing skill id, level, normal rate, or lo"
+        "yalty rate argument for %s in item %d", block->name, block->item_id);
 
-    if(block->ptr_cnt < 4)
+    if( stack_eng_skill(block, block->ptr[0], &cnt) ||         /* skill name */
+        stack_eng_int(block, block->ptr[1], 1, 0) ||            /* skill level */
+        stack_eng_int(block, block->ptr[2], 1, FORMAT_RATIO) || /* normal rate */
+        stack_eng_int(block, block->ptr[3], 1, FORMAT_RATIO) || /* loyalty rate */
+        block_stack_vararg(block, TYPE_ENG, "Add a %s (%s on loyalty) chance of casti"
+        "ng %s [Lv.  %s].", block->eng[2], block->eng[3], block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
-    len = block->arg_cnt;
-    if( stack_eng_skill(block, block->ptr[0], &argc) ||     /* skill name */
-        stack_eng_int(block, block->ptr[1], 1, 0) ||        /* skill level */
-        stack_eng_int(block, block->ptr[2], 1, 0) ||        /* normal rate */
-        stack_eng_int(block, block->ptr[3], 1, 0))          /* loyalty rate */
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
-
-    sprintf(buf, "Add a %s (%s on loyalty) chance of casting %s [Lv. "
-    " %s].", block->eng[2], block->eng[3], block->eng[0], block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_petskillattack2(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    int argc = 0;
-    char * buf = NULL;
+    int cnt = 0;
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
-    if(block->ptr_cnt < 5)
+    /* error on invalid argument */
+    if(5 > block->ptr_cnt)
+        return exit_func_safe("missing skill id, damage, attack count, normal rat"
+        "e, loyalty rate argument for %s in item %d", block->name, block->item_id);
+
+    if( stack_eng_skill(block, block->ptr[0], &cnt) ||         /* skill name */
+        stack_eng_int(block, block->ptr[1], 1, 0) ||            /* damage */
+        stack_eng_int(block, block->ptr[2], 1, 0) ||            /* number of attacks */
+        stack_eng_int(block, block->ptr[3], 1, FORMAT_RATIO) || /* normal rate */
+        stack_eng_int(block, block->ptr[4], 1, FORMAT_RATIO) || /* loyalty rate */
+        block_stack_vararg(block, TYPE_ENG, "Add a %s (%s on loyalty) chance of casting %s for %s da"
+        "mage x %s hits.", block->eng[3], block->eng[4], block->eng[0], block->eng[1], block->eng[2]))
         return CHECK_FAILED;
 
-    len = block->arg_cnt;
-    if( stack_eng_skill(block, block->ptr[0], &argc) ||     /* skill name */
-        stack_eng_int(block, block->ptr[1], 1, 0) ||        /* damage */
-        stack_eng_int(block, block->ptr[2], 1, 0) ||        /* number of attacks */
-        stack_eng_int(block, block->ptr[3], 1, 0) ||        /* normal rate */
-        stack_eng_int(block, block->ptr[4], 1, 0))          /* loyalty rate */
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
-
-    sprintf(buf, "Add a %s (%s on loyalty) chance of casting %s for %s damage x %s hi"
-    "ts.", block->eng[3], block->eng[4], block->eng[0], block->eng[1], block->eng[2]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
     return CHECK_PASSED;
 }
 
 int translate_petskillsupport(block_r * block) {
-    int ret = 0;
-    int len = 0;
     int cnt = 0;
-    char * buf = NULL;
 
-    /* error on invalid reference and empty argument */
-    exit_null_safe(1, block);
+    /* error on invalid argument */
+    if(4 > block->ptr_cnt)
+        return exit_func_safe("missing skill id, level, hp minimum, or sp "
+        "minimum argument for %s in item %d", block->name, block->item_id);
 
-    if(block->ptr_cnt < 4)
-        return CHECK_FAILED;
-
-    len = block->arg_cnt;
     if( stack_eng_skill(block, block->ptr[0], &cnt) ||
         stack_eng_int(block, block->ptr[1], 1, 0) ||
         stack_eng_int(block, block->ptr[2], 1, 0) ||
-        stack_eng_int(block, block->ptr[3], 1, 0) ||
-        stack_eng_int(block, block->ptr[4], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+        stack_eng_int(block, block->ptr[3], 1, FORMAT_RATIO) ||
+        stack_eng_int(block, block->ptr[4], 1, FORMAT_RATIO) ||
+        block_stack_vararg(block, TYPE_ENG, "[HP < %s and SP < %s]\nCast %s [Lv. %s] for every "
+        "%s seconds.", block->eng[3], block->eng[4], block->eng[0], block->eng[1], block->eng[2]))
         return CHECK_FAILED;
 
-    sprintf(buf, "[HP < %s and SP < %s]\nCast %s [Lv. %s] for every %s seconds.",
-    block->eng[3], block->eng[4], block->eng[0], block->eng[1], block->eng[2]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_getexp(block_r * block, int handler) {
