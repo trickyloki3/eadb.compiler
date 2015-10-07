@@ -2722,9 +2722,6 @@ int translate_heal(block_r * block) {
     node_t * hp = NULL;
     node_t * sp = NULL;
 
-    /* error on null references */
-    exit_null_safe(1, block);
-
     /* error on invalid argument count */
     if(2 > block->ptr_cnt)
         return exit_func_safe("missing hp or sp argument for %s in item %d", block->name, block->item_id);
@@ -2763,9 +2760,6 @@ int translate_produce(block_r * block, int handler) {
     int i = 0;
     int arg_off = 0;
     int arg_cnt = 0;
-
-    /* error on invalid references */
-    exit_null_safe(1, block);
 
     /* error on invalid argument */
     if(1 > block->ptr_cnt)
@@ -2911,111 +2905,43 @@ failed:
 }
 
 int translate_status_end(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
-    node_t * effect = NULL;
+    int effect_id = 0;
     status_res status;
 
     if(block->ptr_cnt < 1)
         return exit_func_safe("missing effect id argument"
         " for %s in item %d", block->name, block->item_id);
 
-    effect = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == effect)
+    if(evaluate_numeric_constant(block, block->ptr[0], 1, &effect_id) ||
+       status_id(block->script->db, &status, effect_id) ||
+       block_stack_vararg(block, TYPE_ENG, "Cures %s.", status.scend))
         return CHECK_FAILED;
 
-    /* error on invalid constant;
-     * multiple values supported */
-    if(effect->min != effect->max)
-        goto failed;
-
-    if(status_id(block->script->db, &status, effect->min))
-        goto failed;
-
-    len = strlen(status.scend);
-    if(0 >= len)
-        goto failed;
-
-    buf = calloc(len + 32, sizeof(char));
-    if(NULL == buf)
-        goto failed;
-
-    sprintf(buf, "Cures %s.", status.scend);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
-
-clean:
-    SAFE_FREE(buf);
-    node_free(effect);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return CHECK_PASSED;
 }
 
 int translate_pet_egg(block_r * block) {
-    int ret = 0;
-    int off = 0;
-    int len = 0;
-    node_t * id = 0;
+    int id = 0;
     pet_t pet;
-    char * buf = NULL;
-
-    /* error on invalid references */
-    exit_null_safe(1, block);
 
     /* error on invalid argument count */
     if(block->ptr_cnt < 1)
         return exit_func_safe("missing pet id argument "
         "for %s in item %d", block->name, block->item_id);
 
-    /* evaluate for pet id */
-    id = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    if( NULL == id ||
-        id->min != id->max)
-        goto failed;
+    /* search for pet */
+    if( evaluate_numeric_constant(block, block->ptr[0], 1, &id) ||
+        pet_id(block->script->db, &pet, id))
+        return exit_func_safe("invalid pet id %d in item %d\n", id, block->item_id);
 
-    if (pet_id(block->script->db, &pet, id->min)) {
-        exit_func_safe("failed to search pet id %d in item %d\n", id->min, block->item_id);
-        goto failed;
-    }
-
-    /* search for the pet in the database and
-     * translate both script on block->eng stack */
-    len = block->arg_cnt;
-    if (stack_eng_script(block, pet.pet_script) ||
-        stack_eng_script(block, pet.loyal_script)) {
-        goto failed;
-    }
-    len = block->arg_cnt - len;
-
-    buf = calloc(len + 128, sizeof(char));
-    if(NULL == buf)
+    /* evaluate pet script */
+    if( stack_eng_script(block, pet.pet_script) ||
+        stack_eng_script(block, pet.loyal_script) ||
+        block_stack_vararg(block, TYPE_ENG,"Egg containing %s.\n[Normal Bon"
+        "us]\n%s\n[Loyal Bonus]\n%s", pet.name, block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
-    off += sprintf(&buf[off], "Egg containing %s.\n", pet.name);
-    if(NULL != block->eng[0])
-        off += sprintf(&buf[off], "\n[Normal Bonus]\n%s", block->eng[0]);
-    if(NULL != block->eng[1])
-        off += sprintf(&buf[off], "\n[Loyal Bonus]\n%s", block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
-
-clean:
-    SAFE_FREE(buf);
-    node_free(id);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-
+    return CHECK_PASSED;
 }
 
 int translate_bonus(block_r * block, char * prefix) {
@@ -3023,37 +2949,21 @@ int translate_bonus(block_r * block, char * prefix) {
     int j = 0;
     int ret = 0;
     int cnt = 0;
-    int len = 0;
-    int blen = 0;
-    int plen = 0;
-    char * buf = NULL;
     bonus_res * bonus = NULL;
 
-    /* error on invalid references
-     * or error on empty arguments */
-    exit_null_safe(2, block, prefix);
-
-    if (1 > block->ptr_cnt)
+    /* error on invalid arguments */
+    if (0 >= block->ptr_cnt)
         return CHECK_FAILED;
-
-    /* error on empty string */
-    blen = strlen(block->ptr[0]);
-    plen = strlen(prefix);
-    if(0 >= blen || 0 >= plen)
-        return SCRIPT_FAILED;
 
     /* search for bonus information */
     bonus = calloc(1, sizeof(bonus_res));
     if(NULL == bonus)
         return SCRIPT_FAILED;
 
-    if(bonus_name(block->script->db, bonus, prefix, plen, block->ptr[0], blen)) {
-        exit_func_safe("unsupported %s %s for item "
-        "%d", prefix, block->ptr[0], block->item_id);
+    if(bonus_name(block->script->db, bonus, prefix, strlen(prefix), block->ptr[0], strlen(block->ptr[0]))) {
+        exit_func_safe("unsupported %s %s for item %d", prefix, block->ptr[0], block->item_id);
         goto failed;
     }
-
-    len = block->arg_cnt;
 
     /* translate each bonus argument by argument type */
     for(i = 0, j = 1; i < bonus->type_cnt; i++, j++) {
@@ -3106,43 +3016,36 @@ int translate_bonus(block_r * block, char * prefix) {
         }
     }
 
-    /* write the bonus format */
-    len = (block->arg_cnt - len) + strlen(bonus->format) + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        goto failed;
-
     switch(bonus->type_cnt) {
         case 1:
-            sprintf(buf,
-                bonus->format,
+            block_stack_vararg(block,
+                TYPE_ENG, bonus->format,
                 block->eng[bonus->order[0]]);
             break;
         case 2:
-            sprintf(buf,
-                bonus->format,
+            block_stack_vararg(block,
+                TYPE_ENG, bonus->format,
                 block->eng[bonus->order[0]],
                 block->eng[bonus->order[1]]);
             break;
         case 3:
-            sprintf(buf,
-                bonus->format,
+            block_stack_vararg(block,
+                TYPE_ENG, bonus->format,
                 block->eng[bonus->order[0]],
                 block->eng[bonus->order[1]],
                 block->eng[bonus->order[2]]);
             break;
         case 4:
-            sprintf(buf,
-                bonus->format,
+            block_stack_vararg(block,
+                TYPE_ENG, bonus->format,
                 block->eng[bonus->order[0]],
                 block->eng[bonus->order[1]],
                 block->eng[bonus->order[2]],
                 block->eng[bonus->order[3]]);
             break;
         case 5:
-            sprintf(buf,
-                bonus->format,
+            block_stack_vararg(block,
+                TYPE_ENG, bonus->format,
                 block->eng[bonus->order[0]],
                 block->eng[bonus->order[1]],
                 block->eng[bonus->order[2]],
@@ -3155,18 +3058,12 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
-
-
-clean:
-    SAFE_FREE(buf);
     SAFE_FREE(bonus);
-    return ret;
+    return CHECK_PASSED;
+
 failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    SAFE_FREE(bonus);
+    return CHECK_FAILED;
 }
 
 int translate_skill(block_r * block) {
