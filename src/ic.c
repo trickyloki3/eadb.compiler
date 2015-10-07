@@ -41,7 +41,7 @@ int main(int argc, char * argv[]) {
             script_generate(context) ||
             context->item.id == 0) {
             fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
-            goto failed;
+            /*goto failed;*/
         }
 
         /*printf("%s", context->buffer);

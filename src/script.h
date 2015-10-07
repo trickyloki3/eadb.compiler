@@ -246,6 +246,7 @@
     int stack_eng_item(block_r *, char *, int *);
     int stack_eng_skill(block_r *, char *, int *);
     int stack_eng_grid(block_r *, char *);
+    int stack_eng_coordinate(block_r *, char *);
     int stack_eng_int(block_r *, char *, int, int);
     int stack_eng_int_signed(block_r *, char *, int, const char *, const char *, int);
     int stack_eng_int_bonus(block_r *, char *, int, int, int);
@@ -284,7 +285,6 @@
     int translate_petskillsupport(block_r *);
     int translate_getexp(block_r *);
     int translate_getguildexp(block_r *);
-
     int translate_autobonus(block_r *, int);
     int translate_hire_mercenary(block_r *);
     int translate_buyingstore(block_r *);

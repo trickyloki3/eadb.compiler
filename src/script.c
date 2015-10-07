@@ -1622,6 +1622,22 @@ int stack_eng_grid(block_r * block, char * expr) {
     return ret;
 }
 
+int stack_eng_coordinate(block_r * block, char * expr) {
+    node_t * node = NULL;
+
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if (NULL == node)
+        return CHECK_FAILED;
+
+    /* inefficieny ; evaluates the same expression twice */
+    if(((node->min < 1 && node->max < 1) &&
+        block_stack_push(block, TYPE_ENG, "random")) ||
+       stack_eng_int(block, expr, 1, 0))
+        return CHECK_FAILED;
+
+    return CHECK_PASSED;
+}
+
 /* evaluate the expression and write the integer range
  * onto the block->eng stack along with any dependency
  *
@@ -3300,276 +3316,136 @@ int translate_getguildexp(block_r * block) {
 
 int translate_autobonus(block_r * block, int flag) {
     int ret = 0;
-    int len = 0;
     char * buf = NULL;
-    char * script = NULL;
-    char zero[2];
 
-    exit_null_safe(1, block);
+    /* error on invalid argument */
+    if(3 > block->ptr_cnt)
+        return exit_func_safe("missing bonus script, rate, or durati"
+        "on argument for %s in item %d", block->name, block->item_id);
 
-    if(block->ptr_cnt < 3)
-        return CHECK_FAILED;
+    /* default 0 flag */
+    if(3 == block->ptr_cnt)
+        block_stack_push(block, TYPE_PTR, "0");
 
-    len = block->arg_cnt;
-
-    if(script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &script))
-        return CHECK_FAILED;
-
-    if(stack_eng_int(block, block->ptr[1], 10, 0) ||
-       stack_eng_time(block, block->ptr[2], 1))
-        goto failed;
-
-    if(block->ptr_cnt > 3) {
-       if(stack_eng_trigger_bt(block, block->ptr[3]))
-            goto failed;
-    } else {
-        zero[0] = '0';
-        zero[1] = 0;
-        /* evaluates to default bf flags */
-        if(stack_eng_trigger_bt(block, zero))
-            goto failed;
-    }
-
-    len = (block->arg_cnt - len) + strlen(script) + 256;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        goto failed;
-
-    sprintf(buf, "Add %s chance to activate %s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], script);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
+    if( script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &buf) ||
+        stack_eng_int(block, block->ptr[1], 10, FORMAT_RATIO) ||
+        stack_eng_time(block, block->ptr[2], 1) ||
+        stack_eng_trigger_bt(block, block->ptr[3]) ||
+        block_stack_vararg(block, TYPE_ENG, "Add %s chance to activate %"
+        "s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], buf))
         ret = CHECK_FAILED;
 
-failed:
     SAFE_FREE(buf);
-    SAFE_FREE(script);
     return ret;
 }
 
 int translate_hire_mercenary(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
-    int argc = 0;
+    int cnt = 0;
 
-    len = block->arg_cnt;
-    if(stack_eng_db(block, block->ptr[0], DB_MERC_ID, &argc) ||
-       argc != 1 ||
-       stack_eng_time(block, block->ptr[1], 1))
-        return CHECK_FAILED;
-    len = block->arg_cnt - len + 32;
+    /* error on invalid argument */
+    if(2 > block->ptr_cnt)
+        return exit_func_safe("missing mercenary id or duration a"
+        "rgument for %s in item %d", block->name, block->item_id);
 
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+    if( stack_eng_db(block, block->ptr[0], DB_MERC_ID, &cnt) || cnt != 1 ||
+        stack_eng_time(block, block->ptr[1], 1) ||
+        block_stack_vararg(block, TYPE_ENG, "Hire merce"
+        "nary %s for %s.", block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
-    sprintf(buf, "Hire mercenary %s for %s.", block->eng[0], block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_buyingstore(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
-
-    /* check for null references */
-    exit_null_safe(1, block);
-
     /* check empty block->ptr stack */
     if(1 > block->ptr_cnt)
         return exit_func_safe("buyingstore is missing"
         " type argument in item %d", block->item_id);
 
-    len = block->arg_cnt;
-    if(stack_eng_int(block, block->ptr[0], 1, 0))
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 32;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+    if(stack_eng_int(block, block->ptr[0], 1, 0) ||
+       block_stack_vararg(block, TYPE_ENG, "Open a "
+        "buying store with %s slots.", block->eng[0]))
         return CHECK_FAILED;
 
-    sprintf(buf, "Open a buying store with %s slots.", block->eng[0]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_searchstore(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    int argc = 0;
-    char * buf = NULL;
+    int cnt = 0;
 
-    /* check for null references */
-    exit_null_safe(1, block);
-
-    /* check empty block->ptr stack */
+    /* error on invalid argument */
     if(2 > block->ptr_cnt)
         return exit_func_safe("searchstore is missing "
         "amount or effect in item %d", block->item_id);
 
-    len = block->arg_cnt;
     if(stack_eng_int(block, block->ptr[0], 1, 0) ||
-       stack_eng_map(block, block->ptr[1], MAP_SEARCHSTORE_FLAG, &argc) ||
-       argc != 1)
-        return CHECK_FAILED;
-    len = block->arg_cnt - len + 64;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+       stack_eng_map(block, block->ptr[1], MAP_SEARCHSTORE_FLAG, &cnt) || cnt != 1 ||
+       block_stack_vararg(block, TYPE_ENG, "Search for open vendors on %s. "
+        "Allow up to %s uses before expiring.", block->eng[1], block->eng[0]))
         return CHECK_FAILED;
 
-    sprintf(buf, "Search for open vendors on %s. Allow up to "
-    "%s uses before expiring.", block->eng[1], block->eng[0]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_skill_block(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    int argc = 0;
-    char * buf = NULL;
+    int cnt = 0;
 
-    /* check for null references */
-    exit_null_safe(1, block);
-
-    /* check empty block->ptr stack */
+    /* error on invalid argument */
     if(3 > block->ptr_cnt)
         return exit_func_safe("unitskilluseid is missing"
         " skill id or level in item %d", block->item_id);
 
-    len = block->arg_cnt;
-    if( stack_eng_skill(block, block->ptr[1], &argc) ||
-        argc != 1 ||
-        stack_eng_int(block, block->ptr[2], 1, 0))
-        return CHECK_FAILED;
-    len = block->arg_cnt - len + 32;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+    if( stack_eng_skill(block, block->ptr[1], &cnt) || cnt != 1 ||
+        stack_eng_int(block, block->ptr[2], 1, 0) ||
+        block_stack_vararg(block, TYPE_ENG, "Cast %"
+        "s [Lv. %s].", block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
-    sprintf(buf, "Cast %s [Lv. %s].", block->eng[0], block->eng[1]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_warp(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    int argc = 0;
-    char * buf = NULL;
+    int cnt = 0;
 
-    exit_null_safe(1, block);
-
+    /* error on invalid argument */
     if(3 > block->ptr_cnt)
-        return exit_func_safe("wrap is missing map name, x coo"
+        return exit_func_safe("warp is missing map name, x coo"
         "rdinate, or y coordinate in item %d", block->item_id);
 
-    len = block->arg_cnt;
-    if( stack_eng_db(block, block->ptr[0], DB_MAP_ID, &argc) ||
-        argc != 1||
+    if( stack_eng_db(block, block->ptr[0], DB_MAP_ID, &cnt) || cnt != 1||
         stack_eng_int(block, block->ptr[1], 1, 0) ||
-        stack_eng_int(block, block->ptr[2], 2, 0))
-        return CHECK_FAILED;
-    len = block->arg_cnt - len + 32;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
+        stack_eng_int(block, block->ptr[2], 2, 0) ||
+        block_stack_vararg(block, TYPE_ENG, "Warp to %s on (%s, %s)"
+        " coordinate.", block->eng[0], block->eng[1], block->eng[2]))
         return CHECK_FAILED;
 
-    sprintf(buf, "Warp to %s on (%s, %s) coordinate.", block->eng[0], block->eng[1], block->eng[2]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_monster(block_r * block) {
-    int ret = 0;
-    int len = 0;
-    int argc = 0;
-    char * buf = NULL;
+    int cnt = 0;
 
-    exit_null_safe(1, block);
-
+    /* error on invalid argument */
     if(6 > block->ptr_cnt)
         return exit_func_safe("monster is missing map name, x coordinate, "
         "y coordinate, name, mob id, or amount in item %d", block->item_id);
 
-    /* evaluate map name and coordinates */
-    len = block->arg_cnt;
-    if (0 == ncs_strcmp(block->ptr[0], "this")) {
-        if(block_stack_push(block, TYPE_ENG, "current map"))
-            return CHECK_FAILED;
-    } else if(stack_eng_db(block, block->ptr[0], DB_MAP_ID, &argc) || argc != 1)
+    if( ((0 == ncs_strcmp(block->ptr[0], "this")) ?
+        block_stack_push(block, TYPE_ENG, "current map"):
+        stack_eng_db(block, block->ptr[0], DB_MAP_ID, &cnt)) || cnt > 1 ||
+        stack_eng_coordinate(block, block->ptr[1]) ||
+        stack_eng_coordinate(block, block->ptr[2]) ||
+        stack_eng_db(block, block->ptr[4], DB_MOB_ID, &cnt) || cnt != 1 ||
+        stack_eng_int(block, block->ptr[5], 1, 0) ||
+        block_stack_vararg(block, TYPE_ENG, "Summon %s %s on %s on (%s, %s) coordinate"
+        "s.", block->eng[4], block->eng[3], block->eng[0], block->eng[1], block->eng[2]))
         return CHECK_FAILED;
 
-    if(stack_eng_int(block, block->ptr[1], 1, 0))
-        return CHECK_FAILED;
-    if(0 == ncs_strcmp(block->eng[1], "-1"))
-        if(block_stack_pop(block, TYPE_ENG) ||
-           block_stack_push(block, TYPE_ENG, "random"))
-            return CHECK_FAILED;
-
-    if(stack_eng_int(block, block->ptr[2], 1, 0))
-        return CHECK_FAILED;
-    if(0 == ncs_strcmp(block->eng[2], "-1"))
-        if(block_stack_pop(block, TYPE_ENG) ||
-           block_stack_push(block, TYPE_ENG, "random"))
-            return CHECK_FAILED;
-
-    /* evaluate amount and mob name */
-    if( stack_eng_db(block, block->ptr[4], DB_MOB_ID, &argc) ||
-        argc != 1 ||
-        stack_eng_int(block, block->ptr[5], 1, 0))
-        return exit_func_safe("failed to evaluate mob name or amount in item %d", block->item_id);
-    len = block->arg_cnt - len + 128;
-
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
-
-    sprintf(buf, "Summon %s %s on %s on (%s, %s) coordinates.",
-    block->eng[4], block->eng[3], block->eng[0], block->eng[1],
-    block->eng[2]);
-
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        ret = CHECK_FAILED;
-
-    SAFE_FREE(buf);
-    return ret;
+    return CHECK_PASSED;
 }
 
 int translate_callfunc(block_r * block) {
+    int ret = 0;
     char * buf = NULL;
     node_t * result = NULL;
 
@@ -3628,18 +3504,16 @@ int translate_callfunc(block_r * block) {
     } else if(0 == ncs_strcmp(block->ptr[0],"F_Rice_Weevil_Bug")) {
         buf = "An unforgetable taste! May recover HP or SP.";
     } else if(0 == ncs_strcmp(block->ptr[0],"SetPalete")) {
-        buf = "Set palete";
+        buf = "Set a different palete.";
     } else {
         return exit_func_safe("unsupported callfunc '%"
         "s' in item %d", block->ptr[0], block->item_id);
     }
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        return CHECK_FAILED;
+    ret = block_stack_push(block, TYPE_ENG, buf);
 
     node_free(result);
-    return CHECK_PASSED;
+    return ret;
 }
 
 /* getrandgroupitem require special attention because of
