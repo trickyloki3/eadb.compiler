@@ -23,6 +23,7 @@ int option_res_load(void * db, int row, int col, char * val) {
     switch(col) {
         case 0: strnload(record->option, MAX_NAME_SIZE, val); break;
         case 1: strnload(record->name, MAX_NAME_SIZE, val);   break;
+        case 2: record->flag = convert_integer(val, 16);      break;
         default: exit_func_safe("invalid column field %d in option database", col);
     }
     return 0;
@@ -267,6 +268,7 @@ int opt_db_res_load_record(option_res * options, int size, sqlite3_stmt * sql) {
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_text(sql, 1, option->option, strlen(option->option), SQLITE_STATIC) ||
          SQLITE_OK != sqlite3_bind_text(sql, 2, option->name, strlen(option->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 3, option->flag) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to option db.\n", option->option);

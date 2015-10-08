@@ -131,6 +131,8 @@
     #define TYPE_PTR 0x1                                                        /* block->ptr stack */
     #define TYPE_ENG 0x2                                                        /* block->eng stack */
     #define FLAG_CONCAT 0x4                                                     /* work only with vararg */
+    #define FLAG_COMMA  0x8                                                     /* use comma delimiter */
+    #define FLAG_EMPTY  0x10
     int block_stack_vararg(block_r *, int, const char *, ...);
     int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
     int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
@@ -233,6 +235,27 @@
     #define ATF_MISC                       0x40
     #define ATF_SKILL                      0x60
 
+    /* stack_eng_options bitmask flags */
+    #define OPT_SIGHT                       0x000001
+    #define OPT_HIDE                        0x000002
+    #define OPT_CLOAK                       0x000004
+    #define OPT_CART1                       0x000008
+    #define OPT_FALCON                      0x000010
+    #define OPT_PECO                        0x000020
+    #define OPT_INVISIBLE                   0x000040
+    #define OPT_CART2                       0x000080
+    #define OPT_CART3                       0x000100
+    #define OPT_CART4                       0x000200
+    #define OPT_CART5                       0x000400
+    #define OPT_ORC                         0x000800
+    #define OPT_WEDDING                     0x001000
+    #define OPT_RUWACH                      0x002000
+    #define OPT_CHASEWALK                   0x004000
+    #define OPT_XMAS                        0x008000
+    #define OPT_SIGHTTRASHER                0x010000
+    #define OPT_WARG                        0x100000
+    #define OPT_RIDINGWARG                  0x200000
+
     /* stack_eng_int_* bitmask flags */
     #define FORMAT_RATIO                   0x01
 
@@ -257,6 +280,7 @@
     int stack_eng_item_group(block_r *, char *);
     int stack_eng_trigger_bt(block_r *, char *);
     int stack_eng_trigger_atf(block_r *, char *);
+    int stack_eng_options(block_r *, char *);
     int stack_eng_script(block_r *, char *);
     int stack_aux_formula(block_r *, node_t *, char *);
 
@@ -345,6 +369,7 @@
     int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
     int evaluate_function_pow(block_r *, int, int, var_res *, node_t *);
     int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function_setoption(block_r *, int, int, var_res *, node_t *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01

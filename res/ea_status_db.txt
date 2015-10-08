@@ -89,6 +89,7 @@
 306,sc_food_dex_cash,1,"Increase %s DEX","",1,n,0,0,0,1,0,0,0
 307,sc_food_int_cash,1,"Increase %s INT","",1,n,0,0,0,1,0,0,0
 308,sc_food_luk_cash,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
+432,sc_savage_steak,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
 438,sc_boost500,1,"Increase ASPD by %s","",1,p,0,0,0,1,0,0,0
 439,sc_full_swing_k,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
 440,sc_matkpotion,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0

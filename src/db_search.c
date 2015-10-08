@@ -335,13 +335,13 @@ int opt_name(db_t * db, option_res * opt, const char * name, int len) {
     sqlite3_stmt * stmt = NULL;
 
     exit_null_safe(3, db, opt, name);
-
     if(exec_db_query(db->re, db->opt_name, 1, BIND_STRING, name, len))
-        return CHECK_FAILED;
+        return exit_func_safe("'%s' is an invalid option", name);
 
     stmt = db->opt_name->stmt;
     strncopy(opt->option, MAX_NAME_SIZE, sqlite3_column_text(stmt, 0));
     strncopy(opt->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    opt->flag = sqlite3_column_int(stmt, 2);
     return CHECK_PASSED;
 }
 

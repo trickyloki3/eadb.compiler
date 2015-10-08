@@ -13,7 +13,7 @@
      #include "sqlite3.h"
 
     /* database record counts */
-    #define OPTION_RES_FIELD_COUNT  2
+    #define OPTION_RES_FIELD_COUNT  3
     #define MAP_RES_FIELD_COUNT     2
     #define STATUS_RES_FIELD_COUNT  14
     #define VAR_RES_FIELD_COUNT     7
@@ -24,14 +24,16 @@
     typedef struct option_res {
         char option[MAX_NAME_SIZE];
         char name[MAX_NAME_SIZE];
+        int flag;
     } option_res;
 
     #define RES_OPT_DELETE          "DROP TABLE IF EXISTS option_res;"
-    #define RES_OPT_INSERT          "INSERT INTO option_res VALUES(?, ?);"
+    #define RES_OPT_INSERT          "INSERT INTO option_res VALUES(?, ?, ?);"
     #define RES_OPT_CREATE          "CREATE TABLE IF NOT EXISTS option_res("\
-                                    "    opt TEXT,"\
+                                    "    option TEXT,"\
                                     "    name TEXT,"\
-                                    "    PRIMARY KEY(opt)"\
+                                    "    flag INTEGER,"\
+                                    "    PRIMARY KEY(option)"\
                                     ");"
 
 

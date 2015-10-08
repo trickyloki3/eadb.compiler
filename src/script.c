@@ -115,7 +115,10 @@ int block_stack_vararg(block_r * block, int type, const char * format, ...) {
         if(block->arg_cnt < 0)
             return CHECK_FAILED;
 
-        block->arg[block->arg_cnt - 1] = '\n';
+        if(type & FLAG_EMPTY)
+            block->arg[block->arg_cnt - 1] = ' ';
+        else
+            block->arg[block->arg_cnt - 1] = (type & FLAG_COMMA) ? ',' : '\n';
     } else {
         /* set the stack pointers */
         switch (type & 0x3) {
@@ -2518,6 +2521,41 @@ failed:
     goto clean;
 }
 
+int stack_eng_options(block_r * block, char * expr) {
+    int i = 0;
+    int cnt = 0;
+    int opt = 0;
+    int flag = 0;
+
+    flag = TYPE_ENG | FLAG_EMPTY;
+    if(evaluate_numeric_constant(block, expr, 1, &opt) || 0 >= opt ||
+       (opt & OPT_SIGHT         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using sight,")) ||
+       (opt & OPT_HIDE          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using hide,")) ||
+       (opt & OPT_CLOAK         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using cloak,")) ||
+       (opt & OPT_CART1         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "equipped cart 1,")) ||
+       (opt & OPT_FALCON        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "falcon following,")) ||
+       (opt & OPT_PECO          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "riding peco,")) ||
+       (opt & OPT_INVISIBLE     && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using invisible,")) ||
+       (opt & OPT_CART2         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "equipped cart 2,")) ||
+       (opt & OPT_CART3         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "equipped cart 3,")) ||
+       (opt & OPT_CART4         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "equipped cart 4,")) ||
+       (opt & OPT_CART5         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "equipped cart 5,")) ||
+       (opt & OPT_ORC           && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "having orc head,")) ||
+       (opt & OPT_WEDDING       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "wearing wedding suit,")) ||
+       (opt & OPT_RUWACH        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using ruwach,")) ||
+       (opt & OPT_CHASEWALK     && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using chasewalk,")) ||
+       (opt & OPT_XMAS          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "wearing santa suit,")) ||
+       (opt & OPT_SIGHTTRASHER) && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "casting sight trasher,") ||
+       (opt & OPT_WARG          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "warg following,")) ||
+       (opt & OPT_RIDINGWARG    && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "riding warg,")))
+        return CHECK_FAILED;
+
+    /* remove the last comma and space */
+    block->arg_cnt--;
+    block->arg[block->arg_cnt - 1] = '\0';
+    return CHECK_PASSED;
+}
+
 int stack_eng_script(block_r * block, char * script) {
     int ret = 0;
     char * buf = NULL;
@@ -3766,8 +3804,7 @@ int translate_transform(block_r * block) {
         "ult arguments in item %d", block->item_id);
 
     /* push the mob name and duration */
-    if( stack_eng_db(block, block->ptr[0], DB_MOB_ID, &argc) ||
-        argc != 1 ||
+    if( stack_eng_db(block, block->ptr[0], DB_MOB_ID, &argc) || argc != 1 ||
         stack_eng_time(block, block->ptr[1], 1))
         return CHECK_FAILED;
 
@@ -3796,7 +3833,7 @@ int translate_transform(block_r * block) {
 }
 
 int translate_setfalcon(block_r * block) {
-    return exit_abt_safe("maintenance");
+    return exit_abt_safe("setfalcon");
 }
 
 int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * constant) {
@@ -4118,6 +4155,7 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
     node_t * _node = NULL;  /* node */
     db_t * db = NULL;       /* resource or athena database */
     var_res var;            /* variable or function search */
+    option_res opt;
     map_res map;            /* mapping search */
     const_t constant;       /* constant search */
     block_r * set = NULL;   /* search variable */
@@ -4199,7 +4237,12 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
         if(NULL == _node->id)
             goto failed;
 
-        if(!map_name(db, &map, expr[*start], len)) {
+        if(!opt_name(db, &opt, expr[*start], len)) {
+            /* option name */
+            _node->type = NODE_TYPE_CONSTANT;
+            _node->min = opt.flag;
+            _node->max = opt.flag;
+        } else if(!map_name(db, &map, expr[*start], len)) {
             /* map name */
             _node->type = NODE_TYPE_CONSTANT;
             _node->min = map.id;
@@ -4308,6 +4351,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
         case 26: ret = evaluate_function_callfunc(block, arg_off, arg_cnt, func, node);             break; /* callfunc */
         case 29: ret = evaluate_function_strcharinfo(block, arg_off, arg_cnt, func, node);          break; /* strcharinfo */
         case 30: ret = evaluate_function_countitem(block, arg_off, arg_cnt, func, node);            break; /* countitem */
+        case 31: ret = evaluate_function_setoption(block, arg_off, arg_cnt, func, node);            break; /* setoption */
         case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
         default:
             exit_func_safe("unsupported function '%s' in item %d", func->name, block->item_id);
@@ -4393,8 +4437,8 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
         return exit_func_safe("invalid argument count to "
         "function '%s' in %d", func->name, block->item_id);
 
+    /* use default subgroup id 1 if none specified */
     if(cnt == 1)
-        /* use default subgroup id 1 if none specified */
         if(block_stack_push(block, TYPE_PTR, "1"))
             goto failed;
 
@@ -4899,6 +4943,30 @@ int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * f
     node->min = func->min;
     node->max = func->max;
 
+    return CHECK_PASSED;
+}
+
+int evaluate_function_setoption(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+    int len = 0;
+
+    if(cnt != 1)
+        return exit_func_safe("invalid argument count to "
+        "function '%s' in %d", func->name, block->item_id);
+
+    len = block->arg_cnt;
+    if(stack_eng_options(block, block->ptr[off]))
+        return CHECK_FAILED;
+    len = block->arg_cnt - len;
+
+    node->formula = calloc(len, sizeof(char));
+    if(NULL == node->formula)
+        return CHECK_FAILED;
+
+    sprintf(node->formula, "%s", block->eng[block->eng_cnt - 1]);
+    node->min = func->min;
+    node->max = func->max;
+
+    printf("%s\n", node->formula);
     return CHECK_PASSED;
 }
 

@@ -26,6 +26,7 @@
     typedef struct option_res {
         char option[MAX_NAME_SIZE];
         char name[MAX_NAME_SIZE];
+        int flag;
     } option_res;
 
     typedef struct map_res {
@@ -221,7 +222,7 @@
     } item_group_meta_t;
 
     /* resource database queries */
-    #define RE_OPT_NAME_SEARCH              "SELECT * FROM option_res WHERE opt = ? COLLATE NOCASE;"
+    #define RE_OPT_NAME_SEARCH              "SELECT * FROM option_res WHERE option = ? COLLATE NOCASE;"
     #define RE_MAP_NAME_SEARCH              "SELECT * FROM map_res WHERE map = ?;"
     #define RE_MAP_ID_SEARCH                "SELECT * FROM map_res WHERE id = ?;"
     #define RE_BONUS_NAME_SEARCH            "SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
@@ -233,7 +234,7 @@
 
     /* server item database queries */
     #define EA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
-    #define RA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra;"
+    #define RA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra WHERE id = 12848;"
     #define HE_ITEM_ITERATE                 "SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
                                             "BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
                                             "StackAmount, StackType from item_he;"
