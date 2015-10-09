@@ -1951,8 +1951,8 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
     int i = 0;
     int ret = 0;
     int top = 0;
+    int level = 0;
     item_t * item;
-    node_t * item_level = 0;
     produce_t * produce = NULL;
     produce_t * produces = NULL;
     char buf[MAX_NAME_SIZE + 32];
@@ -1965,20 +1965,13 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
 
     top = block->eng_cnt;
 
-    item_level = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == item_level)
-        return CHECK_FAILED;
-
-    /* error on invalid constant; multiple values supported */
-    if(item_level->min != item_level->max)
-        goto failed;
-
     /* write each item recipe on the stack */
-    if(produce_id(block->script->db, &produces, item_level->min))
+    if(evaluate_numeric_constant(block, expr, 1, &level) ||
+       produce_id(block->script->db, &produces, level))
         goto failed;
 
     /* write the produce header */
-    switch(item_level->min) {
+    switch(level) {
         case 1: ret = block_stack_push(block, TYPE_ENG, "Use to craft level 1 weapons.\n"); break;                     /* lv1 weapons */
         case 2: ret = block_stack_push(block, TYPE_ENG, "Use to craft level 2 weapons.\n"); break;                     /* lv2 weapons */
         case 3: ret = block_stack_push(block, TYPE_ENG, "Use to craft level 3 weapons.\n"); break;                     /* lv3 weapons */
@@ -1988,8 +1981,9 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
         case 14: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 2 success rate.\n"); break;
         case 15: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 1 success rate.\n"); break;
         case 21: ret = block_stack_push(block, TYPE_ENG, "Use to manufacture metals.\n"); break;                       /* metals */
+        case 24: break;
         default:
-            exit_func_safe("unsupported item level %d in item %d", item_level->min, block->item_id);
+            exit_func_safe("unsupported item level %d in item %d", level, block->item_id);
             goto failed;
     }
     if(ret)
@@ -2009,7 +2003,7 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
             if(item_id(block->script->db, item, produce->item_id_req[i]))
                 goto failed;
 
-            sprintf(buf, "%d %s", produce->item_amount_req[i], item->name);
+            sprintf(buf, " * %d %s", produce->item_amount_req[i], item->name);
 
             if(block_stack_push(block, TYPE_ENG, buf))
                 goto failed;
@@ -2020,7 +2014,6 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
 clean:
     *argc = block->eng_cnt - top;
     produce_free(&produces);
-    node_free(item_level);
     SAFE_FREE(item);
     return ret;
 
@@ -3846,8 +3839,22 @@ int translate_setfalcon(block_r * block) {
 }
 
 int translate_makerune(block_r * block) {
+    int i = 0;
+    int rate = 0;
+    int argc = 0;
 
-    return exit_abt_safe("makerune");
+    if( stack_eng_int(block, block->ptr[0], 1, FORMAT_RATIO) ||
+        stack_eng_produce(block, "24", &argc) ||
+        block_stack_vararg(block, TYPE_ENG, "Create runestones with %s success rate.", block->eng[0]))
+        return CHECK_FAILED;
+
+    /* write the produce recipes */
+    argc += 1;
+    for (i = 1; i < argc; i++)
+        if (block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", block->eng[i]))
+            return CHECK_FAILED;
+
+    return CHECK_PASSED;
 }
 
 int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * constant) {

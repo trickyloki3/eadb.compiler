@@ -39,9 +39,10 @@ int main(int argc, char * argv[]) {
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
             script_generate(context) ||
-            context->item.id == 0) {
-            /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);*/
-            /*goto failed;*/
+            context->item.id == 12734) {
+            /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
+            script_block_dump(context, stderr);
+            break;*/
         }
 
         /*printf("%s", context->buffer);
@@ -49,14 +50,6 @@ int main(int argc, char * argv[]) {
         script_block_free_all(context);
     }
 
-    goto clean;
-
-clean:
     script_deit(&context);
     return 0;
-
-failed:
-    if(NULL != context->blocks)
-        script_block_dump(context, stderr);
-    goto clean;
 }
