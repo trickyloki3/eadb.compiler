@@ -2832,6 +2832,7 @@ int translate_produce(block_r * block, int handler) {
         return CHECK_FAILED;
 
     /* write the produce recipes */
+    arg_cnt += arg_off;
     for(i = arg_off; i < arg_cnt; i++)
         if((block->eng_cnt == 0) ?
             block_stack_vararg(block, TYPE_ENG, "%s", block->eng[i]):
