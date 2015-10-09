@@ -1,26 +1,38 @@
-Option_Nothing,"Nothing",0x00000000
-Option_Sight,"Sight Mode",0x00000001
-Option_Hide,"Hide Mode",0x00000002
-Option_Cloak,"Cloak Mode",0x00000004
-Option_Falcon,"Falcon Companion",0x00000010
-Option_Riding,"Riding Peco Peco",0x00000020
-Option_Invisible,"Perfect Hide Mode",0x00000040
-Option_Orcish,"Orcish Head",0x00000800
-Option_Wedding,"Wedding Clothes",0x00001000
-Option_Chasewalk,"Chasewalk Mode",0x00004000
-Option_Flying,"Flying Suit",0x0
-Option_Xmas,"Xmas Suit",0x0
-Option_Transform,"Mob Sprite",0x0
-Option_Summer,"Summer Outfit",0x0
-Option_Wug,"Wug Companion",0x0
-Option_Wugrider,"Riding Wug",0x0
-Option_Madogear,"Operating Madogear",0x0
-Option_Dragon,"Class Mount 0",0x0
-Option_Dragon1,"Class Mount 1",0x0
-Option_Dragon2,"Class Mount 2",0x0
-Option_Dragon3,"Class Mount 3",0x0
-Option_Dragon4,"Class Mount 4",0x0
-Option_Dragon5,"Class Mount 5",0x0
-Option_Hanbok,"Hanbok Costume",0x0
-Option_Oktoberfest,"Oktoberfest Clothes",0x0
-Option_Costume,"Costume",0x0
+/*
+ *    file: option_db.txt
+ *    date: 10/08/2015
+ *    auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ */
+
+OPTION_NOTHING,"none",0x00000000
+OPTION_SIGHT,"sight",0x00000001
+OPTION_HIDE,"hide",0x00000002
+OPTION_CLOAK,"cloak",0x00000004
+OPTION_CART1,"cart 1",0x00000008
+OPTION_FALCON,"falcon",0x00000010
+OPTION_RIDING,"peco",0x00000020
+OPTION_INVISIBLE,"invisible",0x00000040
+OPTION_CART2,"cart 2",0x00000080
+OPTION_CART3,"cart 3",0x00000100
+OPTION_CART4,"cart 4",0x00000200
+OPTION_CART5,"cart 5",0x00000400
+OPTION_ORCISH,"orc head",0x00000800
+OPTION_WEDDING,"wedding suit",0x00001000
+OPTION_RUWACH,"ruwach",0x00002000
+OPTION_CHASEWALK,"chasewalk",0x00004000
+OPTION_FLYING,"flying",0x00008000
+OPTION_XMAS,"santa suit",0x00010000
+OPTION_TRANSFORM,"",0x00020000
+OPTION_SUMMER,"Summer Suit",0x00040000
+OPTION_DRAGON1,"Dragon 1",0x00080000
+OPTION_WUG,"Unmounted Warg",0x00100000
+OPTION_WUGRIDER,"Mounted Warg",0x00200000
+OPTION_MADOGEAR,"Mado Gear",0x00400000
+OPTION_DRAGON2,"Dragon 2",0x00800000
+OPTION_DRAGON3,"Dragon 3",0x01000000
+OPTION_DRAGON4,"Dragon 4",0x02000000
+OPTION_DRAGON5,"Dragon 5",0x04000000
+OPTION_HANBOK,"Hanbok",0x08000000
+OPTION_OKTOBERFEST,"Oktoberfest",0x10000000

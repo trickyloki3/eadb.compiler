@@ -236,25 +236,35 @@
     #define ATF_SKILL                      0x60
 
     /* stack_eng_options bitmask flags */
-    #define OPT_SIGHT                       0x000001
-    #define OPT_HIDE                        0x000002
-    #define OPT_CLOAK                       0x000004
-    #define OPT_CART1                       0x000008
-    #define OPT_FALCON                      0x000010
-    #define OPT_PECO                        0x000020
-    #define OPT_INVISIBLE                   0x000040
-    #define OPT_CART2                       0x000080
-    #define OPT_CART3                       0x000100
-    #define OPT_CART4                       0x000200
-    #define OPT_CART5                       0x000400
-    #define OPT_ORC                         0x000800
-    #define OPT_WEDDING                     0x001000
-    #define OPT_RUWACH                      0x002000
-    #define OPT_CHASEWALK                   0x004000
-    #define OPT_XMAS                        0x008000
-    #define OPT_SIGHTTRASHER                0x010000
-    #define OPT_WARG                        0x100000
-    #define OPT_RIDINGWARG                  0x200000
+    #define OPT_SIGHT                       0x00000001
+    #define OPT_HIDE                        0x00000002
+    #define OPT_CLOAK                       0x00000004
+    #define OPT_CART1                       0x00000008
+    #define OPT_FALCON                      0x00000010
+    #define OPT_PECO                        0x00000020
+    #define OPT_INVISIBLE                   0x00000040
+    #define OPT_CART2                       0x00000080
+    #define OPT_CART3                       0x00000100
+    #define OPT_CART4                       0x00000200
+    #define OPT_CART5                       0x00000400
+    #define OPT_ORC                         0x00000800
+    #define OPT_WEDDING                     0x00001000
+    #define OPT_RUWACH                      0x00002000
+    #define OPT_CHASEWALK                   0x00004000
+    #define OPT_FLYING                      0x00008000
+    #define OPT_XMAS                        0x00010000
+    #define OPT_TRANSFORM                   0x00020000
+    #define OPT_SUMMER                      0x00040000
+    #define OPT_DRAGON1                     0x00080000
+    #define OPT_WUG                         0x00100000
+    #define OPT_WUGRIDER                    0x00200000
+    #define OPT_MADOGEAR                    0x00400000
+    #define OPT_DRAGON2                     0x00800000
+    #define OPT_DRAGON3                     0x01000000
+    #define OPT_DRAGON4                     0x02000000
+    #define OPT_DRAGON5                     0x04000000
+    #define OPT_HANBOK                      0x08000000
+    #define OPT_OKTOBERFEST                 0x10000000
 
     /* stack_eng_int_* bitmask flags */
     #define FORMAT_RATIO                   0x01

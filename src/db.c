@@ -200,7 +200,7 @@ int main(int argc, char * argv[]) {
            opt_db_map_load(resource, server_path) ||
            path_concat(server_path, server_len, PATH_MAX, "item_bonus.txt") ||
            opt_db_bns_load(resource, server_path) ||
-           path_concat(server_path, server_len, PATH_MAX, "ea_status_db.txt") ||
+           path_concat(server_path, server_len, PATH_MAX, "status_db.txt") ||
            opt_db_sta_load(resource, server_path) ||
            path_concat(server_path, server_len, PATH_MAX, "var_db.txt") ||
            opt_db_var_load(resource, server_path) ||

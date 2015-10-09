@@ -1626,19 +1626,20 @@ int stack_eng_grid(block_r * block, char * expr) {
 }
 
 int stack_eng_coordinate(block_r * block, char * expr) {
+    int err = 0;
     node_t * node = NULL;
 
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if (NULL == node)
         return CHECK_FAILED;
 
-    /* inefficieny ; evaluates the same expression twice */
-    if(((node->min < 1 && node->max < 1) &&
-        block_stack_push(block, TYPE_ENG, "random")) ||
-       stack_eng_int(block, expr, 1, 0))
-        return CHECK_FAILED;
+    /* inefficient ; evaluates the same expression twice */
+    err = (node->min < 1 && node->max < 1) ?
+            block_stack_push(block, TYPE_ENG, "random") :
+            stack_eng_int(block, expr, 1, 0);
 
-    return CHECK_PASSED;
+    node_free(node);
+    return err;
 }
 
 /* evaluate the expression and write the integer range
@@ -1795,6 +1796,7 @@ failed:
 int stack_eng_int_bonus(block_r * block, char * expr, int modifier, int attr, int arg) {
     int ret = 0;
     switch(attr) {
+        /* I will get around to condensing the repeated cases later. */
         case 7:
         case 8:  ret = stack_eng_int_signed(block, expr, modifier, "Regain", "Drain", 0); break;
         case 10: ret = stack_eng_int_signed(block, expr, modifier, "Receive", "Reduce", FORMAT_RATIO); break;
@@ -2544,10 +2546,20 @@ int stack_eng_options(block_r * block, char * expr) {
        (opt & OPT_WEDDING       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "wearing wedding suit,")) ||
        (opt & OPT_RUWACH        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using ruwach,")) ||
        (opt & OPT_CHASEWALK     && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using chasewalk,")) ||
+       (opt & OPT_FLYING        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "flying,")) ||
        (opt & OPT_XMAS          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "wearing santa suit,")) ||
-       (opt & OPT_SIGHTTRASHER) && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "casting sight trasher,") ||
-       (opt & OPT_WARG          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "warg following,")) ||
-       (opt & OPT_RIDINGWARG    && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "riding warg,")))
+       (opt & OPT_TRANSFORM     && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "transformed,")) ||
+       (opt & OPT_SUMMER        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "summer suit,")) ||
+       (opt & OPT_DRAGON1       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "dragon 1,")) ||
+       (opt & OPT_WUG           && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "wug following,")) ||
+       (opt & OPT_WUGRIDER      && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "riding wug,")) ||
+       (opt & OPT_MADOGEAR      && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "riding madogear,")) ||
+       (opt & OPT_DRAGON2       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "dragon 2,")) ||
+       (opt & OPT_DRAGON3       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "dragon 3,")) ||
+       (opt & OPT_DRAGON4       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "dragon 4,")) ||
+       (opt & OPT_DRAGON5       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "dragon 5,")) ||
+       (opt & OPT_HANBOK        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "hanbok,")) ||
+       (opt & OPT_OKTOBERFEST   && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "oktoberfest,")))
         return CHECK_FAILED;
 
     /* remove the last comma and space */
