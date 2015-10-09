@@ -332,6 +332,7 @@
     int translate_bonus_script(block_r *);
     int translate_transform(block_r *);
     int translate_setfalcon(block_r *);
+    int translate_makerune(block_r *);
 
     /* evaluate_expression bitmask flags */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */

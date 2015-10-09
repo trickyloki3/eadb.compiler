@@ -332,7 +332,7 @@ int block_stack_dump(block_r * block, FILE * stream) {
                 (void *) iter->set,
                 iter->ptr_cnt,
                 iter->eng_cnt,
-                iter->logic_tree);
+                (void *) iter->logic_tree);
             /* dump the stack */
             for(i = 0; i < iter->ptr_cnt; i++)
                 fprintf(stream, "  arg[%5d]: %s\n", i, iter->ptr[i]);
@@ -1116,7 +1116,7 @@ int script_translate(script_t * script) {
             case 38: ret = translate_status(iter); break;                                                                   /* mercenary_sc_status */
             case 39: ret = translate_produce(iter, iter->type); break;                                                      /* produce */
             case 40: ret = translate_produce(iter, iter->type); break;                                                      /* cooking */
-            case 41: ret = exit_abt_safe("makerune"); break;                                                                /* makerune */
+            case 41: ret = translate_makerune(iter); break;                                                                 /* makerune */
             case 42: ret = translate_getguildexp(iter); break;                                                              /* getguildexp */
             case 43: ret = translate_getexp(iter); break;                                                                   /* getexp */
             case 44: ret = translate_monster(iter); break;                                                                  /* monster */
@@ -1596,7 +1596,6 @@ clean:
 
 int stack_eng_grid(block_r * block, char * expr) {
     int ret = 0;
-    int off = 0;
     int splash_min = 0;
     int splash_max = 0;
     node_t * grid = NULL;
@@ -2526,7 +2525,6 @@ failed:
 }
 
 int stack_eng_options(block_r * block, char * expr) {
-    int i = 0;
     int cnt = 0;
     int opt = 0;
     int flag = 0;
@@ -3586,7 +3584,6 @@ int translate_getrandgroupitem(block_r * block) {
     item_group_meta_t * meta = NULL;
     item_group_t items;
     item_t item;
-    range_t * iter = NULL;
 
     memset(&items, 0, sizeof(item_group_t));
     memset(&item, 0, sizeof(item_t));
@@ -3848,6 +3845,11 @@ int translate_setfalcon(block_r * block) {
     return CHECK_PASSED;
 }
 
+int translate_makerune(block_r * block) {
+
+    return exit_abt_safe("makerune");
+}
+
 int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * constant) {
     node_t * result = NULL;
 
@@ -3865,6 +3867,7 @@ int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * 
     /* set the constant value */
     *constant = result->min;
 
+    node_free(result);
     return CHECK_PASSED;
 }
 
@@ -4931,7 +4934,6 @@ failed:
 }
 
 int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
     int len = 0;
     int argc = 0;
 
