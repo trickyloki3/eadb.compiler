@@ -322,7 +322,8 @@ int block_stack_dump(block_r * block, FILE * stream) {
                 "  block link: %p\n"
                 "   block set: %p\n"
                 "   arg stack: %d\n"
-                "   eng stack: %d\n",
+                "   eng stack: %d\n"
+                "  logic tree: %p\n",
                 iter->item_id,
                 (void *) iter,
                 iter->name,
@@ -330,7 +331,8 @@ int block_stack_dump(block_r * block, FILE * stream) {
                 (void *) iter->link,
                 (void *) iter->set,
                 iter->ptr_cnt,
-                iter->eng_cnt);
+                iter->eng_cnt,
+                iter->logic_tree);
             /* dump the stack */
             for(i = 0; i < iter->ptr_cnt; i++)
                 fprintf(stream, "  arg[%5d]: %s\n", i, iter->ptr[i]);
@@ -346,7 +348,7 @@ int block_stack_dump(block_r * block, FILE * stream) {
             /* dump the logic tree */
             if(iter->logic_tree != NULL) {
                 fprintf(stream," logic tree: ");
-                dmpnamerange(iter->logic_tree, stream, 0);
+                deepdmpnamerange(iter->logic_tree, stream, 0);
             }
             fprintf(stream, "------------;\n");
         }
@@ -3499,8 +3501,6 @@ int translate_callfunc(block_r * block) {
     char * buf = NULL;
     node_t * result = NULL;
 
-    exit_null_safe(1, block);
-
    if(0 == ncs_strcmp(block->ptr[0],"F_CashCity")) {
         result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
         if(NULL == result ||
@@ -3588,8 +3588,6 @@ int translate_getrandgroupitem(block_r * block) {
     item_t item;
     range_t * iter = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(1, block);
     memset(&items, 0, sizeof(item_group_t));
     memset(&item, 0, sizeof(item_t));
 
@@ -3723,9 +3721,6 @@ int translate_getgroupitem(block_r * block) {
     int group_id = 0;
     block_r * subgroup = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(1, block);
-
     /* support for hercules soon */
     if(block->script->mode != RATHENA)
         return exit_abt_safe("only supported on rathena");
@@ -3773,9 +3768,6 @@ int translate_getgroupitem(block_r * block) {
 }
 
 int translate_bonus_script(block_r * block) {
-    /* error on invalid references */
-    exit_null_safe(1, block);
-
     /* error on invalid arguments */
     if(2 > block->ptr_cnt)
         return exit_func_safe("bonus_script is missing "
@@ -3795,9 +3787,6 @@ int translate_transform(block_r * block) {
     int err = 0;
     int argc = 0;
     block_r * sc_start4 = NULL;
-
-    /* error on invalid references */
-    exit_null_safe(1, block);
 
     /* error on invalid arguments */
     if(3 > block->ptr_cnt)
@@ -3845,7 +3834,18 @@ int translate_transform(block_r * block) {
 }
 
 int translate_setfalcon(block_r * block) {
-    return exit_abt_safe("setfalcon");
+    int flag = 0;
+
+    /* error on invalid argument */
+    if(1 != block->ptr_cnt)
+        return exit_func_safe("setfalcon is missing"
+        " flag argument in item %d", block->item_id);
+
+    if(evaluate_numeric_constant(block, block->ptr[0], 1, &flag) ||
+       block_stack_vararg(block, TYPE_ENG, "%s", (flag) ? "Release a falcon." : "Summon a falcon."))
+        return CHECK_FAILED;
+
+    return CHECK_PASSED;
 }
 
 int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * constant) {
@@ -4977,8 +4977,6 @@ int evaluate_function_setoption(block_r * block, int off, int cnt, var_res * fun
     sprintf(node->formula, "%s", block->eng[block->eng_cnt - 1]);
     node->min = func->min;
     node->max = func->max;
-
-    printf("%s\n", node->formula);
     return CHECK_PASSED;
 }
 
