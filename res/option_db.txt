@@ -4,6 +4,15 @@
  *    auth: trickyloki3
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
+ *
+ * option name          - string identifier
+ * option description   - user-friendly string
+ * option value         - string value
+ *
+ * these constants are used in athena script functions
+ * for checking a specific mount, costume, or effect,
+ * they are included separated because they aren't in
+ * const.txt
  */
 
 OPTION_NOTHING,"none",0x00000000

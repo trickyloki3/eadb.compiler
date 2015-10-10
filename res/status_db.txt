@@ -1,103 +1,630 @@
-1,sc_freeze,1,"Inflict freeze","freeze",0,0,0,0,0,0,0,0,0
-2,sc_stun,1,"Inflict stun","stun",0,0,0,0,0,0,0,0,0
-4,sc_poison,1,"Inflict poison","poison",0,0,0,0,0,0,0,0,0
-5,sc_curse,1,"Inflict curse","curse",0,0,0,0,0,0,0,0,0
-6,sc_silence,1,"Inflict silence","silence",0,0,0,0,0,0,0,0,0
-7,sc_confusion,1,"Inflict confusion","confusion",0,0,0,0,0,0,0,0,0
-8,sc_blind,1,"Inflict blind","blind",0,0,0,0,0,0,0,0,0
-9,sc_blooding,1,"Inflict bleed","bleed",0,0,0,0,0,0,0,0,0
-10,sc_dpoison,1,"Inflict poison","poison",0,0,0,0,0,0,0,0,0
-30,sc_blessing,1,"Cast Blessing [Lv.%s]","",1,m,0,0,0,1,0,0,0
-32,sc_inc_agi,1,"Cast Increase Agility [Lv.%s]","",1,m,0,0,0,1,0,0,0
-37,sc_aspersio,1,"Cast Aspersio [Lv.%s]","",1,m,0,0,0,1,0,0,0
-38,sc_benedictio,1,"Enchant armor with Holy property","",0,0,0,0,0,0,0,0,0
-43,sc_adrenaline,0,"Cast Adrenaline [Lv.%s]","",1,m,0,0,0,1,0,0,0
-52,sc_hallucination,0,"Inflict hallucination","hallucination",0,0,0,0,0,0,0,0,0
-55,sc_aspdpotion0,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
-56,sc_aspdpotion1,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
-57,sc_aspdpotion2,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
-58,sc_aspdpotion3,1,"Increase attack speed","",0,0,0,0,0,0,0,0,0
-59,sc_speedup0,1,"Increase movement speed","",0,0,0,0,0,0,0,0,0
-60,sc_speedup1,1,"Increase movement speed","",0,0,0,0,0,0,0,0,0
-61,sc_atkpotion,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
-62,sc_matkpotion,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
-63,sc_wedding,1,"Play absurdly loud wedding music","",0,0,0,0,0,0,0,0,0
-64,sc_slowdown,1,"Decrease movement speed","",0,0,0,0,0,0,0,0,0
-72,sc_cp_weapon,1,"Prevent weapon from being stripped","",0,0,0,0,0,0,0,0,0
-73,sc_cp_shield,1,"Prevent shield from being stripped","",0,0,0,0,0,0,0,0,0
-74,sc_cp_armor,1,"Prevent armor from being stripped","",0,0,0,0,0,0,0,0,0
-75,sc_cp_helm,1,"Prevent helm from being stripped","",0,0,0,0,0,0,0,0,0
-97,sc_waterweapon,1,"Enchant weapon with Water [Lv.%s] property","",1,m,0,0,0,1,0,0,0
-98,sc_windweapon,1,"Enchant weapon with Wind [Lv.%s] property","",1,m,0,0,0,1,0,0,0
-105,sc_armor_element,2,"Increase water resistance by %s, fire resistance by %s, wind resistance by %s, and earth resistance by %s","",4,p,p,p,p,1,2,3,4
-115,sc_assumptio,1,"Cast Assumptio [Lv.%s]","",1,m,0,0,0,1,0,0,0
-121,sc_windwalk,1,"Cast Windwalk [Lv.%s]","",1,m,0,0,0,1,0,0,0
-165,sc_elementalchange,2,"Enchant armor with %s property","",3,n,l,n,0, 2,-1, -1,0
-166,sc_armor_property,2,"Enchant armor with %s property","",3,n,l,n,0, 2,-1, -1,0
-186,sc_intravision,1,"Grant ability to detect hidden enemies","",0,0,0,0,0,0,0,0,0
-187,sc_incallstatus,1,"Increase all status by %+s","",1,n,0,0,0,1,0,0,0
-188,sc_incstr,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
-189,sc_incagi,1,"Increase %s AGI","",1,n,0,0,0,1,0,0,0
-190,sc_incvit,1,"Increase %s VIT","",1,n,0,0,0,1,0,0,0
-191,sc_incint,1,"Increase %s INT","",1,n,0,0,0,1,0,0,0
-192,sc_incdex,1,"Increase %s DEX","",1,n,0,0,0,1,0,0,0
-193,sc_incluk,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
-194,sc_inchit,0,"Increase %s HIT","",1,n,0,0,0,1,0,0,0
-195,sc_inchitrate,0,"Increase hit rate %s HIT","",1,n,0,0,0,1,0,0,0
-196,sc_incflee,1,"Increase flee rate %s FLEE","",1,n,0,0,0,1,0,0,0
-198,sc_incmhprate,0,"Increase maximum HP by %s","",1,p,0,0,0,1,0,0,0
-199,sc_incmsprate,1,"Increase maximum SP by %s","",1,p,0,0,0,1,0,0,0
-200,sc_incatkrate,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
-201,sc_incmatkrate,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
-203,sc_strfood,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
-204,sc_agifood,1,"Increase %s AGI","",1,n,0,0,0,1,0,0,0
-205,sc_vitfood,1,"Increase %s VIT","",1,n,0,0,0,1,0,0,0
-206,sc_intfood,1,"Increase %s INT","",1,n,0,0,0,1,0,0,0
-207,sc_dexfood,1,"Increase %s DEX","",1,n,0,0,0,1,0,0,0
-208,sc_lukfood,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
-209,sc_hitfood,1,"Increase %s HIT","",1,n,0,0,0,1,0,0,0
-210,sc_food_basichit,1,"Increase %s HIT","",1,n,0,0,0,1,0,0,0
-211,sc_batkfood,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
-213,sc_matkfood,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
-215,sc_xmas,1,"Change a Santa Suit costume","",0,0,0,0,0,0,0,0,0
-248,sc_incflee2,1,"Increase perfect dodge by +%s","",1,n,0,0,0,1,0,0,0
-256,sc_summer,1,"Change to Summer Outfit","",0,0,0,0,0,0,0,0,0
-257,sc_expboost,1,"Increase experience gained by %s","",1,p,0,0,0,1,0,0,0
-258,sc_itemboost,1,"Increase item drop rate by %s","",1,p,0,0,0,1,0,0,0
-259,sc_bossmapinfo,1,"Detect MVP monsters by indicating on mini-map","",0,0,0,0,0,0,0,0,0
-260,sc_lifeinsurance,1,"Prevent EXP loss from one KO","",0,0,0,0,0,0,0,0,0
-261,sc_inccri,1,"Increase %s CRIT","",1,n,0,0,0,1,0,0,0
-265,sc_mdef_rate,1,"Increase magical resistance by %s","",1,p,0,0,0,1,0,0,0
-267,sc_inchealrate,1,"Increase recovery amount from all recovery items by %s","",1,p,0,0,0,1,0,0,0
-271,sc_armor_resist,2,"Increase water resistance by %s, fire resistance by %s, wind resistance by %s, and earth resistance by %s","",4,p,p,p,p,1,2,3,4
-272,sc_spcost_rate,1,"Reduce SP consumption by %s","",1,p,0,0,0,1,0,0,0
-273,sc_atker_blood,1,"Reduce SP consumption by %s","",1,p,0,0,0,1,0,0,0
-275,sc_def_rate,1,"Increase physical resistance by %s","",1,p,0,0,0,1,0,0,0
-289,sc_itemscript,4,"","",0,0,0,0,0,0,0,0,0
-290,sc_s_lifepotion,6,"Regenerate %s of maximum HP every %s seconds","",2,u,p,0,0,1,2,0,0
-291,sc_l_lifepotion,6,"Regenerate %s of maximum HP every %s seconds","",2,u,p,0,0,1,2,0,0
-292,sc_jexpboost,1,"Increase job experience gained by %s","",1,p,0,0,0,1,0,0,0
-297,sc_manu_atk,1,"Increase %s physical damage to monsters on Manuk maps","",1,p,0,0,0,1,0,0,0
-298,sc_manu_def,1,"Decrease %s damage taken from monsters on Manuk maps","",1,p,0,0,0,1,0,0,0
-299,sc_spl_atk,1,"Increase %s physical damage to monsters on Splendide maps","",1,p,0,0,0,1,0,0,0
-300,sc_spl_def,1,"Decrease %s damage taken from monsters on Splendide maps","",1,p,0,0,0,1,0,0,0
-301,sc_manu_matk,1,"Increase %s magical damage to monsters on Manuk maps","",1,p,0,0,0,1,0,0,0
-302,sc_spl_matk,1,"Increase %s magical damage to monsters on Splendide maps","",1,p,0,0,0,1,0,0,0
-303,sc_food_str_cash,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
-304,sc_food_agi_cash,1,"Increase %s AGI","",1,n,0,0,0,1,0,0,0
-305,sc_food_vit_cash,1,"Increase %s VIT","",1,n,0,0,0,1,0,0,0
-306,sc_food_dex_cash,1,"Increase %s DEX","",1,n,0,0,0,1,0,0,0
-307,sc_food_int_cash,1,"Increase %s INT","",1,n,0,0,0,1,0,0,0
-308,sc_food_luk_cash,1,"Increase %s LUK","",1,n,0,0,0,1,0,0,0
-432,sc_savage_steak,1,"Increase %s STR","",1,n,0,0,0,1,0,0,0
-438,sc_boost500,1,"Increase ASPD by %s","",1,p,0,0,0,1,0,0,0
-439,sc_full_swing_k,1,"Increase ATK by %s","",1,n,0,0,0,1,0,0,0
-440,sc_matkpotion,1,"Increase MATK by %s","",1,n,0,0,0,1,0,0,0
-441,sc_mustle_m,1,"Increase maximum HP by %s","",1,p,0,0,0,1,0,0,0
-442,sc_life_force_f,1,"Increase maximum SP by %s","",1,p,0,0,0,1,0,0,0
-443,sc_extract_white_potion_z,1,"Increase HP regeneration by %s","",1,p,0,0,0,1,0,0,0
-526,sc_incmhprate,1,"Increase maximum HP by %s","",1,n,0,0,0,1,0,0,0
-603,sc_mtf_mhp,1,"Increase Max HP by %s","",1,n,0,0,0,1,0,0,0
-604,sc_mtf_msp,1,"Increase Max SP by %s","",1,n,0,0,0,1,0,0,0
-605,sc_mtf_pumpkin,1,"Increase HP recovery of all potions by %s","",1,p,0,0,0,1,0,0,0
-606,sc_mtf_hitflee,2,"Increase %s HIT and %s FLEE","",2,n,n,0,0,1,2,0,0
+/*
+ *    file: status_db.txt
+ *    date: 10/10/2015
+ *    auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ *
+ * id       - status id
+ * name     - status name
+ * val1     - sc_start, sc_start2, and  sc_start4
+ * val2     - uses at most 4 paramater values for
+ * val3     - calculating the bonuses applied,
+ * val4     - which specific to the status
+ * format   - format string for how the translated values for val1 to val4 are organized
+ * count    - number of C format specifiers, such as %s, in format string
+ * ...      - offset values that references val1 to val4's translated string
+ *
+ * a barebones status_db.txt can be generated using
+ * script/status_extract.py on the enum sc_type  in
+ * status.h
+ *
+ * see translate_status in script.c for details on
+ * how these values are used. :D
+ */
+0    ,                           sc_stone,?,?,?,?,"",0
+1    ,                          sc_freeze,?,?,?,?,"",0
+2    ,                            sc_stun,?,?,?,?,"",0
+3    ,                           sc_sleep,?,?,?,?,"",0
+4    ,                          sc_poison,?,?,?,?,"",0
+5    ,                           sc_curse,?,?,?,?,"",0
+6    ,                         sc_silence,?,?,?,?,"",0
+7    ,                       sc_confusion,?,?,?,?,"",0
+8    ,                           sc_blind,?,?,?,?,"",0
+9    ,                        sc_bleeding,?,?,?,?,"",0
+10   ,                         sc_dpoison,?,?,?,?,"",0
+10   ,                      sc_common_max,?,?,?,?,"",0
+20   ,                         sc_provoke,?,?,?,?,"",0
+21   ,                          sc_endure,?,?,?,?,"",0
+22   ,                  sc_twohandquicken,?,?,?,?,"",0
+23   ,                     sc_concentrate,?,?,?,?,"",0
+24   ,                          sc_hiding,?,?,?,?,"",0
+25   ,                        sc_cloaking,?,?,?,?,"",0
+26   ,                       sc_encpoison,?,?,?,?,"",0
+27   ,                     sc_poisonreact,?,?,?,?,"",0
+28   ,                        sc_quagmire,?,?,?,?,"",0
+29   ,                         sc_angelus,?,?,?,?,"",0
+30   ,                        sc_blessing,?,?,?,?,"",0
+31   ,                    sc_signumcrucis,?,?,?,?,"",0
+32   ,                     sc_increaseagi,?,?,?,?,"",0
+33   ,                     sc_decreaseagi,?,?,?,?,"",0
+34   ,                      sc_slowpoison,?,?,?,?,"",0
+35   ,                       sc_impositio,?,?,?,?,"",0
+36   ,                      sc_suffragium,?,?,?,?,"",0
+37   ,                        sc_aspersio,?,?,?,?,"",0
+38   ,                      sc_benedictio,?,?,?,?,"",0
+39   ,                           sc_kyrie,?,?,?,?,"",0
+40   ,                      sc_magnificat,?,?,?,?,"",0
+41   ,                          sc_gloria,?,?,?,?,"",0
+42   ,                         sc_aeterna,?,?,?,?,"",0
+43   ,                      sc_adrenaline,?,?,?,?,"",0
+44   ,                sc_weaponperfection,?,?,?,?,"",0
+45   ,                      sc_overthrust,?,?,?,?,"",0
+46   ,                   sc_maximizepower,?,?,?,?,"",0
+47   ,                       sc_trickdead,?,?,?,?,"",0
+48   ,                            sc_loud,?,?,?,?,"",0
+49   ,                      sc_energycoat,?,?,?,?,"",0
+50   ,                     sc_brokenarmor,?,?,?,?,"",0
+51   ,                    sc_brokenweapon,?,?,?,?,"",0
+52   ,                   sc_hallucination,?,?,?,?,"",0
+53   ,                        sc_weight50,?,?,?,?,"",0
+54   ,                        sc_weight90,?,?,?,?,"",0
+55   ,                     sc_aspdpotion0,?,?,?,?,"",0
+56   ,                     sc_aspdpotion1,?,?,?,?,"",0
+57   ,                     sc_aspdpotion2,?,?,?,?,"",0
+58   ,                     sc_aspdpotion3,?,?,?,?,"",0
+59   ,                        sc_speedup0,?,?,?,?,"",0
+60   ,                        sc_speedup1,?,?,?,?,"",0
+61   ,                       sc_atkpotion,?,?,?,?,"",0
+62   ,                      sc_matkpotion,?,?,?,?,"",0
+63   ,                         sc_wedding,?,?,?,?,"",0
+64   ,                        sc_slowdown,?,?,?,?,"",0
+65   ,                           sc_ankle,?,?,?,?,"",0
+66   ,                         sc_keeping,?,?,?,?,"",0
+67   ,                         sc_barrier,?,?,?,?,"",0
+68   ,                     sc_stripweapon,?,?,?,?,"",0
+69   ,                     sc_stripshield,?,?,?,?,"",0
+70   ,                      sc_striparmor,?,?,?,?,"",0
+71   ,                       sc_striphelm,?,?,?,?,"",0
+72   ,                       sc_cp_weapon,?,?,?,?,"",0
+73   ,                       sc_cp_shield,?,?,?,?,"",0
+74   ,                        sc_cp_armor,?,?,?,?,"",0
+75   ,                         sc_cp_helm,?,?,?,?,"",0
+76   ,                       sc_autoguard,?,?,?,?,"",0
+77   ,                   sc_reflectshield,?,?,?,?,"",0
+78   ,                        sc_splasher,?,?,?,?,"",0
+79   ,                      sc_providence,?,?,?,?,"",0
+80   ,                        sc_defender,?,?,?,?,"",0
+81   ,                        sc_magicrod,?,?,?,?,"",0
+82   ,                    sc_spellbreaker,?,?,?,?,"",0
+83   ,                       sc_autospell,?,?,?,?,"",0
+84   ,                    sc_sighttrasher,?,?,?,?,"",0
+85   ,                     sc_autoberserk,?,?,?,?,"",0
+86   ,                    sc_spearquicken,?,?,?,?,"",0
+87   ,                     sc_autocounter,?,?,?,?,"",0
+88   ,                           sc_sight,?,?,?,?,"",0
+89   ,                      sc_safetywall,?,?,?,?,"",0
+90   ,                          sc_ruwach,?,?,?,?,"",0
+91   ,                   sc_extremityfist,?,?,?,?,"",0
+92   ,                sc_explosionspirits,?,?,?,?,"",0
+93   ,                           sc_combo,?,?,?,?,"",0
+94   ,                  sc_bladestop_wait,?,?,?,?,"",0
+95   ,                       sc_bladestop,?,?,?,?,"",0
+96   ,                      sc_fireweapon,?,?,?,?,"",0
+97   ,                     sc_waterweapon,?,?,?,?,"",0
+98   ,                      sc_windweapon,?,?,?,?,"",0
+99   ,                     sc_earthweapon,?,?,?,?,"",0
+100  ,                         sc_volcano,?,?,?,?,"",0
+101  ,                          sc_deluge,?,?,?,?,"",0
+102  ,                     sc_violentgale,?,?,?,?,"",0
+103  ,                    sc_watk_element,?,?,?,?,"",0
+104  ,                           sc_armor,?,?,?,?,"",0
+105  ,                   sc_armor_element,?,?,?,?,"",0
+106  ,                          sc_nochat,?,?,?,?,"",0
+107  ,                            sc_baby,?,?,?,?,"",0
+108  ,                       sc_aurablade,?,?,?,?,"",0
+109  ,                        sc_parrying,?,?,?,?,"",0
+110  ,                   sc_concentration,?,?,?,?,"",0
+111  ,                    sc_tensionrelax,?,?,?,?,"",0
+112  ,                         sc_berserk,?,?,?,?,"",0
+113  ,                            sc_fury,?,?,?,?,"",0
+114  ,                          sc_gospel,?,?,?,?,"",0
+115  ,                       sc_assumptio,?,?,?,?,"",0
+116  ,                        sc_basilica,?,?,?,?,"",0
+117  ,                       sc_guildaura,?,?,?,?,"",0
+118  ,                      sc_magicpower,?,?,?,?,"",0
+119  ,                             sc_edp,?,?,?,?,"",0
+120  ,                       sc_truesight,?,?,?,?,"",0
+121  ,                        sc_windwalk,?,?,?,?,"",0
+122  ,                        sc_meltdown,?,?,?,?,"",0
+123  ,                       sc_cartboost,?,?,?,?,"",0
+124  ,                       sc_chasewalk,?,?,?,?,"",0
+125  ,                     sc_rejectsword,?,?,?,?,"",0
+126  ,                      sc_marionette,?,?,?,?,"",0
+127  ,                     sc_marionette2,?,?,?,?,"",0
+128  ,                    sc_changeundead,?,?,?,?,"",0
+129  ,                       sc_jointbeat,?,?,?,?,"",0
+130  ,                     sc_mindbreaker,?,?,?,?,"",0
+131  ,                        sc_memorize,?,?,?,?,"",0
+132  ,                         sc_fogwall,?,?,?,?,"",0
+133  ,                       sc_spiderweb,?,?,?,?,"",0
+134  ,                        sc_devotion,?,?,?,?,"",0
+135  ,                       sc_sacrifice,?,?,?,?,"",0
+136  ,                       sc_steelbody,?,?,?,?,"",0
+137  ,                          sc_orcish,?,?,?,?,"",0
+138  ,                      sc_readystorm,?,?,?,?,"",0
+139  ,                       sc_readydown,?,?,?,?,"",0
+140  ,                       sc_readyturn,?,?,?,?,"",0
+141  ,                    sc_readycounter,?,?,?,?,"",0
+142  ,                           sc_dodge,?,?,?,?,"",0
+143  ,                             sc_run,?,?,?,?,"",0
+144  ,                    sc_shadowweapon,?,?,?,?,"",0
+145  ,                     sc_adrenaline2,?,?,?,?,"",0
+146  ,                     sc_ghostweapon,?,?,?,?,"",0
+147  ,                          sc_kaizel,?,?,?,?,"",0
+148  ,                           sc_kaahi,?,?,?,?,"",0
+149  ,                           sc_kaupe,?,?,?,?,"",0
+150  ,                         sc_onehand,?,?,?,?,"",0
+151  ,                        sc_preserve,?,?,?,?,"",0
+152  ,                    sc_battleorders,?,?,?,?,"",0
+153  ,                    sc_regeneration,?,?,?,?,"",0
+154  ,                      sc_doublecast,?,?,?,?,"",0
+155  ,                     sc_gravitation,?,?,?,?,"",0
+156  ,                   sc_maxoverthrust,?,?,?,?,"",0
+157  ,                         sc_longing,?,?,?,?,"",0
+158  ,                         sc_hermode,?,?,?,?,"",0
+159  ,                          sc_shrink,?,?,?,?,"",0
+160  ,                    sc_sightblaster,?,?,?,?,"",0
+161  ,                       sc_winkcharm,?,?,?,?,"",0
+162  ,                    sc_closeconfine,?,?,?,?,"",0
+163  ,                   sc_closeconfine2,?,?,?,?,"",0
+164  ,                         sc_dancing,?,?,?,?,"",0
+165  ,                 sc_elementalchange,?,?,?,?,"",0
+166  ,                      sc_richmankim,?,?,?,?,"",0
+167  ,                    sc_eternalchaos,?,?,?,?,"",0
+168  ,                      sc_drumbattle,?,?,?,?,"",0
+169  ,                      sc_nibelungen,?,?,?,?,"",0
+170  ,                       sc_rokisweil,?,?,?,?,"",0
+171  ,                       sc_intoabyss,?,?,?,?,"",0
+172  ,                       sc_siegfried,?,?,?,?,"",0
+173  ,                         sc_whistle,?,?,?,?,"",0
+174  ,                        sc_assncros,?,?,?,?,"",0
+175  ,                       sc_poembragi,?,?,?,?,"",0
+176  ,                       sc_appleidun,?,?,?,?,"",0
+177  ,                      sc_modechange,?,?,?,?,"",0
+178  ,                         sc_humming,?,?,?,?,"",0
+179  ,                    sc_dontforgetme,?,?,?,?,"",0
+180  ,                         sc_fortune,?,?,?,?,"",0
+181  ,                       sc_service4u,?,?,?,?,"",0
+182  ,                            sc_stop,?,?,?,?,"",0
+183  ,                           sc_spurt,?,?,?,?,"",0
+184  ,                          sc_spirit,?,?,?,?,"",0
+185  ,                            sc_coma,?,?,?,?,"",0
+186  ,                     sc_intravision,?,?,?,?,"",0
+187  ,                    sc_incallstatus,?,?,?,?,"",0
+188  ,                          sc_incstr,?,?,?,?,"",0
+189  ,                          sc_incagi,?,?,?,?,"",0
+190  ,                          sc_incvit,?,?,?,?,"",0
+191  ,                          sc_incint,?,?,?,?,"",0
+192  ,                          sc_incdex,?,?,?,?,"",0
+193  ,                          sc_incluk,?,?,?,?,"",0
+194  ,                          sc_inchit,?,?,?,?,"",0
+195  ,                      sc_inchitrate,?,?,?,?,"",0
+196  ,                         sc_incflee,?,?,?,?,"",0
+197  ,                     sc_incfleerate,?,?,?,?,"",0
+198  ,                      sc_incmhprate,?,?,?,?,"",0
+199  ,                      sc_incmsprate,?,?,?,?,"",0
+200  ,                      sc_incatkrate,?,?,?,?,"",0
+201  ,                     sc_incmatkrate,?,?,?,?,"",0
+202  ,                      sc_incdefrate,?,?,?,?,"",0
+203  ,                         sc_strfood,?,?,?,?,"",0
+204  ,                         sc_agifood,?,?,?,?,"",0
+205  ,                         sc_vitfood,?,?,?,?,"",0
+206  ,                         sc_intfood,?,?,?,?,"",0
+207  ,                         sc_dexfood,?,?,?,?,"",0
+208  ,                         sc_lukfood,?,?,?,?,"",0
+209  ,                         sc_hitfood,?,?,?,?,"",0
+210  ,                        sc_fleefood,?,?,?,?,"",0
+211  ,                        sc_batkfood,?,?,?,?,"",0
+212  ,                        sc_watkfood,?,?,?,?,"",0
+213  ,                        sc_matkfood,?,?,?,?,"",0
+214  ,                        sc_scresist,?,?,?,?,"",0
+215  ,                            sc_xmas,?,?,?,?,"",0
+216  ,                            sc_warm,?,?,?,?,"",0
+217  ,                     sc_sun_comfort,?,?,?,?,"",0
+218  ,                    sc_moon_comfort,?,?,?,?,"",0
+219  ,                    sc_star_comfort,?,?,?,?,"",0
+220  ,                          sc_fusion,?,?,?,?,"",0
+221  ,                    sc_skillrate_up,?,?,?,?,"",0
+222  ,                             sc_ske,?,?,?,?,"",0
+223  ,                           sc_kaite,?,?,?,?,"",0
+224  ,                            sc_swoo,?,?,?,?,"",0
+225  ,                             sc_ska,?,?,?,?,"",0
+226  ,                     sc_earthscroll,?,?,?,?,"",0
+227  ,                         sc_miracle,?,?,?,?,"",0
+228  ,                   sc_madnesscancel,?,?,?,?,"",0
+229  ,                      sc_adjustment,?,?,?,?,"",0
+230  ,                      sc_increasing,?,?,?,?,"",0
+231  ,                    sc_gatlingfever,?,?,?,?,"",0
+232  ,                    sc_tatamigaeshi,?,?,?,?,"",0
+233  ,                        sc_utsusemi,?,?,?,?,"",0
+234  ,                    sc_bunsinjyutsu,?,?,?,?,"",0
+235  ,                         sc_kaensin,?,?,?,?,"",0
+236  ,                          sc_suiton,?,?,?,?,"",0
+237  ,                             sc_nen,?,?,?,?,"",0
+238  ,                       sc_knowledge,?,?,?,?,"",0
+239  ,                             sc_sma,?,?,?,?,"",0
+240  ,                           sc_fling,?,?,?,?,"",0
+241  ,                           sc_avoid,?,?,?,?,"",0
+242  ,                          sc_change,?,?,?,?,"",0
+243  ,                       sc_bloodlust,?,?,?,?,"",0
+244  ,                           sc_fleet,?,?,?,?,"",0
+245  ,                           sc_speed,?,?,?,?,"",0
+246  ,                         sc_defence,?,?,?,?,"",0
+247  ,                     sc_incaspdrate,?,?,?,?,"",0
+248  ,                        sc_incflee2,?,?,?,?,"",0
+249  ,                          sc_jailed,?,?,?,?,"",0
+250  ,                     sc_enchantarms,?,?,?,?,"",0
+251  ,                   sc_magicalattack,?,?,?,?,"",0
+252  ,                     sc_armorchange,?,?,?,?,"",0
+253  ,                   sc_criticalwound,?,?,?,?,"",0
+254  ,                     sc_magicmirror,?,?,?,?,"",0
+255  ,                        sc_slowcast,?,?,?,?,"",0
+256  ,                          sc_summer,?,?,?,?,"",0
+257  ,                        sc_expboost,?,?,?,?,"",0
+258  ,                       sc_itemboost,?,?,?,?,"",0
+259  ,                     sc_bossmapinfo,?,?,?,?,"",0
+260  ,                   sc_lifeinsurance,?,?,?,?,"",0
+261  ,                          sc_inccri,?,?,?,?,"",0
+265  ,                       sc_mdef_rate,?,?,?,?,"",0
+267  ,                     sc_inchealrate,?,?,?,?,"",0
+268  ,                          sc_pneuma,?,?,?,?,"",0
+269  ,                       sc_autotrade,?,?,?,?,"",0
+270  ,                     sc_ksprotected,?,?,?,?,"",0
+271  ,                    sc_armor_resist,?,?,?,?,"",0
+272  ,                     sc_spcost_rate,?,?,?,?,"",0
+273  ,                 sc_commonsc_resist,?,?,?,?,"",0
+274  ,                       sc_sevenwind,?,?,?,?,"",0
+275  ,                        sc_def_rate,?,?,?,?,"",0
+277  ,                       sc_walkspeed,?,?,?,?,"",0
+278  ,                     sc_merc_fleeup,?,?,?,?,"",0
+279  ,                      sc_merc_atkup,?,?,?,?,"",0
+280  ,                       sc_merc_hpup,?,?,?,?,"",0
+281  ,                       sc_merc_spup,?,?,?,?,"",0
+282  ,                      sc_merc_hitup,?,?,?,?,"",0
+283  ,                    sc_merc_quicken,?,?,?,?,"",0
+284  ,                         sc_rebirth,?,?,?,?,"",0
+289  ,                      sc_itemscript,?,?,?,?,"",0
+290  ,                    sc_s_lifepotion,?,?,?,?,"",0
+291  ,                    sc_l_lifepotion,?,?,?,?,"",0
+292  ,                       sc_jexpboost,?,?,?,?,"",0
+294  ,                       sc_hellpower,?,?,?,?,"",0
+295  ,                      sc_invincible,?,?,?,?,"",0
+296  ,                   sc_invincibleoff,?,?,?,?,"",0
+297  ,                        sc_manu_atk,?,?,?,?,"",0
+298  ,                        sc_manu_def,?,?,?,?,"",0
+299  ,                         sc_spl_atk,?,?,?,?,"",0
+300  ,                         sc_spl_def,?,?,?,?,"",0
+301  ,                       sc_manu_matk,?,?,?,?,"",0
+302  ,                        sc_spl_matk,?,?,?,?,"",0
+303  ,                   sc_food_str_cash,?,?,?,?,"",0
+304  ,                   sc_food_agi_cash,?,?,?,?,"",0
+305  ,                   sc_food_vit_cash,?,?,?,?,"",0
+306  ,                   sc_food_dex_cash,?,?,?,?,"",0
+307  ,                   sc_food_int_cash,?,?,?,?,"",0
+308  ,                   sc_food_luk_cash,?,?,?,?,"",0
+309  ,                            sc_fear,?,?,?,?,"",0
+310  ,                         sc_burning,?,?,?,?,"",0
+311  ,                        sc_freezing,?,?,?,?,"",0
+312  ,                    sc_enchantblade,?,?,?,?,"",0
+313  ,                      sc_deathbound,?,?,?,?,"",0
+314  ,                sc_millenniumshield,?,?,?,?,"",0
+315  ,                     sc_crushstrike,?,?,?,?,"",0
+316  ,                         sc_refresh,?,?,?,?,"",0
+317  ,                   sc_reuse_refresh,?,?,?,?,"",0
+318  ,                     sc_giantgrowth,?,?,?,?,"",0
+319  ,                   sc_stonehardskin,?,?,?,?,"",0
+320  ,              sc_vitalityactivation,?,?,?,?,"",0
+321  ,                      sc_stormblast,?,?,?,?,"",0
+322  ,                  sc_fightingspirit,?,?,?,?,"",0
+323  ,                       sc_abundance,?,?,?,?,"",0
+324  ,                        sc_adoramus,?,?,?,?,"",0
+325  ,                       sc_epiclesis,?,?,?,?,"",0
+326  ,                          sc_oratio,?,?,?,?,"",0
+327  ,                      sc_laudaagnus,?,?,?,?,"",0
+328  ,                      sc_laudaramus,?,?,?,?,"",0
+329  ,                       sc_renovatio,?,?,?,?,"",0
+330  ,                        sc_expiatio,?,?,?,?,"",0
+331  ,                      sc_duplelight,?,?,?,?,"",0
+332  ,                       sc_secrament,?,?,?,?,"",0
+333  ,                   sc_whiteimprison,?,?,?,?,"",0
+334  ,                    sc_marshofabyss,?,?,?,?,"",0
+335  ,                 sc_recognizedspell,?,?,?,?,"",0
+336  ,                          sc_stasis,?,?,?,?,"",0
+337  ,                        sc_sphere_1,?,?,?,?,"",0
+338  ,                        sc_sphere_2,?,?,?,?,"",0
+339  ,                        sc_sphere_3,?,?,?,?,"",0
+340  ,                        sc_sphere_4,?,?,?,?,"",0
+341  ,                        sc_sphere_5,?,?,?,?,"",0
+342  ,                      sc_reading_sb,?,?,?,?,"",0
+343  ,                       sc_freeze_sp,?,?,?,?,"",0
+344  ,                      sc_fearbreeze,?,?,?,?,"",0
+345  ,                 sc_electricshocker,?,?,?,?,"",0
+346  ,                         sc_wugdash,?,?,?,?,"",0
+347  ,                            sc_bite,?,?,?,?,"",0
+348  ,                      sc_camouflage,?,?,?,?,"",0
+349  ,                    sc_acceleration,?,?,?,?,"",0
+350  ,                        sc_hovering,?,?,?,?,"",0
+351  ,                      sc_shapeshift,?,?,?,?,"",0
+352  ,                    sc_infraredscan,?,?,?,?,"",0
+353  ,                         sc_analyze,?,?,?,?,"",0
+354  ,                   sc_magneticfield,?,?,?,?,"",0
+355  ,                  sc_neutralbarrier,?,?,?,?,"",0
+356  ,           sc_neutralbarrier_master,?,?,?,?,"",0
+357  ,                    sc_stealthfield,?,?,?,?,"",0
+358  ,             sc_stealthfield_master,?,?,?,?,"",0
+359  ,                        sc_overheat,?,?,?,?,"",0
+360  ,             sc_overheat_limitpoint,?,?,?,?,"",0
+361  ,                    sc_venomimpress,?,?,?,?,"",0
+362  ,                 sc_poisoningweapon,?,?,?,?,"",0
+363  ,                  sc_weaponblocking,?,?,?,?,"",0
+364  ,                  sc_cloakingexceed,?,?,?,?,"",0
+365  ,               sc_hallucinationwalk,?,?,?,?,"",0
+366  ,     sc_hallucinationwalk_postdelay,?,?,?,?,"",0
+367  ,                   sc_rollingcutter,?,?,?,?,"",0
+368  ,                           sc_toxin,?,?,?,?,"",0
+369  ,                        sc_paralyse,?,?,?,?,"",0
+370  ,                      sc_venombleed,?,?,?,?,"",0
+371  ,                   sc_magicmushroom,?,?,?,?,"",0
+372  ,                       sc_deathhurt,?,?,?,?,"",0
+373  ,                         sc_pyrexia,?,?,?,?,"",0
+374  ,                   sc_oblivioncurse,?,?,?,?,"",0
+375  ,                      sc_leechesend,?,?,?,?,"",0
+376  ,                   sc_reflectdamage,?,?,?,?,"",0
+377  ,                 sc_forceofvanguard,?,?,?,?,"",0
+378  ,                 sc_shieldspell_def,?,?,?,?,"",0
+379  ,                sc_shieldspell_mdef,?,?,?,?,"",0
+380  ,                 sc_shieldspell_ref,?,?,?,?,"",0
+381  ,                      sc_exeedbreak,?,?,?,?,"",0
+382  ,                        sc_prestige,?,?,?,?,"",0
+383  ,                         sc_banding,?,?,?,?,"",0
+384  ,                 sc_banding_defence,?,?,?,?,"",0
+385  ,                      sc_earthdrive,?,?,?,?,"",0
+386  ,                     sc_inspiration,?,?,?,?,"",0
+387  ,                       sc_spellfist,?,?,?,?,"",0
+388  ,                      sc_crystalize,?,?,?,?,"",0
+389  ,                        sc_striking,?,?,?,?,"",0
+390  ,                          sc_warmer,?,?,?,?,"",0
+391  ,                  sc_vacuum_extreme,?,?,?,?,"",0
+392  ,                    sc_propertywalk,?,?,?,?,"",0
+393  ,                      sc_swingdance,?,?,?,?,"",0
+394  ,                 sc_symphonyoflover,?,?,?,?,"",0
+395  ,                 sc_moonlitserenade,?,?,?,?,"",0
+396  ,                    sc_rushwindmill,?,?,?,?,"",0
+397  ,                        sc_echosong,?,?,?,?,"",0
+398  ,                       sc_harmonize,?,?,?,?,"",0
+399  ,                    sc_voiceofsiren,?,?,?,?,"",0
+400  ,                       sc_deepsleep,?,?,?,?,"",0
+401  ,                  sc_sircleofnature,?,?,?,?,"",0
+402  ,                       sc_gloomyday,?,?,?,?,"",0
+403  ,                    sc_gloomyday_sk,?,?,?,?,"",0
+404  ,                      sc_songofmana,?,?,?,?,"",0
+405  ,                    sc_dancewithwug,?,?,?,?,"",0
+406  ,              sc_saturdaynightfever,?,?,?,?,"",0
+407  ,                       sc_leradsdew,?,?,?,?,"",0
+408  ,                    sc_melodyofsink,?,?,?,?,"",0
+409  ,                  sc_beyondofwarcry,?,?,?,?,"",0
+410  ,           sc_unlimitedhummingvoice,?,?,?,?,"",0
+411  ,                   sc_sitdown_force,?,?,?,?,"",0
+412  ,                     sc_netherworld,?,?,?,?,"",0
+413  ,                   sc_crescentelbow,?,?,?,?,"",0
+414  ,              sc_cursedcircle_atker,?,?,?,?,"",0
+415  ,             sc_cursedcircle_target,?,?,?,?,"",0
+416  ,                   sc_lightningwalk,?,?,?,?,"",0
+417  ,                   sc_raisingdragon,?,?,?,?,"",0
+418  ,                   sc_gt_energygain,?,?,?,?,"",0
+419  ,                       sc_gt_change,?,?,?,?,"",0
+420  ,                   sc_gt_revitalize,?,?,?,?,"",0
+421  ,                    sc_gn_cartboost,?,?,?,?,"",0
+422  ,                      sc_thornstrap,?,?,?,?,"",0
+423  ,                     sc_bloodsucker,?,?,?,?,"",0
+424  ,                     sc_smokepowder,?,?,?,?,"",0
+425  ,                         sc_teargas,?,?,?,?,"",0
+426  ,                      sc_mandragora,?,?,?,?,"",0
+427  ,                     sc_stomachache,?,?,?,?,"",0
+428  ,               sc_mysterious_powder,?,?,?,?,"",0
+429  ,                      sc_melon_bomb,?,?,?,?,"",0
+430  ,                     sc_banana_bomb,?,?,?,?,"",0
+431  ,             sc_banana_bomb_sitdown,?,?,?,?,"",0
+432  ,                    sc_savage_steak,?,?,?,?,"",0
+433  ,             sc_cocktail_warg_blood,?,?,?,?,"",0
+434  ,                       sc_minor_bbq,?,?,?,?,"",0
+435  ,                  sc_siroma_ice_tea,?,?,?,?,"",0
+436  ,            sc_drocera_herb_steamed,?,?,?,?,"",0
+437  ,             sc_putti_tails_noodles,?,?,?,?,"",0
+438  ,                        sc_boost500,?,?,?,?,"",0
+439  ,                    sc_full_swing_k,?,?,?,?,"",0
+440  ,                       sc_mana_plus,?,?,?,?,"",0
+441  ,                        sc_mustle_m,?,?,?,?,"",0
+442  ,                    sc_life_force_f,?,?,?,?,"",0
+443  ,          sc_extract_white_potion_z,?,?,?,?,"",0
+444  ,                      sc_vitata_500,?,?,?,?,"",0
+445  ,          sc_extract_salamine_juice,?,?,?,?,"",0
+446  ,                      sc__reproduce,?,?,?,?,"",0
+447  ,                sc__autoshadowspell,?,?,?,?,"",0
+448  ,                     sc__shadowform,?,?,?,?,"",0
+449  ,                      sc__bodypaint,?,?,?,?,"",0
+450  ,                   sc__invisibility,?,?,?,?,"",0
+451  ,                   sc__deadlyinfect,?,?,?,?,"",0
+452  ,                     sc__enervation,?,?,?,?,"",0
+453  ,                         sc__groomy,?,?,?,?,"",0
+454  ,                      sc__ignorance,?,?,?,?,"",0
+455  ,                       sc__laziness,?,?,?,?,"",0
+456  ,                        sc__unlucky,?,?,?,?,"",0
+457  ,                       sc__weakness,?,?,?,?,"",0
+458  ,                 sc__stripaccessory,?,?,?,?,"",0
+459  ,                        sc__manhole,?,?,?,?,"",0
+460  ,                     sc__bloodylust,?,?,?,?,"",0
+461  ,                  sc_circle_of_fire,?,?,?,?,"",0
+462  ,           sc_circle_of_fire_option,?,?,?,?,"",0
+463  ,                      sc_fire_cloak,?,?,?,?,"",0
+464  ,               sc_fire_cloak_option,?,?,?,?,"",0
+465  ,                    sc_water_screen,?,?,?,?,"",0
+466  ,             sc_water_screen_option,?,?,?,?,"",0
+467  ,                      sc_water_drop,?,?,?,?,"",0
+468  ,               sc_water_drop_option,?,?,?,?,"",0
+469  ,                   sc_water_barrier,?,?,?,?,"",0
+470  ,                       sc_wind_step,?,?,?,?,"",0
+471  ,                sc_wind_step_option,?,?,?,?,"",0
+472  ,                    sc_wind_curtain,?,?,?,?,"",0
+473  ,             sc_wind_curtain_option,?,?,?,?,"",0
+474  ,                          sc_zephyr,?,?,?,?,"",0
+475  ,                      sc_solid_skin,?,?,?,?,"",0
+476  ,               sc_solid_skin_option,?,?,?,?,"",0
+477  ,                    sc_stone_shield,?,?,?,?,"",0
+478  ,             sc_stone_shield_option,?,?,?,?,"",0
+479  ,                   sc_power_of_gaia,?,?,?,?,"",0
+480  ,                     sc_pyrotechnic,?,?,?,?,"",0
+481  ,              sc_pyrotechnic_option,?,?,?,?,"",0
+482  ,                          sc_heater,?,?,?,?,"",0
+483  ,                   sc_heater_option,?,?,?,?,"",0
+484  ,                          sc_tropic,?,?,?,?,"",0
+485  ,                   sc_tropic_option,?,?,?,?,"",0
+486  ,                        sc_aquaplay,?,?,?,?,"",0
+487  ,                 sc_aquaplay_option,?,?,?,?,"",0
+488  ,                          sc_cooler,?,?,?,?,"",0
+489  ,                   sc_cooler_option,?,?,?,?,"",0
+490  ,                      sc_chilly_air,?,?,?,?,"",0
+491  ,               sc_chilly_air_option,?,?,?,?,"",0
+492  ,                            sc_gust,?,?,?,?,"",0
+493  ,                     sc_gust_option,?,?,?,?,"",0
+494  ,                           sc_blast,?,?,?,?,"",0
+495  ,                    sc_blast_option,?,?,?,?,"",0
+496  ,                      sc_wild_storm,?,?,?,?,"",0
+497  ,               sc_wild_storm_option,?,?,?,?,"",0
+498  ,                       sc_petrology,?,?,?,?,"",0
+499  ,                sc_petrology_option,?,?,?,?,"",0
+500  ,                     sc_cursed_soil,?,?,?,?,"",0
+501  ,              sc_cursed_soil_option,?,?,?,?,"",0
+502  ,                        sc_upheaval,?,?,?,?,"",0
+503  ,                 sc_upheaval_option,?,?,?,?,"",0
+504  ,                    sc_tidal_weapon,?,?,?,?,"",0
+505  ,             sc_tidal_weapon_option,?,?,?,?,"",0
+506  ,                    sc_rock_crusher,?,?,?,?,"",0
+507  ,                sc_rock_crusher_atk,?,?,?,?,"",0
+508  ,                      sc_leadership,?,?,?,?,"",0
+509  ,                     sc_glorywounds,?,?,?,?,"",0
+510  ,                        sc_soulcold,?,?,?,?,"",0
+511  ,                        sc_hawkeyes,?,?,?,?,"",0
+512  ,                     sc_odins_power,?,?,?,?,"",0
+513  ,                            sc_raid,?,?,?,?,"",0
+514  ,                   sc_fire_insignia,?,?,?,?,"",0
+515  ,                  sc_water_insignia,?,?,?,?,"",0
+516  ,                   sc_wind_insignia,?,?,?,?,"",0
+517  ,                  sc_earth_insignia,?,?,?,?,"",0
+518  ,                       sc_push_cart,?,?,?,?,"",0
+519  ,                      sc_spellbook1,?,?,?,?,"",0
+520  ,                      sc_spellbook2,?,?,?,?,"",0
+521  ,                      sc_spellbook3,?,?,?,?,"",0
+522  ,                      sc_spellbook4,?,?,?,?,"",0
+523  ,                      sc_spellbook5,?,?,?,?,"",0
+524  ,                      sc_spellbook6,?,?,?,?,"",0
+525  ,                    sc_maxspellbook,?,?,?,?,"",0
+526  ,                          sc_incmhp,?,?,?,?,"",0
+527  ,                          sc_incmsp,?,?,?,?,"",0
+528  ,                       sc_partyflee,?,?,?,?,"",0
+529  ,                    sc_meikyousisui,?,?,?,?,"",0
+530  ,                    sc_jyumonjikiri,?,?,?,?,"",0
+531  ,                        sc_kyougaku,?,?,?,?,"",0
+532  ,                          sc_izayoi,?,?,?,?,"",0
+533  ,                          sc_zenkai,?,?,?,?,"",0
+534  ,                        sc_kagehumi,?,?,?,?,"",0
+535  ,                           sc_kyomu,?,?,?,?,"",0
+536  ,                       sc_kagemusya,?,?,?,?,"",0
+537  ,                        sc_zangetsu,?,?,?,?,"",0
+538  ,                          sc_gensou,?,?,?,?,"",0
+539  ,                       sc_akaitsuki,?,?,?,?,"",0
+540  ,                    sc_style_change,?,?,?,?,"",0
+541  ,                  sc_tinder_breaker,?,?,?,?,"",0
+542  ,                 sc_tinder_breaker2,?,?,?,?,"",0
+543  ,                             sc_cbc,?,?,?,?,"",0
+544  ,                             sc_eqc,?,?,?,?,"",0
+545  ,                   sc_goldene_ferse,?,?,?,?,"",0
+546  ,                  sc_angriffs_modus,?,?,?,?,"",0
+547  ,                    sc_overed_boost,?,?,?,?,"",0
+548  ,                 sc_light_of_regene,?,?,?,?,"",0
+549  ,                             sc_ash,?,?,?,?,"",0
+550  ,                  sc_granitic_armor,?,?,?,?,"",0
+551  ,                      sc_magma_flow,?,?,?,?,"",0
+552  ,                     sc_pyroclastic,?,?,?,?,"",0
+553  ,                       sc_paralysis,?,?,?,?,"",0
+554  ,                     sc_pain_killer,?,?,?,?,"",0
+555  ,                          sc_hanbok,?,?,?,?,"",0
+556  ,                          sc_defset,?,?,?,?,"",0
+557  ,                         sc_mdefset,?,?,?,?,"",0
+558  ,                        sc_darkcrow,?,?,?,?,"",0
+559  ,                   sc_full_throttle,?,?,?,?,"",0
+560  ,                         sc_rebound,?,?,?,?,"",0
+561  ,                         sc_unlimit,?,?,?,?,"",0
+562  ,                     sc_kings_grace,?,?,?,?,"",0
+563  ,             sc_telekinesis_intense,?,?,?,?,"",0
+564  ,                     sc_offertorium,?,?,?,?,"",0
+565  ,                      sc_frigg_song,?,?,?,?,"",0
+566  ,               sc_monster_transform,?,?,?,?,"",0
+567  ,                   sc_angel_protect,?,?,?,?,"",0
+568  ,                  sc_illusiondoping,?,?,?,?,"",0
+569  ,                      sc_flashcombo,?,?,?,?,"",0
+570  ,                        sc_moonstar,?,?,?,?,"",0
+571  ,                      sc_super_star,?,?,?,?,"",0
+572  ,                     sc_heat_barrel,?,?,?,?,"",0
+573  ,               sc_heat_barrel_after,?,?,?,?,"",0
+574  ,                         sc_p_alter,?,?,?,?,"",0
+575  ,                         sc_e_chain,?,?,?,?,"",0
+576  ,                        sc_c_marker,?,?,?,?,"",0
+577  ,                    sc_anti_m_blast,?,?,?,?,"",0
+578  ,                          sc_b_trap,?,?,?,?,"",0
+579  ,                          sc_h_mine,?,?,?,?,"",0
+580  ,                   sc_qd_shot_ready,?,?,?,?,"",0
+581  ,                        sc_mtf_aspd,?,?,?,?,"",0
+582  ,                    sc_mtf_rangeatk,?,?,?,?,"",0
+583  ,                        sc_mtf_matk,?,?,?,?,"",0
+584  ,                    sc_mtf_mleatked,?,?,?,?,"",0
+585  ,                   sc_mtf_cridamage,?,?,?,?,"",0
+586  ,                     sc_oktoberfest,?,?,?,?,"",0
+587  ,                   sc_strangelights,?,?,?,?,"",0
+588  ,             sc_decoration_of_music,?,?,?,?,"",0
+589  ,                     sc_quest_buff1,?,?,?,?,"",0
+590  ,                     sc_quest_buff2,?,?,?,?,"",0
+591  ,                     sc_quest_buff3,?,?,?,?,"",0
+592  ,                      sc_all_riding,?,?,?,?,"",0
+593  ,                     sc_teargas_sob,?,?,?,?,"",0
+594  ,                      sc__feintbomb,?,?,?,?,"",0
+595  ,                          sc__chaos,?,?,?,?,"",0
+596  ,                      sc_chasewalk2,?,?,?,?,"",0
+597  ,        sc_vacuum_extreme_postdelay,?,?,?,?,"",0
+598  ,                       sc_mtf_aspd2,?,?,?,?,"",0
+599  ,                   sc_mtf_rangeatk2,?,?,?,?,"",0
+600  ,                       sc_mtf_matk2,?,?,?,?,"",0
+601  ,                  sc_2011rwc_scroll,?,?,?,?,"",0
+602  ,                      sc_jp_event04,?,?,?,?,"",0
+603  ,                         sc_mtf_mhp,?,?,?,?,"",0
+604  ,                         sc_mtf_msp,?,?,?,?,"",0
+605  ,                     sc_mtf_pumpkin,?,?,?,?,"",0
+606  ,                     sc_mtf_hitflee,?,?,?,?,"",0
+607  ,                         sc_crifood,?,?,?,?,"",0
+608  ,                   sc_atthaste_cash,?,?,?,?,"",0
+609  ,                   sc_reuse_limit_a,?,?,?,?,"",0
+610  ,                   sc_reuse_limit_b,?,?,?,?,"",0
+611  ,                   sc_reuse_limit_c,?,?,?,?,"",0
+612  ,                   sc_reuse_limit_d,?,?,?,?,"",0
+613  ,                   sc_reuse_limit_e,?,?,?,?,"",0
+614  ,                   sc_reuse_limit_f,?,?,?,?,"",0
+615  ,                   sc_reuse_limit_g,?,?,?,?,"",0
+616  ,                   sc_reuse_limit_h,?,?,?,?,"",0
+617  ,                 sc_reuse_limit_mtf,?,?,?,?,"",0
+618  ,         sc_reuse_limit_aspd_potion,?,?,?,?,"",0
+619  ,          sc_reuse_millenniumshield,?,?,?,?,"",0
+620  ,               sc_reuse_crushstrike,?,?,?,?,"",0
+621  ,                sc_reuse_stormblast,?,?,?,?,"",0
+622  ,          sc_all_riding_reuse_limit,?,?,?,?,"",0
+623  ,                  sc_extremityfist2,?,?,?,?,"",0

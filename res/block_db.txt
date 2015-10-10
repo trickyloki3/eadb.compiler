@@ -1,3 +1,20 @@
+/*
+ *    file: block_db.txt
+ *    date: 10/10/2015
+ *    auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ *
+ * block id     - arbitrary unique id
+ * block name   - block name
+ * block flag   - unused
+ *
+ * use to match  tokens  against block names,
+ * but future plans might be to make it like
+ * status_db.txt and bonus_db.txt  where you
+ * can specific a format string.
+ */
+
 0  ,                    bonus,0
 1  ,                   bonus2,0
 2  ,                   bonus3,0

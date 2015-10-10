@@ -123,7 +123,7 @@ int trim_alpha(FILE * file_stm, FILE * trim_stm) {
       if(strlen(buf) > 0)            /* check if empty */
          if(!isspace(buf[0]))        /* check if whitespace */
             if(buf[0] != '/')        /* check if comment */
-               if(isalpha(buf[0])) { /* check if digit */
+               if(isalpha(buf[0])) { /* check if alpha */
                   fprintf(trim_stm, "%s", buf);
                   line_count++;
                }

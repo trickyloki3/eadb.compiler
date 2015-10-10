@@ -15,7 +15,6 @@
     /* database record counts */
     #define OPTION_RES_FIELD_COUNT  3
     #define MAP_RES_FIELD_COUNT     2
-    #define STATUS_RES_FIELD_COUNT  14
     #define VAR_RES_FIELD_COUNT     7
     #define BLOCK_RES_FIELD_COUNT   3
     #define NID_RES_FIELD_COUNT     2
@@ -85,28 +84,30 @@
 
     /* status table consist of a set of template strings and argument types for translating statuses */
     typedef struct {
-        int scid;                         /* status id */
-        char scstr[MAX_NAME_SIZE];        /* status string identifer */
-        int type;
-        char scfmt[MAX_FORMAT_SIZE];      /* format of status string */
-        char scend[MAX_FORMAT_SIZE];      /* format of status end string */
-        int vcnt;                         /* value count */
-        int vmod[4];                      /* modifer for value */
-        int voff[4];                      /* offset translation stack */
+        int id;
+        char name[MAX_NAME_SIZE];
+        int val1;
+        int val2;
+        int val3;
+        int val4;
+        char format[MAX_FORMAT_SIZE];
+        int offset_count;
+        int offset[MAX_VARARG_COUNT];
     } status_res;
 
     #define RES_STA_DELETE          "DROP TABLE IF EXISTS status_res;"
-    #define RES_STA_INSERT          "INSERT INTO status_res VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+    #define RES_STA_INSERT          "INSERT INTO status_res VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RES_STA_CREATE          "CREATE TABLE IF NOT EXISTS status_res("\
-                                    "    scid INTEGER,"\
-                                    "    scstr TEXT,"\
-                                    "    type INTEGER,"\
-                                    "    scfmt TEXT,"\
-                                    "    scend TEXT,"\
-                                    "    vcnt INTEGER,"\
-                                    "    vmod TEXT,"\
-                                    "    voff TEXT,"\
-                                    "    PRIMARY KEY(scid, scstr)"\
+                                    "id INTEGER, "\
+                                    "name TEXT, "\
+                                    "val1 INTEGER, "\
+                                    "val2 INTEGER, "\
+                                    "val3 INTEGER, "\
+                                    "val4 INTEGER, "\
+                                    "format TEXT, "\
+                                    "offset_count INTEGER, "\
+                                    "offset TEXT, "\
+                                    "PRIMARY KEY(id, name)"\
                                     ");"
 
     /* variable table contain specific information on the script engine's special variables */

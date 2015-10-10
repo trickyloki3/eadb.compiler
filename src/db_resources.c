@@ -11,7 +11,7 @@ native_config_t load_res_native[RESOURCE_DB_COUNT] = {
    { option_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, OPTION_RES_FIELD_COUNT, sizeof(option_res) },
    { map_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MAP_RES_FIELD_COUNT, sizeof(map_res) },
    { bonus_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS , 0, sizeof(bonus_res) },
-   { status_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, STATUS_RES_FIELD_COUNT, sizeof(status_res) },
+   { status_res_load, sentinel_newline, delimit_cvs, CHECK_QUOTE | SKIP_NEXT_WS, 0, sizeof(status_res) },
    { var_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, VAR_RES_FIELD_COUNT, sizeof(var_res) },
    { block_res_load, sentinel_semicolon, delimit_cvs_semicolon, CHECK_QUOTE | SKIP_NEXT_WS | CHECK_FIELD_COUNT, BLOCK_RES_FIELD_COUNT, sizeof(block_res) },
    { nid_res_load, sentinel_newline, delimit_cvs_pound, SKIP_NEXT_WS | CHECK_FIELD_COUNT, NID_RES_FIELD_COUNT, sizeof(nid_res) },
@@ -90,27 +90,22 @@ int bonus_res_load(void * db, int row, int col, char * val) {
 }
 
 int status_res_load(void * db, int row, int col, char * val) {
-   /* loader is non-reentrant */
-   static int split_cnt = 0;
    status_res * record = &((status_res *) db)[row];
    switch(col) {
-      case 0:
-         split_cnt = 0;
-         record->scid = convert_integer(val,10);               break;
-      case 1: strnload(record->scstr, MAX_NAME_SIZE, val);     break;
-      case 2: record->type = convert_integer(val,10);          break;
-      case 3: strnload(record->scfmt, MAX_FORMAT_SIZE, val);   break;
-      case 4: strnload(record->scend, MAX_FORMAT_SIZE, val);   break;
-      case 5: record->vcnt = convert_integer(val,10);          break;
+      case 0: record->id = convert_integer(val, 10); break;
+      case 1: strnload(record->name, MAX_NAME_SIZE, val); break;
+      case 2: record->val1 = val[0]; break;
+      case 3: record->val2 = val[0]; break;
+      case 4: record->val3 = val[0]; break;
+      case 5: record->val4 = val[0]; break;
+      case 6: strnload(record->format, MAX_FORMAT_SIZE, val); break;
+      case 7: record->offset_count = convert_integer(val, 10); break;
       default:
-         if(split_cnt < 4) {
-            record->vmod[split_cnt] = (int) val[0];
-            split_cnt++;
-         } else {
-            record->voff[split_cnt-4] = convert_integer(val,10);
-            split_cnt++;
-         }
-         break;
+          if(record->offset_count > MAX_VARARG_COUNT)
+              return exit_func_safe("%d exceed maximum %d varar"
+              "g count", record->offset_count, MAX_VARARG_COUNT);
+          record->offset[col - 7] = convert_integer(val, 10);
+          break;
    }
    return 0;
 }
@@ -408,19 +403,19 @@ int opt_db_sta_load_record(status_res * statuses, int size, sqlite3_stmt * sql) 
       status = &statuses[i];
 
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 1, status->scid) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, status->scstr, strlen(status->scstr), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 3, status->type) ||
-         (status->scfmt != NULL && SQLITE_OK != sqlite3_bind_text(sql, 4, status->scfmt, strlen(status->scfmt), SQLITE_STATIC)) ||
-         (status->scend != NULL && SQLITE_OK != sqlite3_bind_text(sql, 5, status->scend, strlen(status->scend), SQLITE_STATIC)) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 6, status->vcnt) ||
-         NULL == array_to_string_cnt(buf, status->vmod, 4) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 7, buf, strlen(buf), SQLITE_TRANSIENT) ||
-         NULL == array_to_string_cnt(buf, status->voff, 4) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 8, buf, strlen(buf), SQLITE_TRANSIENT) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 1, status->id) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 2, status->name, strlen(status->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 3, status->val1) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 4, status->val2) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 5, status->val3) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 6, status->val4) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 7, status->format, strlen(status->format), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 8, status->offset_count) ||
+         NULL == array_to_string_cnt(buf, status->offset, status->offset_count) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 9, buf, strlen(buf), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
-          fprintf(stderr, "[load]: failed to add %s to status db.\n", status->scstr);
+          fprintf(stderr, "[load]: failed to add %s to status db.\n", status->name);
           if (SQLITE_OK != sqlite3_reset(sql)) {
               fprintf(stderr, "[load]: failed to reset sql statement.\n");
               return CHECK_FAILED;

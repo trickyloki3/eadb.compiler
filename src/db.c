@@ -196,9 +196,7 @@ int main(int argc, char * argv[]) {
            opt_db_init(&resource, output_path) ||
            path_concat(server_path, server_len, PATH_MAX, "option_db.txt") ||
            opt_db_res_load(resource, server_path) ||
-           path_concat(server_path, server_len, PATH_MAX, "mapnametable.txt") ||
-           opt_db_map_load(resource, server_path) ||
-           path_concat(server_path, server_len, PATH_MAX, "item_bonus.txt") ||
+           path_concat(server_path, server_len, PATH_MAX, "bonus_db.txt") ||
            opt_db_bns_load(resource, server_path) ||
            path_concat(server_path, server_len, PATH_MAX, "status_db.txt") ||
            opt_db_sta_load(resource, server_path) ||
@@ -206,9 +204,11 @@ int main(int argc, char * argv[]) {
            opt_db_var_load(resource, server_path) ||
            path_concat(server_path, server_len, PATH_MAX, "block_db.txt") ||
            opt_db_blk_load(resource, server_path) ||
-           path_concat(server_path, server_len, PATH_MAX, "idnum2itemresnametable.txt") ||
+           path_concat(server_path, server_len, PATH_MAX, "client/mapnametable.txt") ||
+           opt_db_map_load(resource, server_path) ||
+           path_concat(server_path, server_len, PATH_MAX, "client/idnum2itemresnametable.txt") ||
            opt_db_rid_load(resource, server_path) ||
-           path_concat(server_path, server_len, PATH_MAX, "num2itemresnametable.txt") ||
+           path_concat(server_path, server_len, PATH_MAX, "client/num2itemresnametable.txt") ||
            opt_db_nid_load(resource, server_path)) {
             fprintf(stderr, "failed to load resource databases.\n");
             goto clean;

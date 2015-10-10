@@ -1,3 +1,14 @@
+/*
+ *    file: bonus_db.txt
+ *    date: 10/10/2015
+ *    auth: trickyloki3
+ * github: https://github.com/trickyloki3
+ *  email: tricky.loki3@gmail.com
+ *
+ * see translate_bonus in script.c for details on
+ * how these values are used. :D
+ */
+
 0,0x00000000,0,bonus,bSpeedRate,"Movement Speed %s",1,p,1,0
 1,0x00000000,5,bonus,bStr,"STR %s",1,n,1,0
 2,0x00000000,5,bonus,bAgi,"AGI %s",1,n,1,0
