@@ -2876,82 +2876,84 @@ int translate_status(block_r * block) {
     if (stack_eng_time(block, block->ptr[1], 1))
         goto failed;
 
-    /* handle special case for sc_itemscript */
-    if(status.scid == 289) {
-        /* translate item script from item id */
-        item = calloc(1, sizeof(item_t));
-        if(NULL == item ||
-           evaluate_numeric_constant(block, block->ptr[2], 1, &id) ||
-           item_id(block->script->db, item, id) ||
-           script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buf) ||
-           block_stack_push(block, TYPE_ENG, buf))
-            goto failed;
-        goto clean;
-    } else {
-        /* translate the extra arguments */
-        for(i = 0; i < status.vcnt; i++) {
-            /* status argument types are different from bonus argument types */
-            switch(status.vmod[i]) {
-                case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* integer */
-                case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* skill level */
-                case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, FORMAT_RATIO);               break;    /* integer percentage */
-                case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);        break;    /* effect */
-                case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);       break;    /* element */
-                case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                         break;    /* regen */
-                default:
-                    exit_func_safe("unsupported status argment type "
-                    "%c in item %d", status.vmod[i], block->item_id);
-                    goto failed;
-            }
-            if(ret || argc > 1)
-                goto failed;
-        }
-    }
+    return exit_abt_safe("sc_start");
 
-    /* decrease the nullified argument */
-    for(i = 0; i < status.vcnt; i++)
-        if(0 <= status.voff[i])
-            vcnt++;
+    ///* handle special case for sc_itemscript */
+    //if(status.scid == 289) {
+    //    /* translate item script from item id */
+    //    item = calloc(1, sizeof(item_t));
+    //    if(NULL == item ||
+    //       evaluate_numeric_constant(block, block->ptr[2], 1, &id) ||
+    //       item_id(block->script->db, item, id) ||
+    //       script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buf) ||
+    //       block_stack_push(block, TYPE_ENG, buf))
+    //        goto failed;
+    //    goto clean;
+    //} else {
+    //    /* translate the extra arguments */
+    //    for(i = 0; i < status.vcnt; i++) {
+    //        /* status argument types are different from bonus argument types */
+    //        switch(status.vmod[i]) {
+    //            case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* integer */
+    //            case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* skill level */
+    //            case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, FORMAT_RATIO);               break;    /* integer percentage */
+    //            case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);        break;    /* effect */
+    //            case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);       break;    /* element */
+    //            case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                         break;    /* regen */
+    //            default:
+    //                exit_func_safe("unsupported status argment type "
+    //                "%c in item %d", status.vmod[i], block->item_id);
+    //                goto failed;
+    //        }
+    //        if(ret || argc > 1)
+    //            goto failed;
+    //    }
+    //}
 
-    switch(vcnt) {
-        case 0:
-            ret = block_stack_vararg(block,
-                TYPE_ENG, status.scfmt);
-            break;
-        case 1:
-            ret = block_stack_vararg(block,
-                TYPE_ENG, status.scfmt,
-                block->eng[status.voff[0]]);
-            break;
-        case 2:
-            ret = block_stack_vararg(block,
-                TYPE_ENG, status.scfmt,
-                block->eng[status.voff[0]],
-                block->eng[status.voff[1]]);
-            break;
-        case 3:
-            ret = block_stack_vararg(block,
-                TYPE_ENG, status.scfmt,
-                block->eng[status.voff[0]],
-                block->eng[status.voff[1]],
-                block->eng[status.voff[2]]);
-            break;
-        case 4:
-            ret = block_stack_vararg(block,
-                TYPE_ENG, status.scfmt,
-                block->eng[status.voff[0]],
-                block->eng[status.voff[1]],
-                block->eng[status.voff[2]],
-                block->eng[status.voff[3]]);
-            break;
-        default:
-            exit_func_safe("unsupport status argument coun"
-            "t %d in item %d", status.vcnt, block->item_id);
-    }
+    ///* decrease the nullified argument */
+    //for(i = 0; i < status.vcnt; i++)
+    //    if(0 <= status.voff[i])
+    //        vcnt++;
 
-    ret = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " for %s.", block->eng[0]);
-    if(ret)
-        goto failed;
+    //switch(vcnt) {
+    //    case 0:
+    //        ret = block_stack_vararg(block,
+    //            TYPE_ENG, status.scfmt);
+    //        break;
+    //    case 1:
+    //        ret = block_stack_vararg(block,
+    //            TYPE_ENG, status.scfmt,
+    //            block->eng[status.voff[0]]);
+    //        break;
+    //    case 2:
+    //        ret = block_stack_vararg(block,
+    //            TYPE_ENG, status.scfmt,
+    //            block->eng[status.voff[0]],
+    //            block->eng[status.voff[1]]);
+    //        break;
+    //    case 3:
+    //        ret = block_stack_vararg(block,
+    //            TYPE_ENG, status.scfmt,
+    //            block->eng[status.voff[0]],
+    //            block->eng[status.voff[1]],
+    //            block->eng[status.voff[2]]);
+    //        break;
+    //    case 4:
+    //        ret = block_stack_vararg(block,
+    //            TYPE_ENG, status.scfmt,
+    //            block->eng[status.voff[0]],
+    //            block->eng[status.voff[1]],
+    //            block->eng[status.voff[2]],
+    //            block->eng[status.voff[3]]);
+    //        break;
+    //    default:
+    //        exit_func_safe("unsupport status argument coun"
+    //        "t %d in item %d", status.vcnt, block->item_id);
+    //}
+
+    //ret = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " for %s.", block->eng[0]);
+    //if(ret)
+    //    goto failed;
 
 clean:
     SAFE_FREE(buf);
@@ -2965,7 +2967,7 @@ failed:
 }
 
 int translate_status_end(block_r * block) {
-    int effect_id = 0;
+    /*int effect_id = 0;
     status_res status;
 
     if(block->ptr_cnt < 1)
@@ -2977,7 +2979,8 @@ int translate_status_end(block_r * block) {
        block_stack_vararg(block, TYPE_ENG, "Cures %s.", status.scend))
         return CHECK_FAILED;
 
-    return CHECK_PASSED;
+    return CHECK_PASSED;*/
+    return exit_abt_safe("status_end");
 }
 
 int translate_pet_egg(block_r * block) {

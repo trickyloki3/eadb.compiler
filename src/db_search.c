@@ -61,7 +61,7 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
        init_db_prep_sql(_db->re, &_db->map_name, RE_MAP_NAME_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->map_id, RE_MAP_ID_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->bonus_name, RE_BONUS_NAME_SEARCH) ||
-       init_db_prep_sql(_db->re, &_db->status_name, RE_STATUS_NAME_SEARCH) ||
+       init_db_prep_sql(_db->re, &_db->status_name, RE_STATUS_ID_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->var_name, RE_VAR_NAME_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->block_name, RE_BLOCK_NAME_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->sprite_id, RE_SPR_ID_SEARCH) ||
@@ -409,16 +409,15 @@ int status_id(db_t * db, status_res * status, int id) {
         return CHECK_FAILED;
 
     stmt = db->status_name->stmt;
-    status->scid = sqlite3_column_int(stmt, 0);
-    strncopy(status->scstr, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
-    status->type = sqlite3_column_int(stmt, 2);
-    strncopy(status->scfmt, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 3));
-    strncopy(status->scend, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 4));
-    status->vcnt = sqlite3_column_int(stmt, 5);
-    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 6), ":", status->vmod, 4, &cnt) ||
-        convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 7), ":", status->voff, 4, &cnt))
-        return CHECK_FAILED;
-    return CHECK_PASSED;
+    status->id = sqlite3_column_int(stmt, 0);
+    strncopy(status->name, MAX_NAME_SIZE, sqlite3_column_text(stmt, 1));
+    status->val1 = sqlite3_column_int(stmt, 2);
+    status->val2 = sqlite3_column_int(stmt, 3);
+    status->val3 = sqlite3_column_int(stmt, 4);
+    status->val4 = sqlite3_column_int(stmt, 5);
+    strncopy(status->format, MAX_FORMAT_SIZE, sqlite3_column_text(stmt, 6));
+    status->offset_count = sqlite3_column_int(stmt, 7);
+    return convert_integer_delimit_static((const char *) sqlite3_column_text(stmt, 8), ":", status->offset, status->offset_count, &cnt);
 }
 
 int var_name(db_t * db, var_res * var, const char * name, int len) {

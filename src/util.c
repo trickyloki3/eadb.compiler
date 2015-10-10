@@ -386,9 +386,17 @@ int convert_integer_delimit_array(const char * str, const char * delimiters, arr
 
 int convert_integer_delimit_static(const char * str, const char * delimiters, int * list, int size, int * argc) {
    int i = 0;
+   int len = 0;
    int * val = NULL;
    array_w array;
    memset(&array, 0, sizeof(array_w));
+
+   len = strlen(str);
+   if(0 >= len) {
+      memset(list, 0, sizeof(int) * size);
+      *argc = 0;
+      return CHECK_PASSED;
+   }
 
    /* check whether destination buffer can hold elements */
    if(convert_integer_delimit_array(str, delimiters, &array) ||

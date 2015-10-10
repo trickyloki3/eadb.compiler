@@ -49,14 +49,15 @@
     } bonus_res;
 
     typedef struct {
-        int scid;                       /* status id */
-        char scstr[MAX_NAME_SIZE];      /* status string identifer */
-        int type;
-        char scfmt[MAX_FORMAT_SIZE];    /* format of status string */
-        char scend[MAX_FORMAT_SIZE];    /* format of status end string */
-        int vcnt;                       /* value count */
-        int vmod[4];                    /* modifer for value */
-        int voff[4];                    /* offset translation stack */
+        int id;
+        char name[MAX_NAME_SIZE];
+        int val1;
+        int val2;
+        int val3;
+        int val4;
+        char format[MAX_FORMAT_SIZE];
+        int offset_count;
+        int offset[MAX_VARARG_COUNT];
     } status_res;
 
     typedef struct {
@@ -226,7 +227,7 @@
     #define RE_MAP_NAME_SEARCH              "SELECT * FROM map_res WHERE map = ?;"
     #define RE_MAP_ID_SEARCH                "SELECT * FROM map_res WHERE id = ?;"
     #define RE_BONUS_NAME_SEARCH            "SELECT * FROM bonus_res WHERE pref = ? AND buff = ? COLLATE NOCASE;"
-    #define RE_STATUS_NAME_SEARCH           "SELECT * FROM status_res WHERE scid = ? COLLATE NOCASE;"
+    #define RE_STATUS_ID_SEARCH             "SELECT * FROM status_res WHERE id = ? COLLATE NOCASE;"
     #define RE_VAR_NAME_SEARCH              "SELECT * FROM var_res WHERE name = ? COLLATE NOCASE;"
     #define RE_BLOCK_NAME_SEARCH            "SELECT * FROM block_res WHERE key = ? COLLATE NOCASE;"
     #define RE_SPR_ID_SEARCH                "SELECT * FROM id_res WHERE id = ?;"
