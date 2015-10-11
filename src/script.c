@@ -1678,12 +1678,12 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flags) {
     if((node->min != 0 && min == 0) ||
        (node->max != 0 && max == 0)) {
         (node->min == node->max) ?
-            sprintf(buf, "%.2f%s", ((double) node->min) / modifier, symbol):
-            sprintf(buf, "%.2f%s ~ %.2f%s", ((double) node->min) / modifier, symbol, ((double) node->max) / modifier, symbol);
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s" : "%.2f%s", ((double) node->min) / modifier, symbol):
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s ~ %+.2f%s" : "%.2f%s ~ %.2f%s", ((double) node->min) / modifier, symbol, ((double) node->max) / modifier, symbol);
     } else {
         (node->min == node->max) ?
-            sprintf(buf, "%d%s", node->min, symbol):
-            sprintf(buf, "%d%s ~ %d%s", node->min, symbol, node->max, symbol);
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s" : "%d%s", node->min, symbol):
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s ~ %+d%s" : "%d%s ~ %d%s", node->min, symbol, node->max, symbol);
     }
 
     /* write buffer with formula */
@@ -2094,6 +2094,8 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
             if(MAP_TIME_FLAG & flag && !script_map_id(block, "time_type", i, &value))
                 goto found;
             if(MAP_STRCHARINFO_FLAG & flag && !script_map_id(block, "strcharinfo", i, &value))
+                goto found;
+            if(MAP_STATUSEFFECT_FLAG & flag && !script_map_id(block, "status_effect", i, &value))
                 goto found;
 
             /* failed to find resolve the id */
@@ -2583,6 +2585,24 @@ failed:
 
 }
 
+int stack_eng_status_val(block_r * block, char * expr, int type) {
+    int val = 0;
+    int cnt = 0;
+    int err = CHECK_FAILED;
+    switch(type) {
+        case 'a': err = stack_eng_re_aspd(block, expr); break;                                              /* calculate renewal aspd rate */
+        case 'e': err = stack_eng_map(block, expr, MAP_EFFECT_FLAG, &cnt); break;                           /* effect */
+        case 'n': err = stack_eng_int(block, expr, 1, FORMAT_PLUS); break;                                  /* +x;     add plus sign */
+        case 'o': err = stack_eng_int(block, expr, 10, FORMAT_PLUS); break;                                 /* +x/10;  add plus sign */
+        case 'p': err = stack_eng_int(block, expr, 1, FORMAT_PLUS | FORMAT_RATIO); break;                   /* +x%;    add plus and percentage sign */
+        case 'l': err = stack_eng_int(block, expr, 1, 0); break;                                            /*  x;     no signs */
+        case 's': err = stack_eng_int_signed(block, expr, 1, "Reduce", "Add", FORMAT_RATIO); break;         /* reduce x on positive, add x on negative */
+        case 'r': err = stack_eng_int_signed(block, expr, 1, "Regenerate", "Drain", FORMAT_RATIO); break;   /* regenerate x on positive, drain x on negative */
+        case '?': err = CHECK_PASSED; break;                                                                /* skip */
+    }
+    return err;
+}
+
 /* append the formula expression onto the top of block->eng stack
  *
  * printf("%s (%s)", block->eng[block->eng_cnt - 1], node->formula);
@@ -2606,6 +2626,37 @@ int stack_aux_formula(block_r * block, node_t * node, char * buf) {
 failed:
     SAFE_FREE(formula);
     return CHECK_FAILED;
+}
+
+/* renewal aspd rate is calculated in status_calc_bl_main by
+ * (status_calc_aspd * AGI / 200) * 10 ignoring the statuses
+ * part in rathena  */
+int stack_eng_re_aspd(block_r * block, char * expr) {
+    int len = 0;
+    int err = 0;
+    char * buf = NULL;
+
+    /* error on invalid references */
+    exit_null_safe(2, block, expr);
+
+    /* error on empty expression */
+    len = strlen(expr);
+    if(0 >= len)
+        return CHECK_FAILED;
+
+    len += 128;
+
+    buf = calloc(len, sizeof(char));
+    if(NULL == buf)
+        return CHECK_FAILED;
+
+    /* :D i am so smart */
+    snprintf(buf, len, "(%s) * readparam(bAgi) / 200", expr);
+
+    err = stack_eng_int(block, buf, 1, FORMAT_PLUS);
+
+    SAFE_FREE(buf);
+    return err;
 }
 
 /* translate getitem and delitem formats
@@ -2843,144 +2894,108 @@ int translate_produce(block_r * block, int handler) {
 }
 
 int translate_status(block_r * block) {
-    int i = 0;
     int id = 0;
-    int ret = 0;
-    int vcnt = 0;
-    int argc = 0;
-    char * buf = NULL;
-    node_t * effect = NULL;
-    item_t * item = NULL;
+    int top = 0;
+    int error = 0;
     status_res status;
 
+    /* evaluate item script */
+    item_t * item = NULL;
+    char * buffer = NULL;
+
     if(block->ptr_cnt < 3)
-        return exit_func_safe("missing effect id, time, or values "
-        "argument for %s in item %d", block->name, block->item_id);
+        return exit_func_safe("missing status id, time, or values"
+        " argument for %s in item %d", block->name, block->item_id);
 
-    /* evaluate the status constant */
-    effect = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == effect)
-        return CHECK_FAILED;
+    if(evaluate_numeric_constant(block, block->ptr[0], 1, &id) ||
+       status_id(block->script->db, &status, id) ||
+       stack_eng_time(block, block->ptr[1], 1))
+        return exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
 
-    /* error on invalid constant
-       multiple values supported */
-    if(effect->min != effect->max)
-        goto failed;
-
-    if(status_id(block->script->db, &status, effect->min)) {
-        exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
-        goto failed;
+    /* sc_itemscript is a special case */
+    if(id == 289) {
+        item = calloc(1, sizeof(item_t));
+        if(NULL == item ||
+           evaluate_numeric_constant(block, block->ptr[2], 1, &id) ||
+           item_id(block->script->db, item, id) ||
+           script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buffer) ||
+           block_stack_push(block, TYPE_ENG, buffer))
+            error = CHECK_FAILED;
+        SAFE_FREE(item);
+        SAFE_FREE(buffer);
+        return error;
     }
 
-    /* translate the tick */
-    if (stack_eng_time(block, block->ptr[1], 1))
-        goto failed;
+    /* error on empty format string which
+     * indicates that it is not implemented */
+    if(0 >= strlen(status.format))
+        return exit_func_safe("%s is not implemented in item %d", status.name, block->item_id);
 
-    return exit_abt_safe("sc_start");
+    /* evaluate the values by type */
+    if( stack_eng_status_val(block, block->ptr[5], status.val4) ||
+        stack_eng_status_val(block, block->ptr[4], status.val3) ||
+        stack_eng_status_val(block, block->ptr[3], status.val2) ||
+        stack_eng_status_val(block, block->ptr[2], status.val1))
+        return CHECK_FAILED;
 
-    ///* handle special case for sc_itemscript */
-    //if(status.scid == 289) {
-    //    /* translate item script from item id */
-    //    item = calloc(1, sizeof(item_t));
-    //    if(NULL == item ||
-    //       evaluate_numeric_constant(block, block->ptr[2], 1, &id) ||
-    //       item_id(block->script->db, item, id) ||
-    //       script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buf) ||
-    //       block_stack_push(block, TYPE_ENG, buf))
-    //        goto failed;
-    //    goto clean;
-    //} else {
-    //    /* translate the extra arguments */
-    //    for(i = 0; i < status.vcnt; i++) {
-    //        /* status argument types are different from bonus argument types */
-    //        switch(status.vmod[i]) {
-    //            case 'n': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* integer */
-    //            case 'm': ret = stack_eng_int(block, block->ptr[2 + i], 1, 0);                          break;    /* skill level */
-    //            case 'p': ret = stack_eng_int(block, block->ptr[2 + i], 1, FORMAT_RATIO);               break;    /* integer percentage */
-    //            case 'e': ret = stack_eng_map(block, block->ptr[2 + i], MAP_EFFECT_FLAG, &argc);        break;    /* effect */
-    //            case 'l': ret = stack_eng_map(block, block->ptr[2 + i], MAP_ELEMENT_FLAG, &argc);       break;    /* element */
-    //            case 'u': ret = stack_eng_int(block, block->ptr[2 + i], -1, 0);                         break;    /* regen */
-    //            default:
-    //                exit_func_safe("unsupported status argment type "
-    //                "%c in item %d", status.vmod[i], block->item_id);
-    //                goto failed;
-    //        }
-    //        if(ret || argc > 1)
-    //            goto failed;
-    //    }
-    //}
+    /* write the format */
+    top = block->eng_cnt;
+    switch(status.offset_count) {
+       case 0:
+           error = block_stack_vararg(block,
+               TYPE_ENG, status.format);
+           break;
+       case 1:
+           error = block_stack_vararg(block,
+               TYPE_ENG, status.format,
+               block->eng[top - status.offset[0]]);
+           break;
+       case 2:
+           error = block_stack_vararg(block,
+               TYPE_ENG, status.format,
+               block->eng[top - status.offset[0]],
+               block->eng[top - status.offset[1]]);
+           break;
+       case 3:
+           error = block_stack_vararg(block,
+               TYPE_ENG, status.format,
+               block->eng[top - status.offset[0]],
+               block->eng[top - status.offset[1]],
+               block->eng[top - status.offset[2]]);
+           break;
+       case 4:
+           error = block_stack_vararg(block,
+               TYPE_ENG, status.format,
+               block->eng[top - status.offset[0]],
+               block->eng[top - status.offset[1]],
+               block->eng[top - status.offset[2]],
+               block->eng[top - status.offset[3]]);
+           break;
+       default:
+           error = exit_func_safe("unsupport status argument count %d"
+                   " in item %d", status.offset_count, block->item_id);
+    }
 
-    ///* decrease the nullified argument */
-    //for(i = 0; i < status.vcnt; i++)
-    //    if(0 <= status.voff[i])
-    //        vcnt++;
+    /* write the duration */
+    error = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT | FLAG_EMPTY, "for %s.", block->eng[0]);
 
-    //switch(vcnt) {
-    //    case 0:
-    //        ret = block_stack_vararg(block,
-    //            TYPE_ENG, status.scfmt);
-    //        break;
-    //    case 1:
-    //        ret = block_stack_vararg(block,
-    //            TYPE_ENG, status.scfmt,
-    //            block->eng[status.voff[0]]);
-    //        break;
-    //    case 2:
-    //        ret = block_stack_vararg(block,
-    //            TYPE_ENG, status.scfmt,
-    //            block->eng[status.voff[0]],
-    //            block->eng[status.voff[1]]);
-    //        break;
-    //    case 3:
-    //        ret = block_stack_vararg(block,
-    //            TYPE_ENG, status.scfmt,
-    //            block->eng[status.voff[0]],
-    //            block->eng[status.voff[1]],
-    //            block->eng[status.voff[2]]);
-    //        break;
-    //    case 4:
-    //        ret = block_stack_vararg(block,
-    //            TYPE_ENG, status.scfmt,
-    //            block->eng[status.voff[0]],
-    //            block->eng[status.voff[1]],
-    //            block->eng[status.voff[2]],
-    //            block->eng[status.voff[3]]);
-    //        break;
-    //    default:
-    //        exit_func_safe("unsupport status argument coun"
-    //        "t %d in item %d", status.vcnt, block->item_id);
-    //}
+    /*printf("%5d; %35s; %s\n", block->item_id, status.name, block->eng[block->eng_cnt - 1]);*/
 
-    //ret = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " for %s.", block->eng[0]);
-    //if(ret)
-    //    goto failed;
-
-clean:
-    SAFE_FREE(buf);
-    SAFE_FREE(item);
-    node_free(effect);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return error;
 }
 
 int translate_status_end(block_r * block) {
-    /*int effect_id = 0;
-    status_res status;
+    int cnt = 0;
 
     if(block->ptr_cnt < 1)
-        return exit_func_safe("missing effect id argument"
+        return exit_func_safe("missing status id argument"
         " for %s in item %d", block->name, block->item_id);
 
-    if(evaluate_numeric_constant(block, block->ptr[0], 1, &effect_id) ||
-       status_id(block->script->db, &status, effect_id) ||
-       block_stack_vararg(block, TYPE_ENG, "Cures %s.", status.scend))
+    if( stack_eng_map(block, block->ptr[0], MAP_STATUSEFFECT_FLAG, &cnt) ||
+        block_stack_vararg(block, TYPE_ENG, "Cures %s.", block->eng[0]))
         return CHECK_FAILED;
 
-    return CHECK_PASSED;*/
-    return exit_abt_safe("status_end");
+    return CHECK_PASSED;
 }
 
 int translate_pet_egg(block_r * block) {

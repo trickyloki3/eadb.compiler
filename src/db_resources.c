@@ -104,7 +104,8 @@ int status_res_load(void * db, int row, int col, char * val) {
           if(record->offset_count > MAX_VARARG_COUNT)
               return exit_func_safe("%d exceed maximum %d varar"
               "g count", record->offset_count, MAX_VARARG_COUNT);
-          record->offset[col - 7] = convert_integer(val, 10);
+          
+          record->offset[col - 8] = convert_integer(val, 10);
           break;
    }
    return 0;

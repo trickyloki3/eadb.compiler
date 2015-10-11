@@ -50,6 +50,7 @@ if __name__ == "__main__":
             # sc_none or sc_max is not useful for translations
             status_name = status[0].strip().lower()
             if  status_name == "sc_common_min" or \
+                status_name == "sc_common_max" or \
                 status_name == "sc_none" or \
                 status_name == "sc_max":
                 continue

@@ -39,7 +39,7 @@ int main(int argc, char * argv[]) {
             script_analysis(context, &context->token, NULL, NULL) ||
             script_translate(context) ||
             script_generate(context) ||
-            context->item.id == 12734) {
+            context->item.id == 0) {
             /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
             script_block_dump(context, stderr);
             break;*/

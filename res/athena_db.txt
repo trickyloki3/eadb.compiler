@@ -344,6 +344,21 @@ sp_flag = {
     [1] = "drain SP";
 }
 
+status_effect = {
+    [0] = "stone";
+    [1] = "freeze";
+    [2] = "stun";
+    [3] = "sleep";
+    [4] = "poison";
+    [5] = "curse";
+    [6] = "silence";
+    [7] = "confusion";
+    [8] = "blind";
+    [9] = "bleeding";
+    [10] = "deadly poison";
+    [52] = "hallucination";
+}
+
 strcharinfo = {
     [0] = "character";
     [1] = "party";

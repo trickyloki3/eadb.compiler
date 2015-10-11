@@ -191,8 +191,10 @@ void strncopy(char * buf, int size, const unsigned char * str) {
 
    src = (const char *) str;
    len = strlen(src);
-   if(len <= 0)
+   if(len <= 0) {
+      buf[0] = '\0';
       return;
+   }
 
    /* check buffer size */
    if(len > size - 1) {

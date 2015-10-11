@@ -204,6 +204,7 @@
     #define MAP_ITEM_INFO_FLAG             0x040000
     #define MAP_TIME_FLAG                  0x080000
     #define MAP_STRCHARINFO_FLAG           0x100000
+    #define MAP_STATUSEFFECT_FLAG          0x200000
 
     /* stack_eng_db bitmask flags */
     #define DB_SKILL_ID                    0x01
@@ -267,7 +268,8 @@
     #define OPT_OKTOBERFEST                 0x10000000
 
     /* stack_eng_int_* bitmask flags */
-    #define FORMAT_RATIO                   0x01
+    #define FORMAT_RATIO                    0x01
+    #define FORMAT_PLUS                     0x02
 
     /* stack limits */
     #define MAX_SUB_GROUP                  4    /* set to MAX_ITEMGROUP_RANDGROUP for rathena */
@@ -292,7 +294,11 @@
     int stack_eng_trigger_atf(block_r *, char *);
     int stack_eng_options(block_r *, char *);
     int stack_eng_script(block_r *, char *);
+    int stack_eng_status_val(block_r *, char *, int);
     int stack_aux_formula(block_r *, node_t *, char *);
+
+    /* script stack functions for status */
+    int stack_eng_re_aspd(block_r *, char *);
 
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */
