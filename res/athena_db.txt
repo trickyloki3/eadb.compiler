@@ -357,6 +357,8 @@ status_effect = {
     [9] = "bleeding";
     [10] = "deadly poison";
     [52] = "hallucination";
+    [128] = "undead";
+    [137] = "orc head";
 }
 
 strcharinfo = {

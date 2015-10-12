@@ -2979,8 +2979,6 @@ int translate_status(block_r * block) {
     /* write the duration */
     error = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT | FLAG_EMPTY, "for %s.", block->eng[0]);
 
-    /*printf("%5d; %35s; %s\n", block->item_id, status.name, block->eng[block->eng_cnt - 1]);*/
-
     return error;
 }
 
@@ -3542,6 +3540,8 @@ int translate_callfunc(block_r * block) {
                 return exit_func_safe("unsupported F_CashTele argume"
                 "nt %d in item id %d", result->min, block->item_id);
         }
+    } else if(0 == ncs_strcmp(block->ptr[0], "F_CashSiegeTele")) {
+        buf = "Warp to any guild castle.";
     } else if(0 == ncs_strcmp(block->ptr[0], "F_CashStore")) {
         buf = "Emergency Kafra service dispatch.";
     } else if(0 == ncs_strcmp(block->ptr[0],"F_CashDungeon")) {

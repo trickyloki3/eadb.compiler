@@ -145,7 +145,7 @@
 125  ,                     sc_rejectsword,?,?,?,?,"",0
 126  ,                      sc_marionette,?,?,?,?,"",0
 127  ,                     sc_marionette2,?,?,?,?,"",0
-128  ,                    sc_changeundead,?,?,?,?,"",0
+128  ,                    sc_changeundead,?,?,?,?,"Enchant weapon with undead element",0
 129  ,                       sc_jointbeat,?,?,?,?,"",0
 130  ,                     sc_mindbreaker,?,?,?,?,"",0
 131  ,                        sc_memorize,?,?,?,?,"",0
@@ -219,7 +219,7 @@
 199  ,                      sc_incmsprate,p,?,?,?,"Increase Max SP by %s",1,1
 200  ,                      sc_incatkrate,p,?,?,?,"Increase BATK by %s",1,1
 201  ,                     sc_incmatkrate,p,?,?,?,"Increase MATK by %s",1,1
-202  ,                      sc_incdefrate,?,?,?,?,"",0
+202  ,                      sc_incdefrate,p,?,?,?,"Increase DEF by %s",1,1
 203  ,                         sc_strfood,n,?,?,?,"Increase STR by %s",1,1
 204  ,                         sc_agifood,n,?,?,?,"Increase AGI by %s",1,1
 205  ,                         sc_vitfood,n,?,?,?,"Increase VIT by %s",1,1
@@ -232,7 +232,7 @@
 212  ,                        sc_watkfood,n,?,?,?,"Increase WATK by %s",1,1
 213  ,                        sc_matkfood,n,?,?,?,"Increase MATK by %s",1,1
 214  ,                        sc_scresist,?,?,?,?,"",0
-215  ,                            sc_xmas,?,?,?,?,"Change to santa suit",0
+215  ,                            sc_xmas,?,?,?,?,"Change into santa suit",0
 216  ,                            sc_warm,?,?,?,?,"",0
 217  ,                     sc_sun_comfort,?,?,?,?,"",0
 218  ,                    sc_moon_comfort,?,?,?,?,"",0
@@ -265,7 +265,7 @@
 245  ,                           sc_speed,?,?,?,?,"",0
 246  ,                         sc_defence,?,?,?,?,"",0
 247  ,                     sc_incaspdrate,?,?,?,?,"",0
-248  ,                        sc_incflee2,?,?,?,?,"",0
+248  ,                        sc_incflee2,n,?,?,?,"Increase perfect flee by %s",1,1
 249  ,                          sc_jailed,?,?,?,?,"",0
 250  ,                     sc_enchantarms,?,?,?,?,"",0
 251  ,                   sc_magicalattack,?,?,?,?,"",0
@@ -273,7 +273,7 @@
 253  ,                   sc_criticalwound,?,?,?,?,"",0
 254  ,                     sc_magicmirror,?,?,?,?,"",0
 255  ,                        sc_slowcast,?,?,?,?,"",0
-256  ,                          sc_summer,?,?,?,?,"Change to summer clothes",0
+256  ,                          sc_summer,?,?,?,?,"Change into summer clothes",0
 257  ,                        sc_expboost,p,?,?,?,"Increase EXP by %s",1,1
 258  ,                       sc_itemboost,?,?,?,?,"Increase item drop rate by %s",1,1
 259  ,                     sc_bossmapinfo,?,?,?,?,"Mark MVP on the mini-map for the current map",0
@@ -286,7 +286,7 @@
 270  ,                     sc_ksprotected,?,?,?,?,"",0
 271  ,                    sc_armor_resist,s,s,s,s,"%s water damage. %s earth damage. %s fire damage. %s wind damage. Effect lasts",4,1,2,3,4
 272  ,                     sc_spcost_rate,p,?,?,?,"Reduce SP consumption by %s",1,1
-273  ,                 sc_commonsc_resist,?,?,?,?,"",0
+273  ,                 sc_commonsc_resist,p,?,?,?,"Increase %s resistance against all status effects",1,1
 274  ,                       sc_sevenwind,?,?,?,?,"",0
 275  ,                        sc_def_rate,p,?,?,?,"Reduce physical damage by %s",1,1
 277  ,                       sc_walkspeed,?,?,?,?,"",0
@@ -375,14 +375,14 @@
 365  ,               sc_hallucinationwalk,?,?,?,?,"",0
 366  ,     sc_hallucinationwalk_postdelay,?,?,?,?,"",0
 367  ,                   sc_rollingcutter,?,?,?,?,"",0
-368  ,                           sc_toxin,?,?,?,?,"",0
-369  ,                        sc_paralyse,?,?,?,?,"",0
-370  ,                      sc_venombleed,?,?,?,?,"",0
-371  ,                   sc_magicmushroom,?,?,?,?,"",0
-372  ,                       sc_deathhurt,?,?,?,?,"",0
-373  ,                         sc_pyrexia,?,?,?,?,"",0
-374  ,                   sc_oblivioncurse,?,?,?,?,"",0
-375  ,                      sc_leechesend,?,?,?,?,"",0
+368  ,                           sc_toxin,?,?,?,?,"Interrupt skill casting every 3 seconds and drain 3% SP everty 10 seconds",0
+369  ,                        sc_paralyse,?,?,?,?,"Reduce movement speed by 50% and decrease ASPD and FLEE by 10%",0
+370  ,                      sc_venombleed,?,?,?,?,"Decrease Max HP by 15%",0
+371  ,                   sc_magicmushroom,?,?,?,?,"Drain 3% of HP every 4 seconds and involuntarially cast a random skill",0
+372  ,                       sc_deathhurt,?,?,?,?,"Reduce HP and SP regeneration by 20%",0
+373  ,                         sc_pyrexia,?,?,?,?,"Incurable blindless and 100 damage every 3 seconds",0
+374  ,                   sc_oblivioncurse,?,?,?,?,"Reduce status effect resistance based on INT and disable SP regeneration",0
+375  ,                      sc_leechesend,?,?,?,?,"Drain HP based on VIT",0
 376  ,                   sc_reflectdamage,?,?,?,?,"",0
 377  ,                 sc_forceofvanguard,?,?,?,?,"",0
 378  ,                 sc_shieldspell_def,?,?,?,?,"",0
@@ -435,11 +435,11 @@
 425  ,                         sc_teargas,?,?,?,?,"",0
 426  ,                      sc_mandragora,?,?,?,?,"",0
 427  ,                     sc_stomachache,n,?,?,?,"Decrease STR, AGI, VIT, INT, DEX, and LUK by %s",1,1
-428  ,               sc_mysterious_powder,?,?,?,?,"",0
+428  ,               sc_mysterious_powder,p,?,?,?,"Decrease Max HP by %s",1,1
 429  ,                      sc_melon_bomb,?,?,?,?,"",0
 430  ,                     sc_banana_bomb,?,?,?,?,"",0
 431  ,             sc_banana_bomb_sitdown,?,?,?,?,"",0
-432  ,                    sc_savage_steak,?,?,?,?,"",0
+432  ,                    sc_savage_steak,n,?,?,?,"Increase STR by %s",1,1
 433  ,             sc_cocktail_warg_blood,n,?,?,?,"Increase INT by %s",1,1
 434  ,                       sc_minor_bbq,n,?,?,?,"Increase VIT by %s",1,1
 435  ,                  sc_siroma_ice_tea,n,?,?,?,"Increase DEX by %s",1,1
@@ -451,8 +451,8 @@
 441  ,                        sc_mustle_m,p,?,?,?,"Increase Max HP by %s",1,1
 442  ,                    sc_life_force_f,p,?,?,?,"Increase Max SP by %s",1,1
 443  ,          sc_extract_white_potion_z,p,?,?,?,"Increase HP regeneration by %s",1,1
-444  ,                      sc_vitata_500,?,?,?,?,"",0
-445  ,          sc_extract_salamine_juice,?,?,?,?,"",0
+444  ,                      sc_vitata_500,p,p,?,?,"Increase Max SP by %s and SP regeneration by %s",2,1,2
+445  ,          sc_extract_salamine_juice,p,?,?,?,"Increase ASPD by %s",1,1
 446  ,                      sc__reproduce,?,?,?,?,"",0
 447  ,                sc__autoshadowspell,?,?,?,?,"",0
 448  ,                     sc__shadowform,?,?,?,?,"",0
@@ -591,15 +591,15 @@
 581  ,                        sc_mtf_aspd,o,?,?,?,"Increase ASPD by %s",1,1
 582  ,                    sc_mtf_rangeatk,p,?,?,?,"Increase range damage by %s",1,1
 583  ,                        sc_mtf_matk,?,?,?,?,"Increase magical damage by %s",1,1
-584  ,                    sc_mtf_mleatked,?,?,?,?,"",0
-585  ,                   sc_mtf_cridamage,?,?,?,?,"",0
-586  ,                     sc_oktoberfest,?,?,?,?,"",0
+584  ,                    sc_mtf_mleatked,l,p,n,?,"A %s chance to cast endure level %s and reduce neutral damage by %s",3,2,1,3
+585  ,                   sc_mtf_cridamage,p,?,?,?,"Increase critical damage by %s",1,1
+586  ,                     sc_oktoberfest,?,?,?,?,"Change into Oktoberfest clothes",0
 587  ,                   sc_strangelights,?,?,?,?,"",0
 588  ,             sc_decoration_of_music,?,?,?,?,"",0
 589  ,                     sc_quest_buff1,?,?,?,?,"",0
 590  ,                     sc_quest_buff2,?,?,?,?,"",0
 591  ,                     sc_quest_buff3,?,?,?,?,"",0
-592  ,                      sc_all_riding,?,?,?,?,"",0
+592  ,                      sc_all_riding,?,?,?,?,"Summon a class-specific mount",0
 593  ,                     sc_teargas_sob,?,?,?,?,"",0
 594  ,                      sc__feintbomb,?,?,?,?,"",0
 595  ,                          sc__chaos,?,?,?,?,"",0
@@ -607,15 +607,15 @@
 597  ,        sc_vacuum_extreme_postdelay,?,?,?,?,"",0
 598  ,                       sc_mtf_aspd2,o,?,?,?,"Increase ASPD by %s",1,1
 599  ,                   sc_mtf_rangeatk2,p,?,?,?,"Increase range damage by %s",1,1
-600  ,                       sc_mtf_matk2,?,?,?,?,"",0
-601  ,                  sc_2011rwc_scroll,?,?,?,?,"",0
-602  ,                      sc_jp_event04,?,?,?,?,"",0
+600  ,                       sc_mtf_matk2,n,?,?,?,"Increase MATK by %s",1,1
+601  ,                  sc_2011rwc_scroll,n,?,?,?,"Increase BATK and MATK by 30 and all status by %s",1,1
+602  ,                      sc_jp_event04,p,?,?,?,"Increase EXP by %s from fish monsters",1,1
 603  ,                         sc_mtf_mhp,n,?,?,?,"Increase Max HP by %s",1,1
 604  ,                         sc_mtf_msp,n,?,?,?,"Increase Max SP by %s",1,1
 605  ,                     sc_mtf_pumpkin,p,?,?,?,"Increase HP recovery of all potions by %s",1,1
 606  ,                     sc_mtf_hitflee,n,n,?,?,"Increase HIT by %s and FLEE by %s",2,1,2
 607  ,                         sc_crifood,n,?,?,?,"Increase CRIT by %s",1,1
-608  ,                   sc_atthaste_cash,?,?,?,?,"",0
+608  ,                   sc_atthaste_cash,a,?,?,?,"Increase ASPD by %s",1,1
 609  ,                   sc_reuse_limit_a,?,?,?,?,"",0
 610  ,                   sc_reuse_limit_b,?,?,?,?,"",0
 611  ,                   sc_reuse_limit_c,?,?,?,?,"",0
