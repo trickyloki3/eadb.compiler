@@ -98,6 +98,8 @@ int block_stack_vararg(block_r * block, int type, const char * format, ...) {
     int cnt = 0;
     va_list args;
 
+    exit_null_safe(2, block, format);
+
     /* write the formatted arguments */
     va_start(args, format);
     cnt = BUF_SIZE - block->arg_cnt;
@@ -2612,7 +2614,6 @@ failed:
 }
 
 int stack_eng_status_val(block_r * block, char * expr, int type) {
-    int val = 0;
     int cnt = 0;
     int err = CHECK_FAILED;
     switch(type) {
@@ -3888,11 +3889,11 @@ int translate_setfalcon(block_r * block) {
 
 int translate_makerune(block_r * block) {
     int i = 0;
-    int rate = 0;
     int argc = 0;
 
-    if( stack_eng_int(block, block->ptr[0], 1, FORMAT_RATIO) ||
-        stack_eng_produce(block, "24", &argc) ||
+    if( block_stack_push(block, TYPE_PTR, "24") ||
+        stack_eng_int(block, block->ptr[0], 1, FORMAT_RATIO) ||
+        stack_eng_produce(block, block->ptr[1], &argc) ||
         block_stack_vararg(block, TYPE_ENG, "Create runestones with %s success rate.", block->eng[0]))
         return CHECK_FAILED;
 
