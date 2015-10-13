@@ -375,7 +375,7 @@
 365  ,               sc_hallucinationwalk,?,?,?,?,"",0
 366  ,     sc_hallucinationwalk_postdelay,?,?,?,?,"",0
 367  ,                   sc_rollingcutter,?,?,?,?,"",0
-368  ,                           sc_toxin,?,?,?,?,"Interrupt skill casting every 3 seconds and drain 3% SP everty 10 seconds",0
+368  ,                           sc_toxin,?,?,?,?,"Interrupt skill casting every 3 seconds and drain 3% SP every 10 seconds",0
 369  ,                        sc_paralyse,?,?,?,?,"Reduce movement speed by 50% and decrease ASPD and FLEE by 10%",0
 370  ,                      sc_venombleed,?,?,?,?,"Decrease Max HP by 15%",0
 371  ,                   sc_magicmushroom,?,?,?,?,"Drain 3% of HP every 4 seconds and involuntarially cast a random skill",0

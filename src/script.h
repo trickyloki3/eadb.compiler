@@ -271,6 +271,10 @@
     #define FORMAT_RATIO                    0x01
     #define FORMAT_PLUS                     0x02
 
+    /* stack_eng_coordinate negative values */
+    #define COORD_RANDOM                    -1
+    #define COORD_CURRENT                   -2
+
     /* stack limits */
     #define MAX_SUB_GROUP                  4    /* set to MAX_ITEMGROUP_RANDGROUP for rathena */
     #define MAX_ITEM_LIST                  10

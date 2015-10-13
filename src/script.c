@@ -778,6 +778,20 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                         link = parent;
                     }
                     break;
+                case 63:    /* getmapxy */
+                    if (script_parse(token_list, &i, block, ',', ';', FLAG_PARSE_NORMAL))
+                        return SCRIPT_FAILED;
+                    /* parsing is off-by-one */
+                    block->ptr_cnt--;
+
+                    /* getmapxy sets the first variable  to the current map
+                     * which is equivalent to strcharinfo(3) and second and
+                     * third argument is the player's current coordinates. */
+                    if(block_stack_vararg(block, TYPE_PTR, "set %s,strcharinfo(3); set %s,%d; set %s,"
+                       "%d;",block->ptr[0], block->ptr[1], COORD_CURRENT, block->ptr[2], COORD_CURRENT) ||
+                        script_analysis_(script, block->ptr[4], block, &set))
+                        return CHECK_FAILED;
+                    break;
                 case 5:     /* autobonus */
                 case 6:     /* autobonus2 */
                 case 7:     /* autobonus3 */
@@ -908,8 +922,12 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                         return SCRIPT_FAILED;
                     break;
             }
-            /* parsing is off-by-one */
+            /* parsing is off-by-one; Q.Q I suck */
             block->ptr_cnt--;
+        } else {
+            /* skip single semicolon; treat as empty statement */
+            if(token[i][0] != ';')
+                return exit_func_safe("invalid block %s in item %d", token[i], script->item.id);
         }
     }
 
@@ -1244,6 +1262,7 @@ int script_translate(script_t * script) {
             case 22: /* specialeffect2 */
             case 29: /* input */
             case 32: /* end */
+            case 63: /* getmapxy */
                break;
             default: return SCRIPT_FAILED;
         }
@@ -1284,6 +1303,7 @@ int script_generate(script_t * script) {
             case 22: /* specialeffect2 */
             case 29: /* input */
             case 32: /* end */
+            case 63: /* getmapxy */
                 break;
             default:
                 top = iter->eng_cnt - 1;
@@ -1829,7 +1849,7 @@ int stack_eng_int_bonus(block_r * block, char * expr, int modifier, int attr, in
             }
             break;
         /* examiner later */
-        case 1:
+        case 0:
         case 4:
         case 12:
         case 13:
@@ -1840,7 +1860,9 @@ int stack_eng_int_bonus(block_r * block, char * expr, int modifier, int attr, in
         case 22:
         case 23:
         case 25:
-        default: ret = stack_eng_int(block, expr, modifier, 0);
+            ret = stack_eng_int(block, expr, modifier, 0); break;
+        default:
+            return exit_func_safe("unsupported bonus attribute %d\n", attr);
     }
 
     return ret;
@@ -3134,6 +3156,9 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
+    if(bonus->attr == 4)
+        printf("%s\n", block->eng[block->eng_cnt - 1]);
+
     SAFE_FREE(bonus);
     return CHECK_PASSED;
 
@@ -3978,20 +4003,20 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
             if(block_stack_push(block, TYPE_ENG, buf))
                 goto failed;
         }
-
-        /* keep logic tree in node */
-        if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
-            if (root_node->cond != NULL) {
-                if (block->logic_tree == NULL) {
-                    block->logic_tree = copy_deep_any_tree(root_node->cond);
-                } else {
-                    /* new logic trees are stack onot the previous logic tree */
-                    temp = block->logic_tree;
-                    block->logic_tree = copy_deep_any_tree(root_node->cond);
-                    block->logic_tree->stack = temp;
-                }
-            }
     }
+
+    /* keep logic tree in node */
+    if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
+        if (root_node->cond != NULL) {
+            if (block->logic_tree == NULL) {
+                block->logic_tree = copy_deep_any_tree(root_node->cond);
+            } else {
+                /* new logic trees are stack onot the previous logic tree */
+                temp = block->logic_tree;
+                block->logic_tree = copy_deep_any_tree(root_node->cond);
+                block->logic_tree->stack = temp;
+            }
+        }
 
     /* return the root node */
     if (EVALUATE_FLAG_KEEP_NODE & flag)
@@ -4283,11 +4308,13 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
             _node->type = NODE_TYPE_CONSTANT;
             _node->min = opt.flag;
             _node->max = opt.flag;
+            _node->formula = convert_string(opt.name);
         } else if(!map_name(db, &map, expr[*start], len)) {
             /* map name */
             _node->type = NODE_TYPE_CONSTANT;
             _node->min = map.id;
             _node->max = map.id;
+            _node->formula = convert_string(map.name);
         } else if(!const_name(db, &constant, expr[*start], len)) {
             /* constant name */
             _node->type = NODE_TYPE_CONSTANT;
@@ -5334,6 +5361,8 @@ int node_inherit(node_t * node) {
             node->left->cond->name,
             node->range,
             node->left->cond);
+        if(NULL == node->cond)
+            return exit_abt_safe("failed to inherit condition");
     } else if(node->left->cond == NULL && node->right->cond != NULL) {
         /* inherit the logic tree from the right node */
         node->cond = make_cond(
@@ -5341,7 +5370,8 @@ int node_inherit(node_t * node) {
             node->right->cond->name,
             node->range,
             node->right->cond);
-
+        if(NULL == node->cond)
+            return exit_abt_safe("failed to inherit condition");
     } else if(node->left == node->right && node->left->cond != NULL) {
         /* inherit for unary operator */
         node->cond = make_cond(
@@ -5349,6 +5379,8 @@ int node_inherit(node_t * node) {
             node->left->cond->name,
             node->range,
             node->left->cond);
+        if(NULL == node->cond)
+            return exit_abt_safe("failed to inherit condition");
     }
 
     /* inherit the return type */
