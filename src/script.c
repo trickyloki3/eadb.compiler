@@ -1521,6 +1521,14 @@ int stack_eng_item(block_r * block, char * expr, int * argc) {
     if(NULL == node) {
         ret = CHECK_FAILED;
     } else {
+        /* getitem can call another function that returns an item id like
+         * getitem getranditemgroup(IG_BLUEBOX), 1; rather than using the
+         * item id return, a more correct translation is to use the formula  */
+        if(node->return_type & ITEM_TYPE_FLAG &&
+           node->formula != NULL) {
+            ret = block_stack_vararg(block, TYPE_ENG, "items from %s", node->formula);
+            goto clean;
+        }
         /* map each item id to name and write
          * each item name to block->eng stack */
         iter = node->range;
@@ -1528,9 +1536,10 @@ int stack_eng_item(block_r * block, char * expr, int * argc) {
             for(i = iter->min; i <= iter->max && cnt < MAX_ITEM_LIST; i++) {
                 if( item_id(block->script->db, item, i) ||
                     block_stack_push(block, TYPE_ENG, item->name)) {
+                    exit_func_safe("failed to find item id %d in item id %d", i, block->item_id);
                     /* invalid item id or block->eng stacked overflow */
                     ret = CHECK_FAILED;
-                    goto return_type;
+                    goto clean;
                 }
                 cnt++;
             }
@@ -1546,17 +1555,6 @@ clean:
     SAFE_FREE(item);
     node_free(node);
     return ret;
-
-return_type:
-    /* check whether the node has a return type of item id
-     * if so, then write that formula instead of item name */
-    if(node->return_type & ITEM_TYPE_FLAG &&
-       node->formula != NULL)
-        ret = block_stack_push(block, TYPE_ENG, node->formula);
-    /* print an error when fallback does not work */
-    if(ret)
-        exit_func_safe("failed to find item id %d in item id %d", i, block->item_id);
-    goto clean;
 }
 
 int stack_eng_skill(block_r * block, char * expr, int * argc) {
@@ -2349,14 +2347,21 @@ int stack_eng_item_group(block_r * block, char * expr) {
             for(i = 3; i < len; i++) {
                 /* converts RWCItem to RWC Item or RedPotion to Red Potion
                  * but assume the first character is a capital letter */
-                if(i != 3 && i + 1 < len && islower(name[i + 1]) && isupper(name[i]))
+
+                /* don't waste your time figuring out this part, better
+                 * off write your own if its confusing. */
+                if(i != 3 && i + 1 < len && islower(name[i + 1]) && isupper(name[i])) {
                     buf[j++] = ' ';
-                if((i + 1 < len && isdigit(name[i]) && !isdigit(name[i + 1])) ||
-                   (i + 1 == len && isdigit(name[i])))
+                    buf[j++] = toupper(name[i]);
+                } else if((i + 1 < len && isdigit(name[i]) && !isdigit(name[i + 1])) ||
+                   (i + 1 == len && isdigit(name[i]))) {
                     buf[j++] = ' ';
-                if(name[i] == '_')
+                    buf[j++] = toupper(name[i]);
+                } else if(name[i] == '_') {
                     continue;
-                buf[j++] = tolower(name[i]);
+                } else {
+                    buf[j++] = (i == 3) ? toupper(name[i]) : tolower(name[i]);
+                }
             }
 
             /* append the 'group' postfix and push to stack */
@@ -2754,9 +2759,10 @@ int translate_getitem(block_r * block) {
             sprintf(&buf[off], "%s, ", block->eng[i]);
     off += sprintf(&buf[off], " into your inventory.");
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
+    if(block_stack_push(block, TYPE_ENG, buf))
         ret = CHECK_FAILED;
+
+    printf("%s\n", buf);
 
     SAFE_FREE(buf);
     return ret;
@@ -2791,8 +2797,7 @@ int translate_delitem(block_r * block) {
             sprintf(&buf[off], "%s, ", block->eng[i]);
     off += sprintf(&buf[off], " from your inventory.");
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
+    if(block_stack_push(block, TYPE_ENG, buf))
         ret = CHECK_FAILED;
 
     SAFE_FREE(buf);
@@ -4383,6 +4388,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     int ret = 0;
     int arg_off = 0;
     int arg_cnt = 0;
+    int ptr_top = 0;
     int eng_off = 0;
     token_r * token = NULL;
 
@@ -4431,14 +4437,14 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
             goto clean;
     }
 
-    /* pop the function arguments from the block->ptr stack */
-    for(i = 0; i < arg_cnt; i++)
-        if(block_stack_pop(block, TYPE_PTR))
-            return CHECK_FAILED;
-
     /* pop the any translation pushed onto the block->eng stack */
     for(i = eng_off; i < block->eng_cnt;)
         if(block_stack_pop(block, TYPE_ENG))
+            return CHECK_FAILED;
+
+    /* pop the function arguments from the block->ptr stack */
+    while(block->ptr_cnt != arg_off)
+        if(block_stack_pop(block, TYPE_PTR))
             return CHECK_FAILED;
 
 clean:
@@ -4520,6 +4526,7 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
     if( evaluate_numeric_constant(block, block->ptr[off + 0], 1, &group_id) ||
         evaluate_numeric_constant(block, block->ptr[off + 1], 1, &subgroup_id) ||
         item_group_id(block->script->db, &item_group, group_id, subgroup_id) ||
+        stack_eng_item_group(block, block->ptr[off + 0]) ||
         0 >= item_group.size)
         goto failed;
 
@@ -4549,6 +4556,9 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
                     min = item_group.item_id[i + 1];
             }
         }
+        /* write group name into formula, which
+         * is calculated by stack_eng_item_group */
+        node->formula = convert_string(block->eng[block->eng_cnt - 1]);
         node->min = minrange(node->range);
         node->max = maxrange(node->range);
     }
