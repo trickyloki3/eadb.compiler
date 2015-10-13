@@ -2970,7 +2970,7 @@ int translate_status(block_r * block) {
     switch(status.offset_count) {
        case 0:
            error = block_stack_vararg(block,
-               TYPE_ENG, status.format);
+               TYPE_ENG, "%s", status.format);
            break;
        case 1:
            error = block_stack_vararg(block,
