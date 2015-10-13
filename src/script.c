@@ -1263,6 +1263,8 @@ int script_translate(script_t * script) {
             case 29: /* input */
             case 32: /* end */
             case 63: /* getmapxy */
+            case 64: /* specialeffect */
+            case 65: /* showscript */
                break;
             default: return SCRIPT_FAILED;
         }
@@ -1304,6 +1306,8 @@ int script_generate(script_t * script) {
             case 29: /* input */
             case 32: /* end */
             case 63: /* getmapxy */
+            case 64: /* specialeffect */
+            case 65: /* showscript */
                 break;
             default:
                 top = iter->eng_cnt - 1;

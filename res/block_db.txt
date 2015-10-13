@@ -79,3 +79,5 @@
 61 ,                  petheal,0
 62 ,                      for,0
 63 ,                 getmapxy,0
+64 ,            specialeffect,0
+65 ,               showscript,0
