@@ -1267,6 +1267,7 @@ int script_translate(script_t * script) {
             case 63: /* getmapxy */
             case 64: /* specialeffect */
             case 65: /* showscript */
+                /* do nothing */
                break;
             default: return SCRIPT_FAILED;
         }
@@ -1301,7 +1302,8 @@ int script_generate(script_t * script) {
                 /* traverse logic tree */
                 break;
             case 28: /* set */
-                /* special case for zeny */
+                /* special cases for script engine
+                 * variables and special variables */
                 break;
             case 21: /* skilleffect */
             case 22: /* specialeffect2 */
@@ -1310,6 +1312,7 @@ int script_generate(script_t * script) {
             case 63: /* getmapxy */
             case 64: /* specialeffect */
             case 65: /* showscript */
+                /* do nothing */
                 break;
             default:
                 top = iter->eng_cnt - 1;

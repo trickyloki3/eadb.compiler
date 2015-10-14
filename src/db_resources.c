@@ -66,12 +66,11 @@ int bonus_res_load(void * db, int row, int col, char * val) {
          order_cnt = 0;
          var_state = 0;
          record->id = convert_integer(val, 10);                break;
-      case 1: record->flag = convert_integer(val, 16);         break;
-      case 2: record->attr = convert_integer(val, 10);         break;
-      case 3: strnload(record->prefix, MAX_NAME_SIZE, val);    break;
-      case 4: strnload(record->bonus, MAX_NAME_SIZE, val);     break;
-      case 5: strnload(record->format, MAX_NAME_SIZE, val);    break;
-      case 6: record->type_cnt = convert_integer(val, 10);     break;
+      case 1: record->attr = convert_integer(val, 10);         break;
+      case 2: strnload(record->prefix, MAX_NAME_SIZE, val);    break;
+      case 3: strnload(record->bonus, MAX_NAME_SIZE, val);     break;
+      case 4: strnload(record->format, MAX_NAME_SIZE, val);    break;
+      case 5: record->type_cnt = convert_integer(val, 10);     break;
       default:
          if(var_state < record->type_cnt) {   /* read the types */
             record->type[type_cnt] = val[0];
@@ -104,7 +103,7 @@ int status_res_load(void * db, int row, int col, char * val) {
           if(record->offset_count > MAX_VARARG_COUNT)
               return exit_func_safe("%d exceed maximum %d varar"
               "g count", record->offset_count, MAX_VARARG_COUNT);
-          
+
           record->offset[col - 8] = convert_integer(val, 10);
           break;
    }
@@ -351,17 +350,16 @@ int opt_db_bns_load_record(bonus_res * bonuses, int size, sqlite3_stmt * sql) {
 
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql, 1, bonus->id) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 2, bonus->flag) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 3, bonus->attr) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 4, bonus->prefix, strlen(bonus->prefix), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 5, bonus->bonus, strlen(bonus->bonus), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 6, bonus->format, strlen(bonus->format), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 7, bonus->type_cnt) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 2, bonus->attr) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 3, bonus->prefix, strlen(bonus->prefix), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 4, bonus->bonus, strlen(bonus->bonus), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 5, bonus->format, strlen(bonus->format), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 6, bonus->type_cnt) ||
          NULL == array_to_string_cnt(buf, bonus->type, bonus->type_cnt) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 8, buf, strlen(buf), SQLITE_TRANSIENT) ||
-         SQLITE_OK != sqlite3_bind_int(sql, 9, bonus->order_cnt) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 7, buf, strlen(buf), SQLITE_TRANSIENT) ||
+         SQLITE_OK != sqlite3_bind_int(sql, 8, bonus->order_cnt) ||
          NULL == array_to_string_cnt(buf, bonus->order, bonus->order_cnt) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 10, buf, strlen(buf), SQLITE_TRANSIENT) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 9, buf, strlen(buf), SQLITE_TRANSIENT) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to bonus db.\n", bonus->bonus);

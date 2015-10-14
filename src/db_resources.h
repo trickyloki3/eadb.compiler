@@ -55,7 +55,6 @@
     /* bonus table consist of a set of template strings and argument types for translating bonuses. */
     typedef struct {
         int id;
-        int flag;
         int attr;
         char prefix[MAX_NAME_SIZE];
         char bonus[MAX_NAME_SIZE];
@@ -67,10 +66,9 @@
     } bonus_res;
 
     #define RES_BNS_DELETE          "DROP TABLE IF EXISTS bonus_res;"
-    #define RES_BNS_INSERT          "INSERT INTO bonus_res VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+    #define RES_BNS_INSERT          "INSERT INTO bonus_res VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RES_BNS_CREATE          "CREATE TABLE IF NOT EXISTS bonus_res("\
                                     "    id INTEGER,"\
-                                    "    flag INTEGER,"\
                                     "    attr INTEGER,"\
                                     "    pref TEXT,"\
                                     "    buff TEXT,"\

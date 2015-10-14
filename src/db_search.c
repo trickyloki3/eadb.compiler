@@ -385,16 +385,15 @@ int bonus_name(db_t * db, bonus_res * bonus, const char * prefix, int plen, cons
 
     stmt = db->bonus_name->stmt;
     bonus->id = sqlite3_column_int(stmt, 0);
-    bonus->flag = sqlite3_column_int(stmt, 1);
-    bonus->attr = sqlite3_column_int(stmt, 2);
-    strncopy(bonus->prefix, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
-    strncopy(bonus->bonus, MAX_NAME_SIZE, sqlite3_column_text(stmt, 4));
-    strncopy(bonus->format, MAX_NAME_SIZE, sqlite3_column_text(stmt, 5));
-    bonus->type_cnt = sqlite3_column_int(stmt, 6);
-    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 7), ":", bonus->type, MAX_BONUS, &cnt))
+    bonus->attr = sqlite3_column_int(stmt, 1);
+    strncopy(bonus->prefix, MAX_NAME_SIZE, sqlite3_column_text(stmt, 2));
+    strncopy(bonus->bonus, MAX_NAME_SIZE, sqlite3_column_text(stmt, 3));
+    strncopy(bonus->format, MAX_NAME_SIZE, sqlite3_column_text(stmt, 4));
+    bonus->type_cnt = sqlite3_column_int(stmt, 5);
+    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 6), ":", bonus->type, MAX_BONUS, &cnt))
         return CHECK_FAILED;
-    bonus->order_cnt = sqlite3_column_int(stmt, 8);
-    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 9), ":", bonus->order, MAX_BONUS, &cnt))
+    bonus->order_cnt = sqlite3_column_int(stmt, 7);
+    if (convert_integer_delimit_static((const char *)sqlite3_column_text(stmt, 8), ":", bonus->order, MAX_BONUS, &cnt))
         return CHECK_FAILED;
     return CHECK_PASSED;
 }

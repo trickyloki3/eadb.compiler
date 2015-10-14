@@ -37,7 +37,6 @@
 
     typedef struct {
         int id;
-        int flag;
         int attr;
         char prefix[MAX_NAME_SIZE];
         char bonus[MAX_NAME_SIZE];
