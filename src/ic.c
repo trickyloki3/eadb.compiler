@@ -1,7 +1,7 @@
 #include <script.h>
 
 #define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\resource.db"
-#define EA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\eathena.db"
+#define RA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\rathena.db"
 #define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
@@ -14,7 +14,7 @@ int main(int argc, char * argv[]) {
     char * script = NULL;
     script_t * context = NULL;
 
-    if(script_init(&context, RE_PATH, EA_PATH, MAP_PATH, EATHENA))
+    if(script_init(&context, RE_PATH, RA_PATH, MAP_PATH, RATHENA))
         return 0;
 
     while(!item_iterate(context->db, &context->item)) {
@@ -42,9 +42,9 @@ int main(int argc, char * argv[]) {
             context->item.id == 0) {
             /* dump the blocks */
             fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
-            if(context->blocks != NULL)
+            /*if(context->blocks != NULL)
                 script_block_dump(context, stderr);
-            break;
+            break;*/
         }
 
         /* display translation 

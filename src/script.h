@@ -267,6 +267,9 @@
     #define OPT_HANBOK                      0x08000000
     #define OPT_OKTOBERFEST                 0x10000000
 
+    /* stack_eng_item bitmask flags */
+    #define FLAG_GETITEM                    0x1
+
     /* stack_eng_int_* bitmask flags */
     #define FORMAT_RATIO                    0x01
     #define FORMAT_PLUS                     0x02
@@ -282,7 +285,7 @@
     /* script stack functions */
     int stack_ptr_call(block_r *, char *, int *);
     int stack_ptr_call_(block_r *, token_r *, int *);
-    int stack_eng_item(block_r *, char *, int *);
+    int stack_eng_item(block_r *, char *, int *, int);
     int stack_eng_skill(block_r *, char *, int *);
     int stack_eng_grid(block_r *, char *);
     int stack_eng_coordinate(block_r *, char *);

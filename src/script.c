@@ -1482,7 +1482,7 @@ int stack_ptr_call_(block_r * block, token_r * token, int * argc) {
  * if more than 5 items, then the list will cut off with
  * a note to indicate that not all items are listed.
  */
-int stack_eng_item(block_r * block, char * expr, int * argc) {
+int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
     int i = 0;
     int len = 0;                /* length of the expression */
     int top = 0;                /* top of the block->eng stack */
@@ -1526,7 +1526,10 @@ int stack_eng_item(block_r * block, char * expr, int * argc) {
          * item id return, a more correct translation is to use the formula  */
         if(node->return_type & ITEM_TYPE_FLAG &&
            node->formula != NULL) {
-            ret = block_stack_vararg(block, TYPE_ENG, "items from %s", node->formula);
+            if(flag & FLAG_GETITEM)
+                ret = block_stack_vararg(block, TYPE_ENG, "items from %s", node->formula);
+            else
+                ret = block_stack_vararg(block, TYPE_ENG, "%s", node->formula);
             goto clean;
         }
         /* map each item id to name and write
@@ -2719,7 +2722,7 @@ int translate_id_amount(block_r * block, int * argc, int * size, const char * fu
 
     /* evaluate the item id and amount expression */
     _size = block->arg_cnt;
-    if( stack_eng_item(block, block->ptr[block->ptr_cnt - 2], &_argc) ||
+    if( stack_eng_item(block, block->ptr[block->ptr_cnt - 2], &_argc, FLAG_GETITEM) ||
         stack_eng_int(block, block->ptr[block->ptr_cnt - 1], 1, 0))
         return CHECK_FAILED;
 
@@ -2761,8 +2764,6 @@ int translate_getitem(block_r * block) {
 
     if(block_stack_push(block, TYPE_ENG, buf))
         ret = CHECK_FAILED;
-
-    printf("%s\n", buf);
 
     SAFE_FREE(buf);
     return ret;
@@ -2827,7 +2828,7 @@ int translate_rentitem(block_r * block) {
         "item id or time in item %d", block->item_id);
 
     size = block->arg_cnt;
-    if( stack_eng_item(block, block->ptr[block->ptr_cnt - 2], &argc) ||
+    if( stack_eng_item(block, block->ptr[block->ptr_cnt - 2], &argc, 0) ||
         stack_eng_time(block, block->ptr[block->ptr_cnt - 1], 1))
         return CHECK_FAILED;
 
@@ -4383,6 +4384,12 @@ failed:
     return CHECK_FAILED;
 }
 
+/* NOTE
+ * All function arguments must be pushed before pushing
+ * function translations because intermixing the stack
+ * would result in breaking the evaluate_function when
+ * we start popping values.
+ */
 int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node_t * node) {
     int i = 0;
     int ret = 0;
@@ -4668,7 +4675,7 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
     len = block->arg_cnt;
     item_off = block->eng_cnt;
     for(i = 0; i < cnt; i++)
-        if(stack_eng_item(block, block->ptr[off + i], &item_cnt))
+        if(stack_eng_item(block, block->ptr[off + i], &item_cnt, 0))
             return CHECK_FAILED;
     len = (block->arg_cnt - len) + 128;
 
@@ -4748,7 +4755,7 @@ int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * f
 
     /* evaluate the item info type */
     len = block->arg_cnt;
-    if(stack_eng_item(block, block->ptr[off], &argc) || argc != 1 ||
+    if(stack_eng_item(block, block->ptr[off], &argc, 0) || argc != 1 ||
        stack_eng_map(block, block->ptr[off+1], MAP_ITEM_INFO_FLAG, &argc) || argc != 1)
         return CHECK_FAILED;
     len = (block->arg_cnt - len) + 32;
@@ -4934,7 +4941,7 @@ int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * fun
         "function '%s' in %d", func->name, block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_item(block, block->ptr[off], &argc) ||
+    if(stack_eng_item(block, block->ptr[off], &argc, 0) ||
        argc != 1)
        return CHECK_FAILED;
     len = (block->arg_cnt - len) + 32;
