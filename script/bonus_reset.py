@@ -6,7 +6,7 @@ import sys
 import csv
 
 if __name__ == '__main__':
-    bonus_old = open('bonus_db.txt', 'r')
+    bonus_old = open('../res/bonus_db.txt', 'r')
     bonus_new = open('bonus_db_.txt', 'w')
 
     # tweak the arguments until it parses the quoted fields entire =.=
@@ -18,14 +18,15 @@ if __name__ == '__main__':
         if length <= 0:
             bonus_new.write('\n')
             continue
-        elif length < 10:
+        elif length < 3:
             bonus_new.write("{0}\n".format(row[0]))
             continue
 
-        bonus_new.write('{0},{1},{2},{3},"{4}",{5}'.format(row[0], 0, row[3], row[4], row[5], row[6]))
+        bonus_new.write('{0:<5},{1:8},{2:>7},{3:>35},"{4}",{5}'.format
+        (row[0], row[1], row[2].strip(), row[3].strip(), row[4], row[5]))
 
-        for i in range(int(row[6])):
-            bonus_new.write(',{0}'.format(row[i + 7]))
+        for i in range(int(row[5])):
+            bonus_new.write(',{0}'.format(row[i + 6]))
         bonus_new.write('\n')
 
     bonus_old.close()

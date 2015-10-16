@@ -1827,52 +1827,9 @@ failed:
 int stack_eng_int_bonus(block_r * block, char * expr, int modifier, int attr, int arg) {
     int ret = 0;
     switch(attr) {
-        /* I will get around to condensing the repeated cases later. */
-        case 7:
-        case 8:  ret = stack_eng_int_signed(block, expr, modifier, "Regain", "Drain", 0); break;
-        case 10: ret = stack_eng_int_signed(block, expr, modifier, "Receive", "Reduce", FORMAT_RATIO); break;
-        case 6:
-        case 9:
-        case 11:
-        case 30: ret = stack_eng_int(block, expr, modifier, FORMAT_RATIO); break;
-        case 3:
-        case 14: ret = stack_eng_int_signed(block, expr, modifier, "Increase", "Decrease", FORMAT_RATIO); break;
-        case 2:
-        case 15:
-        case 17:
-        case 26:
-        case 28: ret = stack_eng_int_signed(block, expr, modifier, "Add", "Reduce", FORMAT_RATIO); break;
-        case 5:
-        case 18:
-        case 29: ret = stack_eng_int(block, expr, modifier, 0); break;
-        case 24:
-            switch(arg) {
-                case 0:  ret = stack_eng_int_signed(block, expr, modifier, "Add", "Reduce", FORMAT_RATIO); break;
-                case 1:  ret = stack_eng_int(block, expr, modifier, FORMAT_RATIO); break;
-                default: ret = stack_eng_int(block, expr, modifier, 0);
-            }
-            break;
-        case 27:
-            switch(arg) {
-                case 2:  ret = stack_eng_int_signed(block, expr, modifier, "Add", "Reduce", FORMAT_RATIO); break;
-                default: ret = stack_eng_int(block, expr, modifier, 0);
-            }
-            break;
-        /* examiner later */
-        case 0:
-        case 4:
-        case 12:
-        case 13:
-        case 16:
-        case 19:
-        case 20:
-        case 21:
-        case 22:
-        case 23:
-        case 25:
-            ret = stack_eng_int(block, expr, modifier, 0); break;
-        default:
-            return exit_func_safe("unsupported bonus attribute %d\n", attr);
+        case 1:     ret = stack_eng_int(block, expr, modifier, FORMAT_RATIO); break;
+        case 2:     ret = stack_eng_int(block, expr, modifier, FORMAT_PLUS); break;
+        default:    ret = stack_eng_int(block, expr, modifier, 0); break;
     }
 
     return ret;
@@ -3083,7 +3040,7 @@ int translate_bonus(block_r * block, char * prefix) {
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
             case 'n': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Integer Value */
-            case 'p': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Integer Percentage */
+            case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* Integer Percentage */
             case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
             case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
             case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
@@ -3170,7 +3127,7 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(bonus->attr == 4)
+    if(bonus->attr == 1)
         printf("%s\n", block->eng[block->eng_cnt - 1]);
 
     SAFE_FREE(bonus);

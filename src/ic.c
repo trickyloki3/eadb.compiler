@@ -41,8 +41,8 @@ int main(int argc, char * argv[]) {
             script_generate(context) ||
             context->item.id == 0) {
             /* dump the blocks */
-            fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
-            /*if(context->blocks != NULL)
+            /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
+            if(context->blocks != NULL)
                 script_block_dump(context, stderr);
             break;*/
         }
