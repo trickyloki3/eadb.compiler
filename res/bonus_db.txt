@@ -19,28 +19,6 @@
  * of rathena.
  */
 
-1    ,0       ,  bonus,                               bStr,"STR %s",1,n
-2    ,0       ,  bonus,                               bAgi,"AGI %s",1,n
-3    ,0       ,  bonus,                               bVit,"VIT %s",1,n
-4    ,0       ,  bonus,                               bInt,"INT %s",1,n
-5    ,0       ,  bonus,                               bDex,"DEX %s",1,n
-6    ,0       ,  bonus,                               bLuk,"LUK %s",1,n
-20   ,0       ,  bonus,                               bHit,"HIT %s",1,n
-21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n
-7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,n
-8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,n
-9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,n
-
-10   ,0       ,  bonus,                             bMaxHP,"Increase max HP by %s.",1,n
-11   ,0       ,  bonus,                             bMaxSP,"Increase max SP by %s.",1,n
-26   ,0       ,  bonus,                         bMaxHPrate,"Increase max HP by %s.",1,p
-27   ,0       ,  bonus,                         bMaxSPrate,"Increase max SP by %s.",1,p
-
-/* rathena uses the maximum of all bSpeedRate plus the sum of
- * all bSpeedAddRate which means bSpeedRate is not stackable. */
-0    ,0       ,  bonus,                         bSpeedRate,"Increase movement speed by %s.",1,p
-29   ,0       ,  bonus,                      bSpeedAddRate,"Increase movement speed by %s.",1,p
-
 /* equivalent to (rand() % atk2 + atk1) + batk; translates
  * to a number between atk1 and atk1 + atk2, then add batk */
 12   ,0       ,  bonus,                               bAtk,"Increase weapon attack by %s.",1,n
@@ -236,6 +214,29 @@
 212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP will be reduce by %s of max hp.",2,p,z
 213  ,0       , bonus2,                          bSubSkill,"%s resistance against %s.",2,k,p
 214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s.",2,k,n
+
+/* fix and rate based status bonuses */
+1    ,0       ,  bonus,                               bStr,"STR %s",1,n,1,0
+2    ,0       ,  bonus,                               bAgi,"AGI %s",1,n,1,0
+3    ,0       ,  bonus,                               bVit,"VIT %s",1,n,1,0
+4    ,0       ,  bonus,                               bInt,"INT %s",1,n,1,0
+5    ,0       ,  bonus,                               bDex,"DEX %s",1,n,1,0
+6    ,0       ,  bonus,                               bLuk,"LUK %s",1,n,1,0
+20   ,0       ,  bonus,                               bHit,"HIT %s",1,n,1,0
+21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n,1,0
+7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,n,1,0
+8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,n,1,0
+9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,n,1,0
+10   ,1       ,  bonus,                             bMaxHP,"Max HP %s",1,n,1,0
+11   ,1       ,  bonus,                             bMaxSP,"Max SP %s",1,n,1,0
+26   ,1       ,  bonus,                         bMaxHPrate,"Max HP %s",1,p,1,0
+27   ,1       ,  bonus,                         bMaxSPrate,"Max SP %s",1,p,1,0
+
+/* rathena uses the maximum of all bSpeedRate plus the sum of
+ * all bSpeedAddRate which means bSpeedRate is not stackable;
+ * max(bSpeedRate) + sum(bSpeedAddRate) */
+0    ,0       ,  bonus,                         bSpeedRate,"Movement Speed %s",1,p,1,0
+29   ,0       ,  bonus,                      bSpeedAddRate,"Movement Speed %s",1,p,1,0
 
 /* renewal mdef damage reduction
  * damage = damage * (1000 + mdef) / (1000 + mdef * 10) - mdef2
