@@ -9,45 +9,59 @@
  * how these values are used. :D
  *
  * pc.c implements each bonus.
+ *
+ * read the comments for more details which
+ * might be interesting if you want  a more
+ * accurate description; i preferred simple
+ * over complex.
+ *
+ * all bonuses are interpreted in the context
+ * of rathena.
  */
 
-/* rathena uses the maximum of all bSpeedRate plus the sum of
- * all bSpeedAddRate which means bSpeedRate is not stackable. */
-0    ,0       ,  bonus,                         bSpeedRate,"Increase movement speed by %s.",1,p
-29   ,0       ,  bonus,                      bSpeedAddRate,"Increase movement speed by %s.",1,p
 1    ,0       ,  bonus,                               bStr,"STR %s",1,n
 2    ,0       ,  bonus,                               bAgi,"AGI %s",1,n
 3    ,0       ,  bonus,                               bVit,"VIT %s",1,n
 4    ,0       ,  bonus,                               bInt,"INT %s",1,n
 5    ,0       ,  bonus,                               bDex,"DEX %s",1,n
 6    ,0       ,  bonus,                               bLuk,"LUK %s",1,n
+20   ,0       ,  bonus,                               bHit,"HIT %s",1,n
+21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n
 7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,n
 8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,n
 9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,n
-10   ,0       ,  bonus,                             bMaxHP,"Increase max HP by %s",1,n
-11   ,0       ,  bonus,                             bMaxSP,"Increase max SP by %s",1,n
-12   ,0       ,  bonus,                               bAtk,"Increase weapon ATK by %s",1,n
-13   ,0       ,  bonus,                              bAtk2,"Increase weapon ATK by %s",1,n
-14   ,0       ,  bonus,                           bBaseAtk,"Increase base ATK %s",1,n
-15   ,0       ,  bonus,                              bMatk,"MATK %s",1,n
+
+10   ,0       ,  bonus,                             bMaxHP,"Increase max HP by %s.",1,n
+11   ,0       ,  bonus,                             bMaxSP,"Increase max SP by %s.",1,n
+26   ,0       ,  bonus,                         bMaxHPrate,"Increase max HP by %s.",1,p
+27   ,0       ,  bonus,                         bMaxSPrate,"Increase max SP by %s.",1,p
+
+/* rathena uses the maximum of all bSpeedRate plus the sum of
+ * all bSpeedAddRate which means bSpeedRate is not stackable. */
+0    ,0       ,  bonus,                         bSpeedRate,"Increase movement speed by %s.",1,p
+29   ,0       ,  bonus,                      bSpeedAddRate,"Increase movement speed by %s.",1,p
+
+/* equivalent to (rand() % atk2 + atk1) + batk; translates
+ * to a number between atk1 and atk1 + atk2, then add batk */
+12   ,0       ,  bonus,                               bAtk,"Increase weapon attack by %s.",1,n
+13   ,0       ,  bonus,                              bAtk2,"Increase weapon attack by %s.",1,n
+14   ,0       ,  bonus,                           bBaseAtk,"Increase base attack %s.",1,n
+15   ,0       ,  bonus,                              bMatk,"Increase base magical %s.",1,n
+
+/* reference battle_calc_defense_reduction for renewal and nonrenewal calculation;
+ * DEF2 subtract directly while DEF subtract by percentage or scale on pre-renewal
+ * and renewal, respectively. */
 16   ,0       ,  bonus,                               bDef,"DEF %s",1,n
 17   ,0       ,  bonus,                              bDef2,"DEF %s",1,n
-18   ,0       ,  bonus,                              bMdef,"MDEF %s",1,n
-19   ,0       ,  bonus,                             bMdef2,"MDEF %s",1,n
-20   ,0       ,  bonus,                               bHit,"HIT %s",1,n
-21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n
+
 22   ,0       ,  bonus,                             bFlee2,"Perfect Dodge %s",1,n
 23   ,0       ,  bonus,                          bAtkRange,"Attack Range %s.",1,n
 24   ,0       ,  bonus,                          bCritical,"CRIT %s",1,n
 25   ,0       ,  bonus,                              bAspd,"Attack Speed: %s",1,n
-26   ,0       ,  bonus,                         bMaxHPrate,"MaxHP %s",1,p
-27   ,0       ,  bonus,                         bMaxSPrate,"MaxSP %s",1,p
 28   ,0       ,  bonus,                           bAtkRate,"ATK %s",1,p
 30   ,0       ,  bonus,                          bMatkRate,"MATK %s",1,p
 31   ,0       ,  bonus,                           bDefRate,"DEF %s",1,p
 32   ,0       ,  bonus,                          bDef2Rate,"DEF %s",1,p
-33   ,0       ,  bonus,                          bMdefRate,"MDEF %s",1,p
-34   ,0       ,  bonus,                         bMdef2Rate,"MDEF %s",1,p
 35   ,0       ,  bonus,                           bHitRate,"HIT %s",1,p
 36   ,0       ,  bonus,                      bCriticalRate,"CRIT %s",1,p
 37   ,0       ,  bonus,                          bFleeRate,"FLEE %s",1,p
@@ -173,14 +187,7 @@
 155  ,0       ,  bonus,                 bMagicDamageReturn,"Reflect %s of all magical damage.",1,p
 156  ,0       , bonus2,                            bResEff,"%s resistance to %s status.",2,e,q
 157  ,0       , bonus2,                       bAddDefClass,"%s physical resistance against %s enemy.",2,j,p
-158  ,0       , bonus2,                      bAddMdefClass,"%s magical resistance against %s enemy.",2,j,p
 159  ,0       , bonus2,                     bAddDefMonster,"%s physical resistance against %s enemy.",2,c,p
-160  ,0       ,  bonus,                     bIgnoreMdefEle,"Ignore the magical defense of %s enemy.",1,l
-161  ,0       ,  bonus,                    bIgnoreMdefRace,"Ignore the magical defense of %s enemy.",1,r
-162  ,0       ,  bonus,                    bIgnoreMdefRate,"Pierce the magical defense of all targets by %s.",1,p
-163  ,0       , bonus2,                    bIgnoreMdefRate,"Ignore %s magical defense of %s enemy.",2,r,p
-164  ,0       , bonus2,                bIgnoreMdefRaceRate,"Ignore %s magical defense of %s enemy.",2,r,p
-165  ,0       , bonus2,               bIgnoreMdefClassRate,"Ignore %s magical defense of %s enemy.",2,j,p
 166  ,0       ,  bonus,                      bIgnoreDefEle,"Ignore the physical defense of %s enemy.",1,l
 167  ,0       ,  bonus,                     bIgnoreDefRace,"Ignore the physical defense of %s enemy.",1,r
 168  ,0       ,  bonus,                    bIgnoreDefClass,"Ignore the physical defense of %s enemy.",1,j
@@ -203,7 +210,6 @@
 185  ,0       , bonus2,                        bExpAddRace,"%s more EXP from %s enemy.",2,r,p
 186  ,0       , bonus2,                       bExpAddClass,"%s more EXP from %s enemy.",2,j,p
 187  ,0       , bonus4,                        bSetDefRace,"Add %s chance to reduce %s enemy's DEF to %s for %s seconds.",4,r,p,p,q
-188  ,0       , bonus4,                       bSetMDefRace,"Add %s chance to reduce %s enemy's MDEF to %s for %s seconds.",4,r,p,p,q
 189  ,0       ,  bonus,                bUnbreakableGarment,"Garment is indestructible.",1,z
 190  ,0       ,  bonus,                 bUnbreakableWeapon,"Weapon is indestructible.",1,z
 191  ,0       ,  bonus,                  bUnbreakableArmor,"Armor is indestructible.",1,z
@@ -230,3 +236,58 @@
 212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP will be reduce by %s of max hp.",2,p,z
 213  ,0       , bonus2,                          bSubSkill,"%s resistance against %s.",2,k,p
 214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s.",2,k,n
+
+/* renewal mdef damage reduction
+ * damage = damage * (1000 + mdef) / (1000 + mdef * 10) - mdef2
+ *
+ * mdef     reduction   deviation
+ * 0        0%
+ * 50       30%         %30
+ * 100      45%         %15
+ * 150      54%         %9
+ * 200      60%         %6
+ * therefore, renewal factors in diminishing returns
+ * for mdef, while mdef2 is a fixed damage reduction
+ * (renewal also allows a negative mdef to boost damage rather than to reduce damage)
+ *
+ * prenewal mdef damage reduction
+ * damage = damage - ((100 - mdef) / 100) - mdef2 (official)
+ * however, prenewal uses a linear percentage based reduction
+ * i.e. for each 1 mdef means 1% of magic  damage is reduced.
+ *
+ * prenewal mdef damage reduction (custom)
+ * if you set battle.conf's magic_defense_type, then instead
+ * of a linear percentage based  reduction, a scaling factor
+ * is used instead.
+ *
+ * reference battle_calc_magic_attack in battle.c [10/17/2015]
+ */
+18   ,0       ,  bonus,                              bMdef,"MDEF %s",1,n,1,0
+19   ,0       ,  bonus,                             bMdef2,"MDEF2 %s",1,n,1,0
+33   ,0       ,  bonus,                          bMdefRate,"MDEF %s",1,p,1,0
+34   ,0       ,  bonus,                         bMdef2Rate,"MDEF2 %s",1,p,1,0
+
+/* skip the  mdef damage reduction by setting the imdef
+ * flag in battle_calc_magic_attack function (battle.c) */
+160  ,0       ,  bonus,                     bIgnoreMdefEle,"Ignore MDEF of %s enemies.",1,l,1,0
+161  ,0       ,  bonus,                    bIgnoreMdefRace,"Ignore MDEF of %s enemies.",1,r,1,0
+
+/* reduce the target's MDEF by a percentage rate
+ * reducing mdef by race and class is stack
+ * reducing mdef by single and all race or class is stack
+ *
+ * example
+ *  bIgnoreMdefRaceRate,RC_DEMIHUMAN,10;
+ *  bIgnoreMdefRaceRate,RC_ALL,10;
+ *  bIgnoreMdefClassRate,CLASS_ALL,10;
+ *  provides up to 30% MDEF reduction */
+164  ,0       , bonus2,                bIgnoreMdefRaceRate,"Ignore %s MDEF of %s enemies.",2,r,p,2,1,0
+165  ,0       , bonus2,               bIgnoreMdefClassRate,"Ignore %s MDEF of %s enemies.",2,j,p,2,1,0
+162  ,0       ,  bonus,                    bIgnoreMdefRate,"Ignore %s MDEF of all enemeies.",1,p,1,0
+/* eathena's equivalent of rathena's bIgnoreMdefRaceRate and bIgnoreMdefClassRate */
+163  ,0       , bonus2,                    bIgnoreMdefRate,"Ignore %s MDEF of %s enemies.",2,r,p,2,1,0
+158  ,0       , bonus2,                      bAddMdefClass,"Ignore %s MDEF of %s enemies.",2,j,p,2,1,0
+
+/* set the target's mdef to a value by chance, race, and
+ * duration when using physical attacks on the target. */
+188  ,0       , bonus4,                       bSetMDefRace,"Add %s chance to reduce MDEF to %s on %s enemies for %s seconds.",4,r,q,a,0,4,1,3,0,2

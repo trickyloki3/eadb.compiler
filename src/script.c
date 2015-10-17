@@ -1681,8 +1681,8 @@ int stack_eng_coordinate(block_r * block, char * expr) {
  */
 int stack_eng_int(block_r * block, char * expr, int modifier, int flags) {
     int ret = 0;
-    int min = 0;
-    int max = 0;
+    double min = 0;
+    double max = 0;
     char buf[64];
     char * symbol = NULL;
     node_t * node = NULL;
@@ -1694,26 +1694,26 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flags) {
         return CHECK_FAILED;
 
     /* evaluate integer expression */
-    node = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if (NULL == node)
         return CHECK_FAILED;
 
     /* percentage postfix */
     symbol = (flags & FORMAT_RATIO) ? "%" : "";
 
-    min = node->min / modifier;
-    max = node->max / modifier;
+    min = ((double) node->min) / modifier;
+    max = ((double) node->max) / modifier;
 
     /* automatic float detection */
-    if((node->min != 0 && min == 0) ||
-       (node->max != 0 && max == 0)) {
+    if((node->min != 0 && (node->min / modifier) == 0) ||
+       (node->max != 0 && (node->max / modifier) == 0)) {
         (node->min == node->max) ?
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s" : "%.2f%s", ((double) node->min) / modifier, symbol):
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s ~ %+.2f%s" : "%.2f%s ~ %.2f%s", ((double) node->min) / modifier, symbol, ((double) node->max) / modifier, symbol);
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s" : "%.2f%s", min, symbol):
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s ~ %+.2f%s" : "%.2f%s ~ %.2f%s", min, symbol, max, symbol);
     } else {
         (node->min == node->max) ?
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s" : "%d%s", node->min, symbol):
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s ~ %+d%s" : "%d%s ~ %d%s", node->min, symbol, node->max, symbol);
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s" : "%d%s", (int) min, symbol):
+            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s ~ %+d%s" : "%d%s ~ %d%s", (int) min, symbol, (int) max, symbol);
     }
 
     /* write buffer with formula */
@@ -1763,7 +1763,7 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
         return CHECK_FAILED;
 
     /* push the integer result on the stack */
-    node = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if (node == NULL)
         goto failed;
 
@@ -3039,30 +3039,33 @@ int translate_bonus(block_r * block, char * prefix) {
 
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
-            case 'n': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Integer Value */
-            case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* Integer Percentage */
+            case '0': ret = stack_eng_int(block, block->ptr[j], 1, 0);                                  break; /* integer without annotation */
+            case 'n': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* integer with +X */
+            case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO);         break; /* integer with +X% */
+            case 'o': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO);        break; /* integer with +X/10% */
+            case 'q': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO);       break; /* integer with +X/100% */
+            case 'a': ret = stack_eng_int(block, block->ptr[j], 1000, 0);                               break; /* millisecond convert to seconds */
+
+            case 'x': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Level */
+            case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
+            case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
+
             case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
             case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
             case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
             case 'z':                                                                                   break; /* Meaningless */
             case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                 break; /* Effect */
-            case 'q': ret = stack_eng_int_bonus(block, block->ptr[j], 100, bonus->attr, i);             break; /* Integer Percentage / 100 */
             case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                                break; /* Skill */
             case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                   break; /* Size */
             case 'c': ret = (stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt) &&
                             stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt));  break; /* Monster Class & Job ID * Monster ID */
-            case 'o': ret = stack_eng_int_bonus(block, block->ptr[j], 10, bonus->attr, i);              break; /* Integer Percentage / 10 */
             case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                       break; /* Item ID */
-            case 'x': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Level */
             case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                  break; /* Regen */
-            case 'a': ret = stack_eng_int_bonus(block, block->ptr[j], 1000, bonus->attr, i);            break; /* Millisecond */
-            case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
             case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
             case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                                 break; /* Trigger BT */
             case 'y': ret = (stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt)
                             && stack_eng_item_group(block, block->ptr[j]));                             break; /* Item Group */
             case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                                break; /* Triger ATF */
-            case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
             case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                 break; /* Flag Bitfield */
             case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                 break; /* Weapon Type */
             case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
@@ -3944,36 +3947,40 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
         return NULL;
     }
 
-    if(flag & (EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK)) {
-        /* get the min and max value */
+    /* get the min and max value */
+    if(modifier != 1) {
+        calcrangemin('/', root_node->range, modifier);
+        calcrangemax('/', root_node->range, modifier);
+        root_node->min = minrange(root_node->range);
+        root_node->max = maxrange(root_node->range);
         min = root_node->min;
         max = root_node->max;
+    }
 
-        /* check whether min and max can be divided by the modifier */
-        if (min == max) {
-            /* write a single value */
-            len = (min > 0 && (min / modifier) == 0) ?
-                sprintf(buf, "%.2f", (double) min / modifier) :
-                sprintf(buf, "%d", min / modifier);
-        } else {
-            /* write multiple values */
-            len = ((min > 0 && (min / modifier) == 0) || (max > 0 && (max / modifier) == 0)) ?
-                sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
-                sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
-        }
+    /* check whether min and max can be divided by the modifier */
+    if (min == max) {
+        /* write a single value */
+        len = (min > 0 && (min / modifier) == 0) ?
+            sprintf(buf, "%.2f", (double) min / modifier) :
+            sprintf(buf, "%d", min / modifier);
+    } else {
+        /* write multiple values */
+        len = ((min > 0 && (min / modifier) == 0) || (max > 0 && (max / modifier) == 0)) ?
+            sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
+            sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
+    }
 
-        /* write formula if dependencies exist and only when flag is set */
-        if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
-            if(block_stack_push(block, TYPE_ENG, buf) ||
-               block_stack_formula(block, block->eng_cnt - 1, root_node, &formula) ||
-               block_stack_pop(block, TYPE_ENG) ||
-               block_stack_push(block, TYPE_ENG, formula))
-                goto failed;
-            SAFE_FREE(formula);
-        } else if(EVALUATE_FLAG_WRITE_STACK & flag) {
-            if(block_stack_push(block, TYPE_ENG, buf))
-                goto failed;
-        }
+    /* write formula if dependencies exist and only when flag is set */
+    if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
+        if(block_stack_push(block, TYPE_ENG, buf) ||
+           block_stack_formula(block, block->eng_cnt - 1, root_node, &formula) ||
+           block_stack_pop(block, TYPE_ENG) ||
+           block_stack_push(block, TYPE_ENG, formula))
+            goto failed;
+        SAFE_FREE(formula);
+    } else if(EVALUATE_FLAG_WRITE_STACK & flag) {
+        if(block_stack_push(block, TYPE_ENG, buf))
+            goto failed;
     }
 
     /* keep logic tree in node */

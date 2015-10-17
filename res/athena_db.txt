@@ -18,10 +18,10 @@ cast_flag = {
 }
 
 class_type = {
-    [0] = "normal classes";
-    [1] = "boss classes";
-    [2] = "guardian classes";
-    [3] = "all classes";
+    [0] = "normal";
+    [1] = "boss";
+    [2] = "guardian";
+    [3] = "all";
 }
 
 effect_type =  {
