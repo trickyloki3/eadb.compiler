@@ -1,4 +1,3 @@
-*.db
 out/
 proj/tmp/
 sql/tmp/
