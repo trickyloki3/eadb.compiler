@@ -18,24 +18,42 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\common\util.c" />
+    <ClCompile Include="src\db\db.c" />
+    <ClCompile Include="src\db\db_eathena.c" />
+    <ClCompile Include="src\db\db_hercules.c" />
+    <ClCompile Include="src\db\db_rathena.c" />
+    <ClCompile Include="src\db\db_resources.c" />
+    <ClCompile Include="src\db\load.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\common\setting.h" />
+    <ClInclude Include="src\common\util.h" />
+    <ClInclude Include="src\db\db_eathena.h" />
+    <ClInclude Include="src\db\db_hercules.h" />
+    <ClInclude Include="src\db\db_rathena.h" />
+    <ClInclude Include="src\db\db_resources.h" />
+    <ClInclude Include="src\db\load.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{285D17AF-BEB1-49F8-887A-602D4FCAA326}</ProjectGuid>
-    <RootNamespace>libconfig</RootNamespace>
+    <ProjectGuid>{E6F756BD-7A5B-42EE-926A-08800C5775A7}</ProjectGuid>
+    <RootNamespace>db</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140_xp</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -71,23 +89,27 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)build\</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\</IntDir>
-    <TargetExt>.lib</TargetExt>
+    <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)build\</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\</IntDir>
-    <TargetExt>.lib</TargetExt>
+    <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;WIN32;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)build\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libconfig.lib;lua5.lib;sqlite3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -107,13 +129,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;WIN32;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)build\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libconfig.lib;lua5.lib;sqlite3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,22 +156,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\grammar.c" />
-    <ClCompile Include="..\libconfig.c" />
-    <ClCompile Include="..\scanctx.c" />
-    <ClCompile Include="..\scanner.c" />
-    <ClCompile Include="..\strbuf.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\grammar.h" />
-    <ClInclude Include="..\libconfig.h" />
-    <ClInclude Include="..\parsectx.h" />
-    <ClInclude Include="..\scanctx.h" />
-    <ClInclude Include="..\scanner.h" />
-    <ClInclude Include="..\strbuf.h" />
-    <ClInclude Include="..\wincompat.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

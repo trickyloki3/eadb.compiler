@@ -589,7 +589,7 @@ static int __config_read(config_t *config, FILE *stream, const char *filename,
   if(stream)
     libconfig_yyrestart(stream, scanner);
   else /* read from string */
-    /*buffer = */libconfig_yy_scan_string(str, scanner);
+    /*buffer = */libconfig_yy_scan_string((char *)str, scanner);
 
   libconfig_yyset_lineno(1, scanner);
   r = libconfig_yyparse(scanner, &parse_ctx, &scan_ctx);
