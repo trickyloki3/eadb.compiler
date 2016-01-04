@@ -1,34 +1,17 @@
 #include <script.h>
 
-#define EATHENA 0
-
-#if EATHENA == 1
-    #define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\resource.db"
-    #define EA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\eathena.db"
-    #define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
-#else
-    #define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\resource.db"
-    #define RA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\rathena.db"
-    #define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
-#endif
+#define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\resource.db"
+#define RA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\rathena.db"
+#define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
-    /*script_t * context = NULL;
-    if (script_init(&context, RE_PATH, RA_PATH, MAP_PATH, RATHENA))
-        return 0;
-    script_deit(&context);*/
     int i = 0;
     int level = 0;
     char * script = NULL;
     script_t * context = NULL;
 
-#if EATHENA == 1
-    if (script_init(&context, RE_PATH, EA_PATH, MAP_PATH, EATHENA))
-        return 0;
-#else
     if (script_init(&context, RE_PATH, RA_PATH, MAP_PATH, RATHENA))
         return 0;
-#endif
 
     while(!item_iterate(context->db, &context->item)) {
         /* skip any script without statements */
