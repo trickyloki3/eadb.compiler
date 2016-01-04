@@ -15,46 +15,43 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <ClCompile Include="..\grammar.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libconfig.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scanctx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scanner.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\strbuf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="grammar.h">
+    <ClInclude Include="..\grammar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libconfig.h">
+    <ClInclude Include="..\libconfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="parsectx.h">
+    <ClInclude Include="..\parsectx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scanctx.h">
+    <ClInclude Include="..\scanctx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scanner.h">
+    <ClInclude Include="..\scanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="strbuf.h">
+    <ClInclude Include="..\strbuf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wincompat.h">
+    <ClInclude Include="..\wincompat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="grammar.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="libconfig.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scanctx.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scanner.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="strbuf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
