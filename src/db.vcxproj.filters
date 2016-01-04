@@ -15,48 +15,48 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\db\db.c">
+    <ClCompile Include="db\db.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\db\db_eathena.c">
+    <ClCompile Include="db\db_eathena.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\db\db_hercules.c">
+    <ClCompile Include="db\db_hercules.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\db\db_rathena.c">
+    <ClCompile Include="db\db_rathena.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\db\db_resources.c">
+    <ClCompile Include="db\db_resources.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\db\load.c">
+    <ClCompile Include="db\load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\util.c">
+    <ClCompile Include="common\util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\db\db_eathena.h">
+    <ClInclude Include="common\setting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\db_hercules.h">
+    <ClInclude Include="common\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\db_rathena.h">
+    <ClInclude Include="db\db_eathena.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\db_resources.h">
+    <ClInclude Include="db\db_hercules.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\db\load.h">
+    <ClInclude Include="db\db_rathena.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\common\setting.h">
+    <ClInclude Include="db\db_resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\common\util.h">
+    <ClInclude Include="db\load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

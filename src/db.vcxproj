@@ -19,22 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\common\util.c" />
-    <ClCompile Include="src\db\db.c" />
-    <ClCompile Include="src\db\db_eathena.c" />
-    <ClCompile Include="src\db\db_hercules.c" />
-    <ClCompile Include="src\db\db_rathena.c" />
-    <ClCompile Include="src\db\db_resources.c" />
-    <ClCompile Include="src\db\load.c" />
+    <ClCompile Include="common\util.c" />
+    <ClCompile Include="db\db.c" />
+    <ClCompile Include="db\db_eathena.c" />
+    <ClCompile Include="db\db_hercules.c" />
+    <ClCompile Include="db\db_rathena.c" />
+    <ClCompile Include="db\db_resources.c" />
+    <ClCompile Include="db\load.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\common\setting.h" />
-    <ClInclude Include="src\common\util.h" />
-    <ClInclude Include="src\db\db_eathena.h" />
-    <ClInclude Include="src\db\db_hercules.h" />
-    <ClInclude Include="src\db\db_rathena.h" />
-    <ClInclude Include="src\db\db_resources.h" />
-    <ClInclude Include="src\db\load.h" />
+    <ClInclude Include="common\setting.h" />
+    <ClInclude Include="common\util.h" />
+    <ClInclude Include="db\db_eathena.h" />
+    <ClInclude Include="db\db_hercules.h" />
+    <ClInclude Include="db\db_rathena.h" />
+    <ClInclude Include="db\db_resources.h" />
+    <ClInclude Include="db\load.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E6F756BD-7A5B-42EE-926A-08800C5775A7}</ProjectGuid>
