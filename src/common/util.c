@@ -129,11 +129,13 @@ int path_concat(char * path, size_t len, size_t max, const char * sub_path) {
             break;
         }
 
-    /* write the directory separator */
-    ret = snprintf(&path[len], max - len, "%c", separator);
-    if(sizeof(char) != ret)
-        return exit_func_safe("failed concatenate %s an"
-        "d %c on %d buffer size", path, separator, max);
+    /* append the directory separator */
+    if (path[len - 1] != separator) {
+        ret = snprintf(&path[len], max - len, "%c", separator);
+        if (sizeof(char) != ret)
+            return exit_func_safe("failed concatenate %s an"
+                "d %c on %d buffer size", path, separator, max);
+    }
 
     /* error on empty sub-path string */
     sub_len = strlen(sub_path);
@@ -145,6 +147,10 @@ int path_concat(char * path, size_t len, size_t max, const char * sub_path) {
     if(sub_len != ret)
         return exit_func_safe("failed concatenate %s and"
         " %s on %d buffer size", path, sub_path, max);
+
+    for (i = len; i < len + sub_len; i++)
+        if (path[i] == '\\' || path[i] == '/')
+            path[i] = separator;
 
     return CHECK_PASSED;
 }

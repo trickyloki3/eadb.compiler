@@ -230,8 +230,10 @@ int load_native(const char * file_name, DB_TRIM file_trim, NATIVE_DB_LOAD file_l
 
    /* trim the database file and open stream to new trim file */
    trim_name = trim(file_name, &trim_size, file_trim);
-   if(trim_name == NULL || trim_size <= 0) {
-      exit_func_safe("failed to filtered %s database file detected %d records", file_name, trim_size);
+   if (trim_name == NULL)
+       return CHECK_FAILED;
+   if(trim_size <= 0) {
+      exit_func_safe("detected %d records from %s", trim_size, file_name);
       return CHECK_FAILED;
    }
 
