@@ -132,8 +132,8 @@ int trim_alpha(FILE * file_stm, FILE * trim_stm) {
 
 int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t * config) {
    int i = 0;
-   char buf[BUF_SIZE];
-   char fld[BUF_SIZE];
+   unsigned char buf[BUF_SIZE];
+   unsigned char fld[BUF_SIZE];
    int offset_buf = 0;
    int offset_fld = 0;
    int index_col = 0;  /* column index */

@@ -1,7 +1,7 @@
 #include <script.h>
 
-#define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\resource.db"
-#define RA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\out\\rathena.db"
+#define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\build\\resource.db"
+#define RA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\build\\rathena.db"
 #define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
@@ -43,7 +43,7 @@ int main(int argc, char * argv[]) {
             break;*/
         }
 
-        /* display translation 
+        /* display translation
         printf("%s", context->buffer);
         script_block_dump(context, stderr);*/
 
