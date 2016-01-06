@@ -2,7 +2,7 @@
 
 #define RE_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\build\\resource.db"
 #define RA_PATH     "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\build\\rathena.db"
-#define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\res\\athena_db.txt"
+#define MAP_PATH    "C:\\Users\\trickyloki3\\Desktop\\git\\eadb.compiler\\db\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
     int i = 0;

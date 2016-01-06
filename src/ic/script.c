@@ -2032,7 +2032,6 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
     if (0 == flag)
         return CHECK_FAILED;
 
-
     top = block->eng_cnt;
 
     id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
@@ -2379,7 +2378,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
     /* trigger range (inclusive) */
     if(BF_RANGEMASK & val) {
         if((BF_LONG | BF_SHORT) & val)
-            off += sprintf(&buf[off], "meelee and range ");
+            off += sprintf(&buf[off], "meelee + range ");
         else if(BF_LONG & val)
             off += sprintf(&buf[off], "range ");
         else if(BF_SHORT & val)
@@ -2389,7 +2388,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
             goto failed;
     } else {
         /* default to meelee and range */
-        off += sprintf(&buf[off], "meelee and range ");
+        off += sprintf(&buf[off], "meelee + range ");
     }
 
     /* trigger type (exclusive?) */
@@ -2397,11 +2396,11 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         if(BF_WEAPON & val)
             off += sprintf(&buf[off], "weapon ");
         else if((BF_MAGIC | BF_MISC) & val)
-            off += sprintf(&buf[off], "magic and misc");
+            off += sprintf(&buf[off], "magical + special ");
         else if(BF_MAGIC & val)
-            off += sprintf(&buf[off], "magic ");
+            off += sprintf(&buf[off], "magical ");
         else if(BF_MISC & val)
-            off += sprintf(&buf[off], "misc ");
+            off += sprintf(&buf[off], "special ");
         else
             /* unsupported bit */
             goto failed;
@@ -2423,7 +2422,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         /* default depends on trigger type */
         if(BF_MISC & val || BF_MAGIC & val)
             off += sprintf(&buf[off], "skills");
-        else if(BF_WEAPON & val)
+        else
             off += sprintf(&buf[off], "attack");
     }
 
@@ -3039,6 +3038,9 @@ int translate_bonus(block_r * block, char * prefix) {
 
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
+            case 'A': ret = stack_eng_int_signed(block, block->ptr[j], 1, "Increase", "Decrease", FORMAT_RATIO); break;
+            case 'B': ret = stack_eng_int_signed(block, block->ptr[j], 100, "Increase", "Decrease", FORMAT_RATIO); break;
+
             case '0': ret = stack_eng_int(block, block->ptr[j], 1, 0);                                  break; /* integer without annotation */
             case 'n': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* integer with +X */
             case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO);         break; /* integer with +X% */
@@ -3070,7 +3072,7 @@ int translate_bonus(block_r * block, char * prefix) {
             case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                 break; /* Weapon Type */
             case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
                              && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                   break; /* Class Group & Monster */
-            default: break;
+            default: ret = SCRIPT_FAILED;
         }
 
         /* failed to push values onto the stack */
@@ -3130,8 +3132,9 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(bonus->attr == 1)
-        printf("%s\n", block->eng[block->eng_cnt - 1]);
+    if(bonus->id >= 157 && bonus->id <= 159) {
+        printf("%6d; %25s; %s\n", block->item_id, bonus->bonus, block->eng[block->eng_cnt - 1]);
+    }
 
     SAFE_FREE(bonus);
     return CHECK_PASSED;

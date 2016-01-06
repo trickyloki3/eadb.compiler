@@ -55,7 +55,7 @@ element_type = {
     [7] = "dark";
     [8] = "ghost";
     [9] = "undead";
-    [10] = "all elements";
+    [10] = "all";
 }
 
 equip_id = {
