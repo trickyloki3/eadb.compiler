@@ -27,7 +27,7 @@
 127  ,0       , bonus2,                       bMagicAtkEle,"%s %s magical damage.",2,l,A,2,1,0
 128  ,0       , bonus2,                       bMagicAddEle,"%s magical damage against %s enemies.",2,l,A,2,1,0
 129  ,0       , bonus2,                      bMagicAddRace,"%s magical damage against %s enemies.",2,r,A,2,1,0
-130  ,0       , bonus2,                      bMagicAddSize,"%s magical damage against %s size enemies.",2,s,A,2,1,0
+130  ,0       , bonus2,                      bMagicAddSize,"%s magical damage against %s enemies.",2,s,A,2,1,0
 131  ,0       , bonus2,                     bMagicAddClass,"%s magical damage against %s enemies.",2,j,A,2,1,0
 132  ,0       , bonus2,               bAddMagicDamageClass,"%s magical damage against %s.",2,j,A,2,1,0
 133  ,0       , bonus2,                            bAddEle,"%s physical damage against %s enemies.",2,l,A,2,1,0
@@ -37,24 +37,26 @@
 137  ,0       , bonus2,                           bAddSize,"%s physical damage against %s enemies.",2,s,A,2,1,0
 138  ,0       , bonus2,                          bAddClass,"%s physical damage against %s enemies.",2,j,A,2,1,0
 139  ,0       , bonus2,                    bAddDamageClass,"%s physical damage against %s enemies.",2,c,A,2,1,0
-140  ,0       , bonus2,                            bSubEle,"%s resist against %s property.",2,l,A,2,1,0
-141  ,0       , bonus3,                            bSubEle,"%s resist against %s property %s.",3,l,A,t,3,1,0,2
-142  ,0       , bonus2,                           bSubRace,"%s resist against %s enemies.",2,r,A,2,1,0
-143  ,0       , bonus2,                          bSubRace2,"%s resist against %s enemies.",2,r,A,2,1,0
-144  ,0       , bonus2,                           bSubSize,"%s resist against %s enemies.",2,s,A,2,1,0
-145  ,0       , bonus2,                          bSubClass,"%s resist against %s enemies.",2,j,A,2,1,0
-146  ,0       ,  bonus,                      bNoMiscDamage,"%s resist against special damage.",1,p,1,0
-147  ,0       ,  bonus,                    bNoWeaponDamage,"%s resist against physical damage.",1,p,1,0
-148  ,0       ,  bonus,                     bNoMagicDamage,"%s resist against magical damage.",1,p,1,0
-149  ,0       ,  bonus,                        bNearAtkDef,"%s resist against meelee damage.",1,A,1,0
-150  ,0       ,  bonus,                        bLongAtkDef,"%s resist against ranged damage.",1,A,1,0
-151  ,0       ,  bonus,                       bMagicAtkDef,"%s resist against magical damage.",1,A,1,0
-152  ,0       ,  bonus,                        bMiscAtkDef,"%s resist against special damage.",1,A,1,0
-153  ,0       ,  bonus,           bShortWeaponDamageReturn,"Reflect %s meelee damage.",1,p,1,0
-154  ,0       ,  bonus,            bLongWeaponDamageReturn,"Reflect %s ranged damage.",1,p,1,0
-155  ,0       ,  bonus,                 bMagicDamageReturn,"Reflect %s magical damage.",1,p,1,0
-156  ,0       , bonus2,                            bResEff,"%s resist against %s.",2,e,B,2,1,0
-159  ,0       , bonus2,                     bAddDefMonster,"%s physical resist against %s.",2,c,A,2,1,0
+140  ,0       , bonus2,                            bSubEle,"%s resistance against %s property.",2,l,A,2,1,0
+141  ,0       , bonus3,                            bSubEle,"%s resistance against %s property %s.",3,l,A,t,3,1,0,2
+142  ,0       , bonus2,                           bSubRace,"%s resistance against %s enemies.",2,r,A,2,1,0
+143  ,0       , bonus2,                          bSubRace2,"%s resistance against %s enemies.",2,r,A,2,1,0
+144  ,0       , bonus2,                           bSubSize,"%s resistance against %s enemies.",2,s,A,2,1,0
+145  ,0       , bonus2,                          bSubClass,"%s resistance against %s enemies.",2,j,A,2,1,0
+146  ,0       ,  bonus,                      bNoMiscDamage,"%s resistance against special damage.",1,A,1,0
+147  ,0       ,  bonus,                    bNoWeaponDamage,"%s resistance against physical damage.",1,A,1,0
+148  ,0       ,  bonus,                     bNoMagicDamage,"%s resistance against magical damage.",1,A,1,0
+149  ,0       ,  bonus,                        bNearAtkDef,"%s resistance against meelee damage.",1,A,1,0
+150  ,0       ,  bonus,                        bLongAtkDef,"%s resistance against ranged damage.",1,A,1,0
+151  ,0       ,  bonus,                       bMagicAtkDef,"%s resistance against magical damage.",1,A,1,0
+152  ,0       ,  bonus,                        bMiscAtkDef,"%s resistance against special damage.",1,A,1,0
+153  ,0       ,  bonus,           bShortWeaponDamageReturn,"Reflect %s meelee damage.",1,C,1,0
+154  ,0       ,  bonus,            bLongWeaponDamageReturn,"Reflect %s ranged damage.",1,C,1,0
+155  ,0       ,  bonus,                 bMagicDamageReturn,"Reflect %s magical damage.",1,C,1,0
+156  ,0       , bonus2,                            bResEff,"%s resistance against %s.",2,e,B,2,1,0
+157  ,0       , bonus2,                       bAddDefClass,"%s physical resistance against %s enemies.",2,j,A,2,1,0
+158  ,0       , bonus2,                      bAddMdefClass,"%s magical resistance against %s enemies.",2,j,A,2,1,0
+159  ,0       , bonus2,                     bAddDefMonster,"%s physical resistance against %s.",2,c,A,2,1,0
 
 /* skip the  mdef damage reduction by setting the imdef
  * flag in battle_calc_magic_attack function (battle.c) */
@@ -291,8 +293,3 @@
 /* set the target's mdef to a value by chance, race, and
  * duration when using physical attacks on the target. */
 188  ,0       , bonus4,                       bSetMDefRace,"Add %s chance to reduce MDEF to %s on %s enemies for %s seconds.",4,r,q,a,0,4,1,3,0,2
-
-
-/* no sample */
-157  ,0       , bonus2,                       bAddDefClass,"%s physical resist against %s enemies.",2,j,A,2,1,0
-158  ,0       , bonus2,                      bAddMdefClass,"%s magical resist against %s enemies.",2,j,A,2,1,0
