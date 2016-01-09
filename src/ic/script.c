@@ -3040,7 +3040,9 @@ int translate_bonus(block_r * block, char * prefix) {
         switch(bonus->type[i]) {
             case 'A': ret = stack_eng_int_signed(block, block->ptr[j], 1, "Increase", "Decrease", FORMAT_RATIO); break;
             case 'B': ret = stack_eng_int_signed(block, block->ptr[j], 100, "Increase", "Decrease", FORMAT_RATIO); break;
-            case 'C': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO); break;
+
+            case 'Y': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO); break;
+            case 'Z': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_RATIO); break;
 
             case '0': ret = stack_eng_int(block, block->ptr[j], 1, 0);                                  break; /* integer without annotation */
             case 'n': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* integer with +X */
@@ -3133,7 +3135,7 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(bonus->id >= 159 && bonus->id <= 159) {
+    if(bonus->id >= 157 && bonus->id <= 159) {
         printf("%6d; %25s; %s\n", block->item_id, bonus->bonus, block->eng[block->eng_cnt - 1]);
     }
 

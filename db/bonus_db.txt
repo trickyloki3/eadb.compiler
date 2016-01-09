@@ -50,31 +50,32 @@
 150  ,0       ,  bonus,                        bLongAtkDef,"%s resistance against ranged damage.",1,A,1,0
 151  ,0       ,  bonus,                       bMagicAtkDef,"%s resistance against magical damage.",1,A,1,0
 152  ,0       ,  bonus,                        bMiscAtkDef,"%s resistance against special damage.",1,A,1,0
-153  ,0       ,  bonus,           bShortWeaponDamageReturn,"Reflect %s meelee damage.",1,C,1,0
-154  ,0       ,  bonus,            bLongWeaponDamageReturn,"Reflect %s ranged damage.",1,C,1,0
-155  ,0       ,  bonus,                 bMagicDamageReturn,"Reflect %s magical damage.",1,C,1,0
-156  ,0       , bonus2,                            bResEff,"%s resistance against %s.",2,e,B,2,1,0
-157  ,0       , bonus2,                       bAddDefClass,"%s physical resistance against %s enemies.",2,j,A,2,1,0
-158  ,0       , bonus2,                      bAddMdefClass,"%s magical resistance against %s enemies.",2,j,A,2,1,0
-159  ,0       , bonus2,                     bAddDefMonster,"%s physical resistance against %s.",2,c,A,2,1,0
+156  ,0       , bonus2,                            bResEff,"%s chance of %s status.",2,e,B,2,1,0
+153  ,0       , bonus2,                     bAddDefMonster,"%s physical resistance against %s.",2,c,A,2,1,0
+154  ,0       , bonus2,                       bAddDefClass,"%s physical resistance against %s enemies.",2,j,A,2,1,0
+155  ,0       , bonus2,                      bAddMdefClass,"%s magical resistance against %s enemies.",2,j,A,2,1,0
 
-/* skip the  mdef damage reduction by setting the imdef
- * flag in battle_calc_magic_attack function (battle.c) */
-160  ,0       ,  bonus,                     bIgnoreMdefEle,"Ignore magical defense of %s enemies.",1,l,1,0
-161  ,0       ,  bonus,                    bIgnoreMdefRace,"Ignore magical defense of %s enemies.",1,r,1,0
-/* reduce the target's MDEF by a percentage rate
- * reducing mdef by race and class is stack
- * reducing mdef by single and all race or class is stack
- *
- * example
- *  bIgnoreMdefRaceRate,RC_DEMIHUMAN,10;
- *  bIgnoreMdefRaceRate,RC_ALL,10;
- *  bIgnoreMdefClassRate,CLASS_ALL,10;
- *  provides up to 30% MDEF reduction */
-164  ,0       , bonus2,                bIgnoreMdefRaceRate,"Ignore %s MDEF of %s enemies.",2,r,p,2,1,0
-165  ,0       , bonus2,               bIgnoreMdefClassRate,"Ignore %s MDEF of %s enemies.",2,j,p,2,1,0
-162  ,0       ,  bonus,                    bIgnoreMdefRate,"Ignore %s MDEF of all enemeies.",1,p,1,0
-163  ,0       , bonus2,                    bIgnoreMdefRate,"Ignore %s MDEF of %s enemies.",2,r,p,2,1,0
+
+
+/* 01/08/2016
+ * Pre-renewal allow translating 'ignore 10% magical defense'
+ * to 'increase 10% magical damage' because 1 mdef reduces 1%
+ * magical damage. [trickyloki3]
+ */
+157  ,0       ,  bonus,           bShortWeaponDamageReturn,"Reflect %s of all meelee damage.",1,Y,1,0
+158  ,0       ,  bonus,            bLongWeaponDamageReturn,"Reflect %s of all ranged damage.",1,Y,1,0
+159  ,0       ,  bonus,                 bMagicDamageReturn,"Reflect %s of all magical damage.",1,Y,1,0
+160  ,0       ,  bonus,                     bIgnoreMdefEle,"All magical attacks ignore the magical defense of %s enemies.",1,l,1,0
+161  ,0       ,  bonus,                    bIgnoreMdefRace,"All magical attacks ignore the magical defense of %s enemies.",1,r,1,0
+162  ,0       ,  bonus,                    bIgnoreMdefRate,"All magical attacks ignore %s magical defense of all enemies.",1,Z,1,
+163  ,0       , bonus2,                    bIgnoreMdefRate,"All magical attacks ignore %s magical defense of %s enemies.",2,r,Z,2,1,0
+164  ,0       , bonus2,                bIgnoreMdefRaceRate,"All magical attacks ignore %s magical defense of %s enemies.",2,r,Z,2,1,0
+165  ,0       , bonus2,               bIgnoreMdefClassRate,"All magical attacks ignore %s magical defense of %s enemies.",2,j,Z,2,1,0
+166  ,0       ,  bonus,                      bIgnoreDefEle,"All physical attacks ignore the physical defense of %s enemies.",1,l,1,0
+167  ,0       ,  bonus,                     bIgnoreDefRace,"All physical attacks ignore the physical defense of %s enemies.",1,r,1,0
+168  ,0       ,  bonus,                    bIgnoreDefClass,"All physical attacks ignore the physical defense of %s enemies.",1,j,1,0
+169  ,0       , bonus2,                     bIgnoreDefRate,"All physical attacks ignore %s physical defense of %s.",2,r,p,2,1,0
+170  ,0       , bonus2,                 bIgnoreDefRaceRate,"All physical attacks ignore %s physical defense of %s.",2,r,p,2,1,0
 
 /* equivalent to (rand() % atk2 + atk1) + batk; translates
  * to a number between atk1 and atk1 + atk2, then add batk */
@@ -88,7 +89,6 @@
  * and renewal, respectively. */
 16   ,0       ,  bonus,                               bDef,"DEF %s",1,n
 17   ,0       ,  bonus,                              bDef2,"DEF %s",1,n
-
 22   ,0       ,  bonus,                             bFlee2,"Perfect Dodge %s",1,n
 23   ,0       ,  bonus,                          bAtkRange,"Attack Range %s.",1,n
 24   ,0       ,  bonus,                          bCritical,"CRIT %s",1,n
@@ -188,11 +188,6 @@
 121  ,0       , bonus3,           bAddMonsterDropItemGroup,"%s chance of dropping an item in %s from each %s monster defeated.",3,y,r,q
 122  ,0       , bonus3,                  bAddClassDropItem,"%s chance of dropping %s from %s enemy.",3,m,j,q
 123  ,0       ,  bonus,           bAddMonsterDropChainItem,"Able to get item of chain type %s",1,n
-166  ,0       ,  bonus,                      bIgnoreDefEle,"Ignore the physical defense of %s enemy.",1,l
-167  ,0       ,  bonus,                     bIgnoreDefRace,"Ignore the physical defense of %s enemy.",1,r
-168  ,0       ,  bonus,                    bIgnoreDefClass,"Ignore the physical defense of %s enemy.",1,j
-169  ,0       , bonus2,                     bIgnoreDefRate,"Ignore %s physical defense of %s enemy.",2,r,p
-170  ,0       , bonus2,                 bIgnoreDefRaceRate,"Ignore %s physical defense of %s enemy.",2,r,p
 171  ,0       , bonus2,                     bWeaponComaEle,"Add %s chance of inflicting coma on %s enemy.",2,l,q
 172  ,0       , bonus2,                    bWeaponComaRace,"Add %s chance of inflicting coma on %s enemy.",2,r,q
 173  ,0       , bonus2,                   bWeaponComaClass,"Add %s chance of inflicting coma on %s enemy.",2,j,q

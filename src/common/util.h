@@ -23,7 +23,7 @@
     extern int exit_echo;
 
     /* msvc's function name macro */
-    #if defined ( WIN32 )
+    #if defined ( _WIN32 )
         #define __func__ __FUNCTION__
     #endif
 
