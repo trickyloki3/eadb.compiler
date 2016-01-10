@@ -42,6 +42,8 @@
 143  ,0       , bonus2,                          bSubRace2,"%s resistance against %s enemies",2,r,0,2,1,0
 144  ,0       , bonus2,                           bSubSize,"%s resistance against %s enemies",2,s,0,2,1,0
 145  ,0       , bonus2,                          bSubClass,"%s resistance against %s enemies",2,j,0,2,1,0
+211  ,0       , bonus2,                         bSubDefEle,"%s resistance against %s enemies",2,l,0,2,1,0
+213  ,0       , bonus2,                          bSubSkill,"%s resistance against %s",2,k,0,2,1,0
 146  ,0       ,  bonus,                      bNoMiscDamage,"%s special resistance",1,0,1,0
 147  ,0       ,  bonus,                    bNoWeaponDamage,"%s physical resistance",1,0,1,0
 148  ,0       ,  bonus,                     bNoMagicDamage,"%s magical resistance",1,0,1,0
@@ -71,13 +73,75 @@
 168  ,0       ,  bonus,                    bIgnoreDefClass,"pierce the physical defense of %s enemies",1,j,1,0
 169  ,0       , bonus2,                     bIgnoreDefRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
 170  ,0       , bonus2,                 bIgnoreDefRaceRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
+187  ,0       , bonus4,                        bSetDefRace,"%s chance to reduce %s's DEF to %s for %s",4,r,2,a,9,4,1,0,3,2
+171  ,0       , bonus2,                     bWeaponComaEle,"%s chance of inflicting coma on %s enemies",2,l,2,2,1,0
+172  ,0       , bonus2,                    bWeaponComaRace,"%s chance of inflicting coma on %s enemies",2,r,2,2,1,0
+173  ,0       , bonus2,                   bWeaponComaClass,"%s chance of inflicting coma on %s enemies",2,j,2,2,1,0
+/* eathena's bDefRatioAtk bonuses are abused heavily on high
+ * rate servers because the damage scales with defense using
+ * a percentage rate:
+ * ATK_RATE2(
+ *      flag.idef ?100:(flag.pdef ?(int)(flag.pdef *(def1+vit_def)):(100-def1)),
+ *      flag.idef2?100:(flag.pdef2?(int)(flag.pdef2*(def1+vit_def)):(100-def1))
+ *  );
+ * damage is increase by (def1 + vit_def)%, which on high rate servers
+ * player with angelus or highly refined armor can take tons of damage
+ *
+ * rathena's implementation ignores physical defense only for pre-renewal and renewal.
+ * hercules' implementation adds def1 / 2 fixed damage for renewal and uses the same
+ * implementation as eathena, except def1 is always limited to 100.
+ * [trickyloki3]
+ */
+174  ,0       ,  bonus,                    bDefRatioAtkEle,"deals more damage depending on the target's defense against %s enemies",1,l,1,0
+175  ,0       ,  bonus,                   bDefRatioAtkRace,"deals more damage depending on the target's defense against %s enemies",1,r,1,0
+176  ,0       ,  bonus,                  bDefRatioAtkClass,"deals more damage depending on the target's defense against %s enemies",1,j,1,0
+
+/* 01/10/2016
+ * ignore the 'using physical attack' or 'with weapon' conditions
+ * for the gain and drain bonuses, because of the implications of
+ * assigning these bonuses to item where the condition is implied
+ */
+177  ,0       , bonus2,                        bSPGainRace,"%s SP for every %s defeated",2,r,6,2,1,0
+178  ,0       , bonus2,                  bSPGainRaceAttack,"%s SP for each hit on %s enemies",2,r,6,2,1,0
+179  ,0       , bonus2,                  bHPGainRaceAttack,"%s HP for each hit on %s enemies",2,r,6,2,1,0
+180  ,0       , bonus2,                  bSPDrainValueRace,"%s SP for each hit on %s enemies",2,r,6,2,1,0
+181  ,0       , bonus2,                  bHPDrainValueRace,"%s HP for each hit on %s enemies",2,r,6,2,1,0
+182  ,0       , bonus3,                   bSPDrainRateRace,"%s chance to absorb %s SP from %s enemies",3,r,1,0,3,1,2,0
+183  ,0       , bonus3,                   bHPDrainRateRace,"%s chance to absorb %s HP from %s enemies",3,r,1,0,3,1,2,0
+214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s",2,k,6,2,1,0
+200  ,0       ,  bonus,                           bNoRegen,"disable %s natural regeneration",1,g,1,0
+212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP is absorbed",1,p,1,0
+185  ,0       , bonus2,                        bExpAddRace,"%s EXP from %s enemies",2,r,0,2,1,0
+186  ,0       , bonus2,                       bExpAddClass,"%s EXP from %s enemies",2,j,0,2,1,0
+189  ,0       ,  bonus,                bUnbreakableGarment,"garment is indestructible",0
+190  ,0       ,  bonus,                 bUnbreakableWeapon,"weapon is indestructible",0
+191  ,0       ,  bonus,                  bUnbreakableArmor,"armor is indestructible",0
+192  ,0       ,  bonus,                   bUnbreakableHelm,"helm is indestructible",0
+193  ,0       ,  bonus,                 bUnbreakableShield,"shield is indestructible",0
+194  ,0       ,  bonus,                  bUnbreakableShoes,"shoe is indestructible",0
+195  ,0       ,  bonus,                 bUnstripableWeapon,"weapon is unstrippable",0
+196  ,0       ,  bonus,                  bUnstripableArmor,"armor is unstrippable",0
+197  ,0       ,  bonus,                   bUnstripableHelm,"helm is unstrippable",0
+198  ,0       ,  bonus,                 bUnstripableShield,"shield is unstrippable",0
+199  ,0       ,  bonus,                       bUnstripable,"equipment is unstrippable",0
+201  ,0       ,  bonus,                       bPerfectHide,"GM perfect hiding cannot be detected",0
+202  ,0       ,  bonus,                       bNoKnockback,"cannot be knockback",0
+203  ,0       ,  bonus,                bRestartFullRecover,"recover full HP and SP when revived",0
+204  ,0       ,  bonus,                         bNoSizeFix,"nullify reduction in damage inflicted on enemies resulting from enemy's size",0
+205  ,0       ,  bonus,                        bNoGemStone,"ability to use magic without gemstones",0
+206  ,0       ,  bonus,                       bIntravision,"ability to detect cloak or hidden enemies",0
+207  ,0       ,  bonus,                      bNoCastCancel,"ability to cast magic without interruption",0
+208  ,0       ,  bonus,                     bNoCastCancel2,"ability to cast magic without interruption",0
+209  ,0       , bonus2,                         bComaClass,"%s chance of inflicting coma on %s enemies",2,j,2,2,1,0
+210  ,0       , bonus2,                          bComaRace,"%s chance of inflicting coma on %s enemies",2,r,2,2,1,0
+184  ,0       , bonus2,                   bCriticalAddRace,"%s critical chance on %s enemies",2,r,0,2,1,0
 
 /* equivalent to (rand() % atk2 + atk1) + batk; translates
  * to a number between atk1 and atk1 + atk2, then add batk */
-12   ,0       ,  bonus,                               bAtk,"Increase weapon attack by %s.",1,n
-13   ,0       ,  bonus,                              bAtk2,"Increase weapon attack by %s.",1,n
-14   ,0       ,  bonus,                           bBaseAtk,"Increase base attack %s.",1,n
-15   ,0       ,  bonus,                              bMatk,"Increase base magical %s.",1,n
+12   ,0       ,  bonus,                               bAtk,"ATK %s.",1,n
+13   ,0       ,  bonus,                              bAtk2,"ATK %s.",1,n
+14   ,0       ,  bonus,                           bBaseAtk,"BATK %s.",1,n
+15   ,0       ,  bonus,                              bMatk,"MATK %s.",1,n
 
 /* reference battle_calc_defense_reduction for renewal and nonrenewal calculation;
  * DEF2 subtract directly while DEF subtract by percentage or scale on pre-renewal
@@ -130,8 +194,8 @@
 70   ,0       , bonus2,                      bHPVanishRate,"%s chance to drain %s HP of opponent with each physical attack.",2,o,p
 71   ,0       , bonus2,                      bSPVanishRate,"%s chance to drain %s SP of opponent with each physical attack.",2,o,p
 72   ,0       , bonus3,                      bSPVanishRate,"%s chance to drain %s SP of opponent with each physical attack.",3,o,p,t
-209  ,0       , bonus3,                  bHPVanishRaceRate,"%s chance to drain %s HP of %s opponent with each physical attack.",3,r,q,p
-210  ,0       , bonus3,                  bSPVanishRaceRate,"%s chance to drain %s SP of %s opponent with each physical attack.",3,r,q,p
+215  ,0       , bonus3,                  bHPVanishRaceRate,"%s chance to drain %s HP of %s opponent with each physical attack.",3,r,q,p
+216  ,0       , bonus3,                  bSPVanishRaceRate,"%s chance to drain %s SP of %s opponent with each physical attack.",3,r,q,p
 73   ,0       , bonus2,                       bHPDrainRate,"%s chance to absorb %s HP on physical attack.",2,o,p
 74   ,0       , bonus2,                       bSPDrainRate,"%s chance to absorb %s SP on physical attack.",2,o,p
 75   ,0       , bonus3,                       bSPDrainRate,"%s chance to absorb %s SP on physical attack.",3,o,p,h
@@ -183,49 +247,6 @@
 121  ,0       , bonus3,           bAddMonsterDropItemGroup,"%s chance of dropping an item in %s from each %s monster defeated.",3,y,r,q
 122  ,0       , bonus3,                  bAddClassDropItem,"%s chance of dropping %s from %s enemy.",3,m,j,q
 123  ,0       ,  bonus,           bAddMonsterDropChainItem,"Able to get item of chain type %s",1,n
-171  ,0       , bonus2,                     bWeaponComaEle,"Add %s chance of inflicting coma on %s enemy.",2,l,q
-172  ,0       , bonus2,                    bWeaponComaRace,"Add %s chance of inflicting coma on %s enemy.",2,r,q
-173  ,0       , bonus2,                   bWeaponComaClass,"Add %s chance of inflicting coma on %s enemy.",2,j,q
-174  ,0       ,  bonus,                    bDefRatioAtkEle,"Increase damage proportional to the target's defense for %s enemy.",1,l
-175  ,0       ,  bonus,                   bDefRatioAtkRace,"Increase damage proportional to the target's defense for %s enemy.",1,r
-176  ,0       ,  bonus,                  bDefRatioAtkClass,"Increase damage proportional to the target's defense for %s enemy.",1,j
-177  ,0       , bonus2,                        bSPGainRace,"%s SP for every %s defeated.",2,r,n
-178  ,0       , bonus2,                  bSPGainRaceAttack,"%s SP for every hit on %s enemy.",2,r,n
-179  ,0       , bonus2,                  bSPDrainValueRace,"%s SP for every hit on %s enemy.",2,r,n
-180  ,0       , bonus3,                   bSPDrainRateRace,"%s chance to absorb %s SP from %s enemy.",3,r,o,p
-181  ,0       , bonus2,                  bHPGainRaceAttack,"%s HP for every hit on %s enemy.",2,r,n
-182  ,0       , bonus2,                  bHPDrainValueRace,"%s HP for every hit on %s enemy.",2,r,n
-183  ,0       , bonus3,                   bHPDrainRateRace,"%s chance to absorb %s HP from %s enemy.",3,r,o,p
-184  ,0       , bonus2,                   bCriticalAddRace,"%s critical chance on %s enemy.",2,r,n
-185  ,0       , bonus2,                        bExpAddRace,"%s more EXP from %s enemy.",2,r,p
-186  ,0       , bonus2,                       bExpAddClass,"%s more EXP from %s enemy.",2,j,p
-187  ,0       , bonus4,                        bSetDefRace,"Add %s chance to reduce %s enemy's DEF to %s for %s seconds.",4,r,p,p,q
-189  ,0       ,  bonus,                bUnbreakableGarment,"Garment is indestructible.",1,z
-190  ,0       ,  bonus,                 bUnbreakableWeapon,"Weapon is indestructible.",1,z
-191  ,0       ,  bonus,                  bUnbreakableArmor,"Armor is indestructible.",1,z
-192  ,0       ,  bonus,                   bUnbreakableHelm,"Helm is indestructible.",1,z
-193  ,0       ,  bonus,                 bUnbreakableShield,"Shield is indestructible.",1,z
-194  ,0       ,  bonus,                  bUnbreakableShoes,"Shoe is indestructible.",1,z
-195  ,0       ,  bonus,                 bUnstripableWeapon,"Weapon cannot be strip.",1,z
-196  ,0       ,  bonus,                  bUnstripableArmor,"Armor cannot be strip.",1,z
-197  ,0       ,  bonus,                   bUnstripableHelm,"Helm cannot be strip.",1,z
-198  ,0       ,  bonus,                 bUnstripableShield,"Shield cannot be strip.",1,z
-199  ,0       ,  bonus,                       bUnstripable,"Equipment cannot be strip.",1,z
-200  ,0       ,  bonus,                           bNoRegen,"Disable %s natural regeneration.",1,g
-201  ,0       ,  bonus,                       bPerfectHide,"Grant ability to be undetect by monsters when cloak or hidden.",1,z
-202  ,0       ,  bonus,                       bNoKnockback,"Grant ability to resist knockback.",1,z
-203  ,0       ,  bonus,                bRestartFullRecover,"Grant ability to recover full HP and SP when revived.",1,z
-204  ,0       ,  bonus,                         bNoSizeFix,"Grant ability to disregard size reduction on damage.",1,z
-205  ,0       ,  bonus,                        bNoGemStone,"Grant ability to use magic without gemstones.",1,z
-206  ,0       ,  bonus,                       bIntravision,"Grant ability to see hidden characters.",1,z
-207  ,0       ,  bonus,                      bNoCastCancel,"Grant ability to cast magic without interruption.",1,z
-208  ,0       ,  bonus,                     bNoCastCancel2,"Grant ability to cast magic without interruption.",1,z
-209  ,0       , bonus2,                         bComaClass,"Add %s chance of inflicting coma on %s enemy.",2,j,q
-210  ,0       , bonus2,                          bComaRace,"Add %s chance of inflicting coma on %s enemy.",2,r,q
-211  ,0       , bonus2,                         bSubDefEle,"%s resistance against %s enemies.",2,l,p
-212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP will be reduce by %s of max hp.",2,p,z
-213  ,0       , bonus2,                          bSubSkill,"%s resistance against %s.",2,k,p
-214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s.",2,k,n
 
 /* fix and rate based status bonuses */
 1    ,0       ,  bonus,                               bStr,"STR %s",1,n,1,0

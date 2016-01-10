@@ -3047,17 +3047,18 @@ int translate_bonus(block_r * block, char * prefix) {
             case '6': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS); break;
             case '7': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS); break;
             case '8': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS); break;
+            case '9': ret = stack_eng_int(block, block->ptr[j], 1, 0); break;
 
             case 'n': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* integer with +X */
             case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO);         break; /* integer with +X% */
             case 'o': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO);        break; /* integer with +X/10% */
             case 'q': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO);       break; /* integer with +X/100% */
-            case 'a': ret = stack_eng_int(block, block->ptr[j], 1000, 0);                               break; /* millisecond convert to seconds */
 
             case 'x': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Level */
             case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
             case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
 
+            case 'a': ret = stack_eng_time(block, block->ptr[j], 1);                                    break; /* Time */
             case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
             case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
             case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
@@ -3097,6 +3098,10 @@ int translate_bonus(block_r * block, char * prefix) {
     }
 
     switch(bonus->type_cnt) {
+        case 0:
+            block_stack_vararg(block,
+                TYPE_ENG, bonus->format);
+            break;
         case 1:
             block_stack_vararg(block,
                 TYPE_ENG, bonus->format,
@@ -3138,7 +3143,7 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(bonus->id >= 124 && bonus->id <= 170) {
+    if(bonus->id >= 184 && bonus->id <= 184) {
         printf("%6d; %25s; %s\n", block->item_id, bonus->bonus, block->eng[block->eng_cnt - 1]);
     }
 
