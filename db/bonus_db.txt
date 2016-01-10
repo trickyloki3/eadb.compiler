@@ -74,6 +74,7 @@
 169  ,0       , bonus2,                     bIgnoreDefRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
 170  ,0       , bonus2,                 bIgnoreDefRaceRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
 187  ,0       , bonus4,                        bSetDefRace,"%s chance to reduce %s's DEF to %s for %s",4,r,2,a,9,4,1,0,3,2
+188  ,0       , bonus4,                       bSetMDefRace,"%s chance to reduce %s's MDEF to %s for %s",4,r,2,a,9,4,1,0,3,2
 171  ,0       , bonus2,                     bWeaponComaEle,"%s chance of inflicting coma on %s enemies",2,l,2,2,1,0
 172  ,0       , bonus2,                    bWeaponComaRace,"%s chance of inflicting coma on %s enemies",2,r,2,2,1,0
 173  ,0       , bonus2,                   bWeaponComaClass,"%s chance of inflicting coma on %s enemies",2,j,2,2,1,0
@@ -136,16 +137,57 @@
 210  ,0       , bonus2,                          bComaRace,"%s chance of inflicting coma on %s enemies",2,r,2,2,1,0
 184  ,0       , bonus2,                   bCriticalAddRace,"%s critical chance on %s enemies",2,r,0,2,1,0
 
-/* equivalent to (rand() % atk2 + atk1) + batk; translates
- * to a number between atk1 and atk1 + atk2, then add batk */
+99   ,0       , bonus2,                      bAddSkillBlow,"Knock enemy back by %s cells using %s",2,k,9,2,1,0
+100  ,0       , bonus3,                     bAddEffOnSkill,"%s chance of inflicting %s when using %s",3,k,e,2,3,2,1,0
+101  ,0       , bonus4,                     bAddEffOnSkill,"%s chance of inflicting %s when using %s %s",4,k,e,2,d,4,2,1,0,3
+102  ,0       , bonus4,                  bAutoSpellOnSkill,"%s chance of casting level %s %s when using %s",4,k,k,9,1,4,3,2,1,0
+103  ,0       , bonus5,                  bAutoSpellOnSkill,"%s chance of casting level %s %s %s when using %s",5,k,k,9,1,b,5,3,2,1,4,0
+105  ,0       , bonus2,                            bAddEff,"%s chance of inflicting %s when attacking",2,e,2,2,1,0
+106  ,0       , bonus2,                           bAddEff2,"%s chance of inflicting %s on self when attacking",2,e,2,2,1,0
+104  ,0       , bonus3,                            bAddEff,"%s chance of inflicting %s %s",3,e,2,d,3,1,0,2
+107  ,0       , bonus2,                     bAddEffWhenHit,"%s chance of inflicting %s on enemy when hit",2,e,2,2,1,0
+108  ,0       , bonus3,                     bAddEffWhenHit,"%s chance of inflicting %s %s",3,e,2,d,3,1,0,2
+109  ,0       , bonus3,                         bAutoSpell,"%s chance of casting level %s %s when attacking",3,k,9,1,3,2,1,0
+110  ,0       , bonus4,                         bAutoSpell,"%s chance of casting level %s %s %s when attacking",4,k,9,1,v,4,2,1,0,3
+111  ,0       , bonus5,                         bAutoSpell,"%s chance of casting level %s %s %s when %s",5,k,9,1,t,v,5,2,1,0,4,3
+112  ,0       , bonus3,                  bAutoSpellWhenHit,"%s chance of casting level %s %s when hit",3,k,9,1,3,2,1,0
+113  ,0       , bonus4,                  bAutoSpellWhenHit,"%s chance of casting level %s %s %s when hit",4,k,9,1,v,4,2,1,0,3
+114  ,0       , bonus5,                  bAutoSpellWhenHit,"%s chance of casting level %s %s %s when %s",5,k,9,1,t,v,5,2,1,0,4,3
+115  ,0       , bonus2,                        bGetZenyNum,"%s chance of gaining %s zeny",2,9,0,2,1,0
+116  ,0       , bonus2,                     bAddGetZenyNum,"%s chance of gaining %s zeny",2,9,0,2,1,0
+117  ,0       , bonus2,                bAddMonsterDropItem,"%s chance of dropping '%s'",2,m,2,2,1,0
+118  ,0       , bonus3,                bAddMonsterDropItem,"%s chance of dropping '%s' from %s enemies",3,m,r,2,3,2,0,1
+119  ,0       , bonus3,              bAddMonsterIdDropItem,"%s chance of dropping '%s' from %s",3,m,c,2,3,2,0,1
+120  ,0       , bonus3,                  bAddClassDropItem,"%s chance of dropping '%s' from %s enemies",3,m,j,2,3,2,0,1
+121  ,0       , bonus2,           bAddMonsterDropItemGroup,"%s chance of dropping an item in '%s'",2,y,2,2,1,0
+122  ,0       , bonus3,           bAddMonsterDropItemGroup,"%s chance of dropping an item in '%s' from %s",3,y,r,2,3,2,0,1
+123  ,0       ,  bonus,           bAddMonsterDropChainItem,"obtain an item from '%s'",1,y,1,0
+
+1    ,0       ,  bonus,                               bStr,"STR %s",1,n,1,0
+2    ,0       ,  bonus,                               bAgi,"AGI %s",1,n,1,0
+3    ,0       ,  bonus,                               bVit,"VIT %s",1,n,1,0
+4    ,0       ,  bonus,                               bInt,"INT %s",1,n,1,0
+5    ,0       ,  bonus,                               bDex,"DEX %s",1,n,1,0
+6    ,0       ,  bonus,                               bLuk,"LUK %s",1,n,1,0
+20   ,0       ,  bonus,                               bHit,"HIT %s",1,n,1,0
+21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n,1,0
+7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,n,1,0
+8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,n,1,0
+9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,n,1,0
+10   ,1       ,  bonus,                             bMaxHP,"Max HP %s",1,n,1,0
+11   ,1       ,  bonus,                             bMaxSP,"Max SP %s",1,n,1,0
+26   ,1       ,  bonus,                         bMaxHPrate,"Max HP %s",1,p,1,0
+27   ,1       ,  bonus,                         bMaxSPrate,"Max SP %s",1,p,1,0
+0    ,0       ,  bonus,                         bSpeedRate,"Movement Speed %s",1,p,1,0
+29   ,0       ,  bonus,                      bSpeedAddRate,"Movement Speed %s",1,p,1,0
+18   ,0       ,  bonus,                              bMdef,"MDEF %s",1,n,1,0
+19   ,0       ,  bonus,                             bMdef2,"MDEF2 %s",1,n,1,0
+33   ,0       ,  bonus,                          bMdefRate,"MDEF %s",1,p,1,0
+34   ,0       ,  bonus,                         bMdef2Rate,"MDEF2 %s",1,p,1,0
 12   ,0       ,  bonus,                               bAtk,"ATK %s.",1,n
 13   ,0       ,  bonus,                              bAtk2,"ATK %s.",1,n
 14   ,0       ,  bonus,                           bBaseAtk,"BATK %s.",1,n
 15   ,0       ,  bonus,                              bMatk,"MATK %s.",1,n
-
-/* reference battle_calc_defense_reduction for renewal and nonrenewal calculation;
- * DEF2 subtract directly while DEF subtract by percentage or scale on pre-renewal
- * and renewal, respectively. */
 16   ,0       ,  bonus,                               bDef,"DEF %s",1,n
 17   ,0       ,  bonus,                              bDef2,"DEF %s",1,n
 22   ,0       ,  bonus,                             bFlee2,"Perfect Dodge %s",1,n
@@ -222,85 +264,3 @@
 96   ,0       , bonus2,                     bSkillCooldown,"%s on cooldown time for %s.",2,k,a
 97   ,0       , bonus2,                    bSkillFixedCast,"%s on fixed cast time for %s.",2,k,a
 98   ,0       , bonus2,                 bSkillVariableCast,"%s on variable cast time for %s.",2,k,a
-99   ,0       , bonus2,                      bAddSkillBlow,"Knock enemy back by %s cells using %s.",2,k,f
-100  ,0       , bonus3,                     bAddEffOnSkill,"Add %s chance of inflicting %s when using %s.",3,k,e,q
-101  ,0       , bonus4,                     bAddEffOnSkill,"Add %s chance of inflicting %s when using %s %s.",4,k,e,q,d
-102  ,0       , bonus4,                  bAutoSpellOnSkill,"Add %s%% chance of auto-casting %s[Lv.%s] when using %s.",4,k,k,x,o
-103  ,0       , bonus5,                  bAutoSpellOnSkill,"Add %s%% chance of auto-casting %s[Lv.%s] %s when using %s.",5,k,k,x,o,b
-104  ,0       , bonus3,                            bAddEff,"%s chance of inflicting %s %s.",3,e,q,d
-105  ,0       , bonus2,                            bAddEff,"%s chance of inflicting %s when attacking.",2,e,q
-106  ,0       , bonus2,                           bAddEff2,"%s chance of inflicting %s on self when attacking.",2,e,q
-107  ,0       , bonus2,                     bAddEffWhenHit,"%s chance of inflicting %s on enemy when receiving physical damage.",2,e,q
-108  ,0       , bonus3,                     bAddEffWhenHit,"%s chance of inflicting %s %s when receiving physical damage.",3,e,q,d
-109  ,0       , bonus3,                         bAutoSpell,"%s chance of casting %s[Lv.%s] when attacking.",3,k,x,o
-110  ,0       , bonus4,                         bAutoSpell,"%s chance of casting %s[Lv.%s] %s when attacking.",4,k,x,o,v
-111  ,0       , bonus5,                         bAutoSpell,"%s chance of casting %s[Lv.%s] %s.%s",5,k,x,o,t,v
-112  ,0       , bonus3,                  bAutoSpellWhenHit,"%s chance of casting %s[Lv.%s] when receiving physical damage.",3,k,x,o
-113  ,0       , bonus4,                  bAutoSpellWhenHit,"%s chance of casting %s[Lv.%s] %s when receiving physical damage.",4,k,x,o,v
-114  ,0       , bonus5,                  bAutoSpellWhenHit,"%s chance of casting %s[Lv.%s] %s when attacked. %s",5,k,x,o,t,v
-115  ,0       , bonus2,                        bGetZenyNum,"%s chance of gaining %s zeny for each monster killed.",2,n,p
-116  ,0       , bonus2,                     bAddGetZenyNum,"%s chance of gaining %s zeny from each monster killed.",2,n,p
-117  ,0       , bonus2,                bAddMonsterDropItem,"%s chance of dropping '%s' from each monster defeated.",2,m,q
-118  ,0       , bonus3,                bAddMonsterDropItem,"%s chance of dropping '%s' from each %s monster defeated.",3,m,r,q
-119  ,0       , bonus3,              bAddMonsterIdDropItem,"%s chance of dropping '%s' from each %s defeated.",3,m,c,q
-120  ,0       , bonus2,           bAddMonsterDropItemGroup,"%s chance of dropping an item in %s from each monster defeated.",2,y,q
-121  ,0       , bonus3,           bAddMonsterDropItemGroup,"%s chance of dropping an item in %s from each %s monster defeated.",3,y,r,q
-122  ,0       , bonus3,                  bAddClassDropItem,"%s chance of dropping %s from %s enemy.",3,m,j,q
-123  ,0       ,  bonus,           bAddMonsterDropChainItem,"Able to get item of chain type %s",1,n
-
-/* fix and rate based status bonuses */
-1    ,0       ,  bonus,                               bStr,"STR %s",1,n,1,0
-2    ,0       ,  bonus,                               bAgi,"AGI %s",1,n,1,0
-3    ,0       ,  bonus,                               bVit,"VIT %s",1,n,1,0
-4    ,0       ,  bonus,                               bInt,"INT %s",1,n,1,0
-5    ,0       ,  bonus,                               bDex,"DEX %s",1,n,1,0
-6    ,0       ,  bonus,                               bLuk,"LUK %s",1,n,1,0
-20   ,0       ,  bonus,                               bHit,"HIT %s",1,n,1,0
-21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n,1,0
-7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,n,1,0
-8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,n,1,0
-9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,n,1,0
-10   ,1       ,  bonus,                             bMaxHP,"Max HP %s",1,n,1,0
-11   ,1       ,  bonus,                             bMaxSP,"Max SP %s",1,n,1,0
-26   ,1       ,  bonus,                         bMaxHPrate,"Max HP %s",1,p,1,0
-27   ,1       ,  bonus,                         bMaxSPrate,"Max SP %s",1,p,1,0
-
-/* rathena uses the maximum of all bSpeedRate plus the sum of
- * all bSpeedAddRate which means bSpeedRate is not stackable;
- * max(bSpeedRate) + sum(bSpeedAddRate) */
-0    ,0       ,  bonus,                         bSpeedRate,"Movement Speed %s",1,p,1,0
-29   ,0       ,  bonus,                      bSpeedAddRate,"Movement Speed %s",1,p,1,0
-
-/* renewal mdef damage reduction
- * damage = damage * (1000 + mdef) / (1000 + mdef * 10) - mdef2
- *
- * mdef     reduction   deviation
- * 0        0%
- * 50       30%         %30
- * 100      45%         %15
- * 150      54%         %9
- * 200      60%         %6
- * therefore, renewal factors in diminishing returns
- * for mdef, while mdef2 is a fixed damage reduction
- * (renewal also allows a negative mdef to boost damage rather than to reduce damage)
- *
- * prenewal mdef damage reduction
- * damage = damage - ((100 - mdef) / 100) - mdef2 (official)
- * however, prenewal uses a linear percentage based reduction
- * i.e. for each 1 mdef means 1% of magic  damage is reduced.
- *
- * prenewal mdef damage reduction (custom)
- * if you set battle.conf's magic_defense_type, then instead
- * of a linear percentage based  reduction, a scaling factor
- * is used instead.
- *
- * reference battle_calc_magic_attack in battle.c [10/17/2015]
- */
-18   ,0       ,  bonus,                              bMdef,"MDEF %s",1,n,1,0
-19   ,0       ,  bonus,                             bMdef2,"MDEF2 %s",1,n,1,0
-33   ,0       ,  bonus,                          bMdefRate,"MDEF %s",1,p,1,0
-34   ,0       ,  bonus,                         bMdef2Rate,"MDEF2 %s",1,p,1,0
-
-/* set the target's mdef to a value by chance, race, and
- * duration when using physical attacks on the target. */
-188  ,0       , bonus4,                       bSetMDefRace,"Add %s chance to reduce MDEF to %s on %s enemies for %s seconds.",4,r,q,a,0,4,1,3,0,2

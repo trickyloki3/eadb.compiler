@@ -3143,7 +3143,7 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(bonus->id >= 184 && bonus->id <= 184) {
+    if(bonus->id >= 99 && bonus->id <= 99) {
         printf("%6d; %25s; %s\n", block->item_id, bonus->bonus, block->eng[block->eng_cnt - 1]);
     }
 
