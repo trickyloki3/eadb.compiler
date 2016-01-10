@@ -2378,7 +2378,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
     /* trigger range (inclusive) */
     if(BF_RANGEMASK & val) {
         if((BF_LONG | BF_SHORT) & val)
-            off += sprintf(&buf[off], "meelee + range ");
+            off += sprintf(&buf[off], "meelee and range ");
         else if(BF_LONG & val)
             off += sprintf(&buf[off], "range ");
         else if(BF_SHORT & val)
@@ -2388,15 +2388,15 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
             goto failed;
     } else {
         /* default to meelee and range */
-        off += sprintf(&buf[off], "meelee + range ");
+        off += sprintf(&buf[off], "meelee and range ");
     }
 
     /* trigger type (exclusive?) */
     if(BF_WEAPONMASK & val) {
         if(BF_WEAPON & val)
-            off += sprintf(&buf[off], "weapon ");
+            off += sprintf(&buf[off], "phyiscal ");
         else if((BF_MAGIC | BF_MISC) & val)
-            off += sprintf(&buf[off], "magical + special ");
+            off += sprintf(&buf[off], "magical and special ");
         else if(BF_MAGIC & val)
             off += sprintf(&buf[off], "magical ");
         else if(BF_MISC & val)
@@ -2406,7 +2406,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
             goto failed;
     } else {
         /* default to weapon */
-        off += sprintf(&buf[off], "weapon ");
+        off += sprintf(&buf[off], "phyiscal ");
     }
 
     /* trigger method (exclusive) */
@@ -2414,7 +2414,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         if(BF_SKILL & val)
             off += sprintf(&buf[off], "skills");
         else if(BF_NORMAL & val)
-            off += sprintf(&buf[off], "attack");
+            off += sprintf(&buf[off], "attacks");
         else
             /* unsupported bit */
             goto failed;
@@ -2423,7 +2423,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         if(BF_MISC & val || BF_MAGIC & val)
             off += sprintf(&buf[off], "skills");
         else
-            off += sprintf(&buf[off], "attack");
+            off += sprintf(&buf[off], "attacks");
     }
 
     if(stack_aux_formula(block, trigger, buf))
@@ -3038,13 +3038,16 @@ int translate_bonus(block_r * block, char * prefix) {
 
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
-            case 'A': ret = stack_eng_int_signed(block, block->ptr[j], 1, "Increase", "Decrease", FORMAT_RATIO); break;
-            case 'B': ret = stack_eng_int_signed(block, block->ptr[j], 100, "Increase", "Decrease", FORMAT_RATIO); break;
+            case '0': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO); break;
+            case '1': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO); break;
+            case '2': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO); break;
+            case '3': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_RATIO); break;
+            case '4': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_RATIO); break;
+            case '5': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_RATIO); break;
+            case '6': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS); break;
+            case '7': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS); break;
+            case '8': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS); break;
 
-            case 'Y': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO); break;
-            case 'Z': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_RATIO); break;
-
-            case '0': ret = stack_eng_int(block, block->ptr[j], 1, 0);                                  break; /* integer without annotation */
             case 'n': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* integer with +X */
             case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO);         break; /* integer with +X% */
             case 'o': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO);        break; /* integer with +X/10% */
@@ -3075,12 +3078,12 @@ int translate_bonus(block_r * block, char * prefix) {
             case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                 break; /* Weapon Type */
             case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
                              && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                   break; /* Class Group & Monster */
-            default: ret = SCRIPT_FAILED;
+            default: ret = CHECK_FAILED;
         }
 
         /* failed to push values onto the stack */
         if(ret) {
-            exit_func_safe("failed to evaluate argument 'c' for item %d", bonus->type[i], block->item_id);
+            exit_func_safe("failed to evaluate argument '%c' for item %d", bonus->type[i], block->item_id);
             goto failed;
         }
 
@@ -3135,7 +3138,7 @@ int translate_bonus(block_r * block, char * prefix) {
             block->item_id);
     }
 
-    if(bonus->id >= 157 && bonus->id <= 159) {
+    if(bonus->id >= 124 && bonus->id <= 170) {
         printf("%6d; %25s; %s\n", block->item_id, bonus->bonus, block->eng[block->eng_cnt - 1]);
     }
 

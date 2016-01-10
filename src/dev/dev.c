@@ -1,9 +1,7 @@
 /* dev.exe -p ..\db -o ..\build
  * to update the sqlite3 databases when 
  * the text database files changes make
- * life so much easier [trickyloki3] 
- * 
- * run from build\ with db.exe in build\ */
+ * life so much easier [trickyloki3] */
 
 #include "util.h"
 #include <windows.h>

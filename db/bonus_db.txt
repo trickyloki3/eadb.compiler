@@ -19,63 +19,58 @@
  * of rathena.
  */
 
-
-/* 01/05/2016 */
-124  ,0       ,  bonus,                            bDefEle,"Enchanted with %s property.",1,l,1,0
-125  ,0       ,  bonus,                            bAtkEle,"Enchanted with %s property.",1,l,1,0
-126  ,0       , bonus2,                            bAtkEle,"%s %s physical damage.",2,l,A,2,1,0
-127  ,0       , bonus2,                       bMagicAtkEle,"%s %s magical damage.",2,l,A,2,1,0
-128  ,0       , bonus2,                       bMagicAddEle,"%s magical damage against %s enemies.",2,l,A,2,1,0
-129  ,0       , bonus2,                      bMagicAddRace,"%s magical damage against %s enemies.",2,r,A,2,1,0
-130  ,0       , bonus2,                      bMagicAddSize,"%s magical damage against %s enemies.",2,s,A,2,1,0
-131  ,0       , bonus2,                     bMagicAddClass,"%s magical damage against %s enemies.",2,j,A,2,1,0
-132  ,0       , bonus2,               bAddMagicDamageClass,"%s magical damage against %s.",2,j,A,2,1,0
-133  ,0       , bonus2,                            bAddEle,"%s physical damage against %s enemies.",2,l,A,2,1,0
-134  ,0       , bonus3,                            bAddEle,"%s physical damage against %s enemies %s.",3,l,A,t,3,1,0,2
-135  ,0       , bonus2,                           bAddRace,"%s physical damage against %s enemies.",2,r,A,2,1,0
-136  ,0       , bonus2,                          bAddRace2,"%s physical damage against %s enemies.",2,r,A,2,1,0
-137  ,0       , bonus2,                           bAddSize,"%s physical damage against %s enemies.",2,s,A,2,1,0
-138  ,0       , bonus2,                          bAddClass,"%s physical damage against %s enemies.",2,j,A,2,1,0
-139  ,0       , bonus2,                    bAddDamageClass,"%s physical damage against %s enemies.",2,c,A,2,1,0
-140  ,0       , bonus2,                            bSubEle,"%s resistance against %s property.",2,l,A,2,1,0
-141  ,0       , bonus3,                            bSubEle,"%s resistance against %s property %s.",3,l,A,t,3,1,0,2
-142  ,0       , bonus2,                           bSubRace,"%s resistance against %s enemies.",2,r,A,2,1,0
-143  ,0       , bonus2,                          bSubRace2,"%s resistance against %s enemies.",2,r,A,2,1,0
-144  ,0       , bonus2,                           bSubSize,"%s resistance against %s enemies.",2,s,A,2,1,0
-145  ,0       , bonus2,                          bSubClass,"%s resistance against %s enemies.",2,j,A,2,1,0
-146  ,0       ,  bonus,                      bNoMiscDamage,"%s resistance against special damage.",1,A,1,0
-147  ,0       ,  bonus,                    bNoWeaponDamage,"%s resistance against physical damage.",1,A,1,0
-148  ,0       ,  bonus,                     bNoMagicDamage,"%s resistance against magical damage.",1,A,1,0
-149  ,0       ,  bonus,                        bNearAtkDef,"%s resistance against meelee damage.",1,A,1,0
-150  ,0       ,  bonus,                        bLongAtkDef,"%s resistance against ranged damage.",1,A,1,0
-151  ,0       ,  bonus,                       bMagicAtkDef,"%s resistance against magical damage.",1,A,1,0
-152  ,0       ,  bonus,                        bMiscAtkDef,"%s resistance against special damage.",1,A,1,0
-156  ,0       , bonus2,                            bResEff,"%s chance of %s status.",2,e,B,2,1,0
-153  ,0       , bonus2,                     bAddDefMonster,"%s physical resistance against %s.",2,c,A,2,1,0
-154  ,0       , bonus2,                       bAddDefClass,"%s physical resistance against %s enemies.",2,j,A,2,1,0
-155  ,0       , bonus2,                      bAddMdefClass,"%s magical resistance against %s enemies.",2,j,A,2,1,0
-
-
-
-/* 01/08/2016
- * Pre-renewal allow translating 'ignore 10% magical defense'
+/* 01/09/2016 */
+124  ,0       ,  bonus,                            bDefEle,"%s elemental property",1,l,1,0
+125  ,0       ,  bonus,                            bAtkEle,"%s elemental property",1,l,1,0
+126  ,0       , bonus2,                       bMagicAtkEle,"%s %s magical damage",2,l,0,2,1,0
+127  ,0       , bonus2,                       bMagicAddEle,"%s magical damage against %s enemies",2,l,0,2,1,0
+128  ,0       , bonus2,                      bMagicAddRace,"%s magical damage against %s enemies",2,r,0,2,1,0
+129  ,0       , bonus2,                      bMagicAddSize,"%s magical damage against %s enemies",2,s,0,2,1,0
+130  ,0       , bonus2,                     bMagicAddClass,"%s magical damage against %s enemies",2,j,0,2,1,0
+131  ,0       , bonus2,               bAddMagicDamageClass,"%s magical damage against %s enemies",2,j,0,2,1,0
+132  ,0       , bonus2,                            bAtkEle,"%s physical damage using %s attacks",2,l,0,2,1,0
+133  ,0       , bonus2,                            bAddEle,"%s physical damage against %s enemies",2,l,0,2,1,0
+134  ,0       , bonus3,                            bAddEle,"%s physical damage against %s enemies %s",3,l,0,t,3,1,0,2
+135  ,0       , bonus2,                           bAddRace,"%s physical damage against %s enemies",2,r,0,2,1,0
+136  ,0       , bonus2,                          bAddRace2,"%s physical damage against %s enemies",2,r,0,2,1,0
+137  ,0       , bonus2,                           bAddSize,"%s physical damage against %s enemies",2,s,0,2,1,0
+138  ,0       , bonus2,                          bAddClass,"%s physical damage against %s enemies",2,j,0,2,1,0
+139  ,0       , bonus2,                    bAddDamageClass,"%s physical damage against %s enemies",2,c,0,2,1,0
+140  ,0       , bonus2,                            bSubEle,"%s %s resistance",2,l,0,2,1,0
+141  ,0       , bonus3,                            bSubEle,"%s %s resistance %s",3,l,0,t,3,1,0,2
+142  ,0       , bonus2,                           bSubRace,"%s resistance against %s enemies",2,r,0,2,1,0
+143  ,0       , bonus2,                          bSubRace2,"%s resistance against %s enemies",2,r,0,2,1,0
+144  ,0       , bonus2,                           bSubSize,"%s resistance against %s enemies",2,s,0,2,1,0
+145  ,0       , bonus2,                          bSubClass,"%s resistance against %s enemies",2,j,0,2,1,0
+146  ,0       ,  bonus,                      bNoMiscDamage,"%s special resistance",1,0,1,0
+147  ,0       ,  bonus,                    bNoWeaponDamage,"%s physical resistance",1,0,1,0
+148  ,0       ,  bonus,                     bNoMagicDamage,"%s magical resistance",1,0,1,0
+149  ,0       ,  bonus,                        bNearAtkDef,"%s meelee resistance",1,0,1,0
+150  ,0       ,  bonus,                        bLongAtkDef,"%s ranged resistance",1,0,1,0
+151  ,0       ,  bonus,                       bMagicAtkDef,"%s magical resistance",1,0,1,0
+152  ,0       ,  bonus,                        bMiscAtkDef,"%s special resistance",1,0,1,0
+153  ,0       , bonus2,                     bAddDefMonster,"%s physical resistance against %s",2,c,0,2,1,0
+154  ,0       , bonus2,                       bAddDefClass,"%s physical resistance against %s enemies",2,j,0,2,1,0
+155  ,0       , bonus2,                      bAddMdefClass,"%s magical resistance against %s enemies",2,j,0,2,1,0
+156  ,0       , bonus2,                            bResEff,"%s %s status resistance",2,e,2,2,1,0
+157  ,0       ,  bonus,           bShortWeaponDamageReturn,"reflect %s meelee damage",1,0,1,0
+158  ,0       ,  bonus,            bLongWeaponDamageReturn,"reflect %s ranged damage",1,0,1,0
+159  ,0       ,  bonus,                 bMagicDamageReturn,"%s chance to reflect magic spell back to caster",1,0,1,0
+/* pre-renewal allow translating 'ignore 10% magical defense'
  * to 'increase 10% magical damage' because 1 mdef reduces 1%
- * magical damage. [trickyloki3]
- */
-157  ,0       ,  bonus,           bShortWeaponDamageReturn,"Reflect %s of all meelee damage.",1,Y,1,0
-158  ,0       ,  bonus,            bLongWeaponDamageReturn,"Reflect %s of all ranged damage.",1,Y,1,0
-159  ,0       ,  bonus,                 bMagicDamageReturn,"Reflect %s of all magical damage.",1,Y,1,0
-160  ,0       ,  bonus,                     bIgnoreMdefEle,"All magical attacks ignore the magical defense of %s enemies.",1,l,1,0
-161  ,0       ,  bonus,                    bIgnoreMdefRace,"All magical attacks ignore the magical defense of %s enemies.",1,r,1,0
-162  ,0       ,  bonus,                    bIgnoreMdefRate,"All magical attacks ignore %s magical defense of all enemies.",1,Z,1,
-163  ,0       , bonus2,                    bIgnoreMdefRate,"All magical attacks ignore %s magical defense of %s enemies.",2,r,Z,2,1,0
-164  ,0       , bonus2,                bIgnoreMdefRaceRate,"All magical attacks ignore %s magical defense of %s enemies.",2,r,Z,2,1,0
-165  ,0       , bonus2,               bIgnoreMdefClassRate,"All magical attacks ignore %s magical defense of %s enemies.",2,j,Z,2,1,0
-166  ,0       ,  bonus,                      bIgnoreDefEle,"All physical attacks ignore the physical defense of %s enemies.",1,l,1,0
-167  ,0       ,  bonus,                     bIgnoreDefRace,"All physical attacks ignore the physical defense of %s enemies.",1,r,1,0
-168  ,0       ,  bonus,                    bIgnoreDefClass,"All physical attacks ignore the physical defense of %s enemies.",1,j,1,0
-169  ,0       , bonus2,                     bIgnoreDefRate,"All physical attacks ignore %s physical defense of %s.",2,r,p,2,1,0
-170  ,0       , bonus2,                 bIgnoreDefRaceRate,"All physical attacks ignore %s physical defense of %s.",2,r,p,2,1,0
+ * magical damage, which applies for physical defense as well
+ * [trickyloki3] */
+160  ,0       ,  bonus,                     bIgnoreMdefEle,"pierce the magical defense of %s enemies",1,l,1,0
+161  ,0       ,  bonus,                    bIgnoreMdefRace,"pierce the magical defense of %s enemies",1,r,1,0
+162  ,0       ,  bonus,                    bIgnoreMdefRate,"pierce %s magical defense of all enemies",1,0,1,0
+163  ,0       , bonus2,                    bIgnoreMdefRate,"pierce %s magical defense of %s enemies",2,r,0,2,1,0
+164  ,0       , bonus2,                bIgnoreMdefRaceRate,"pierce %s magical defense of %s enemies",2,r,0,2,1,0
+165  ,0       , bonus2,               bIgnoreMdefClassRate,"pierce %s magical defense of %s enemies",2,j,0,2,1,0
+166  ,0       ,  bonus,                      bIgnoreDefEle,"pierce the physical defense of %s enemies",1,l,1,0
+167  ,0       ,  bonus,                     bIgnoreDefRace,"pierce the physical defense of %s enemies",1,r,1,0
+168  ,0       ,  bonus,                    bIgnoreDefClass,"pierce the physical defense of %s enemies",1,j,1,0
+169  ,0       , bonus2,                     bIgnoreDefRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
+170  ,0       , bonus2,                 bIgnoreDefRaceRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
 
 /* equivalent to (rand() % atk2 + atk1) + batk; translates
  * to a number between atk1 and atk1 + atk2, then add batk */
