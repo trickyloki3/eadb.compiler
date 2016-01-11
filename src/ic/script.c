@@ -1403,7 +1403,6 @@ clean:
     /* free the sub-script context */
     SAFE_FREE(script);
     return ret;
-
 failed:
     exit_func_safe("failed to translate subscript '%s'", subscript);
     ret = CHECK_FAILED;
@@ -4000,6 +3999,9 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
            block_stack_push(block, TYPE_ENG, formula))
             goto failed;
         SAFE_FREE(formula);
+    } else if(EVALUATE_FLAG_WRITE_STACK & flag) {
+        if(block_stack_push(block, TYPE_ENG, buf))
+            goto failed;
     }
 
     /* keep logic tree in node */
@@ -4140,7 +4142,6 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
      * node */
     if(node_structure(root_node) ||
        node_evaluate(root_node->next, node_dbg, logic_tree, flag) ||
-       node_formula(root_node->next, 64) ||
        node_steal(root_node->next, root_node)) {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed;
@@ -4479,7 +4480,7 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
             "function '%s' in %d", func->name, block->item_id);
     }
 
-    node->formula = convert_string("Random");
+    node->formula = convert_string("random");
 
 clean:
     node_free(operand_1);
@@ -4868,7 +4869,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
                 result = NULL;
             }
 
-            node->formula = convert_string("Random");
+            node->formula = convert_string("random");
             node->min = minrange(node->range);
             node->max = maxrange(node->range);
             goto clean;
@@ -4898,7 +4899,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
                 result = NULL;
             }
 
-            node->formula = convert_string("Random");
+            node->formula = convert_string("random");
             node->min = minrange(node->range);
             node->max = maxrange(node->range);
             goto clean;
@@ -4946,7 +4947,8 @@ int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * fun
 }
 
 int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = CHECK_FAILED;
+    int ret = 0;
+    int len = 0;
     int flag = 0;
     node_t * base = NULL;
     node_t * expo = NULL;
@@ -4958,21 +4960,40 @@ int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, nod
         return exit_func_safe("invalid argument count to "
         "function '%s' in %d", func->name, block->item_id);
 
-    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA;
+    len = block->arg_cnt;
+    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK;
     base = evaluate_expression(block, block->ptr[off], 1, flag);
-    if(NULL != base) {
-        expo = evaluate_expression(block, block->ptr[off + 1], 1, flag);
-        if(NULL != expo)
-            ret = CHECK_PASSED;
-    }
+    if(NULL == base)
+        goto failed;
 
+    expo = evaluate_expression(block, block->ptr[off + 1], 1, flag);
+    if(NULL == expo)
+        goto failed;
+
+    len = block->arg_cnt - len + 128;
+    node->formula = calloc(len, sizeof(char));
+    if(NULL == node->formula)
+        goto failed;
+
+    if(expo->min == expo->max &&
+       expo->min == 1)
+        sprintf(node->formula, "%s",
+                block->eng[block->eng_cnt - 2]);
+    else
+        sprintf(node->formula, "(%s)^%s",
+                block->eng[block->eng_cnt - 2],
+                block->eng[block->eng_cnt - 1]);
 
     node->min = (int) pow(base->min, expo->min);
     node->max = (int) pow(base->max, expo->max);
 
+clean:
     node_free(base);
     node_free(expo);
     return ret;
+failed:
+    ret = CHECK_FAILED;
+    goto clean;
 }
 
 int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
@@ -5385,7 +5406,6 @@ void node_free(node_t * node) {
             freenamerange(node->cond);
         if(NULL != node->range)
             freerange(node->range);
-        SAFE_FREE(node->hash_table);
         SAFE_FREE(node->formula);
         SAFE_FREE(node->id);
         SAFE_FREE(node);
@@ -5423,110 +5443,4 @@ void node_dump(node_t * node, FILE * stream) {
         dmpnamerange(node->cond, stream, 0);
         fprintf(stream,"\n");
     }
-}
-
-int node_formula(node_t * root, int hash_size) {
-    /* initialize the root node's hash table */
-    root->hash_count = 0;
-    root->hash_size = hash_size;
-    root->hash_table = calloc(hash_size, sizeof(char *));
-
-    if(NULL == root->hash_table)
-        return CHECK_FAILED;
-
-    if(node_formula_recursive(root, root))
-        return CHECK_FAILED;
-
-    /* if hash table is empty, then destroy it */
-    if(0 >= root->hash_count) {
-        root->hash_size = 0;
-        SAFE_FREE(root->hash_table);
-    }
-
-    return CHECK_PASSED;
-}
-
-int node_formula_recursive(node_t * node, node_t * root) {
-    int i = 0;
-    int hash = 0;
-
-    /* post order traversal of node tree */
-    if(node->left == node->right) {
-        /* unary operator case */
-        if(NULL != node->left && node_formula_recursive(node->left, root))
-            return CHECK_FAILED;
-    } else {
-        /* binary operator case */
-        if((NULL != node->left && node_formula_recursive(node->left, root)) ||
-           (NULL != node->right && node_formula_recursive(node->right, root)))
-            return CHECK_FAILED;
-    }
-
-    /* merge a subexpression's hash table if non-empty */
-    if(node->type & NODE_TYPE_SUB && node->hash_count > 0) {
-        for(i = 0; i < node->hash_size; i++)
-            if(NULL != node->hash_table[i])
-                if(node_cluster(root, i, node->hash_table[i]))
-                    return CHECK_FAILED;
-        /* subexpression's  formula is an aggregate
-         * of the hash table; ignore the hash table */
-        return CHECK_PASSED;
-    }
-
-    /* skip any node without a formula */
-    if(NULL == node->formula)
-        return CHECK_PASSED;
-
-    /* compute the hash */
-    if(node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
-        /* variable or function id */
-        hash = node->var;
-    } else {
-        /* (min + max) / 2 % size */
-        hash += node->min / 2;
-        hash += node->max / 2;
-        hash %= root->hash_size;
-    }
-
-    /* add the node's formula to root node's hash table */
-    return node_cluster(root, hash, node->formula);
-}
-
-int node_cluster(node_t * root, int hash, char * formula) {
-    int i = 0;
-    int size = 0;
-
-    /* check whether the hash table is full */
-    if(root->hash_size <= root->hash_count)
-        return exit_abt_safe("root node's hash table is full");
-
-    /* the do-loop below is intended to factor the for-loop body
-     * by preventing the need to use two for-loops with the same
-     * body; the two for-loop below is equivalent.
-     *  for(i = hash; i < hash_size; i++)
-     *  for(i = 0; i < hash; i++) */
-    size = root->hash_size;
-    do {
-        for(i = hash; i < size; i++) {
-            /* steal the node's formula and store in hash table */
-            if(NULL == root->hash_table[i]) {
-                root->hash_table[i] = formula;
-                root->hash_count++;
-                return CHECK_PASSED;
-            }
-
-            /* skip if the formula already exist in the hash table */
-            if(0 == ncs_strcmp(root->hash_table[i], formula))
-                return CHECK_PASSED;
-        }
-
-        /* iterate the remainder of the hash
-         * table;  for(i = 0; i < hash; i++) */
-        i = 0;
-        size = hash;
-    } while(i != hash);
-
-    /* the hash table size check ensure at
-     * least one free slot is available */
-    return CHECK_PASSED;
 }
