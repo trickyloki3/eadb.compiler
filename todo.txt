@@ -1,0 +1,7 @@
+# High Priority
+ * Re-implement processing of conditions for if, if-else, ? operator, and for statements.
+ * Re-implement scheme for complex expressions show players how bonuses are calculated.
+
+# Low Priority
+ * Recognize and interpret script engine variables in expressions.
+ * Implement compound assignment, increment, and decrement operators.
