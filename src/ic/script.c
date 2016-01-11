@@ -571,6 +571,23 @@ int script_deit(script_t ** script) {
     return CHECK_PASSED;
 }
 
+int script_check(const char * script) {
+    int i;
+    int level = 0;
+
+    for (i = 0; script[i] != '\0'; i++) {
+        if (script[i + 1] != '\0' && script[i] == '/' && script[i + 1] == '*') {
+            level++;
+        } else if (script[i] != '\0'  && script[i] == '*' && script[i + 1] == '/') {
+            level--;
+            i += 2;
+        }
+        if (!level && ';' == script[i])
+            return CHECK_PASSED;
+    }
+    return CHECK_FAILED;
+}
+
 int script_lexical(token_r * token, char * script) {
     int i = 0;
     int id = 0;                 /* indicate previous token is an identifer */

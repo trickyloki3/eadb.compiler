@@ -172,6 +172,7 @@
     #define FLAG_PARSE_ALL_FLAGS           0x07
 
     /* script core interface */
+    int script_check(const char *);
     int script_lexical(token_r *, char *);
     int script_analysis(script_t *, token_r *, block_r *, block_r **);
     int script_analysis_(script_t *, char *, block_r *, block_r **);
