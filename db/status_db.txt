@@ -631,3 +631,8 @@
 621  ,                sc_reuse_stormblast,?,?,?,?,"",0
 622  ,          sc_all_riding_reuse_limit,?,?,?,?,"",0
 623  ,                  sc_extremityfist2,?,?,?,?,"",0
+/* both health and energy drink uses a formula based
+ * on thrown or drank, but too lazy to translated in
+ * to code */
+625  ,          sc_promote_health_reserch,?,?,?,?,"Increase Max HP.",0
+626  ,            sc_energy_drink_reserch,?,?,?,?,"Increase Max SP.",0
