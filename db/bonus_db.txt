@@ -5,18 +5,7 @@
  * github: https://github.com/trickyloki3
  *  email: tricky.loki3@gmail.com
  *
- * see translate_bonus in script.c for details on
- * how these values are used. :D
- *
- * pc.c implements each bonus.
- *
- * read the comments for more details which
- * might be interesting if you want  a more
- * accurate description; i preferred simple
- * over complex.
- *
- * all bonuses are interpreted in the context
- * of rathena.
+ * translate_bonus in script.c for additional information
  */
 
 /* 01/09/2016 */
@@ -101,6 +90,7 @@
  * ignore the 'using physical attack' or 'with weapon' conditions
  * for the gain and drain bonuses, because of the implications of
  * assigning these bonuses to item where the condition is implied
+ * [trickyloki3]
  */
 177  ,0       , bonus2,                        bSPGainRace,"%s SP for every %s defeated",2,r,6,2,1,0
 178  ,0       , bonus2,                  bSPGainRaceAttack,"%s SP for each hit on %s enemies",2,r,6,2,1,0
@@ -110,6 +100,7 @@
 182  ,0       , bonus3,                   bSPDrainRateRace,"%s chance to absorb %s SP from %s enemies",3,r,1,0,3,1,2,0
 183  ,0       , bonus3,                   bHPDrainRateRace,"%s chance to absorb %s HP from %s enemies",3,r,1,0,3,1,2,0
 214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s",2,k,6,2,1,0
+64   ,0       ,  bonus,                         bUseSPrate,"%s SP consumption",1,0,1,0
 200  ,0       ,  bonus,                           bNoRegen,"disable %s natural regeneration",1,g,1,0
 212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP is absorbed",1,p,1,0
 185  ,0       , bonus2,                        bExpAddRace,"%s EXP from %s enemies",2,r,0,2,1,0
@@ -120,6 +111,7 @@
 192  ,0       ,  bonus,                   bUnbreakableHelm,"helm is indestructible",0
 193  ,0       ,  bonus,                 bUnbreakableShield,"shield is indestructible",0
 194  ,0       ,  bonus,                  bUnbreakableShoes,"shoe is indestructible",0
+46   ,0       ,  bonus,                       bUnbreakable,"%s equipment break resistance",1,0,1,0
 195  ,0       ,  bonus,                 bUnstripableWeapon,"weapon is unstrippable",0
 196  ,0       ,  bonus,                  bUnstripableArmor,"armor is unstrippable",0
 197  ,0       ,  bonus,                   bUnstripableHelm,"helm is unstrippable",0
@@ -136,7 +128,6 @@
 209  ,0       , bonus2,                         bComaClass,"%s chance of inflicting coma on %s enemies",2,j,2,2,1,0
 210  ,0       , bonus2,                          bComaRace,"%s chance of inflicting coma on %s enemies",2,r,2,2,1,0
 184  ,0       , bonus2,                   bCriticalAddRace,"%s critical chance on %s enemies",2,r,0,2,1,0
-
 99   ,0       , bonus2,                      bAddSkillBlow,"Knock enemy back by %s cells using %s",2,k,9,2,1,0
 100  ,0       , bonus3,                     bAddEffOnSkill,"%s chance of inflicting %s when using %s",3,k,e,2,3,2,1,0
 101  ,0       , bonus4,                     bAddEffOnSkill,"%s chance of inflicting %s when using %s %s",4,k,e,2,d,4,2,1,0,3
@@ -162,105 +153,107 @@
 121  ,0       , bonus2,           bAddMonsterDropItemGroup,"%s chance of dropping an item in '%s'",2,y,2,2,1,0
 122  ,0       , bonus3,           bAddMonsterDropItemGroup,"%s chance of dropping an item in '%s' from %s",3,y,r,2,3,2,0,1
 123  ,0       ,  bonus,           bAddMonsterDropChainItem,"obtain an item from '%s'",1,y,1,0
-
-1    ,0       ,  bonus,                               bStr,"STR %s",1,n,1,0
-2    ,0       ,  bonus,                               bAgi,"AGI %s",1,n,1,0
-3    ,0       ,  bonus,                               bVit,"VIT %s",1,n,1,0
-4    ,0       ,  bonus,                               bInt,"INT %s",1,n,1,0
-5    ,0       ,  bonus,                               bDex,"DEX %s",1,n,1,0
-6    ,0       ,  bonus,                               bLuk,"LUK %s",1,n,1,0
-20   ,0       ,  bonus,                               bHit,"HIT %s",1,n,1,0
-21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,n,1,0
-7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,n,1,0
-8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,n,1,0
-9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,n,1,0
-10   ,1       ,  bonus,                             bMaxHP,"Max HP %s",1,n,1,0
-11   ,1       ,  bonus,                             bMaxSP,"Max SP %s",1,n,1,0
-26   ,1       ,  bonus,                         bMaxHPrate,"Max HP %s",1,p,1,0
-27   ,1       ,  bonus,                         bMaxSPrate,"Max SP %s",1,p,1,0
-0    ,0       ,  bonus,                         bSpeedRate,"Movement Speed %s",1,p,1,0
-29   ,0       ,  bonus,                      bSpeedAddRate,"Movement Speed %s",1,p,1,0
-18   ,0       ,  bonus,                              bMdef,"MDEF %s",1,n,1,0
-19   ,0       ,  bonus,                             bMdef2,"MDEF2 %s",1,n,1,0
-33   ,0       ,  bonus,                          bMdefRate,"MDEF %s",1,p,1,0
-34   ,0       ,  bonus,                         bMdef2Rate,"MDEF2 %s",1,p,1,0
-12   ,0       ,  bonus,                               bAtk,"ATK %s.",1,n
-13   ,0       ,  bonus,                              bAtk2,"ATK %s.",1,n
-14   ,0       ,  bonus,                           bBaseAtk,"BATK %s.",1,n
-15   ,0       ,  bonus,                              bMatk,"MATK %s.",1,n
-16   ,0       ,  bonus,                               bDef,"DEF %s",1,n
-17   ,0       ,  bonus,                              bDef2,"DEF %s",1,n
-22   ,0       ,  bonus,                             bFlee2,"Perfect Dodge %s",1,n
-23   ,0       ,  bonus,                          bAtkRange,"Attack Range %s.",1,n
-24   ,0       ,  bonus,                          bCritical,"CRIT %s",1,n
-25   ,0       ,  bonus,                              bAspd,"Attack Speed: %s",1,n
-28   ,0       ,  bonus,                           bAtkRate,"ATK %s",1,p
-30   ,0       ,  bonus,                          bMatkRate,"MATK %s",1,p
-31   ,0       ,  bonus,                           bDefRate,"DEF %s",1,p
-32   ,0       ,  bonus,                          bDef2Rate,"DEF %s",1,p
-35   ,0       ,  bonus,                           bHitRate,"HIT %s",1,p
-36   ,0       ,  bonus,                      bCriticalRate,"CRIT %s",1,p
-37   ,0       ,  bonus,                          bFleeRate,"FLEE %s",1,p
-38   ,0       ,  bonus,                         bFlee2Rate,"Perfect Dogde %s",1,p
-39   ,0       ,  bonus,                          bAspdRate,"ASPD %s",1,p
-40   ,0       ,  bonus,                       bLongAtkRate,"%s long ranged damage.",1,p
-41   ,0       ,  bonus,                       bCritAtkRate,"%s critical damage.",1,p
-42   ,0       ,  bonus,                       bClassChange,"%s chance of transforming a monster while fighting.",1,q
-43   ,0       ,  bonus,                      bAddStealRate,"%s success rate to stealing.",1,q
-44   ,0       ,  bonus,                   bBreakWeaponRate,"%s chance of breaking enemy's weapon while attacking.",1,q
-45   ,0       ,  bonus,                    bBreakArmorRate,"%s chance of breaking enemy's armor while attacking.",1,q
-46   ,0       ,  bonus,                       bUnbreakable,"%s resistance from breaking.",1,p
-47   ,0       ,  bonus,                       bCriticalDef,"%s to avoid critical damage from traps.",1,p
-48   ,0       ,  bonus,                        bDoubleRate,"%s fixed-chance of double-attack.",1,p
-49   ,0       ,  bonus,                     bDoubleAddRate,"%s chance of double-attack",1,p
-50   ,0       ,  bonus,                    bPerfectHitRate,"%s fixed-chance of a perfect hit.",1,p
-51   ,0       ,  bonus,                 bPerfectHitAddRate,"%s chance of a perfect hit.",1,p
-52   ,0       ,  bonus,                       bSplashRange,"Adjust splash radius to an overpowering %s grid.",1,w
-53   ,0       ,  bonus,                    bSplashAddRange,"Ajust splash radius to an overpowering %s grid.",1,w
-54   ,0       , bonus2,                         bWeaponAtk,"Add %s ATK to %s weapons.",2,i,n
-55   ,0       , bonus2,                     bWeaponAtkRate,"Add %s ATK to %s weapons.",2,i,n
-56   ,0       ,  bonus,                      bSPDrainValue,"%s SP with each physical attack.",1,n
-57   ,0       , bonus2,                      bSPDrainValue,"%s SP with each physical attack.",2,n,h
-58   ,0       ,  bonus,                      bHPDrainValue,"%s HP with each physical attack.",1,n
-59   ,0       , bonus2,                      bHPDrainValue,"%s HP with each physical attack.",2,n,x
-60   ,0       ,  bonus,                       bSPGainValue,"%s SP for each monster killed using physical attacks.",1,n
-61   ,0       ,  bonus,                       bHPGainValue,"%s HP for each monster killed using physical attacks.",1,n
-62   ,0       ,  bonus,                  bMagicSPGainValue,"%s SP for each monster killed using magical attacks.",1,n
-63   ,0       ,  bonus,                  bMagicHPGainValue,"%s HP for each monster killed using magical attacks.",1,n
-64   ,0       ,  bonus,                         bUseSPrate,"%s SP consumption of all magic.",1,p
-65   ,0       ,  bonus,                   bAddItemHealRate,"%s HP recovery from all items.",1,p
-66   ,0       ,  bonus,                         bHealPower,"%s heal amount of all healing magic.",1,p
-67   ,0       ,  bonus,                        bHealPower2,"%s heal amount from ally healing magic.",1,p
-68   ,0       ,  bonus,                       bHPrecovRate,"%s natural HP recovery.",1,p
-69   ,0       ,  bonus,                       bSPrecovRate,"%s natural SP recovery.",1,p
-70   ,0       , bonus2,                      bHPVanishRate,"%s chance to drain %s HP of opponent with each physical attack.",2,o,p
-71   ,0       , bonus2,                      bSPVanishRate,"%s chance to drain %s SP of opponent with each physical attack.",2,o,p
-72   ,0       , bonus3,                      bSPVanishRate,"%s chance to drain %s SP of opponent with each physical attack.",3,o,p,t
-215  ,0       , bonus3,                  bHPVanishRaceRate,"%s chance to drain %s HP of %s opponent with each physical attack.",3,r,q,p
-216  ,0       , bonus3,                  bSPVanishRaceRate,"%s chance to drain %s SP of %s opponent with each physical attack.",3,r,q,p
-73   ,0       , bonus2,                       bHPDrainRate,"%s chance to absorb %s HP on physical attack.",2,o,p
-74   ,0       , bonus2,                       bSPDrainRate,"%s chance to absorb %s SP on physical attack.",2,o,p
-75   ,0       , bonus3,                       bSPDrainRate,"%s chance to absorb %s SP on physical attack.",3,o,p,h
-76   ,0       , bonus2,                       bHPRegenRate,"Gain %s HP every %s seconds.",2,n,a
-77   ,0       , bonus2,                       bSPRegenRate,"Gain %s SP every %s seconds.",2,n,a
-78   ,0       , bonus2,                        bHPLossRate,"Lose %s HP every %s seconds",2,n,a
-79   ,0       , bonus2,                        bSPLossRate,"Lose %s SP every %s seconds",2,n,a
-80   ,0       , bonus2,                   bAddItemHealRate,"%s HP recovery from %s.",2,y,p
-81   ,0       , bonus2,              bAddItemGroupHealRate,"%s HP recovery from %s.",2,y,p
-82   ,0       ,  bonus,                          bCastrate,"%s cast time of all magic.",1,p
-83   ,0       , bonus2,                          bCastrate,"%s casting time of %s.",2,k,p
-84   ,0       ,  bonus,                     bFixedCastrate,"%s fixed-cast time of all magic.",1,p
-85   ,0       , bonus2,                     bFixedCastrate,"%s fixed-cast time of %s.",2,k,p
-86   ,0       ,  bonus,                         bDelayrate,"%s after-cast skill delay of all magic.",1,p
-87   ,0       ,  bonus,                  bVariableCastrate,"%s variable cast time of all magic.",1,p
-88   ,0       , bonus2,                  bVariableCastrate,"%s variable cast time of %s.",2,k,p
-89   ,0       ,  bonus,                         bFixedCast,"%s milliseconds to fixed cast time of all magic.",1,a
-90   ,0       ,  bonus,                      bVariableCast,"%s milliseconds to variable cast time of all magic.",1,a
-91   ,0       , bonus2,                          bSkillAtk,"%s %s damage.",2,k,p
-92   ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s.",2,k,n
-93   ,0       , bonus2,                    bSkillUseSPrate,"%s SP consumption when using %s.",2,k,p
-94   ,0       , bonus2,                         bSkillHeal,"%s heal amount using %s skill.",2,k,p
-95   ,0       , bonus2,                        bSkillHeal2,"%s heal amount using ally %s skill.",2,k,p
-96   ,0       , bonus2,                     bSkillCooldown,"%s on cooldown time for %s.",2,k,a
-97   ,0       , bonus2,                    bSkillFixedCast,"%s on fixed cast time for %s.",2,k,a
-98   ,0       , bonus2,                 bSkillVariableCast,"%s on variable cast time for %s.",2,k,a
+1    ,0       ,  bonus,                               bStr,"STR %s",1,6,1,0
+2    ,0       ,  bonus,                               bAgi,"AGI %s",1,6,1,0
+3    ,0       ,  bonus,                               bVit,"VIT %s",1,6,1,0
+4    ,0       ,  bonus,                               bInt,"INT %s",1,6,1,0
+5    ,0       ,  bonus,                               bDex,"DEX %s",1,6,1,0
+6    ,0       ,  bonus,                               bLuk,"LUK %s",1,6,1,0
+20   ,0       ,  bonus,                               bHit,"HIT %s",1,6,1,0
+35   ,0       ,  bonus,                           bHitRate,"HIT %s",1,0,1,0
+21   ,0       ,  bonus,                              bFlee,"FLEE %s",1,6,1,0
+37   ,0       ,  bonus,                          bFleeRate,"FLEE %s",1,0,1,0
+22   ,0       ,  bonus,                             bFlee2,"Perfect Dodge %s",1,6,1,0
+38   ,0       ,  bonus,                         bFlee2Rate,"Perfect Dogde %s",1,0,1,0
+7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,6,1,0
+8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,6,1,0
+9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,6,1,0
+10   ,1       ,  bonus,                             bMaxHP,"Max HP %s",1,6,1,0
+11   ,1       ,  bonus,                             bMaxSP,"Max SP %s",1,6,1,0
+26   ,1       ,  bonus,                         bMaxHPrate,"Max HP %s",1,0,1,0
+27   ,1       ,  bonus,                         bMaxSPrate,"Max SP %s",1,0,1,0
+0    ,0       ,  bonus,                         bSpeedRate,"Base Movement Speed %s",1,0,1,0
+29   ,0       ,  bonus,                      bSpeedAddRate,"Movement Speed %s",1,0,1,0
+18   ,0       ,  bonus,                              bMdef,"MDEF %s",1,6,1,0
+19   ,0       ,  bonus,                             bMdef2,"MDEF2 %s",1,6,1,0
+33   ,0       ,  bonus,                          bMdefRate,"MDEF %s",1,0,1,0
+34   ,0       ,  bonus,                         bMdef2Rate,"MDEF2 %s",1,0,1,0
+/* BATK adds fixed amount of damage
+ * WATK adds fixed attack bonus to weapon (similar to atk2)
+ * ATK and ATK2 limit the range of damage by (rand() % atk2) + atk1
+ * [trickyloki3]
+ */
+12   ,0       ,  bonus,                               bAtk,"ATK %s",1,6,1,0
+28   ,0       ,  bonus,                           bAtkRate,"ATK %s",1,0,1,0
+13   ,0       ,  bonus,                              bAtk2,"ATK2 %s",1,6,1,0
+14   ,0       ,  bonus,                           bBaseAtk,"BATK %s",1,6,1,0
+54   ,0       , bonus2,                         bWeaponAtk,"%s attack bonus for %s",2,i,6,2,1,0
+55   ,0       , bonus2,                     bWeaponAtkRate,"%s attack bonus for %s",2,i,0,2,1,0
+15   ,0       ,  bonus,                              bMatk,"MATK %s",1,6,1,0
+30   ,0       ,  bonus,                          bMatkRate,"MATK %s",1,0,1,0
+16   ,0       ,  bonus,                               bDef,"DEF %s",1,6,1,0
+31   ,0       ,  bonus,                           bDefRate,"DEF %s",1,0,1,0
+17   ,0       ,  bonus,                              bDef2,"DEF2 %s",1,6,1,0
+32   ,0       ,  bonus,                          bDef2Rate,"DEF2 %s",1,0,1,0
+24   ,0       ,  bonus,                          bCritical,"CRIT %s",1,6,1,0
+36   ,0       ,  bonus,                      bCriticalRate,"CRIT %s",1,0,1,0
+25   ,0       ,  bonus,                              bAspd,"ASPD %s",1,6,1,0
+39   ,0       ,  bonus,                          bAspdRate,"ASPD %s",1,0,1,0
+23   ,0       ,  bonus,                          bAtkRange,"Range %s",1,6,1,0
+40   ,0       ,  bonus,                       bLongAtkRate,"%s ranged damage",1,0,1,0
+41   ,0       ,  bonus,                       bCritAtkRate,"%s critical damage",1,0,1,0
+42   ,0       ,  bonus,                       bClassChange,"%s chance of transforming a non-mvp monster on each hit",1,2,1,0
+43   ,0       ,  bonus,                      bAddStealRate,"%s success rate to stealing",1,2,1,0
+44   ,0       ,  bonus,                   bBreakWeaponRate,"%s chance of breaking target's weapon on each hit",1,2,1,0
+45   ,0       ,  bonus,                    bBreakArmorRate,"%s chance of breaking target's armor on each hit",1,2,1,0
+47   ,0       ,  bonus,                       bCriticalDef,"%s chance to take a normal hit over a critical hit",1,0,1,0
+48   ,0       ,  bonus,                        bDoubleRate,"%s base chance of double attack",1,0,1,0
+49   ,0       ,  bonus,                     bDoubleAddRate,"%s chance of double attack",1,0,1,0
+50   ,0       ,  bonus,                    bPerfectHitRate,"%s base chance to hit target without miss",1,0,1,0
+51   ,0       ,  bonus,                 bPerfectHitAddRate,"%s chance to hit target without miss",1,0,1,0
+52   ,0       ,  bonus,                       bSplashRange,"each hit deals AoE damage to a %s grid",1,w,1,0
+53   ,0       ,  bonus,                    bSplashAddRange,"each hit deals AoE damage to a %s grid",1,w,1,0
+56   ,0       ,  bonus,                      bSPDrainValue,"%s SP for each physical attack",1,6,1,0
+57   ,0       , bonus2,                      bSPDrainValue,"%s SP %s for each physical attack %s",2,6,h,2,0,1
+58   ,0       ,  bonus,                      bHPDrainValue,"%s HP for each physical attack",1,6,1,0
+59   ,0       , bonus2,                      bHPDrainValue,"%s HP for each physical attack %s",2,6,x,2,1,0
+60   ,0       ,  bonus,                       bSPGainValue,"%s SP for each enemy defeated using physical attacks",1,6,1,0
+61   ,0       ,  bonus,                       bHPGainValue,"%s HP for each enemy defeated using physical attacks",1,6,1,0
+62   ,0       ,  bonus,                  bMagicSPGainValue,"%s SP for each enemy defeated using magical attacks",1,6,1,0
+63   ,0       ,  bonus,                  bMagicHPGainValue,"%s HP for each enemy defeated using magical attacks",1,6,1,0
+65   ,0       ,  bonus,                   bAddItemHealRate,"%s HP item recovery",1,0,1,0
+66   ,0       ,  bonus,                         bHealPower,"%s healing magic",1,0,1,0
+67   ,0       ,  bonus,                        bHealPower2,"%s healing magic",1,0,1,0
+68   ,0       ,  bonus,                       bHPrecovRate,"%s HP recovery",1,0,1,0
+69   ,0       ,  bonus,                       bSPrecovRate,"%s SP recovery",1,0,1,0
+70   ,0       , bonus2,                      bHPVanishRate,"%s chance of draining %s HP of target for each hit",2,1,0,2,0,1
+71   ,0       , bonus2,                      bSPVanishRate,"%s chance of draining %s SP of target for each hit",2,1,0,2,0,1
+72   ,0       , bonus3,                      bSPVanishRate,"%s chance of draining %s SP of target %s",3,1,0,t,3,0,1,2
+215  ,0       , bonus3,                  bHPVanishRaceRate,"%s chance of draining %s HP of %s enemies for each hit",3,r,2,0,3,1,2,0
+216  ,0       , bonus3,                  bSPVanishRaceRate,"%s chance of draining %s SP of %s enemies for each hit",3,r,2,0,3,1,2,0
+73   ,0       , bonus2,                       bHPDrainRate,"%s chance to absorb %s HP on physical attack",2,1,0,2,0,1
+74   ,0       , bonus2,                       bSPDrainRate,"%s chance to absorb %s SP on physical attack",2,1,0,2,0,1
+75   ,0       , bonus3,                       bSPDrainRate,"%s chance to %s %s SP on physical attack",3,1,0,h,3,0,2,1
+76   ,0       , bonus2,                       bHPRegenRate,"Gain %s HP every %s",2,9,a,2,0,1
+77   ,0       , bonus2,                       bSPRegenRate,"Gain %s SP every %s",2,9,a,2,0,1
+78   ,0       , bonus2,                        bHPLossRate,"Lose %s HP every %s",2,9,a,2,0,1
+79   ,0       , bonus2,                        bSPLossRate,"Lose %s SP every %s",2,9,a,2,0,1
+80   ,0       , bonus2,                   bAddItemHealRate,"%s HP recovery from %s",2,y,0,2,1,0
+81   ,0       , bonus2,              bAddItemGroupHealRate,"%s HP recovery from items in %s",2,y,0,2,1,0
+94   ,0       , bonus2,                         bSkillHeal,"%s heal amount using %s",2,k,0,2,1,0
+95   ,0       , bonus2,                        bSkillHeal2,"%s heal amount from %s",2,k,0,2,1,0
+82   ,0       ,  bonus,                          bCastrate,"%s cast time",1,0,1,0
+83   ,0       , bonus2,                          bCastrate,"%s cast time of %s.",2,k,0,2,1,0
+86   ,0       ,  bonus,                         bDelayrate,"%s after cast delay",1,0,1,0
+89   ,0       ,  bonus,                         bFixedCast,"increase fixed cast time by %s",1,a,1,0
+84   ,0       ,  bonus,                     bFixedCastrate,"%s fixed cast time",1,0,1,0
+85   ,0       , bonus2,                     bFixedCastrate,"%s fixed cast time of %s",2,k,0,2,1,0
+90   ,0       ,  bonus,                      bVariableCast,"increase variable cast time by %s",1,a,1,0
+87   ,0       ,  bonus,                  bVariableCastrate,"%s variable cast time",1,0,1,0
+88   ,0       , bonus2,                  bVariableCastrate,"%s variable cast time of %s",2,k,0,2,1,0
+91   ,0       , bonus2,                          bSkillAtk,"%s %s damage.",2,k,0,2,1,0
+92   ,0       , bonus2,                        bSkillUseSP,"%s SP consumption for %s",2,k,6,2,1,0
+93   ,0       , bonus2,                    bSkillUseSPrate,"%s SP consumption for %s",2,k,0,2,1,0
+96   ,0       , bonus2,                     bSkillCooldown,"%s cooldown time for %s.",2,k,a,2,1,0
+97   ,0       , bonus2,                    bSkillFixedCast,"%s fixed cast time for %s.",2,k,a,2,1,0
+98   ,0       , bonus2,                 bSkillVariableCast,"%s variable cast time for %s.",2,k,a,2,1,0

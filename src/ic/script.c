@@ -1869,21 +1869,23 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
     tick_max = time->max;
 
     /* get the closest time metric that can divide the total number of milliseconds */
-    if (tick_min / 86400000 > 1) {
+    if (tick_min / 86400000 != 0) {
         time_suffix = "day";
         time_unit = 86400000;
     }
-    else if (tick_min / 3600000 > 1) {
+    else if (tick_min / 3600000 != 0) {
         time_suffix = "hour";
         time_unit = 3600000;
     }
-    else if (tick_min / 60000 > 1) {
+    else if (tick_min / 60000 != 0) {
         time_suffix = "minute";
         time_unit = 60000;
-    }
-    else {
+    } else if (tick_min / 1000 != 0) {
         time_suffix = "second";
         time_unit = 1000;
+    } else {
+        time_suffix = "millisecond";
+        time_unit = 1;
     }
 
     /* convert millisecond to time metric */
@@ -3029,7 +3031,7 @@ int translate_bonus(block_r * block, char * prefix) {
         return SCRIPT_FAILED;
 
     if(bonus_name(block->script->db, bonus, prefix, strlen(prefix), block->ptr[0], strlen(block->ptr[0]))) {
-        exit_func_safe("unsupported %s %s for item %d", prefix, block->ptr[0], block->item_id);
+        exit_func_safe("the '%s %s' bonus is not supported for item %d", prefix, block->ptr[0], block->item_id);
         goto failed;
     }
 
@@ -3038,6 +3040,7 @@ int translate_bonus(block_r * block, char * prefix) {
 
         /* push the argument on the block->eng stack */
         switch(bonus->type[i]) {
+            /* integer and percentage arguments */
             case '0': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO); break;
             case '1': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO); break;
             case '2': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO); break;
@@ -3048,26 +3051,17 @@ int translate_bonus(block_r * block, char * prefix) {
             case '7': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS); break;
             case '8': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS); break;
             case '9': ret = stack_eng_int(block, block->ptr[j], 1, 0); break;
-
-            case 'n': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                        break; /* integer with +X */
-            case 'p': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO);         break; /* integer with +X% */
-            case 'o': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO);        break; /* integer with +X/10% */
-            case 'q': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO);       break; /* integer with +X/100% */
-
-            case 'x': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Level */
-            case 'h': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* SP Gain Bool */
-            case 'f': ret = stack_eng_int_bonus(block, block->ptr[j], 1, bonus->attr, i);               break; /* Cell */
-
+            /* special arguments */
+            case 'h': ret = stack_eng_map(block, block->ptr[j], MAP_SP_FLAG, &cnt);                     break; /* SP Gain Bool */
             case 'a': ret = stack_eng_time(block, block->ptr[j], 1);                                    break; /* Time */
             case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
             case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
             case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
-            case 'z':                                                                                   break; /* Meaningless */
             case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                 break; /* Effect */
             case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                                break; /* Skill */
             case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                   break; /* Size */
             case 'c': ret = (stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt) &&
-                            stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt));  break; /* Monster Class & Job ID * Monster ID */
+                             stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt)); break; /* Monster Class & Job ID * Monster ID */
             case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                       break; /* Item ID */
             case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                  break; /* Regen */
             case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
@@ -3141,10 +3135,6 @@ int translate_bonus(block_r * block, char * prefix) {
             return exit_func_safe("unsupport bonus argument count"
             " %d on %s in item %d", bonus->type_cnt, bonus->bonus,
             block->item_id);
-    }
-
-    if(bonus->id >= 99 && bonus->id <= 99) {
-        printf("%6d; %25s; %s\n", block->item_id, bonus->bonus, block->eng[block->eng_cnt - 1]);
     }
 
     SAFE_FREE(bonus);
