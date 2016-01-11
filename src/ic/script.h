@@ -63,6 +63,10 @@
         struct node * prev;
         /* singly linked list for memory management */
          struct node * list;
+         /* hash table of formulas */
+         char ** hash_table;                                                   /* hash table of formula from node tree */
+         int hash_size;                                                        /* size of the hash table */
+         int hash_count;                                                       /* total number of hash entries */
     } node_t;
 
     /* forward declaration for block_r */
@@ -357,7 +361,6 @@
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x020 /* keep logic tree for ?: operators; set blocks */
     #define EVALUATE_FLAG_ITERABLE_SET     0x040
     #define EVALUATE_FLAG_VARIANT_SET      0x080
-    #define EVALUATE_FLAG_WRITE_STACK      0x100
 
     /* higher level wrappers over evaluate expression */
     int evaluate_numeric_constant(block_r *, char *, int, int *);
@@ -412,4 +415,8 @@
     int node_inherit(node_t *);
     void node_free(node_t *);
     void node_dump(node_t *, FILE *);
+
+    int node_formula(node_t *, int);
+    int node_formula_recursive(node_t *, node_t *);
+    int node_cluster(node_t *, int, char *);
 #endif
