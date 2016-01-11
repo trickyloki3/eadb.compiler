@@ -60,8 +60,8 @@
 166  ,0       ,  bonus,                      bIgnoreDefEle,"pierce the physical defense of %s enemies",1,l,1,0
 167  ,0       ,  bonus,                     bIgnoreDefRace,"pierce the physical defense of %s enemies",1,r,1,0
 168  ,0       ,  bonus,                    bIgnoreDefClass,"pierce the physical defense of %s enemies",1,j,1,0
-169  ,0       , bonus2,                     bIgnoreDefRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
-170  ,0       , bonus2,                 bIgnoreDefRaceRate,"pierce %s physical defense of %s enemies",2,r,p,2,1,0
+169  ,0       , bonus2,                     bIgnoreDefRate,"pierce %s physical defense of %s enemies",2,r,0,2,1,0
+170  ,0       , bonus2,                 bIgnoreDefRaceRate,"pierce %s physical defense of %s enemies",2,r,0,2,1,0
 187  ,0       , bonus4,                        bSetDefRace,"%s chance to reduce %s's DEF to %s for %s",4,r,2,a,9,4,1,0,3,2
 188  ,0       , bonus4,                       bSetMDefRace,"%s chance to reduce %s's MDEF to %s for %s",4,r,2,a,9,4,1,0,3,2
 171  ,0       , bonus2,                     bWeaponComaEle,"%s chance of inflicting coma on %s enemies",2,l,2,2,1,0
@@ -102,7 +102,7 @@
 214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s",2,k,6,2,1,0
 64   ,0       ,  bonus,                         bUseSPrate,"%s SP consumption",1,0,1,0
 200  ,0       ,  bonus,                           bNoRegen,"disable %s natural regeneration",1,g,1,0
-212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP is absorbed",1,p,1,0
+212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP is absorbed",1,0,1,0
 185  ,0       , bonus2,                        bExpAddRace,"%s EXP from %s enemies",2,r,0,2,1,0
 186  ,0       , bonus2,                       bExpAddClass,"%s EXP from %s enemies",2,j,0,2,1,0
 189  ,0       ,  bonus,                bUnbreakableGarment,"garment is indestructible",0
