@@ -257,3 +257,7 @@
 96   ,0       , bonus2,                     bSkillCooldown,"%s cooldown time for %s.",2,k,a,2,1,0
 97   ,0       , bonus2,                    bSkillFixedCast,"%s fixed cast time for %s.",2,k,a,2,1,0
 98   ,0       , bonus2,                 bSkillVariableCast,"%s variable cast time for %s.",2,k,a,2,1,0
+
+/* new */
+217  ,0       , bonus3,                bStateNoRecoverRace,"%s chance to nullified reocvery for %s against %s enemies",3,r,2,a,3,1,2,0
+218  ,0       , bonus4,                            bAddEff,"%s chance to inflicting %s for %s %s",4,e,2,d,a,4,1,0,3,2

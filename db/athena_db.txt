@@ -42,6 +42,7 @@ effect_type =  {
     [14] = "deep sleep";
     [309] = "fear";
     [310] = "burning";
+    [388] = "crystalize";
 }
 
 element_type = {
