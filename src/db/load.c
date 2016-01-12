@@ -132,8 +132,8 @@ int trim_alpha(FILE * file_stm, FILE * trim_stm) {
 
 int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t * config) {
    int i = 0;
-   unsigned char buf[BUF_SIZE];
-   unsigned char fld[BUF_SIZE];
+   char buf[BUF_SIZE];
+   char fld[BUF_SIZE];
    int offset_buf = 0;
    int offset_fld = 0;
    int index_col = 0;  /* column index */
@@ -170,11 +170,12 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
             fld[offset_fld] = '\0';
             /* strip the whitespace from the end */
             if(offset_fld > 0)
-               for(i = offset_fld - 1; i >= 0; i--)
+               for(i = offset_fld - 1; i >= 0; i--) {
                   if(isspace(fld[i]))
                      offset_fld--;
                   else
                      break;
+               }
 
             /* write the column field */
             config->load(mem, index_row, index_col, fld);
