@@ -12,7 +12,7 @@ CM_DIR=src/common
 CFLAGS+=-I$(DB_DIR) -I$(IC_DIR) -I$(CM_DIR)
 
 # item script compiler object files
-IC_OBJ:=db_search.c format.c name_range.c range.c script.c util.c
+IC_OBJ:=db_search.c format.c name_range.c range.c script.c util.c libsort/libsort.a
 IC_OBJ:=$(patsubst %.c,$(OBJ_DIR)/%.o,$(IC_OBJ))
 
 # item database loader object files
@@ -21,6 +21,9 @@ DB_OBJ:=$(patsubst %.c,$(OBJ_DIR)/%.o,$(DB_OBJ))
 
 # default target compiles the tools
 all: ic dbc
+
+libsort/libsort.a:
+	$(MAKE) -C libsort
 
 ic: $(IC_DIR)/ic.c $(IC_OBJ)
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
@@ -47,3 +50,4 @@ clean:
 	rm -rf ic.dSYM
 	rm -rf dbc.dSYM
 	rm -f .DS_Store
+	$(MAKE) -C libsort clean

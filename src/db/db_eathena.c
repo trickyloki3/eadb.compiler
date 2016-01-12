@@ -761,6 +761,7 @@ int ea_db_item_group_load(ea_db_t * ea, const char * path) {
         ea_db_exec(ea, "BEGIN IMMEDIATE TRANSACTION;")) {
         goto failed;
     } else {
+        quick_sort(item_groups.db, &tmp, item_groups.size, item_group_ea, group_id);
         if( ea_db_item_group_load_record(item_groups.db, item_groups.size, ea) ||
             ea_db_exec(ea, "COMMIT TRANSACTION;")) {
             ea_db_exec(ea, "ROLLBACK TRANSACTION;");
