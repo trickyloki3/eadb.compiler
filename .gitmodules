@@ -1,0 +1,3 @@
+[submodule "libsort"]
+	path = libsort
+	url = https://github.com/trickyloki3/libsort.git

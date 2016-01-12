@@ -6,6 +6,7 @@
  *  email: tricky.loki3@gmail.com
  */
 #include "db_eathena.h"
+#include "libsort.h"
 
 native_config_t load_ea_native[EATHENA_DB_COUNT] = {
     { item_ea_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_EA_FIELD_COUNT, sizeof(item_ea) },
@@ -16,36 +17,6 @@ native_config_t load_ea_native[EATHENA_DB_COUNT] = {
     { pet_ea_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, PET_EA_FIELD_COUNT, sizeof(pet_ea) },
     { item_group_ea_load, sentinel_whitespace, delimit_cvs_whitespace, SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_GROUP_EA_FIELD_COUNT, sizeof(item_group_ea) },
     { const_ea_load, sentinel_newline, delimit_cvs_whitespace, SKIP_NEXT_WS, 0, sizeof(const_ea) }
-};
-
-int less_item_group(void * list, size_t i, size_t j) {
-    return ((item_group_ea *) list)[i].group_id < ((item_group_ea *) list)[j].group_id;
-}
-
-int same_item_group(void * list, size_t i, size_t j) {
-    return ((item_group_ea *) list)[i].group_id == ((item_group_ea *) list)[j].group_id;
-}
-
-void swap_item_group(void * list, size_t i, size_t j) {
-    item_group_ea * _list = list;
-    item_group_ea _temp;
-
-    _temp = _list[i];
-    _list[i] = _list[j];
-    _list[j] = _temp;
-}
-
-void read_item_group(void * list, size_t i) {
-    item_group_ea * _list = list;
-    printf("%d ", _list[i].group_id);
-}
-
-
-swap_t qsort_item_group = {
-    less_item_group,
-    same_item_group,
-    swap_item_group,
-    read_item_group
 };
 
 int item_ea_load(void * db, int row, int col, char * val) {
@@ -782,22 +753,29 @@ int ea_db_item_group_load(ea_db_t * ea, const char * path) {
     native_t item_groups;
     item_groups.db = NULL;
     item_groups.size = 0;
+    item_group_ea tmp;
 
     if( load_native(path, trim_numeric, load_native_general, &item_groups, &load_ea_native[6]) ||
         NULL == item_groups.db ||
         0 >= item_groups.size ||
-        ea_db_exec(ea, "BEGIN IMMEDIATE TRANSACTION;") ||
-        quick_sort(item_groups.db, item_groups.size, &qsort_item_group) ||
-        ea_db_item_group_load_record(item_groups.db, item_groups.size, ea) ||
-        ea_db_exec(ea, "COMMIT TRANSACTION;")) {
-        ea_db_exec(ea, "ROLLBACK TRANSACTION;");
-        fprintf(stderr, "[load]: failed to load item group db; %s.\n", path);
-        SAFE_FREE(item_groups.db);
-        return CHECK_FAILED;
+        ea_db_exec(ea, "BEGIN IMMEDIATE TRANSACTION;")) {
+        goto failed;
+    } else {
+        if( ea_db_item_group_load_record(item_groups.db, item_groups.size, ea) ||
+            ea_db_exec(ea, "COMMIT TRANSACTION;")) {
+            ea_db_exec(ea, "ROLLBACK TRANSACTION;");
+            goto failed;
+        }
     }
+
     fprintf(stdout, "[load]: loaded item group db; %s.\n", path);
     SAFE_FREE(item_groups.db);
     return CHECK_PASSED;
+
+failed:
+    fprintf(stderr, "[load]: failed to load item group db; %s.\n", path);
+    SAFE_FREE(item_groups.db);
+    return CHECK_FAILED;
 }
 
 int ea_db_item_group_load_record(item_group_ea * item_groups, int size, ea_db_t * ea) {

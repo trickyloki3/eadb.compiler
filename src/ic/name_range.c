@@ -418,7 +418,6 @@ range_t * search_tree_dependency(logic_node_t * root, char * name, range_t * ran
 }
 
 void search_tree_name_range(logic_node_t * root, char * name, range_t * range, range_t ** match) {
-    range_t * temp = NULL;
     range_t * _match = NULL;
     if(root->left != NULL) search_tree_name_range(root->left, name, range, match);
     if(root->right != NULL) search_tree_name_range(root->right, name, range, match);

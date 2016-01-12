@@ -5,7 +5,9 @@
 #include <limits.h>
 #include "db_eathena.h"
 #include "db_rathena.h"
+#ifdef WITH_HERCULES
 #include "db_hercules.h"
+#endif
 #include "db_resources.h"
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -28,7 +30,9 @@ int main(int argc, char * argv[]) {
     /* database */
     ra_db_t * rathena = NULL;
     ea_db_t * eathena = NULL;
+#ifdef WITH_HERCULES
     herc_db_t * hercule = NULL;
+#endif
     opt_db_t * resource = NULL;
     /* parse the command line arguments */
     if(parse_argv(argv, argc))
@@ -89,6 +93,7 @@ int main(int argc, char * argv[]) {
     output_len = strlen(output_path);
     server_len = strlen(server_path);
 
+#ifdef WITH_HERCULES
     /* load the server's databases */
     if(0 == ncs_strcmp(server_mode, "hercules")) {
         if( path_concat(output_path, output_len, PATH_MAX, "hercule.db") ||
@@ -118,7 +123,9 @@ int main(int argc, char * argv[]) {
             fprintf(stderr, "failed to load hercules databases.\n");
             goto clean;
         }
-    } else if(0 == ncs_strcmp(server_mode, "rathena")) {
+    } else
+#endif
+    if(0 == ncs_strcmp(server_mode, "rathena")) {
         if(path_concat(output_path, output_len, PATH_MAX, "rathena.db") ||
            ra_db_init(&rathena, output_path) ||
            path_concat(server_path, server_len, PATH_MAX, "db/re/item_db.txt") ||
@@ -220,7 +227,9 @@ int main(int argc, char * argv[]) {
 clean:
     if(eathena) ea_db_deit(&eathena);
     if(rathena) ra_db_deit(&rathena);
+#ifdef WITH_HERCULES
     if(hercule) herc_db_deit(&hercule);
+#endif
     if(resource) opt_db_deit(&resource);
     SAFE_FREE(output_path);
     SAFE_FREE(server_path);

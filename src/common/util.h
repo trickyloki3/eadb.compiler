@@ -75,22 +75,4 @@
 
     /* grammer */
     int aeiou(char letter);
-
-    /* sorting */
-    typedef struct swap_t {
-        int(*less)(void *, size_t, size_t);
-        int(*same)(void *, size_t, size_t);
-        void(*swap)(void *, size_t, size_t);
-        void(*read)(void *, size_t);
-    } swap_t;
-
-    void sift_down(void *, size_t, size_t, swap_t *);
-    int heap_sort(void *, size_t, swap_t *);
-    int insertion_sort(void *, size_t, size_t, swap_t *);
-    size_t mof3(void *, size_t, size_t, size_t, swap_t *);
-    void pivot_sedgwick(void *, size_t, size_t, swap_t *);
-    void pivot_ninther(void *, size_t, size_t, size_t, swap_t *);
-    void partition_3way(void *, size_t, size_t, size_t *, size_t *, swap_t *);
-    int _quick_sort(void *, size_t, size_t, size_t, swap_t *);
-    int quick_sort(void *, size_t, swap_t *);
 #endif

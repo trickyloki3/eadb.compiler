@@ -4383,7 +4383,6 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     int ret = 0;
     int arg_off = 0;
     int arg_cnt = 0;
-    int ptr_top = 0;
     int eng_off = 0;
     token_r * token = NULL;
 

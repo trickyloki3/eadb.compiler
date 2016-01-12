@@ -372,7 +372,7 @@
                                     "    loyal_script TEXT"\
                                     ");"
 
-    typedef struct {
+    typedef struct item_group_ea {
         int group_id;
         int item_id;
         int rate;
@@ -392,12 +392,6 @@
                                         "    item_id INTEGER,"\
                                         "    rate INTEGER"\
                                         ");"
-
-    void swap_item_group(void *, size_t, size_t);
-    int less_item_group(void *, size_t, size_t);
-    int same_item_group(void *, size_t, size_t);
-    void read_item_group(void *, size_t);
-    extern swap_t qsort_item_group;
 
     typedef struct {
         char name[MAX_NAME_SIZE];
