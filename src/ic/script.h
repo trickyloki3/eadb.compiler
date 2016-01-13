@@ -35,6 +35,12 @@
      * otherwise you get a lot of output. */
     extern FILE * node_dbg;
 
+    /* forward declaration for block_r
+     * =.= postfix does not make sense */
+    struct script_t;
+    struct block_r;
+    struct node;
+
     typedef struct {
          char script[BUF_SIZE];
          char * script_ptr[PTR_SIZE];
@@ -63,10 +69,9 @@
         struct node * prev;
         /* singly linked list for memory management */
          struct node * list;
+         /* pointer back to free list */
+         struct script_t * script;
     } node_t;
-
-    /* forward declaration for block_r */
-    struct script_t;
 
     typedef struct block_r {
         int item_id;                                                            /* item id defined in item_db.txt */
@@ -114,6 +119,7 @@
         int offset;                                                             /* script buffer size */
         block_r * blocks;
         block_r * free_blocks;
+        node_t * free_nodes;
         /* invariant */
         db_t * db;                                                              /* compiler and athena databases */
         int mode;                                                               /* EATHENA, RATHENA, or HERCULES */
@@ -410,6 +416,13 @@
     int node_structure(node_t *);
     int node_evaluate(node_t *, FILE *, logic_node_t *, int);
     int node_inherit(node_t *);
-    void node_free(node_t *);
     void node_dump(node_t *, FILE *);
+
+    #define node_free(x) if(x) { node_deit(x->script, &x); }
+    int node_init(script_t *, node_t **);
+    int node_deit(script_t *, node_t **);
+    int node_release(script_t *);
+    int node_append(node_t *, node_t *);
+    int node_remove(node_t *);
+
 #endif

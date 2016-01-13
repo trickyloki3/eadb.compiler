@@ -564,6 +564,8 @@ int script_deit(script_t ** script) {
         deit_db_load(&_script->db);
     /* release all blocks */
     script_block_release(_script);
+    /* release all nodes */
+    node_release(_script);
     /* release script struct */
     SAFE_FREE(_script);
     *script = NULL;
@@ -1400,6 +1402,8 @@ compile:
 clean:
     /* free the block list */
     script_block_release(script);
+    /* free the node list */
+    node_release(script);
     /* free the sub-script context */
     SAFE_FREE(script);
     return ret;
@@ -4040,7 +4044,10 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     node_t * temp_node = NULL;
 
     /* initialize the root node */
-    iter_node = root_node = calloc(1, sizeof(node_t));
+    if(node_init(block->script, &root_node))
+        return NULL;
+
+    iter_node = root_node;
 
     /* circularly link the free and node list */
     root_node->list = root_node;
@@ -4055,8 +4062,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             operand++;
         } else if(SCRIPT_BINARY(expr[i][0])) {
             /* create single or dual operator node */
-            temp_node = calloc(1, sizeof(node_t));
-            if(NULL == temp_node)
+            if(node_init(block->script, &temp_node))
                 goto failed;
 
             /* set the operator symbol and type */
@@ -4079,8 +4085,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             }
         } else if(isdigit(expr[i][0])) {
             /* create numeric constant */
-            temp_node = calloc(1, sizeof(node_t));
-            if(NULL == temp_node)
+            if(node_init(block->script, &temp_node))
                 goto failed;
 
             temp_node->type = NODE_TYPE_OPERAND;
@@ -4232,8 +4237,7 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
         return CHECK_FAILED;
 
     /* create the variable and function node */
-    _node = calloc(1, sizeof(node_t));
-    if(NULL == _node)
+    if(node_init(block->script, &_node))
         return CHECK_FAILED;
 
     /* search the database */
@@ -5399,18 +5403,6 @@ int node_inherit(node_t * node) {
     return SCRIPT_PASSED;
 }
 
-void node_free(node_t * node) {
-    if(NULL != node) {
-        if(NULL != node->cond)
-            freenamerange(node->cond);
-        if(NULL != node->range)
-            freerange(node->range);
-        SAFE_FREE(node->formula);
-        SAFE_FREE(node->id);
-        SAFE_FREE(node);
-    }
-}
-
 void node_dump(node_t * node, FILE * stream) {
     if(node != NULL && stream != NULL) {
         fprintf(stream," -- Node %p --\n", (void *) node);
@@ -5442,4 +5434,91 @@ void node_dump(node_t * node, FILE * stream) {
         dmpnamerange(node->cond, stream, 0);
         fprintf(stream,"\n");
     }
+}
+
+int node_init(script_t * script, node_t ** node) {
+    exit_null_safe(2, script, node);
+
+    /* grab a free node from the free list */
+    if(NULL != script->free_nodes) {
+        if(script->free_nodes == script->free_nodes->next) {
+            *node = script->free_nodes;
+            script->free_nodes = NULL;
+        } else {
+            *node = script->free_nodes;
+            script->free_nodes = script->free_nodes->next;
+            node_remove(*node);
+        }
+        return CHECK_PASSED;
+    }
+
+    *node = calloc(1, sizeof(node_t));
+    (*node)->script = script;
+    return *node ? CHECK_PASSED : CHECK_FAILED;
+}
+
+int node_deit(script_t * script, node_t ** node) {
+    node_t * temp;
+
+    exit_null_safe(2, script, node);
+
+    /* free the node's resources */
+    temp = *node;
+    if(NULL != temp->cond)
+        freenamerange(temp->cond);
+    if(NULL != temp->range)
+        freerange(temp->range);
+    SAFE_FREE(temp->formula);
+    SAFE_FREE(temp->id);
+
+    /* reset node links and add to free list */
+    memset(temp, 0, sizeof(node_t));
+    temp->prev = temp;
+    temp->next = temp;
+    temp->script = script;
+    if(NULL != script->free_nodes) {
+        node_append(script->free_nodes, temp);
+    } else {
+        script->free_nodes = temp;
+    }
+
+    return CHECK_PASSED;
+}
+
+int node_release(script_t * script) {
+    node_t * temp = NULL;
+    if (NULL == script ||
+        NULL == script->free_nodes)
+        return CHECK_FAILED;
+
+    while(script->free_nodes != script->free_nodes->next) {
+        temp = script->free_nodes;
+        script->free_nodes = script->free_nodes->next;
+        node_remove(temp);
+        SAFE_FREE(temp);
+    }
+    SAFE_FREE(script->free_nodes);
+
+    return CHECK_PASSED;
+}
+
+int node_append(node_t * parent, node_t * child) {
+    exit_null_safe(2, parent, child);
+
+    parent->next->prev = child->prev;
+    child->prev->next = parent->next;
+    parent->next = child;
+    child->prev = parent;
+    return CHECK_PASSED;
+}
+
+int node_remove(node_t * node) {
+    exit_null_safe(1, node);
+
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
+    node->next = node;
+    node->prev = node;
+
+    return CHECK_PASSED;
 }
