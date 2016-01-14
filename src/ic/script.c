@@ -2824,10 +2824,8 @@ int translate_rentitem(block_r * block) {
     if (buf == NULL)
         return CHECK_FAILED;
 
-    off += sprintf(&buf[off], "Rent %s %s%s",
-        aeiou(block->eng[0][0]) ? "a" : "an",
-        block->eng[0],
-        (argc > 1) ? ", " : "");
+    off += sprintf(&buf[off], "Rent a(n) %s%s",
+    block->eng[0], (argc > 1) ? ", " : "");
     for (i = 1; i < argc; i++)
         off += (i + 1 == argc) ?
             sprintf(&buf[off], "and %s", block->eng[i]) :

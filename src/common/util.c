@@ -587,11 +587,12 @@ int array_field_cnt(char * buf) {
    return cnt;
 }
 
-int aeiou(char letter) {
-    switch (letter) {
-        case 'a': case 'e': case 'i': case 'o': case 'u':
-            return CHECK_PASSED;
-        default:
-            return CHECK_FAILED;
-    }
+unsigned long sdbm(unsigned char * str) {
+    unsigned long hash = 0;
+    int c;
+
+    while (c = *str++)
+        hash = c + (hash << 6) + (hash << 16) - hash;
+
+    return hash;
 }

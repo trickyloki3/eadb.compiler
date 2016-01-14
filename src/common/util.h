@@ -73,6 +73,6 @@
     char * array_to_string_cnt(char *, int *, int);
     int array_field_cnt(char *);
 
-    /* grammer */
-    int aeiou(char letter);
+    /* string hash function */
+    unsigned long sdbm(unsigned char * str);
 #endif
