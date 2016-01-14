@@ -1,7 +1,7 @@
 # build paramaters
 CC=gcc
 CFLAGS=-std=c99 -pedantic -Wall -g -O -I/usr/local/include -Ilibsort
-LDFLAGS=/usr/local/lib/liblua.a libsort/libsort.a
+LDFLAGS=/usr/local/lib/liblua.a libsort/libsort.a librbt/librbt.a
 LIB=-lsqlite3 -lm
 
 OBJ_DIR=src
@@ -24,6 +24,9 @@ all: ic dbc
 
 libsort/libsort.a:
 	$(MAKE) -C libsort
+
+librbt/librbt.a:
+	$(MAKE) -C librbt
 
 ic: $(IC_DIR)/ic.c $(IC_OBJ)
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
