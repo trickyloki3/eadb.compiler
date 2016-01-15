@@ -102,7 +102,8 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
                init_db_prep_sql(_db->db, &_db->item_group_name, RA_ITEM_GROUP_NAME_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_id, RA_ITEM_GROUP_ID_SEARCH) ||
                init_db_prep_sql(_db->db, &_db->item_group_record, RA_ITEM_GROUP_ID_RECORD) ||
-               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH))
+               init_db_prep_sql(_db->db, &_db->item_combo, RA_ITEM_COMBO_ID_SEARCH) ||
+               init_db_prep_sql(_db->db, &_db->item_subgroup_id, RA_ITEM_SUBGROUP_SEARCH) )
                 goto failed;
             break;
         case HERCULE:
@@ -139,7 +140,8 @@ int deit_db_load(db_t ** db) {
     exit_null_safe(2, db, *db);
 
     _db = *db;
-    if((_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
+    if((_db->item_subgroup_id && deit_db_prep_sql(_db->db, &_db->item_subgroup_id)) ||
+       (_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
        (_db->item_group_record && deit_db_prep_sql(_db->db, &_db->item_group_record)) ||
        (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
        (_db->item_group_name && deit_db_prep_sql(_db->db, &_db->item_group_name)) ||
@@ -984,5 +986,25 @@ int item_combo_free(combo_t ** item_combos) {
     }
 
     *item_combos = NULL;
+    return CHECK_PASSED;
+}
+
+int item_subgroup_id(db_t * db, int * buffer, int * length, int group_id) {
+    sqlite3_stmt * stmt;
+    int offset = 0;
+
+    exit_null_safe(2, db, buffer);
+
+    if(exec_db_query(db->db, db->item_subgroup_id, 1, BIND_NUMBER, group_id))
+        return CHECK_FAILED;
+
+    stmt = db->item_subgroup_id->stmt;
+    do {
+        if(offset >= *length)
+            return exit_abt_safe("failed to set subgroup id");
+        buffer[offset++] = sqlite3_column_int(stmt, 0);
+    } while(SQLITE_DONE != sqlite3_step(stmt));
+
+    *length = offset;
     return CHECK_PASSED;
 }

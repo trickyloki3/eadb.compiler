@@ -20,7 +20,6 @@
     #define ENABLE_EXIT 0    /* set to 1 for debugging */
     #define CHECK_PASSED 0
     #define CHECK_FAILED 1
-    extern int exit_echo;
 
     /* msvc's function name macro */
     #if defined ( _WIN32 )

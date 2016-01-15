@@ -278,6 +278,7 @@
     #define RA_ITEM_GROUP_ID_SEARCH         "SELECT * FROM item_package_meta_ra WHERE group_id = ? AND subgroup_id = ?;"
     #define EA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_group_record_ea WHERE group_id = ? ORDER BY item_id;"
     #define RA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_package_ra WHERE group_id = ? and random = ? ORDER BY item_id;"
+    #define RA_ITEM_SUBGROUP_SEARCH         "SELECT subgroup_id FROM item_package_meta_ra WHERE group_id = ?;"
 
     typedef struct sql_t {
         char * query;
@@ -312,6 +313,7 @@
         sql_t * item_group_name;
         sql_t * item_group_id;          /* query item group metadata */
         sql_t * item_group_record;      /* query item group records */
+        sql_t * item_subgroup_id;
         sql_t * item_combo;
         /* server item database iterate */
         sql_t * item_db;
@@ -373,4 +375,5 @@
     int item_group_id_ra(db_t *, item_group_meta_t *, int, int);
     int item_combo_id(db_t *, combo_t **, int);
     int item_combo_free(combo_t **);
+    int item_subgroup_id(db_t *, int *, int *, int);
 #endif

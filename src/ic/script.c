@@ -3751,6 +3751,9 @@ int translate_getgroupitem(block_r * block) {
     int i = 0;
     int group_id = 0;
     block_r * subgroup = NULL;
+    int subgroup_id[5];
+    int subgroup_len = 5;
+    memset(subgroup_id, 0, sizeof(subgroup_id));
 
     /* support for hercules soon */
     if(block->script->mode != RATHENA)
@@ -3763,23 +3766,21 @@ int translate_getgroupitem(block_r * block) {
 
     /* grab a empty block */
     if(evaluate_numeric_constant(block, block->ptr[0], 1, &group_id) ||
+       item_subgroup_id(block->script->db, subgroup_id, &subgroup_len, group_id) ||
        script_block_new(block->script, &subgroup))
         return SCRIPT_FAILED;
 
     /* cheap hack to disable error from translate_getrandgroupitem */
-    exit_echo = 0;
-    for(i = 0; i < MAX_SUB_GROUP; i++) {
+    for(i = 0; i < subgroup_len; i++) {
         /* block id for getrandgroupitem */
         subgroup->name = convert_string("getrandgroupitem");
         subgroup->item_id = block->item_id;
         subgroup->type = 20;
         if( block_stack_vararg(subgroup, TYPE_PTR, "%d", group_id) ||
             block_stack_vararg(subgroup, TYPE_PTR, "0") ||
-            block_stack_vararg(subgroup, TYPE_PTR, "%d", i) ||
+            block_stack_vararg(subgroup, TYPE_PTR, "%d", subgroup_id[i]) ||
             translate_getrandgroupitem(subgroup)) {
-            /* special case for sub group zero */
-            if(0 != i)
-                break;
+            /* skip */
         } else {
             if( (block->eng_cnt == 0) ?
                 block_stack_vararg(block, TYPE_ENG, subgroup->eng[subgroup->eng_cnt - 1]):
@@ -3790,7 +3791,6 @@ int translate_getgroupitem(block_r * block) {
         }
         block_reset(subgroup);
     }
-    exit_echo = 1;
 
     /* return the block */
     script_block_free(block->script, &subgroup);

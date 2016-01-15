@@ -10,49 +10,46 @@
 
 /* global error buffer */
 char err_buf[BUF_SIZE];
-int exit_echo = 1;
 
 /* write formatted string into global error buffer */
 char * exit_msg(char * msg, char * format, ...) {
-   int offset = 0;
-   va_list list;
-   va_start(list, format);
-   offset = vsprintf(msg, format, list);
-   msg[offset] = '\0';
-   va_end(list);
-   return msg;
+    int offset = 0;
+    va_list list;
+    va_start(list, format);
+    offset = vsprintf(msg, format, list);
+    msg[offset] = '\0';
+    va_end(list);
+    return msg;
 }
 
 /* check whether variable arguments are NULL */
 int exit_null(const char * file_name, const char * function_name, const int line_number, int argc, ...) {
-   int i = 0;
-   va_list list;
-   va_start(list, argc);
-   for(i = 0; i < argc; i++) {
-      if(va_arg(list, void *) == NULL) {
-         fprintf(stderr,
-            "[warn]: %s;%s;%d; null detected in position %d.\n",
-            file_name, function_name, line_number, i + 1);
-         va_end(list);
+    int i = 0;
+    va_list list;
+    va_start(list, argc);
+    for(i = 0; i < argc; i++) {
+        if(va_arg(list, void *) == NULL) {
+            fprintf(stderr, "[warn]: %s;%s;%d; null detected in posit"
+            "ion %d.\n", file_name, function_name, line_number, i + 1);
+            va_end(list);
 #if ENABLE_EXIT
-         exit(EXIT_FAILURE);
+            exit(EXIT_FAILURE);
 #else
-         return CHECK_FAILED;
+            return CHECK_FAILED;
 #endif
-      }
-   }
-   va_end(list);
-   return CHECK_PASSED;
+        }
+    }
+    va_end(list);
+    return CHECK_PASSED;
 }
 
 /* print error message before exiting */
 int exit_func(const char * file_name, const char * function_name, const int line_number, int exitcode, const char * error) {
-    if(exit_echo)
-      fprintf(stderr, "[warn]: %s;%s;%d; %s.\n", file_name, function_name, line_number, error);
+    fprintf(stderr, "[warn]: %s;%s;%d; %s.\n", file_name, function_name, line_number, error);
 #if ENABLE_EXIT
-   exit(exitcode);
+    exit(exitcode);
 #else
-   return CHECK_FAILED;
+    return CHECK_FAILED;
 #endif
 }
 

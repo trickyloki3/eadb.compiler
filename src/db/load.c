@@ -171,7 +171,7 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
             /* strip the whitespace from the end */
             if(offset_fld > 0)
                for(i = offset_fld - 1; i >= 0; i--) {
-                  if(isspace(fld[i]))
+                  if(isspace((unsigned char) fld[i]))
                      offset_fld--;
                   else
                      break;
@@ -184,10 +184,10 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
 
             /* skip all beginning whitespace for the next field */
             if(config->flag & SKIP_NEXT_WS)
-               while(isspace(buf[offset_buf+1]) && buf[offset_buf+1] != '\0')
+               while(isspace((unsigned char) buf[offset_buf+1]) && buf[offset_buf+1] != '\0')
                   offset_buf++;
          } else {
-            if(!(isspace(buf[offset_buf]) && offset_fld <= 0) && buf[offset_buf] != '\"') {
+            if(!(isspace((unsigned char) buf[offset_buf]) && offset_fld <= 0) && buf[offset_buf] != '\"') {
                fld[offset_fld] = buf[offset_buf];
                offset_fld++;
             }
