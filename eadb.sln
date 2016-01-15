@@ -26,7 +26,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dev", "src\dev\dev.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsort", "libsort\libsort.vcxproj", "{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librbt", "..\librbt\librbt.vcxproj", "{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librbt", "librbt\librbt.vcxproj", "{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

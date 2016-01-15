@@ -1687,7 +1687,7 @@ int stack_eng_coordinate(block_r * block, char * expr) {
 
     /* inefficient ; evaluates the same expression twice */
     err = (node->min < 1 && node->max < 1) ?
-            block_stack_push(block, TYPE_ENG, "random") :
+            block_stack_push(block, TYPE_ENG, "Random") :
             stack_eng_int(block, expr, 1, 0);
 
     node_free(node);
@@ -3925,6 +3925,7 @@ int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * 
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
     node_t * result = NULL;
     token_r * tokens = NULL;
+    rbt_tree_t * id_tree = NULL;
 
     /* check null */
     if (NULL == block || expr == NULL)
@@ -3940,8 +3941,11 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
         goto clean;
     }
 
+    if(rbt_init(&id_tree))
+        goto clean;
+
     /* evaluate expression */
-    result = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic_tree, flag);
+    result = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic_tree, id_tree, flag);
     if (result == NULL) {
         exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
         goto clean;
@@ -3951,6 +3955,8 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     result = evaluate_expression_(block, result, modifier, flag);
 
 clean:
+    rbt_deploy(id_tree, id_tree_free, expr);
+    rbt_deit(&id_tree);
     SAFE_FREE(tokens);
     return result;
 }
@@ -4031,7 +4037,7 @@ failed:
     return NULL;
 }
 
-node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, int flag) {
+node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag) {
     int  i = 0;
     char c = 0;
     int operand = 0;
@@ -4055,7 +4061,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     for(i = start; i < end; i++) {
         if(expr[i][0] == '(') {
             /* create subexpression node */
-            if(evaluate_expression_sub(block, expr, &i, end, logic_tree, flag, &temp_node))
+            if(evaluate_expression_sub(block, expr, &i, end, logic_tree, id_tree, flag, &temp_node))
                 goto failed;
             operand++;
         } else if(SCRIPT_BINARY(expr[i][0])) {
@@ -4144,7 +4150,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
      * to copy any value we want to return using the root
      * node */
     if(node_structure(root_node) ||
-       node_evaluate(root_node->next, node_dbg, logic_tree, flag) ||
+       node_evaluate(root_node->next, node_dbg, logic_tree, id_tree, flag) ||
        node_steal(root_node->next, root_node)) {
         exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
         goto failed;
@@ -4172,7 +4178,7 @@ failed:
     return NULL;
 }
 
-int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, logic_node_t * logic_tree, int flag, node_t ** node) {
+int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag, node_t ** node) {
     int  i = 0;
     char c = 0;
     int  level = 0;
@@ -4202,8 +4208,8 @@ int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end,
 
     /* peek ahead to check if subexpression is part of ? operator */
     _node = (i + 1 < end && expr[i + 1][0] == '?') ?
-        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, flag | EVALUATE_FLAG_EXPR_BOOL):
-        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, flag);
+        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag | EVALUATE_FLAG_EXPR_BOOL):
+        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag);
     if(NULL == _node)
         return exit_func_safe("failed to evaluate subexpression in item %d", block->item_id);
 
@@ -4481,7 +4487,7 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
             "function '%s' in %d", func->name, block->item_id);
     }
 
-    node->formula = convert_string("random");
+    node->formula = convert_string("Random");
 
 clean:
     node_free(operand_1);
@@ -4870,7 +4876,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
                 result = NULL;
             }
 
-            node->formula = convert_string("random");
+            node->formula = convert_string("Random");
             node->min = minrange(node->range);
             node->max = maxrange(node->range);
             goto clean;
@@ -4900,7 +4906,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
                 result = NULL;
             }
 
-            node->formula = convert_string("random");
+            node->formula = convert_string("Random");
             node->min = minrange(node->range);
             node->max = maxrange(node->range);
             goto clean;
@@ -4949,7 +4955,6 @@ int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * fun
 
 int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, node_t * node) {
     int ret = 0;
-    int len = 0;
     int flag = 0;
     node_t * base = NULL;
     node_t * expo = NULL;
@@ -4961,7 +4966,6 @@ int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, nod
         return exit_func_safe("invalid argument count to "
         "function '%s' in %d", func->name, block->item_id);
 
-    len = block->arg_cnt;
     flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK;
     base = evaluate_expression(block, block->ptr[off], 1, flag);
     if(NULL == base)
@@ -4970,20 +4974,6 @@ int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, nod
     expo = evaluate_expression(block, block->ptr[off + 1], 1, flag);
     if(NULL == expo)
         goto failed;
-
-    len = block->arg_cnt - len + 128;
-    node->formula = calloc(len, sizeof(char));
-    if(NULL == node->formula)
-        goto failed;
-
-    if(expo->min == expo->max &&
-       expo->min == 1)
-        sprintf(node->formula, "%s",
-                block->eng[block->eng_cnt - 2]);
-    else
-        sprintf(node->formula, "(%s)^%s",
-                block->eng[block->eng_cnt - 2],
-                block->eng[block->eng_cnt - 1]);
 
     node->min = (int) pow(base->min, expo->min);
     node->max = (int) pow(base->max, expo->max);
@@ -5131,7 +5121,7 @@ int node_structure(node_t * root_node) {
  * to get a real good understanding of how this algorithm works,
  * simply draw a few examples and work through it by hand; which
  * was how the algorithm was developed. !D */
-int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag) {
+int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag) {
     range_t * temp = NULL;
     range_t * result = NULL;
     logic_node_t * new_tree = NULL;
@@ -5140,7 +5130,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
         /* unary operator has one expression
          * (operator) (expression) */
         if(node->left != NULL)
-            if(node_evaluate(node->left, stm, logic_tree, flag))
+            if(node_evaluate(node->left, stm, logic_tree, id_tree, flag))
                 return SCRIPT_FAILED;
     } else {
         /* binary operators has two expression
@@ -5180,13 +5170,13 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
 
             /* (true)  original logic tree */
             if(node->left != NULL)
-                if(node_evaluate(node->left, stm, logic_tree, flag))
+                if(node_evaluate(node->left, stm, logic_tree, id_tree, flag))
                     return SCRIPT_FAILED;
 
             /* (false) inverse logic tree */
             new_tree = inverse_logic_tree(logic_tree);
             if(node->right != NULL)
-                if(node_evaluate(node->right, stm, new_tree, flag))
+                if(node_evaluate(node->right, stm, new_tree, id_tree, flag))
                     return SCRIPT_FAILED;
             freenamerange(new_tree);
 
@@ -5194,7 +5184,7 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
          * evaluate the left expression before the right expression */
         } else {
             if(node->left != NULL)
-                if(node_evaluate(node->left, stm, logic_tree, flag))
+                if(node_evaluate(node->left, stm, logic_tree, id_tree, flag))
                     return SCRIPT_FAILED;
 
             /* ? operator node's left child is the (condition) expression and
@@ -5210,11 +5200,11 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
                     node->cond = copy_any_tree(new_tree);
                 /* evaluate the (true) : (false) expression */
                 if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, new_tree, flag))
+                    if(node_evaluate(node->right, stm, new_tree, id_tree, flag))
                         return SCRIPT_FAILED;
             } else {
                 if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, logic_tree, flag))
+                    if(node_evaluate(node->right, stm, logic_tree, id_tree, flag))
                         return SCRIPT_FAILED;
             }
         }
@@ -5355,6 +5345,12 @@ int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, int flag
      * need to set the global node_dbg
      * stream */
     node_dump(node, stm);
+
+    /* steal formula or identifier string */
+    if(node->formula)
+        id_tree_add(id_tree, node->formula);
+    if(node->type & NODE_TYPE_VARIABLE)
+        id_tree_add(id_tree, node->id);
 
     return SCRIPT_PASSED;
 }
@@ -5518,5 +5514,42 @@ int node_remove(node_t * node) {
     node->next = node;
     node->prev = node;
 
+    return CHECK_PASSED;
+}
+
+int id_tree_add(rbt_tree_t * tree, char * id) {
+    int hash;
+    char * name;
+    rbt_node_t * node;
+
+    if(NULL == tree ||
+       NULL == id )
+        return CHECK_FAILED;
+
+    hash = (int) sdbm(id);
+
+    /* skip collisions */
+    if(rbt_search(tree, &node, hash)) {
+        name = convert_string(id);
+        if( NULL == name ||
+            rbt_node(&node, hash, name) ||
+            rbt_insert(tree, node)) {
+            SAFE_FREE(name);
+            SAFE_FREE(node);
+        }
+    }
+
+    return CHECK_PASSED;
+}
+
+int id_tree_free(struct rbt_node * node, void * data, int flag) {
+    /* dump the variables
+    char * expr = data;
+    if(flag & RBT_FIRST)
+        fprintf(stdout, "%s [", expr);
+    fprintf(stdout, "%s ", (char *) node->val);
+    if(flag & RBT_LAST)
+        fprintf(stdout, "]\n");*/
+    SAFE_FREE(node->val);
     return CHECK_PASSED;
 }

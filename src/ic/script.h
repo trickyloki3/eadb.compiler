@@ -19,10 +19,14 @@
     #include "lauxlib.h"
 
     /* eadb */
+    #include "rbt.h"
     #include "util.h"
     #include "name_range.h"
     #include "range.h"
     #include "db_search.h"
+
+    typedef struct rbt_node rbt_node_t;
+    typedef struct rbt_tree rbt_tree_t;
 
     #define SCRIPT_PASSED                         CHECK_PASSED
     #define SCRIPT_FAILED                         CHECK_FAILED
@@ -371,8 +375,8 @@
     /* evaluate an expression */
     node_t * evaluate_expression(block_r *, char *, int, int);
     node_t * evaluate_expression_(block_r *, node_t *, int, int);
-    node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, int);
-    int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
+    node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, rbt_tree_t * id_tree, int);
+    int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, rbt_tree_t *, int, node_t **);
     int evaluate_expression_var(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
 
     /* evaluate a function with the expression
@@ -414,7 +418,7 @@
 
     int node_steal(node_t *, node_t *);
     int node_structure(node_t *);
-    int node_evaluate(node_t *, FILE *, logic_node_t *, int);
+    int node_evaluate(node_t *, FILE *, logic_node_t *, rbt_tree_t *, int);
     int node_inherit(node_t *);
     void node_dump(node_t *, FILE *);
 
@@ -425,4 +429,6 @@
     int node_append(node_t *, node_t *);
     int node_remove(node_t *);
 
+    int id_tree_add(rbt_tree_t *, char *);
+    int id_tree_free(struct rbt_node *, void *, int);
 #endif
