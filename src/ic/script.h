@@ -363,7 +363,6 @@
     #define EVALUATE_FLAG_KEEP_NODE        0x002 /* keep the root node */
     #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators returns 0 or 1 rather than range */
     #define EVALUATE_FLAG_WRITE_FORMULA    0x008 /* write the formula for expression */
-    #define EVALUATE_FLAG_LIST_FORMULA     0x010
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x020 /* keep logic tree for ?: operators; set blocks */
     #define EVALUATE_FLAG_ITERABLE_SET     0x040
     #define EVALUATE_FLAG_VARIANT_SET      0x080
@@ -373,7 +372,6 @@
 
     /* evaluate an expression */
     node_t * evaluate_expression(block_r *, char *, int, int);
-    node_t * evaluate_expression_(block_r *, node_t *, int, int);
     node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, rbt_tree_t * id_tree, int);
     int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, rbt_tree_t *, int, node_t **);
     int evaluate_expression_var(block_r *, char **, int *, int, logic_node_t *, int, node_t **);

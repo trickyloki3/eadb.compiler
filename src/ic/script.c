@@ -3928,11 +3928,13 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     node_t * result = NULL;
     token_r * tokens = NULL;
     rbt_tree_t id_tree;
+    logic_node_t * temp;
 
-    memset(&id_tree, 0, sizeof(id_tree));
 
     /* check null */
-    if (NULL == block || expr == NULL)
+    if (NULL == block ||
+        NULL == expr ||
+        rbt_tree_init_static(&id_tree) )
         return NULL;
 
     tokens = calloc(1, sizeof(token_r));
@@ -3952,85 +3954,28 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
         goto clean;
     }
 
-    /* post expression handling of node */
-    result = evaluate_expression_(block, result, modifier, flag);
-
-clean:
-    rbt_deploy(&id_tree, id_tree_free, expr);
-    SAFE_FREE(tokens);
-    return result;
-}
-
-/* handle specific flags before returning to the caller */
-node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier, int flag) {
-    int min = 0;
-    int max = 0;
-    int len = 0;
-    char buf[64];
-    char * formula = NULL;
-    logic_node_t * temp = NULL;
-
-    /* check division by zero */
-    if (modifier == 0) {
-        exit_func_safe("modifier is zero in item %d", block->item_id);
-        return NULL;
-    }
-
-    /* get the min and max value */
-    if(modifier != 1) {
-        calcrangemin('/', root_node->range, modifier);
-        calcrangemax('/', root_node->range, modifier);
-        root_node->min = minrange(root_node->range);
-        root_node->max = maxrange(root_node->range);
-    }
-    min = root_node->min;
-    max = root_node->max;
-
-    /* check whether min and max can be divided by the modifier */
-    if (min == max) {
-        /* write a single value */
-        len = (min > 0 && (min / modifier) == 0) ?
-            sprintf(buf, "%.2f", (double) min / modifier) :
-            sprintf(buf, "%d", min / modifier);
-    } else {
-        /* write multiple values */
-        len = ((min > 0 && (min / modifier) == 0) || (max > 0 && (max / modifier) == 0)) ?
-            sprintf(buf, "%.2f ~ %.2f", (double) min / modifier, (double) max / modifier) :
-            sprintf(buf, "%d ~ %d", min / modifier, max / modifier);
-    }
-
-    /* write formula if dependencies exist and only when flag is set */
-    if (EVALUATE_FLAG_WRITE_FORMULA & flag && root_node->cond_cnt > 0) {
-        if(block_stack_push(block, TYPE_ENG, buf) ||
-           block_stack_formula(block, block->eng_cnt - 1, root_node, &formula) ||
-           block_stack_pop(block, TYPE_ENG) ||
-           block_stack_push(block, TYPE_ENG, formula))
-            goto failed;
-        SAFE_FREE(formula);
-    }
-
     /* keep logic tree in node */
     if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
-        if (root_node->cond != NULL) {
+        if (result->cond != NULL) {
             if (block->logic_tree == NULL) {
-                block->logic_tree = copy_deep_any_tree(root_node->cond);
+                block->logic_tree = copy_deep_any_tree(result->cond);
             } else {
                 /* new logic trees are stack onot the previous logic tree */
                 temp = block->logic_tree;
-                block->logic_tree = copy_deep_any_tree(root_node->cond);
+                block->logic_tree = copy_deep_any_tree(result->cond);
                 block->logic_tree->stack = temp;
             }
         }
 
+clean:
+    rbt_deploy(&id_tree, id_tree_free, expr);
+    rbt_tree_deit_static(&id_tree);
+    SAFE_FREE(tokens);
     /* return the root node */
     if (EVALUATE_FLAG_KEEP_NODE & flag)
-        return root_node;
+        return result;
 
-    node_free(root_node);
-    return NULL;
-
-failed:
-    SAFE_FREE(formula);
+    node_free(result);
     return NULL;
 }
 
@@ -5514,8 +5459,8 @@ int node_remove(node_t * node) {
 
 int id_tree_add(rbt_tree_t * tree, char * id) {
     int hash;
-    char * name;
-    rbt_node_t * node;
+    char * name = NULL;
+    rbt_node_t * node = NULL;
 
     if(NULL == tree ||
        NULL == id )
@@ -5527,10 +5472,10 @@ int id_tree_add(rbt_tree_t * tree, char * id) {
     if(rbt_search(tree, &node, hash)) {
         name = convert_string(id);
         if( NULL == name ||
-            rbt_node(&node, hash, name) ||
+            rbt_node_init(&node, hash, name) ||
             rbt_insert(tree, node)) {
             SAFE_FREE(name);
-            SAFE_FREE(node);
+            rbt_node_deit(&node);
         }
     }
 
