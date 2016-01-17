@@ -119,8 +119,10 @@ int block_stack_vararg(block_r * block, int type, const char * format, ...) {
 
         if(type & FLAG_EMPTY)
             block->arg[block->arg_cnt - 1] = ' ';
+        else if(type & FLAG_COMMA)
+            block->arg[block->arg_cnt - 1] = ',';
         else
-            block->arg[block->arg_cnt - 1] = (type & FLAG_COMMA) ? ',' : '\n';
+            block->arg[block->arg_cnt - 1] = '\n';
     } else {
         /* set the stack pointers */
         switch (type & 0x3) {
@@ -3925,7 +3927,9 @@ int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * 
 node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
     node_t * result = NULL;
     token_r * tokens = NULL;
-    rbt_tree_t * id_tree = NULL;
+    rbt_tree_t id_tree;
+
+    memset(&id_tree, 0, sizeof(id_tree));
 
     /* check null */
     if (NULL == block || expr == NULL)
@@ -3941,11 +3945,8 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
         goto clean;
     }
 
-    if(rbt_init(&id_tree))
-        goto clean;
-
     /* evaluate expression */
-    result = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic_tree, id_tree, flag);
+    result = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic_tree, &id_tree, flag);
     if (result == NULL) {
         exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
         goto clean;
@@ -3955,8 +3956,7 @@ node_t * evaluate_expression(block_r * block, char * expr, int modifier, int fla
     result = evaluate_expression_(block, result, modifier, flag);
 
 clean:
-    rbt_deploy(id_tree, id_tree_free, expr);
-    rbt_deit(&id_tree);
+    rbt_deploy(&id_tree, id_tree_free, expr);
     SAFE_FREE(tokens);
     return result;
 }
@@ -3982,9 +3982,9 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
         calcrangemax('/', root_node->range, modifier);
         root_node->min = minrange(root_node->range);
         root_node->max = maxrange(root_node->range);
-        min = root_node->min;
-        max = root_node->max;
     }
+    min = root_node->min;
+    max = root_node->max;
 
     /* check whether min and max can be divided by the modifier */
     if (min == max) {
@@ -4007,9 +4007,6 @@ node_t * evaluate_expression_(block_r * block, node_t * root_node, int modifier,
            block_stack_push(block, TYPE_ENG, formula))
             goto failed;
         SAFE_FREE(formula);
-    } else if(EVALUATE_FLAG_WRITE_STACK & flag) {
-        if(block_stack_push(block, TYPE_ENG, buf))
-            goto failed;
     }
 
     /* keep logic tree in node */
@@ -4955,7 +4952,6 @@ int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * fun
 
 int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, node_t * node) {
     int ret = 0;
-    int flag = 0;
     node_t * base = NULL;
     node_t * expo = NULL;
 
@@ -4966,12 +4962,11 @@ int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, nod
         return exit_func_safe("invalid argument count to "
         "function '%s' in %d", func->name, block->item_id);
 
-    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_WRITE_STACK;
-    base = evaluate_expression(block, block->ptr[off], 1, flag);
+    base = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
     if(NULL == base)
         goto failed;
 
-    expo = evaluate_expression(block, block->ptr[off + 1], 1, flag);
+    expo = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
     if(NULL == expo)
         goto failed;
 
@@ -5543,13 +5538,13 @@ int id_tree_add(rbt_tree_t * tree, char * id) {
 }
 
 int id_tree_free(struct rbt_node * node, void * data, int flag) {
-    /* dump the variables
+    /* dump the variables */
     char * expr = data;
     if(flag & RBT_FIRST)
         fprintf(stdout, "%s [", expr);
     fprintf(stdout, "%s ", (char *) node->val);
     if(flag & RBT_LAST)
-        fprintf(stdout, "]\n");*/
+        fprintf(stdout, "]\n");
     SAFE_FREE(node->val);
     return CHECK_PASSED;
 }

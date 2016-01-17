@@ -367,7 +367,6 @@
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x020 /* keep logic tree for ?: operators; set blocks */
     #define EVALUATE_FLAG_ITERABLE_SET     0x040
     #define EVALUATE_FLAG_VARIANT_SET      0x080
-    #define EVALUATE_FLAG_WRITE_STACK      0x100
 
     /* higher level wrappers over evaluate expression */
     int evaluate_numeric_constant(block_r *, char *, int, int *);
