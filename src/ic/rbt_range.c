@@ -267,10 +267,10 @@ int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
         while(yi) {
             y = yi->val;
 
-            if(y->min > max)
+            if(y->min > max + 1 /* +1 handles merge right */ )
                 break;
 
-            if(min > y->min && min > y->max) {
+            if(min > y->min && min > y->max + 1 /* +1 handles merge left */) {
                 /* disjoint left */
                 if(rbt_range_insert(object, y->min, y->max))
                     goto failed;
