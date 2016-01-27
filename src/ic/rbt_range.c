@@ -69,6 +69,7 @@ static int rbt_range_deit_(struct rbt_range * rbt_range) {
     if(t->root) {
         while(!is_last(t->root)) {
             r = t->root;
+            /* inefficient; require optimization */
             rbt_delete(t, r);
             free_ptr_call( (struct range *) r->val, range_deit);
             free_ptr_call(r, rbt_node_deit);
@@ -116,6 +117,34 @@ int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
     return 0;
 }
 
+int rbt_range_copy(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
+    rbt_node * i, * r;
+    struct rbt_range * object = NULL;
+    struct range * range = NULL;
+
+    if( is_nil(rbt_range_x) ||
+        is_nil(rbt_range_y) ||
+        rbt_min(rbt_range_x->ranges, &r) ||
+        rbt_range_init(&object, rbt_range_x->global->min, rbt_range_x->global->max) )
+        return 1;
+
+    if(!is_last(r)) {
+        i = r;
+        do {
+            range = i->val;
+            if(rbt_range_insert(object, range->min, range->max))
+                goto failed;
+            i = i->next;
+        } while(i != r);
+    }
+
+    *rbt_range_y = object;
+    return 0;
+failed:
+    rbt_range_deit(&object);
+    return 1;
+}
+
 int rbt_range_insert(struct rbt_range * rbt_range, int min, int max) {
     struct range * range = NULL;
     struct rbt_node * node = NULL;
@@ -129,5 +158,25 @@ int rbt_range_insert(struct rbt_range * rbt_range, int min, int max) {
         return 1;
     }
 
+    return 0;
+}
+
+int rbt_range_min(struct rbt_range * rbt_range, int * min) {
+    rbt_node * i;
+
+    if(rbt_min(rbt_range->ranges, &i))
+        return 1;
+
+    *min = ((struct range *) (i->val))->min;
+    return 0;
+}
+
+int rbt_range_max(struct rbt_range * rbt_range, int * max) {
+    rbt_node * i;
+
+    if(rbt_max(rbt_range->ranges, &i))
+        return 1;
+
+    *max = ((struct range *) (i->val))->max;
     return 0;
 }
