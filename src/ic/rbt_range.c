@@ -132,6 +132,10 @@ int rbt_range_copy(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range
         return 1;
 
     if(!is_last(r)) {
+        /* inefficient; insert and delete */
+        if(rbt_range_delete(object, object->ranges->root))
+            goto failed;
+
         i = r;
         do {
             range = i->val;

@@ -122,7 +122,7 @@ void rbt_range_or_test() {
     rbt_range_deit(&range1);
 
 
-    /* o mega */
+    /* all cases in sequence */
     rbt_range_init(&range1, 2, 4);
     rbt_range_init(&range2, -15, -10);
     rbt_range_or(range1, range2, &range3);
@@ -142,4 +142,26 @@ void rbt_range_or_test() {
     rbt_range_deit(&range2);
     rbt_range_deit(&range1);
 
+    rbt_range_init(&range1, 3, 5);
+    rbt_range_or(range1, range3, &range2);
+    rbt_range_dump(range2, "4. right overlapped");
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, 1, 3);
+    rbt_range_or(range1, range2, &range3);
+    rbt_range_dump(range2, "5. outer subset");
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, -5, 7);
+    rbt_range_or(range1, range3, &range2);
+    rbt_range_dump(range2, "6. inner subset");
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range1);
+
+    /* test random cases */
+    rbt_range_copy(range2, &range1);
+    rbt_range_dump(range1, "copy");
+    rbt_range_deit(&range2);
 }
