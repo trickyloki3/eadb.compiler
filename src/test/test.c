@@ -121,4 +121,25 @@ void rbt_range_or_test() {
     rbt_range_deit(&range2);
     rbt_range_deit(&range1);
 
+
+    /* o mega */
+    rbt_range_init(&range1, 2, 4);
+    rbt_range_init(&range2, -15, -10);
+    rbt_range_or(range1, range2, &range3);
+    rbt_range_dump(range3, "1. left disjoint");
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, 10, 15);
+    rbt_range_or(range1, range3, &range2);
+    rbt_range_dump(range2, "2. right disjoint");
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, 0, 3);
+    rbt_range_or(range1, range2, &range3);
+    rbt_range_dump(range3, "3. left overlapped");
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
 }

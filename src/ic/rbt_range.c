@@ -246,8 +246,8 @@ int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
     max = max(get_max(xr), get_max(yr));
 
     /* get min of two range */
-    if( rbt_max(rbt_range_x->ranges, &xr) ||
-        rbt_max(rbt_range_y->ranges, &yr) )
+    if( rbt_min(rbt_range_x->ranges, &xr) ||
+        rbt_min(rbt_range_y->ranges, &yr) )
         return 1;
     min = min(get_min(xr), get_min(yr));
 
