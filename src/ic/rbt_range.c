@@ -15,6 +15,9 @@
 #define max(x, y)           ((x < y) ? y : x)
 #endif
 
+#define get_min(x)          (((struct range *) ((x)->val))->min)
+#define get_max(x)          (((struct range *) ((x)->val))->max)
+
 int range_init(struct range ** range, int min, int max) {
     struct range * object = NULL;
 
@@ -161,6 +164,17 @@ int rbt_range_insert(struct rbt_range * rbt_range, int min, int max) {
     return 0;
 }
 
+int rbt_range_delete(struct rbt_range * rbt_range, struct rbt_node * node) {
+    struct range * range = node->val;
+
+    if(rbt_delete(rbt_range->ranges, node))
+        return 1;
+
+    free_ptr_call(range, range_deit);
+    free_ptr_call(node, rbt_node_deit);
+    return 0;
+}
+
 int rbt_range_min(struct rbt_range * rbt_range, int * min) {
     rbt_node * i;
 
@@ -179,4 +193,119 @@ int rbt_range_max(struct rbt_range * rbt_range, int * max) {
 
     *max = ((struct range *) (i->val))->max;
     return 0;
+}
+
+static rbt_range_negate_(struct range * range) {
+    int min;
+    int max;
+
+    /* i.e. (1, 3) => (-3, -1) */
+    min = range->max * -1;
+    max = range->min * -1;
+
+    range->min = min;
+    range->max = max;
+    return 0;
+}
+
+int rbt_range_negate(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
+    rbt_node * i, * r;
+    struct rbt_range * object = NULL;
+
+    if( rbt_range_copy(rbt_range_x, &object) ||
+        rbt_min(object->ranges, &r) ||
+        rbt_range_negate_(object->global))
+        return 1;
+
+    i = r;
+    do {
+        rbt_range_negate_(i->val);
+        i = i->next;
+    } while(i != r);
+
+    *rbt_range_y = object;
+    return 0;
+}
+
+int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y, struct rbt_range ** rbt_range_z) {
+    int min;
+    int max;
+    rbt_node * xi, * xr;
+    rbt_node * yi, * yr;
+    struct range * x, * y;
+    struct rbt_range * object = NULL;
+
+    if( is_nil(rbt_range_x) ||
+        is_nil(rbt_range_y) )
+        return 1;
+
+    /* get max of two range  */
+    if( rbt_max(rbt_range_x->ranges, &xr) ||
+        rbt_max(rbt_range_y->ranges, &yr) )
+        return 1;
+    max = max(get_max(xr), get_max(yr));
+
+    /* get min of two range */
+    if( rbt_max(rbt_range_x->ranges, &xr) ||
+        rbt_max(rbt_range_y->ranges, &yr) )
+        return 1;
+    min = min(get_min(xr), get_min(yr));
+
+    if(rbt_range_init(&object, min, max) ||
+       /* inefficient; insert and delete */
+       rbt_range_delete(object, object->ranges->root) )
+        return 1;
+
+    /* O(n + m) */
+    xi = xr;
+    yi = yr;
+    do {
+        x = xi->val;
+        min = x->min;
+        max = x->max;
+
+        while(yi) {
+            y = yi->val;
+
+            if(y->min > max)
+                break;
+
+            if(min > y->min && min > y->max) {
+                /* disjoint left */
+                if(rbt_range_insert(object, y->min, y->max))
+                    goto failed;
+            } else {
+                /* overlap left and right
+                 * subset inner and outer */
+                min = min(min, y->min);
+                max = max(max, y->max);
+            }
+
+            yi = yi->next;
+
+            /* sentinel */
+            if(yi == yr)
+                yi = NULL;
+        }
+
+        if(rbt_range_insert(object, min, max))
+            goto failed;
+
+        xi = xi->next;
+    } while(xi != xr);
+
+    if(yi) {
+        do {
+            y = yi->val;
+            if(rbt_range_insert(object, y->min, y->max))
+                goto failed;
+            yi = yi->next;
+        } while(yi != yr);
+    }
+
+    *rbt_range_z = object;
+    return 0;
+failed:
+    rbt_range_deit(&object);
+    return 1;
 }
