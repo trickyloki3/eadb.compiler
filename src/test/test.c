@@ -162,6 +162,13 @@ void rbt_range_or_test() {
 
     /* test random cases */
     rbt_range_copy(range2, &range1);
-    rbt_range_dump(range1, "copy");
+    rbt_range_or(range1, range2, &range3);
+    rbt_range_negate(range3, &range4);
+    rbt_range_dump(range1, "random case; copy");
+    rbt_range_dump(range3, "random case; same");
+    rbt_range_dump(range4, "random case; negate");
+    rbt_range_deit(&range4);
+    rbt_range_deit(&range3);
     rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
 }

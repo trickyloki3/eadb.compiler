@@ -213,22 +213,36 @@ static rbt_range_negate_(struct range * range) {
 }
 
 int rbt_range_negate(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
+    int min;
+    int max;
     rbt_node * i, * r;
     struct rbt_range * object = NULL;
 
-    if( rbt_range_copy(rbt_range_x, &object) ||
-        rbt_min(object->ranges, &r) ||
-        rbt_range_negate_(object->global))
-        return 1;
+    if( rbt_range_init(&object, rbt_range_x->global->min, rbt_range_x->global->max) ||
+        rbt_range_negate_(object->global) ||
+        rbt_min(rbt_range_x->ranges, &r) )
+        goto failed;
 
-    i = r;
-    do {
-        rbt_range_negate_(i->val);
-        i = i->next;
-    } while(i != r);
+    if(!is_last(r)) {
+        /* inefficient; insert and delete */
+        if(rbt_range_delete(object, object->ranges->root))
+            goto failed;
+
+        i = r;
+        do {
+            min = -1 * get_max(i);
+            max = -1 * get_min(i);
+            if(rbt_range_insert(object, min, max))
+                goto failed;
+            i = i->prev;
+        } while(i != r);
+    }
 
     *rbt_range_y = object;
     return 0;
+failed:
+    rbt_range_deit(&object);
+    return 1;
 }
 
 int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y, struct rbt_range ** rbt_range_z) {
