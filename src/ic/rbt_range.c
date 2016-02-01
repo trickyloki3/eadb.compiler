@@ -45,7 +45,7 @@ int range_deit(struct range ** range) {
     return 0;
 }
 
-int rbt_range_init(struct rbt_range ** rbt_range, int min, int max) {
+int rbt_range_init(struct rbt_range ** rbt_range, int min, int max, int flag) {
     struct rbt_range * object = NULL;
 
     if( is_nil( rbt_range) ||
@@ -54,14 +54,19 @@ int rbt_range_init(struct rbt_range ** rbt_range, int min, int max) {
         return 1;
 
     if( rbt_tree_init(&object->ranges) ||
-        range_init(&object->global, min, max) ||
-        rbt_range_add(object, min, max, NULL) ) {
-        rbt_range_deit(&object);
-        return 1;
-    }
+        range_init(&object->global, min, max) )
+        goto failed;
+
+    if(!flag)
+        if(rbt_range_add(object, min, max, NULL))
+            goto failed;
 
     *rbt_range = object;
     return 0;
+
+failed:
+    rbt_range_deit(&object);
+    return 1;
 }
 
 static int rbt_range_deit_(struct rbt_range * rbt_range) {
@@ -120,49 +125,6 @@ int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
     return 0;
 }
 
-int rbt_range_copy(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
-    rbt_node * i, * r;
-    struct rbt_range * object = NULL;
-    struct range * range = NULL;
-
-    if( is_nil(rbt_range_x) ||
-        is_nil(rbt_range_y) ||
-        rbt_min(rbt_range_x->ranges, &r) ||
-        rbt_range_init(&object, rbt_range_x->global->min, rbt_range_x->global->max) )
-        return 1;
-
-    if(!is_last(r)) {
-        /* inefficient; insert and delete */
-        if(rbt_range_delete(object, object->ranges->root))
-            goto failed;
-
-        i = r;
-        do {
-            range = i->val;
-            if(rbt_range_add(object, range->min, range->max, NULL))
-                goto failed;
-            i = i->next;
-        } while(i != r);
-    }
-
-    *rbt_range_y = object;
-    return 0;
-failed:
-    rbt_range_deit(&object);
-    return 1;
-}
-
-int rbt_range_delete(struct rbt_range * rbt_range, struct rbt_node * node) {
-    struct range * range = node->val;
-
-    if(rbt_delete(rbt_range->ranges, node))
-        return 1;
-
-    free_ptr_call(range, range_deit);
-    free_ptr_call(node, rbt_node_deit);
-    return 0;
-}
-
 int rbt_range_min(struct rbt_range * rbt_range, int * min) {
     rbt_node * i;
 
@@ -183,52 +145,6 @@ int rbt_range_max(struct rbt_range * rbt_range, int * max) {
     return 0;
 }
 
-static rbt_range_negate_(struct range * range) {
-    int min;
-    int max;
-
-    /* i.e. (1, 3) => (-3, -1) */
-    min = range->max * -1;
-    max = range->min * -1;
-
-    range->min = min;
-    range->max = max;
-    return 0;
-}
-
-int rbt_range_negate(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
-    int min;
-    int max;
-    rbt_node * i, * r;
-    struct rbt_range * object = NULL;
-
-    if( rbt_range_init(&object, rbt_range_x->global->min, rbt_range_x->global->max) ||
-        rbt_range_negate_(object->global) ||
-        rbt_min(rbt_range_x->ranges, &r) )
-        goto failed;
-
-    if(!is_last(r)) {
-        /* inefficient; insert and delete */
-        if(rbt_range_delete(object, object->ranges->root))
-            goto failed;
-
-        i = r;
-        do {
-            min = -1 * get_max(i);
-            max = -1 * get_min(i);
-            if(rbt_range_add(object, min, max, NULL))
-                goto failed;
-            i = i->prev;
-        } while(i != r);
-    }
-
-    *rbt_range_y = object;
-    return 0;
-failed:
-    rbt_range_deit(&object);
-    return 1;
-}
-
 int rbt_range_add(struct rbt_range * rbt_range, int min, int max, struct range ** result) {
     struct range * range = NULL;
     struct rbt_node * node = NULL;
@@ -245,6 +161,59 @@ int rbt_range_add(struct rbt_range * rbt_range, int min, int max, struct range *
     if(result)
         *result = range;
     return 0;
+}
+
+int rbt_range_dup(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
+    rbt_node * i, * r;
+    struct rbt_range * object = NULL;
+
+    if( rbt_min(rbt_range_x->ranges, &r) ||
+        rbt_range_init(&object, rbt_range_x->global->min, rbt_range_x->global->max, FLAG_RBT_EMPTY) )
+        goto failed;
+
+    i = r;
+    do {
+        if(rbt_range_add(object, get_min(i), get_max(i), NULL))
+            goto failed;
+        i = i->next;
+    } while(i != r);
+
+    *rbt_range_y = object;
+    return 0;
+
+failed:
+    rbt_range_deit(&object);
+    return 1;
+}
+
+int rbt_range_neg(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
+    int min;
+    int max;
+    rbt_node * i, * r;
+    struct rbt_range * object = NULL;
+
+    min = rbt_range_x->global->max * -1;
+    max = rbt_range_x->global->min * -1;
+
+    if( rbt_min(rbt_range_x->ranges, &r) ||
+        rbt_range_init(&object, min, max, FLAG_RBT_EMPTY) )
+        goto failed;
+
+    i = r;
+    do {
+        min = -1 * get_max(i);
+        max = -1 * get_min(i);
+        if(rbt_range_add(object, min, max, NULL))
+            goto failed;
+        i = i->prev;
+    } while(i != r);
+
+    *rbt_range_y = object;
+    return 0;
+
+failed:
+    rbt_range_deit(&object);
+    return 1;
 }
 
 static int rbt_range_or_next(struct rbt_range * rbt_range, struct range ** last, struct range * next) {
@@ -278,13 +247,10 @@ int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
     min = min(rbt_range_x->global->min, rbt_range_y->global->min);
     max = max(rbt_range_x->global->max, rbt_range_y->global->max);
 
-    if( rbt_range_init(&object, min, max) ||
-        rbt_range_delete(object, object->ranges->root) )
-        goto failed;
-
     /* merge sort algorithm for merging ranges */
 
-    if( rbt_min(rbt_range_x->ranges, &xr) ||
+    if(rbt_range_init(&object, min, max, FLAG_RBT_EMPTY) ||
+        rbt_min(rbt_range_x->ranges, &xr) ||
         rbt_min(rbt_range_y->ranges, &yr) )
         goto failed;
 
