@@ -20,10 +20,11 @@
     int rbt_range_deit(struct rbt_range **);
     int rbt_range_dump(struct rbt_range *, char *);
     int rbt_range_copy(struct rbt_range *, struct rbt_range **);
-    int rbt_range_insert(struct rbt_range *, int, int);
     int rbt_range_delete(struct rbt_range *, struct rbt_node *);
     int rbt_range_min(struct rbt_range *, int *);
     int rbt_range_max(struct rbt_range *, int *);
     int rbt_range_negate(struct rbt_range *, struct rbt_range **);
+
+    int rbt_range_add(struct rbt_range *, int, int, struct range **);
     int rbt_range_or(struct rbt_range *, struct rbt_range *, struct rbt_range **);
 #endif
