@@ -126,22 +126,12 @@ int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
 }
 
 int rbt_range_min(struct rbt_range * rbt_range, int * min) {
-    rbt_node * i;
-
-    if(rbt_min(rbt_range->ranges, &i))
-        return 1;
-
-    *min = ((struct range *) (i->val))->min;
+    *min = rbt_range->global->min;
     return 0;
 }
 
 int rbt_range_max(struct rbt_range * rbt_range, int * max) {
-    rbt_node * i;
-
-    if(rbt_max(rbt_range->ranges, &i))
-        return 1;
-
-    *max = ((struct range *) (i->val))->max;
+    *max = rbt_range->global->max;
     return 0;
 }
 
@@ -296,18 +286,63 @@ int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
     if( rbt_range_init(&object, min, max, FLAG_RBT_EMPTY) ||
         rbt_min(rbt_range_x->ranges, &xr) ||
         rbt_min(rbt_range_y->ranges, &yr) ||
-        rbt_range_merge(object, xr, yr, rbt_range_or_next) )
-        goto failed;
+        rbt_range_merge(object, xr, yr, rbt_range_or_next) ) {
+        free_ptr_call(object, rbt_range_deit);
+        return 1;
+    }
 
     *rbt_range_z = object;
     return 0;
+}
 
-failed:
-    free_ptr_call(object, rbt_range_deit);
-    return 1;
+static int rbt_range_and_next(struct rbt_range * rbt_range, struct range ** last, struct range * next) {
+    int min, max;
+    if(is_nil(*last)) {
+        *last = next;
+    } else {
+        if( (*last)->min <= next->max &&
+            (*last)->max >= next->min ) {
+            min = max((*last)->min, next->min);
+            max = min((*last)->max, next->max);
+            if(rbt_range_add(rbt_range, min, max, NULL))
+                return 1;
+        } else {
+            if( next->min <= (*last)->max &&
+                next->max >= (*last)->min ) {
+                min = max((*last)->min, next->min);
+                max = min((*last)->max, next->max);
+                if(rbt_range_add(rbt_range, min, max, NULL))
+                    return 1;
+            }
+        }
+
+        if((*last)->max < next->max)
+            *last = next;
+    }
+    return 0;
 }
 
 int rbt_range_and(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y, struct rbt_range ** rbt_range_z) {
+    int min, max;
+    rbt_node * xr;
+    rbt_node * yr;
+    struct rbt_range * object = NULL;
 
+    if( is_nil(rbt_range_x) ||
+        is_nil(rbt_range_y) )
+        return 1;
+
+    min = max(rbt_range_x->global->min, rbt_range_y->global->min);
+    max = min(rbt_range_x->global->max, rbt_range_y->global->max);
+
+    if( rbt_range_init(&object, min, max, FLAG_RBT_EMPTY) ||
+        rbt_min(rbt_range_x->ranges, &xr) ||
+        rbt_min(rbt_range_y->ranges, &yr) ||
+        rbt_range_merge(object, xr, yr, rbt_range_and_next) ) {
+        free_ptr_call(object, rbt_range_deit);
+        return 1;
+    }
+
+    *rbt_range_z = object;
     return 0;
 }
