@@ -141,5 +141,4 @@ void rbt_range_and_test() {
     struct rbt_range * range1 = NULL;
     struct rbt_range * range2 = NULL;
     struct rbt_range * range3 = NULL;
-
 }

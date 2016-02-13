@@ -346,3 +346,56 @@ int rbt_range_and(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y
     *rbt_range_z = object;
     return 0;
 }
+
+int rbt_range_not(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
+    int min;
+    int max;
+    rbt_node * root;
+    rbt_node * iter;
+    struct range * last = NULL;
+    struct rbt_range * object = NULL;
+
+    if( is_nil(rbt_range_x) ||
+        rbt_min(rbt_range_x->ranges, &root) )
+        return 1;
+
+    min = rbt_range_x->global->min;
+    max = rbt_range_x->global->max;
+
+    if( is_last(root) &&
+        get_min(root) == 0 &&
+        get_max(root) == 0) {
+        return rbt_range_init(rbt_range_y, min, max, 0);
+    } else if(rbt_range_init(&object, min, max, FLAG_RBT_EMPTY)) {
+        return 1;
+    }
+
+    if(min < get_min(root))
+        if(rbt_range_add(object, min, get_min(root), &last))
+            goto failed;
+
+    if(!is_last(root)) {
+        iter = root;
+        do {
+            if(rbt_range_add(object, get_max(iter) + 1, get_min(iter->next) - 1, &last))
+                goto failed;
+
+            iter = iter->next;
+        } while(iter->next != root);
+    }
+
+    if(get_max(root) < max)
+        if(rbt_range_add(object, get_max(root), max, &last))
+            goto failed;
+
+    if(is_nil(last))
+        if(rbt_range_add(object, 0, 0, NULL))
+            goto failed;
+
+    *rbt_range_y = object;
+    return 0;
+
+failed:
+    rbt_range_deit(&object);
+    return 1;
+}
