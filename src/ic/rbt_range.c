@@ -139,6 +139,12 @@ int rbt_range_add(struct rbt_range * rbt_range, int min, int max, struct range *
     struct range * range = NULL;
     struct rbt_node * node = NULL;
 
+    if(rbt_range->global->min > min)
+        rbt_range->global->min = min;
+
+    if(rbt_range->global->max < max)
+        rbt_range->global->max = max;
+
     if( range_init(&range, min, max) ||
         rbt_node_init(&node, range->max, range) ||
         rbt_insert(rbt_range->ranges, node) ) {
