@@ -126,12 +126,18 @@ int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
 }
 
 int rbt_range_min(struct rbt_range * rbt_range, int * min) {
-    *min = rbt_range->global->min;
+    rbt_node * node;
+    if(rbt_min(rbt_range->ranges, &node))
+        return 1;
+    *min = get_min(node);
     return 0;
 }
 
 int rbt_range_max(struct rbt_range * rbt_range, int * max) {
-    *max = rbt_range->global->max;
+    rbt_node * node;
+    if(rbt_max(rbt_range->ranges, &node))
+        return 1;
+    *max = get_max(node);
     return 0;
 }
 

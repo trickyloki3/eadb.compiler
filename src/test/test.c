@@ -29,10 +29,10 @@ int main(int argc, char * argv[]) {
     assert(0 == rbt_range_deit(&range1));
 
     /* test logical or cases */
-    rbt_range_or_test();
+    /*rbt_range_or_test();*/
 
     /* test logical and cases */
-    /*rbt_range_and_test();*/
+    rbt_range_and_test();
 
     return 0;
 }
@@ -142,5 +142,63 @@ void rbt_range_and_test() {
     struct rbt_range * range2 = NULL;
     struct rbt_range * range3 = NULL;
 
+    rbt_range_init(&range1, 0, 3, 0);       /* (0, 3) U (5, 7) U (9, 11) */
+    rbt_range_add(range1, 5, 7, NULL);
+    rbt_range_add(range1, 9, 11, NULL);
+    rbt_range_init(&range2, 0, 10, 0);      /* (0, 10) */
+    rbt_range_and(range1, range2, &range3);
+    rbt_range_dump(range3, "single overlap left");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 10);
+    assert(3 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_and(range2, range1, &range3);
+    rbt_range_dump(range3, "single overlap right");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 10);
+    assert(3 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
 
+    rbt_range_init(&range1, 0, 3, 0);       /* (0, 3) U (5, 7) U (9, 11) */
+    rbt_range_add(range1, 5, 7, NULL);
+    rbt_range_add(range1, 9, 11, NULL);
+    rbt_range_init(&range2, 2, 10, 0);      /* (0, 10) */
+    rbt_range_and(range2, range1, &range3);
+    rbt_range_dump(range3, "single overlap left (double edge) ");
+    assert(0 == rbt_range_min(range3, &min) && min == 2);
+    assert(0 == rbt_range_max(range3, &max) && max == 10);
+    assert(3 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, 0, 5, 0);       /* (0, 5) U (10, 15) U (20, 25) */
+    rbt_range_add(range1, 10, 15, NULL);
+    rbt_range_add(range1, 20, 25, NULL);
+    rbt_range_init(&range2, 3, 12, 0);      /* (3, 12) U (14, 23) */
+    rbt_range_add(range2, 14, 23, NULL);
+    rbt_range_and(range1, range2, &range3);
+    rbt_range_dump(range3, "multiple overlap left");
+    assert(0 == rbt_range_min(range3, &min) && min == 3);
+    assert(0 == rbt_range_max(range3, &max) && max == 23);
+    assert(4 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, 0, 5, 0);       /* (0, 5) U (10, 15) U (20, 25) */
+    rbt_range_add(range1, 10, 15, NULL);
+    rbt_range_add(range1, 20, 25, NULL);
+    rbt_range_init(&range2, 5, 10, 0);      /* (5, 10) U (15, 20) */
+    rbt_range_add(range2, 15, 20, NULL);
+    rbt_range_and(range1, range2, &range3);
+    rbt_range_dump(range3, "multiple edge overlap left");
+    assert(0 == rbt_range_min(range3, &min) && min == 5);
+    assert(0 == rbt_range_max(range3, &max) && max == 20);
+    assert(4 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
 }
