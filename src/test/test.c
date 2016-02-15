@@ -28,6 +28,20 @@ int main(int argc, char * argv[]) {
     assert(0 == rbt_range_deit(&range2));
     assert(0 == rbt_range_deit(&range1));
 
+    /* test the rbt_range_in */
+    rbt_range_init(&range1, 0, 3, 0);
+    rbt_range_add(range1, 6, 9, NULL);
+    rbt_range_add(range1, 12, 15, NULL);
+    rbt_range_add(range1, 18, 21, NULL);
+    assert(0 == rbt_range_in(range1, 2));
+    assert(0 == rbt_range_in(range1, 6));
+    assert(0 == rbt_range_in(range1, 15));
+    assert(0 == rbt_range_in(range1, 19));
+    assert(1 == rbt_range_in(range1, 4));
+    assert(1 == rbt_range_in(range1, 5));
+    assert(1 == rbt_range_in(range1, 16));
+    rbt_range_deit(&range1);
+
     /* test logical or cases */
     rbt_range_or_test();
 

@@ -417,3 +417,22 @@ failed:
     rbt_range_deit(&object);
     return 1;
 }
+
+int rbt_range_in(struct rbt_range * rbt_range, int key) {
+    rbt_node * i;
+
+    /* modified version of rbt_search() */
+    i = rbt_range->ranges->root;
+    while(i != NULL) {
+        if( key >= get_min(i) &&
+            key <= get_max(i) ) {
+            return 0;
+        } else if(key < get_max(i)) {
+            i = i->l;
+        } else {
+            i = i->r;
+        }
+    }
+
+    return 1;
+}

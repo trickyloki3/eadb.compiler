@@ -30,4 +30,5 @@
     int rbt_range_or(struct rbt_range *, struct rbt_range *, struct rbt_range **);      /* logical or */
     int rbt_range_and(struct rbt_range *, struct rbt_range *, struct rbt_range **);     /* logical and */
     int rbt_range_not(struct rbt_range *, struct rbt_range **);                         /* logical not */
+    int rbt_range_in(struct rbt_range *, int);                                          /* check whether integer in range */
 #endif
