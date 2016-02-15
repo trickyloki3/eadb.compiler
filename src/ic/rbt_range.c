@@ -383,7 +383,7 @@ int rbt_range_not(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_
     }
 
     if(min < get_min(root))
-        if(rbt_range_add(object, min, get_min(root), &last))
+        if(rbt_range_add(object, min, get_min(root) - 1, &last))
             goto failed;
 
     if(!is_last(root)) {
@@ -396,13 +396,19 @@ int rbt_range_not(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_
         } while(iter->next != root);
     }
 
-    if(get_max(root) < max)
-        if(rbt_range_add(object, get_max(root), max, &last))
+    if(get_max(root->prev) < max)
+        if(rbt_range_add(object, get_max(root->prev) + 1, max, &last))
             goto failed;
 
-    if(is_nil(last))
-        if(rbt_range_add(object, 0, 0, NULL))
+    if(is_nil(last)) {
+        if(rbt_range_add(object, 0, 0, &last)) {
             goto failed;
+        } else {
+            /* rbt_range_add modified the global */
+            object->global->min = min;
+            object->global->max = max;
+        }
+    }
 
     *rbt_range_y = object;
     return 0;

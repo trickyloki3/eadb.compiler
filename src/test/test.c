@@ -3,6 +3,7 @@
 
 void rbt_range_or_test();
 void rbt_range_and_test();
+void rbt_range_not_test();
 
 int main(int argc, char * argv[]) {
     int min;
@@ -13,26 +14,28 @@ int main(int argc, char * argv[]) {
     struct rbt_range * range3 = NULL;
     struct rbt_range * range4 = NULL;
 
+    /* test the rbt_range interface */
     assert(0 == rbt_range_init(&range1, 0, 3, 0));
     assert(0 == rbt_range_init(&range2, 5, 7, 0));
     assert(0 == rbt_range_dup(range1, &range3));
     assert(0 == rbt_range_neg(range3, &range4));
-
     assert(0 == rbt_range_min(range1, &min));
     assert(0 == min);
     assert(0 == rbt_range_max(range1, &max));
     assert(3 == max);
-
     assert(0 == rbt_range_deit(&range4));
     assert(0 == rbt_range_deit(&range3));
     assert(0 == rbt_range_deit(&range2));
     assert(0 == rbt_range_deit(&range1));
 
     /* test logical or cases */
-    /*rbt_range_or_test();*/
+    rbt_range_or_test();
 
     /* test logical and cases */
     rbt_range_and_test();
+
+    /* test logical not cases */
+    rbt_range_not_test();
 
     return 0;
 }
@@ -198,6 +201,46 @@ void rbt_range_and_test() {
     assert(0 == rbt_range_min(range3, &min) && min == 5);
     assert(0 == rbt_range_max(range3, &max) && max == 20);
     assert(4 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+}
+
+void rbt_range_not_test() {
+    int min = 0;
+    int max = 0;
+    struct rbt_range * range1 = NULL;
+    struct rbt_range * range2 = NULL;
+    struct rbt_range * range3 = NULL;
+
+    rbt_range_init(&range1, 0, 3, 0);   /* (0, 3) U (6, 9) */
+    rbt_range_add(range1, 6, 9, NULL);
+    rbt_range_not(range1, &range2);
+    rbt_range_dump(range2, "not");
+    assert(0 == rbt_range_min(range2, &min) && min == 4);
+    assert(0 == rbt_range_max(range2, &max) && max == 5);
+    assert(1 == range2->ranges->count);
+    rbt_range_not(range2, &range3);
+    rbt_range_dump(range3, "not twice");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 9);
+    assert(2 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    rbt_range_init(&range1, 1, 3, 0);   /* (1, 3) */
+    rbt_range_dump(range1, "not zero");
+    rbt_range_not(range1, &range2);
+    rbt_range_dump(range2, "not zero");
+    rbt_range_not(range2, &range3);
+    assert(0 == rbt_range_min(range2, &min) && min == 0);
+    assert(0 == rbt_range_max(range2, &max) && max == 0);
+    assert(1 == range2->ranges->count);
+    rbt_range_dump(range3, "not zero twice");
+    assert(0 == rbt_range_min(range3, &min) && min == 1);
+    assert(0 == rbt_range_max(range3, &max) && max == 3);
+    assert(1 == range3->ranges->count);
     rbt_range_deit(&range3);
     rbt_range_deit(&range2);
     rbt_range_deit(&range1);
