@@ -342,6 +342,16 @@ void rbt_range_op_test() {
     assert(1 == range3->ranges->count);
     rbt_range_deit(&range3);
 
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    /* test the null set */
+    rbt_range_init(&range1, 0, 3, 0);                      /* (0, 3) */
+    rbt_range_init(&range2, 6, 9, 0);                      /* (6, 9) */
+
+    rbt_range_op(range1, range2, &range3, '>' + '=');
+    rbt_range_dump(range3, "null set");
+    rbt_range_deit(&range3);
 
     rbt_range_deit(&range2);
     rbt_range_deit(&range1);

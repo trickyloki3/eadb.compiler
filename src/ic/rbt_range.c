@@ -440,8 +440,8 @@ int rbt_range_in(struct rbt_range * rbt_range, int key) {
 int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y, struct rbt_range ** rbt_range_z, int operator) {
     int xmin, ymin;
     int xmax, ymax;
+    int rmin, rmax;
     struct rbt_range * range_1 = NULL;
-    struct rbt_range * range_2 = NULL;
     struct rbt_range * result = NULL;
 
     /* relational operators are delegated */
@@ -486,9 +486,9 @@ int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
             ymax--;
         case '<' + '=':
             /* compute x <= y */
-            if( (ymax < xmin) ?
-                   rbt_range_init(&range_1, ymax, xmin, 0) :
-                   rbt_range_init(&range_1, xmin, ymax, 0) ||
+            if( ((ymax < xmin) ?
+                   rbt_range_init(&range_1, 0, 0, 0) :
+                   rbt_range_init(&range_1, xmin, ymax, 0)) ||
                 rbt_range_and(rbt_range_x, range_1, &result) ) {
                 goto failed;
             } else {
@@ -501,9 +501,9 @@ int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
             ymax++;
         case '>' + '=':
             /* compute x >= y */
-            if( (xmax < ymax) ?
-                    rbt_range_init(&range_1, xmax, ymax, 0) :
-                    rbt_range_init(&range_1, ymax, xmax, 0) ||
+            if( ((xmax < ymax) ?
+                    rbt_range_init(&range_1, 0, 0, 0) :
+                    rbt_range_init(&range_1, ymax, xmax, 0)) ||
                 rbt_range_and(rbt_range_x, range_1, &result) ) {
                 goto failed;
             } else {
@@ -513,6 +513,7 @@ int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
             goto passed;
     }
 
+    /* the operation is commutative */
     switch(operator) {
         case '*':
         case '/':
