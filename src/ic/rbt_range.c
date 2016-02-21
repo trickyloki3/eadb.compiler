@@ -72,17 +72,19 @@ failed:
 static int rbt_range_deit_(struct rbt_range * rbt_range) {
     struct rbt_node * r;
     struct rbt_tree * t;
-
+    struct range * p;
     t = rbt_range->ranges;
     if(t->root) {
         while(!is_last(t->root)) {
             r = t->root;
             /* inefficient; require optimization */
             rbt_delete(t, r);
-            free_ptr_call( (struct range *) r->val, range_deit);
+            p = r->val;
+            free_ptr_call(p, range_deit);
             free_ptr_call(r, rbt_node_deit);
         }
-        free_ptr_call((struct range *) t->root->val, range_deit);
+        p = t->root->val;
+        free_ptr_call(p, range_deit);
         free_ptr_call(t->root, rbt_node_deit);
     }
 
