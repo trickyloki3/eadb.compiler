@@ -270,7 +270,7 @@ void rbt_range_op_test() {
     struct rbt_range * range1 = NULL;
     struct rbt_range * range2 = NULL;
     struct rbt_range * range3 = NULL;
-        
+
     /* test the equality and inequality operators */
     rbt_range_init(&range1, -5, -2, 0);
     rbt_range_add(range1, 0, 3, NULL);
@@ -311,9 +311,9 @@ void rbt_range_op_test() {
 
     /* test the relational operators */
     rbt_range_init(&range1, -5, 0, 0);                      /* (-5, 0) U (5, 10) */
-    rbt_range_add(range1, 5, 10, NULL);                     
+    rbt_range_add(range1, 5, 10, NULL);
     rbt_range_init(&range2, 0, 5, 0);                       /* (0, 5) */
-    
+
     rbt_range_op(range1, range2, &range3, '<');
     rbt_range_dump(range3, "less than");
     assert(0 == rbt_range_min(range3, &min) && min == -5);
@@ -351,6 +351,16 @@ void rbt_range_op_test() {
 
     rbt_range_op(range1, range2, &range3, '>' + '=');
     rbt_range_dump(range3, "null set");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 0);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range2, range1, &range3, '<' + '=');
+    rbt_range_dump(range3, "null set");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 0);
+    assert(1 == range3->ranges->count);
     rbt_range_deit(&range3);
 
     rbt_range_deit(&range2);

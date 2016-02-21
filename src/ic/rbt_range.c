@@ -298,13 +298,22 @@ int rbt_range_or(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
     if( rbt_range_init(&object, min, max, FLAG_RBT_EMPTY) ||
         rbt_min(rbt_range_x->ranges, &xr) ||
         rbt_min(rbt_range_y->ranges, &yr) ||
-        rbt_range_merge(object, xr, yr, rbt_range_or_next) ) {
-        free_ptr_call(object, rbt_range_deit);
-        return 1;
+        rbt_range_merge(object, xr, yr, rbt_range_or_next) )
+        goto failed;
+
+    if(!object->ranges->count) {
+        if(rbt_range_add(object, 0, 0, 0))
+            goto failed;
+        object->global->min = min;
+        object->global->max = max;
     }
 
     *rbt_range_z = object;
     return 0;
+
+failed:
+    free_ptr_call(object, rbt_range_deit);
+    return 1;
 }
 
 static int rbt_range_and_next(struct rbt_range * rbt_range, struct range ** last, struct range * next) {
@@ -350,13 +359,22 @@ int rbt_range_and(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y
     if( rbt_range_init(&object, min, max, FLAG_RBT_EMPTY) ||
         rbt_min(rbt_range_x->ranges, &xr) ||
         rbt_min(rbt_range_y->ranges, &yr) ||
-        rbt_range_merge(object, xr, yr, rbt_range_and_next) ) {
-        free_ptr_call(object, rbt_range_deit);
-        return 1;
+        rbt_range_merge(object, xr, yr, rbt_range_and_next) )
+        goto failed;
+
+    if(!object->ranges->count) {
+        if(rbt_range_add(object, 0, 0, 0))
+            goto failed;
+        object->global->min = min;
+        object->global->max = max;
     }
 
     *rbt_range_z = object;
     return 0;
+
+failed:
+    free_ptr_call(object, rbt_range_deit);
+    return 1;
 }
 
 int rbt_range_not(struct rbt_range * rbt_range_x, struct rbt_range ** rbt_range_y) {
