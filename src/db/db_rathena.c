@@ -1105,6 +1105,10 @@ int ra_db_item_package_meta(ra_db_t * ra) {
     memset(&meta, 0, sizeof(package_meta_ra));
     stmt = ra->item_package_query;
 
+    /* begin database transaction */
+    if (ra_db_exec(ra, "BEGIN IMMEDIATE TRANSACTION;"))
+        return exit_abt_safe("failed to start transaction");
+
     /* query each item package record */
     ret = sqlite3_step(stmt);
     if(SQLITE_DONE == ret)
@@ -1172,6 +1176,9 @@ int ra_db_item_package_meta(ra_db_t * ra) {
     /* write the last package meta record to database */
     if(ra_db_item_package_meta_insert(ra->item_package_meta_insert, &meta))
         return CHECK_FAILED;
+
+    if (ra_db_exec(ra, "COMMIT TRANSACTION;"))
+        return exit_abt_safe("failed to commit transaction");
 
     fprintf(stdout, "[load]: created item package meta table.\n");
     return CHECK_PASSED;
