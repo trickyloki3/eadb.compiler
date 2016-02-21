@@ -4,6 +4,7 @@
 void rbt_range_or_test();
 void rbt_range_and_test();
 void rbt_range_not_test();
+void rbt_range_op_test();
 
 int main(int argc, char * argv[]) {
     int min;
@@ -50,6 +51,9 @@ int main(int argc, char * argv[]) {
 
     /* test logical not cases */
     rbt_range_not_test();
+
+    /* test operators */
+    rbt_range_op_test();
 
     return 0;
 }
@@ -256,6 +260,89 @@ void rbt_range_not_test() {
     assert(0 == rbt_range_max(range3, &max) && max == 3);
     assert(1 == range3->ranges->count);
     rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+}
+
+void rbt_range_op_test() {
+    int min;
+    int max;
+    struct rbt_range * range1 = NULL;
+    struct rbt_range * range2 = NULL;
+    struct rbt_range * range3 = NULL;
+        
+    /* test the equality and inequality operators */
+    rbt_range_init(&range1, -5, -2, 0);
+    rbt_range_add(range1, 0, 3, NULL);
+    rbt_range_add(range1, 6, 9, NULL);
+    rbt_range_add(range1, 12, 15, NULL);
+    rbt_range_init(&range2, 0, 5, 0);
+
+    rbt_range_op(range1, range2, &range3, '=' + '=');
+    rbt_range_dump(range3, "equality range1");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 3);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range2, range1, &range3, '=' + '=');
+    rbt_range_dump(range3, "equality range2");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 3);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range1, range2, &range3, '!' + '=');
+    rbt_range_dump(range3, "inequality range1");
+    assert(0 == rbt_range_min(range3, &min) && min == -5);
+    assert(0 == rbt_range_max(range3, &max) && max == 15);
+    assert(2 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range2, range1, &range3, '!' + '=');
+    rbt_range_dump(range3, "inequality range2");
+    assert(0 == rbt_range_min(range3, &min) && min == 4);
+    assert(0 == rbt_range_max(range3, &max) && max == 5);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_deit(&range2);
+    rbt_range_deit(&range1);
+
+    /* test the relational operators */
+    rbt_range_init(&range1, -5, 0, 0);                      /* (-5, 0) U (5, 10) */
+    rbt_range_add(range1, 5, 10, NULL);                     
+    rbt_range_init(&range2, 0, 5, 0);                       /* (0, 5) */
+    
+    rbt_range_op(range1, range2, &range3, '<');
+    rbt_range_dump(range3, "less than");
+    assert(0 == rbt_range_min(range3, &min) && min == -5);
+    assert(0 == rbt_range_max(range3, &max) && max ==  0);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range1, range2, &range3, '<' + '=');
+    rbt_range_dump(range3, "less than or equal to");
+    assert(0 == rbt_range_min(range3, &min) && min == -5);
+    assert(0 == rbt_range_max(range3, &max) && max == 5);
+    assert(2 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range1, range2, &range3, '>');
+    rbt_range_dump(range3, "greater than");
+    assert(0 == rbt_range_min(range3, &min) && min == 6);
+    assert(0 == rbt_range_max(range3, &max) && max == 10);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range1, range2, &range3, '>' + '=');
+    rbt_range_dump(range3, "greater than or equal to");
+    assert(0 == rbt_range_min(range3, &min) && min == 5);
+    assert(0 == rbt_range_max(range3, &max) && max == 10);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+
     rbt_range_deit(&range2);
     rbt_range_deit(&range1);
 }

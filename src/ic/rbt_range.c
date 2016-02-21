@@ -436,3 +436,100 @@ int rbt_range_in(struct rbt_range * rbt_range, int key) {
 
     return 1;
 }
+
+int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y, struct rbt_range ** rbt_range_z, int operator) {
+    int xmin, ymin;
+    int xmax, ymax;
+    struct rbt_range * range_1 = NULL;
+    struct rbt_range * range_2 = NULL;
+    struct rbt_range * result = NULL;
+
+    /* relational operators are delegated */
+    switch(operator) {
+        case '&' + '&': return rbt_range_and(rbt_range_x, rbt_range_y, rbt_range_z);
+        case '|' + '|': return rbt_range_or (rbt_range_x, rbt_range_y, rbt_range_z);
+    }
+
+    /* equality operators map to logical AND */
+    switch(operator) {
+        case '=' + '=':
+        case '!' + '=':
+            /* compute x == y */
+            if(rbt_range_and(rbt_range_x, rbt_range_y, &range_1)) {
+                goto failed;
+            } else {
+                range_1->global->min = rbt_range_x->global->min;
+                range_1->global->max = rbt_range_x->global->max;
+            }
+
+            /* compute !(x == y), which is x != y */
+            if(operator == '!' + '=') {
+                if(rbt_range_not(range_1, &result))
+                    goto failed;
+            } else {
+                result = range_1;
+                range_1 = NULL;
+            }
+            goto passed;
+    }
+
+    /* get the min and max of x and y */
+    if( rbt_range_min(rbt_range_x, &xmin) ||
+        rbt_range_max(rbt_range_x, &xmax) ||
+        rbt_range_min(rbt_range_y, &ymin) ||
+        rbt_range_max(rbt_range_y, &ymax) )
+        goto failed;
+
+    switch(operator) {
+        case '<':
+            /* compute x < y */
+            ymax--;
+        case '<' + '=':
+            /* compute x <= y */
+            if( (ymax < xmin) ?
+                   rbt_range_init(&range_1, ymax, xmin, 0) :
+                   rbt_range_init(&range_1, xmin, ymax, 0) ||
+                rbt_range_and(rbt_range_x, range_1, &result) ) {
+                goto failed;
+            } else {
+                result->global->min = rbt_range_x->global->min;
+                result->global->max = rbt_range_x->global->max;
+            }
+            goto passed;
+        case '>':
+            /* compute x > y */
+            ymax++;
+        case '>' + '=':
+            /* compute x >= y */
+            if( (xmax < ymax) ?
+                    rbt_range_init(&range_1, xmax, ymax, 0) :
+                    rbt_range_init(&range_1, ymax, xmax, 0) ||
+                rbt_range_and(rbt_range_x, range_1, &result) ) {
+                goto failed;
+            } else {
+                result->global->min = rbt_range_x->global->min;
+                result->global->max = rbt_range_x->global->max;
+            }
+            goto passed;
+    }
+
+    switch(operator) {
+        case '*':
+        case '/':
+        case '+':
+        case '-':
+        case '&':
+        case '|':
+            break;
+    }
+
+passed:
+    rbt_range_deit(&range_1);
+    *rbt_range_z = result;
+    return 0;
+
+failed:
+    rbt_range_deit(&range_1);
+    rbt_range_deit(&result);
+    return 1;
+}
