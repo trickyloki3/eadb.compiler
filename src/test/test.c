@@ -365,4 +365,45 @@ void rbt_range_op_test() {
 
     rbt_range_deit(&range2);
     rbt_range_deit(&range1);
+
+    /* test the arithmetic operators */
+    rbt_range_init(&range1, 0, 3, 0);                      /* (0, 3) U (6, 9) U (12, 15) */
+    rbt_range_add(range1, 6, 9, NULL);
+    rbt_range_add(range1, 12, 15, NULL);
+    rbt_range_init(&range2, 0, 1, 0);                      /* (0, 1) */
+
+    rbt_range_op(range1, range2, &range3, '+');
+    rbt_range_dump(range3, "non-merge +");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 16);
+    assert(3 == range3->ranges->count);
+    rbt_range_deit(&range3);
+
+    rbt_range_op(range1, range2, &range3, '-');
+    rbt_range_dump(range3, "non-merge -");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 14);
+    assert(3 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+
+    rbt_range_init(&range2, 0, 3, 0);                      /* (0, 3) */
+    rbt_range_op(range1, range2, &range3, '+');
+    rbt_range_dump(range3, "merge +");
+    assert(0 == rbt_range_min(range3, &min) && min == 0);
+    assert(0 == rbt_range_max(range3, &max) && max == 18);
+    assert(1 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+
+    rbt_range_init(&range2, 3, 3, 0);                      /* (3, 3) */
+    rbt_range_op(range1, range2, &range3, '-');
+    rbt_range_dump(range3, "merge -");
+    assert(0 == rbt_range_min(range3, &min) && min == -3);
+    assert(0 == rbt_range_max(range3, &max) && max == 12);
+    assert(3 == range3->ranges->count);
+    rbt_range_deit(&range3);
+    rbt_range_deit(&range2);
+
+    rbt_range_deit(&range1);
 }

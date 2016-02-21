@@ -455,10 +455,14 @@ int rbt_range_in(struct rbt_range * rbt_range, int key) {
     return 1;
 }
 
+/* advisable to divide and conquer each operator's implementation but this simplifies the interface :D */
 int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y, struct rbt_range ** rbt_range_z, int operator) {
     int xmin, ymin;
     int xmax, ymax;
     int rmin, rmax;
+    rbt_node * iter = NULL;
+    rbt_node * root = NULL;
+    struct range * last = NULL;
     struct rbt_range * range_1 = NULL;
     struct rbt_range * result = NULL;
 
@@ -531,16 +535,88 @@ int rbt_range_op(struct rbt_range * rbt_range_x, struct rbt_range * rbt_range_y,
             goto passed;
     }
 
-    /* the operation is commutative */
+    /* build the initial object */
     switch(operator) {
         case '*':
-        case '/':
-        case '+':
-        case '-':
-        case '&':
-        case '|':
+            rmin = xmin * ymin;
+            rmax = xmax * ymax;
             break;
+        case '/':
+            rmin = ymin ? (xmin / ymin) : 0;
+            rmax = ymax ? (xmax / ymax) : 0;
+            break;
+        case '+':
+            rmin = xmin + ymin;
+            rmax = xmax + ymax;
+            break;
+        case '-':
+            rmin = xmin - ymin;
+            rmax = xmax - ymax;
+            break;
+        case '&':
+            rmin = xmin & ymin;
+            rmax = xmax & ymax;
+            break;
+        case '|':
+            rmin = xmin | ymin;
+            rmax = xmax | ymax;
+            break;
+        default:
+            goto failed;
     }
+    if(rbt_range_init(&result, rmin, rmax, FLAG_RBT_EMPTY))
+        goto failed;
+
+    /* get the root of the x */
+    if(rbt_min(rbt_range_x->ranges, &root))
+        goto failed;
+    else
+        iter = root;
+
+    do {
+        /* the operation is commutative */
+        switch(operator) {
+            case '*':
+                rmin = get_min(iter) * ymin;
+                rmax = get_max(iter) * ymax;
+                break;
+            case '/':
+                rmin = ymin ? (get_min(iter) / ymin) : 0;
+                rmax = ymax ? (get_max(iter) / ymax) : 0;
+                break;
+            case '+':
+                rmin = get_min(iter) + ymin;
+                rmax = get_max(iter) + ymax;
+                break;
+            case '-':
+                rmin = get_min(iter) - ymin;
+                rmax = get_max(iter) - ymax;
+                break;
+            case '&':
+                rmin = get_min(iter) & ymin;
+                rmax = get_max(iter) & ymax;
+                break;
+            case '|':
+                rmin = get_min(iter) | ymin;
+                rmax = get_max(iter) | ymax;
+                break;
+            default:
+                goto failed;
+        }
+
+        if(is_nil(last)) {
+            if(rbt_range_add(result, rmin, rmax, &last))
+                goto failed;
+        } else {
+            if(rmin <= last->max) {
+                last->max = rmax;
+            } else if(rbt_range_add(result, rmin, rmax, &last)) {
+                goto failed;
+            }
+        }
+
+        iter = iter->next;
+    } while(iter != root);
 
 passed:
     rbt_range_deit(&range_1);
