@@ -1,6 +1,6 @@
 # build paramaters
 CC=gcc
-CFLAGS=-std=c99 -pedantic -Wall -g -O -I/usr/local/include -Ilibsort
+CFLAGS=-std=c99 -pedantic -Wall -g -O -I/usr/local/include -Ilibsort -Ilibrbt
 LDFLAGS=/usr/local/lib/liblua.a libsort/libsort.a librbt/librbt.a
 LIB=-lsqlite3 -lm
 
@@ -28,10 +28,10 @@ libsort/libsort.a:
 librbt/librbt.a:
 	$(MAKE) -C librbt
 
-ic: $(IC_DIR)/ic.c $(IC_OBJ)
+ic: $(IC_DIR)/ic.c $(IC_OBJ) librbt/librbt.a
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
 
-dbc: $(DB_DIR)/db.c $(DB_OBJ)
+dbc: $(DB_DIR)/db.c $(DB_OBJ) librbt/librbt.a libsort/libsort.a
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
 
 $(OBJ_DIR)/%.o: $(DB_DIR)/%.c

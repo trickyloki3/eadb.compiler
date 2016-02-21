@@ -588,8 +588,11 @@ unsigned long sdbm(unsigned char * str) {
     unsigned long hash = 0;
     int c;
 
-    while (c = *str++)
+    c = *str++;
+    while (c) {
         hash = c + (hash << 6) + (hash << 16) - hash;
+        c = *str++;
+    }
 
     return hash;
 }

@@ -5466,7 +5466,7 @@ int id_tree_add(rbt_tree_t * tree, char * id) {
        NULL == id )
         return CHECK_FAILED;
 
-    hash = (int) sdbm(id);
+    hash = (int) sdbm( (unsigned char * ) id);
 
     /* skip collisions */
     if(rbt_search(tree, &node, hash)) {
