@@ -108,6 +108,7 @@ int rbt_range_deit(struct rbt_range ** rbt_range) {
 }
 
 int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
+#if RBT_DEBUG == 1
     rbt_node * i, * r;
     struct range * range;
 
@@ -123,7 +124,7 @@ int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
         fprintf(stderr, " -> %d - %d\n", range->min, range->max);
         i = i->next;
     } while(i != r);
-
+#endif
     return 0;
 }
 
