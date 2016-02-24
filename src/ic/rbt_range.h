@@ -1,11 +1,7 @@
 #ifndef RBT_RANGE_H
 #define RBT_RANGE_H
+    #include "stdio.h"
     #include "rbt.h"
-    #define RBT_DEBUG 0
-
-#if RBT_DEBUG == 1
-    #include <stdio.h>
-#endif
 
     struct range {
         int min;
