@@ -22,9 +22,11 @@
     };
 
     int rbt_logic_var_init(struct rbt_logic **, char *, rbt_range *);
+    int rbt_logic_var_copy(struct rbt_logic **, struct rbt_logic *);
     int rbt_logic_init(struct rbt_logic **, struct rbt_logic *, struct rbt_logic *, int);
     int rbt_logic_deit(struct rbt_logic **);
-    int rbt_logic_var_dump(struct rbt_logic *);
+    int rbt_logic_copy(struct rbt_logic **, struct rbt_logic *);
+    int rbt_logic_dump(struct rbt_logic *);
     int rbt_logic_op(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **, int);
 
     typedef struct rbt_logic rbt_logic;

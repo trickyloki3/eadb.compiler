@@ -10,7 +10,7 @@ int main(int argc, char * argv[]) {
     rbt_range_add(range, 6, 9, NULL);
     rbt_range_add(range, 12, 15, NULL);
     assert(0 == rbt_logic_var_init(&logic, name, range));
-    assert(0 == rbt_logic_var_dump(logic));
+    assert(0 == rbt_logic_dump(logic));
 
 
 
