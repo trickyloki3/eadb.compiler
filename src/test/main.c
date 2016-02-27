@@ -2,19 +2,41 @@
 #include "rbt_name_range.h"
 
 int main(int argc, char * argv[]) {
-    rbt_logic * logic = NULL;
-    rbt_range * range = NULL;
-    char * name = "getrefine";
+    rbt_logic * logic_1 = NULL;
+    rbt_logic * logic_2 = NULL;
+    rbt_logic * logic_3 = NULL;
+    rbt_logic * logic_4 = NULL;
+    rbt_logic * logic_5 = NULL;
+    rbt_range * range_1 = NULL;
+    rbt_range * range_2 = NULL;
 
-    rbt_range_init(&range, 0, 3, 0);
-    rbt_range_add(range, 6, 9, NULL);
-    rbt_range_add(range, 12, 15, NULL);
-    assert(0 == rbt_logic_var_init(&logic, name, range));
-    assert(0 == rbt_logic_dump(logic));
+    /* test and_var_var */
+    rbt_range_init(&range_1, 0, 15, 0);
+    rbt_range_init(&range_2, 5, 10, 0);
+    rbt_logic_var_init(&logic_1, "getrefine", range_1);
+    rbt_logic_var_init(&logic_2, "readparam", range_2);
+    assert(0 == rbt_logic_op(logic_1, logic_2, &logic_3, and));
 
+    rbt_logic_deit(&logic_2);
+    rbt_logic_deit(&logic_1);
+    rbt_range_deit(&range_2);
+    rbt_range_deit(&range_1);
 
+    /* test and_var_var merge */
+    rbt_range_init(&range_1, 0, 15, 0);
+    rbt_range_init(&range_2, 5, 10, 0);
+    rbt_logic_var_init(&logic_1, "getrefine", range_1);
+    rbt_logic_var_init(&logic_2, "getrefine", range_2);
+    assert(0 == rbt_logic_op(logic_1, logic_2, &logic_4, and));
+    rbt_logic_deit(&logic_2);
+    rbt_logic_deit(&logic_1);
+    rbt_range_deit(&range_2);
+    rbt_range_deit(&range_1);
 
-    assert(0 == rbt_logic_deit(&logic));
-    rbt_range_deit(&range);
+    assert(0 == rbt_logic_op(logic_3, logic_4, &logic_5, and));
+    rbt_logic_dump(logic_5);
+    rbt_logic_deit(&logic_5);
+    rbt_logic_deit(&logic_4);
+    rbt_logic_deit(&logic_3);
     return 0;
 }

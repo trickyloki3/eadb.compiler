@@ -8,6 +8,8 @@
 
 static int rbt_logic_and_copy(struct rbt_logic **, struct rbt_logic *);
 static int rbt_logic_or_copy(struct rbt_logic **, struct rbt_logic *);
+static int rbt_logic_and_search(struct rbt_logic *, char *, struct rbt_logic **);
+static int rbt_logic_and_var_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_base(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **, int);
 static int rbt_logic_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
@@ -95,9 +97,16 @@ int rbt_logic_dump(struct rbt_logic * logic) {
     if(is_nil(logic))
         return 0;
 
+    if(logic->type != var)
+        fprintf(stderr, "[%s]\n", logic->type == and ? "and" : "or");
+
     rbt_logic_dump(logic->l);
     rbt_logic_dump(logic->r);
-    return rbt_range_dump(logic->range, logic->name);
+
+    if(logic->range)
+        return rbt_range_dump(logic->range, logic->name);
+
+    return 0;
 }
 
 static int rbt_logic_and_copy(struct rbt_logic ** object, struct rbt_logic * root) {
@@ -167,26 +176,83 @@ int rbt_logic_copy(struct rbt_logic ** object, struct rbt_logic * root) {
     return 1;
 }
 
+static int rbt_logic_and_search(struct rbt_logic * root, char * name, struct rbt_logic ** object) {
+    if(var == root->type && 0 == strcmp(root->name, name)) {
+        *object = root;
+    } else {
+        if(root->l && !(*object))
+            rbt_logic_and_search(root->l, name, object);
+        if(root->r && !(*object))
+            rbt_logic_and_search(root->r, name, object);
+    }
+
+    return *object ? 0 : 1;
+}
+
+static int rbt_logic_and_and_and_re(struct rbt_logic * l, struct rbt_logic ** object) {
+    rbt_logic * logic = NULL;
+    rbt_logic * result = NULL;
+    rbt_range * range = NULL;
+
+    if(var == l->type) {
+
+        if(rbt_logic_and_search(*object, l->name, &logic)) {
+            if( rbt_logic_var_copy(&logic, l) ||
+                rbt_logic_init(&result, logic, *object, and) ) {
+                free_ptr_call(logic, rbt_logic_deit);
+                return 1;
+            }
+
+            *object = result;
+        } else {
+            if(rbt_range_and(logic->range, l->range, &range))
+                return 1;
+
+            rbt_range_deit(&logic->range);
+            logic->range = range;
+        }
+
+        return 0;
+    }
+
+    return  rbt_logic_and_and_and_re(l->l, object) ||
+            rbt_logic_and_and_and_re(l->r, object);
+}
+
+static int rbt_logic_and_and_and(struct rbt_logic * l_and, struct rbt_logic * r_and, struct rbt_logic ** object) {
+    return  rbt_logic_and_copy(object, l_and) ||
+            rbt_logic_and_and_and_re(r_and, object);
+}
+
+static int rbt_logic_and_var_and(struct rbt_logic * l_var, struct rbt_logic * r_and, struct rbt_logic ** object) {
+    return  rbt_logic_and_copy(object, r_and) ||
+            rbt_logic_and_and_and_re(l_var, object);
+}
+
 static int rbt_logic_base(struct rbt_logic * l, struct rbt_logic * r, struct rbt_logic ** object, int type) {
     rbt_range * range = NULL;
-    rbt_logic * logic = NULL;
-
+    rbt_logic * logic_1 = NULL;
+    rbt_logic * logic_2 = NULL;
     if( type == and &&
         0 == strcmp(l->name, r->name)) {
         if( rbt_range_and(l->range, r->range, &range) ||
-            rbt_logic_var_init(&logic, l->name, range) )
+            rbt_logic_var_init(&logic_1, l->name, range) )
             goto failed;
+        rbt_range_deit(&range);
+        *object = logic_1;
     } else {
-        if(rbt_logic_init(&logic, l, r, type))
-            return 1;
+        if( rbt_logic_var_copy(&logic_1, l) ||
+            rbt_logic_var_copy(&logic_2, r) ||
+            rbt_logic_init(object, logic_1, logic_2, type))
+            goto failed;
     }
 
-    *object = logic;
     return 0;
 
 failed:
     rbt_range_deit(&range);
-    rbt_logic_deit(&logic);
+    rbt_logic_deit(&logic_2);
+    rbt_logic_deit(&logic_1);
     return 1;
 }
 
@@ -195,15 +261,15 @@ static int rbt_logic_and(struct rbt_logic * l, struct rbt_logic * r, struct rbt_
         case var:
             switch(r->type) {
                 case var: return rbt_logic_base(l, r, object, and);
-                case and:
+                case and: return rbt_logic_and_var_and(l, r, object);
                 case or:
                     break;
             }
             break;
         case and:
             switch(r->type) {
-                case var:
-                case and:
+                case var: return rbt_logic_and_var_and(r, l, object);
+                case and: return rbt_logic_and_and_and(l, r, object);
                 case or:
                     break;
             }

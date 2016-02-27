@@ -4,6 +4,17 @@
     #include "string.h"
     #include "rbt_range.h"
 
+    /* rbt_name_range's implementation is extremely
+     * inefficient in certain cases where sub-trees
+     * are copied many times over, but it is easier
+     * to implement it this way.
+     *
+     * also this implementation uses excessive extra
+     * and and or nodes to preserve the structure of
+     * the logical expression, which is unnecessary,
+     * but makes the implementation easier.
+     * :D  */
+
     enum {
         var,
         and,
