@@ -21,12 +21,14 @@
     /* eadb */
     #include "rbt.h"
     #include "util.h"
-    #include "name_range.h"
-    #include "range.h"
+    #include "rbt_name_range.h"
+    #include "rbt_range.h"
     #include "db_search.h"
 
-    typedef struct rbt_node rbt_node_t;
-    typedef struct rbt_tree rbt_tree_t;
+    #define is_nil(x)           ((x) == NULL)
+
+    typedef struct rbt_node rbt_node;
+    typedef struct rbt_tree rbt_tree;
 
     #define SCRIPT_PASSED                         CHECK_PASSED
     #define SCRIPT_FAILED                         CHECK_FAILED
@@ -43,7 +45,6 @@
      * =.= postfix does not make sense */
     struct script_t;
     struct block_r;
-    struct node;
 
     typedef struct {
          char script[BUF_SIZE];
@@ -51,31 +52,29 @@
          int script_cnt;
     } token_r;
 
-    typedef struct node {
-        int var;                                                              /* var_db.txt tag for variable and functions */
-        int type;                                                             /* see node types macros */
-        int op;                                                               /* operator (NODE_TYPE_OPERATOR) */
-        char * id;                                                            /* identifier (NODE_TYPE_FUNCTION / VARIABLE / LOCAL / CONSTANT / SUB) */
-        int return_type;                                                      /* bitmask of return types use for check formula compatibility */
-        /* range is a discontinuous set of values
-         * between the minimum and maximum value */
-        int min;                                                              /* minrange() */
-        int max;                                                              /* maxrange() */
-        range_t * range;                                                      /* range values */
-        /* logic tree is a and-or-cond tree */
-        logic_node_t * cond;                                                  /* logic tree */
-        int cond_cnt;                                                         /* total number of variable and functions in the logic tree */
-        char * formula;                                                       /* user-friendly string of the expression */
+    struct node {
+        int var;                                                                /* variable or function identifier number from var_db.txt */
+        int type;                                                               /* type of node, i.e. function, variable, constant, etc */
+        char * id;                                                              /* name of node, i.e. function name, variable name, constant name, etc*/
+        int op;                                                                 /* operator, i.e. '+', '-', '*', etc */
+        int return_type;                                                        /* bitmask of return types use for check formula compatibility */
+        /* value range, logic tree, and node cache */
+        int min;                                                                /* rbt_range_min value */
+        int max;                                                                /* rbt_range_max value */
+        rbt_range * value;                                                      /* range to keep track of a set of values */
+        rbt_logic * logic;                                                      /* logic tree to keep track of predicates */
+        int logic_count;                                                        /* total number of predicates in logic tree */
+        char * formula;                                                         /* user-friendly representation of expression */
+        struct node * list;                                                     /* singly linked list for memory management */
+        struct script_t * script;                                               /* context containing the node cache */
         /* expression precedence and associative */
         struct node * left;
         struct node * right;
         struct node * next;
         struct node * prev;
-        /* singly linked list for memory management */
-         struct node * list;
-         /* pointer back to free list */
-         struct script_t * script;
-    } node_t;
+    };
+
+    typedef struct node node;
 
     typedef struct block_r {
         int item_id;                                                            /* item id defined in item_db.txt */
@@ -100,10 +99,10 @@
         struct block_r * set;                                                   /* point to end of current linked list of set block */
         /* each set block keep their node so that referencing
          * blocks can copy the node for use in their expression */
-        node_t * set_node;
+        node * set_node;
         /* the logic tree is set for if, else, and for
          * blocks which is inherited by child blocks */
-        logic_node_t * logic_tree;                                              /* calculational and dependency information */
+        rbt_logic * logic;
         int flag;                                                               /* use for handling for blocks in script_analysis */
 
         /* reference script context */
@@ -123,7 +122,7 @@
         int offset;                                                             /* script buffer size */
         block_r * blocks;
         block_r * free_blocks;
-        node_t * free_nodes;
+        node * free_nodes;
         /* invariant */
         db_t * db;                                                              /* compiler and athena databases */
         int mode;                                                               /* EATHENA, RATHENA, or HERCULES */
@@ -147,7 +146,7 @@
     int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
     int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
     int block_stack_reset(block_r *, int);                                      /* reset the stack; don't intermix block->ptr and block->eng stack */
-    int block_stack_formula(block_r *, int, node_t *, char **);                 /* concatenate a node's formula string with block->eng stack string */
+    int block_stack_formula(block_r *, int, node *, char **);                 /* concatenate a node's formula string with block->eng stack string */
     int block_stack_dump(block_r *, FILE *);
     #define script_block_dump(script, stream) block_stack_dump((script->blocks->next), (stream))
 
@@ -313,7 +312,7 @@
     int stack_eng_options(block_r *, char *);
     int stack_eng_script(block_r *, char *);
     int stack_eng_status_val(block_r *, char *, int);
-    int stack_aux_formula(block_r *, node_t *, char *);
+    int stack_aux_formula(block_r *, node *, char *);
 
     /* script stack functions for status */
     int stack_eng_re_aspd(block_r *, char *);
@@ -363,18 +362,17 @@
     #define EVALUATE_FLAG_KEEP_NODE        0x002 /* keep the root node */
     #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators returns 0 or 1 rather than range */
     #define EVALUATE_FLAG_WRITE_FORMULA    0x008 /* write the formula for expression */
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x020 /* keep logic tree for ?: operators; set blocks */
-    #define EVALUATE_FLAG_ITERABLE_SET     0x040
-    #define EVALUATE_FLAG_VARIANT_SET      0x080
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x010 /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_ALL              0xfff
 
     /* higher level wrappers over evaluate expression */
     int evaluate_numeric_constant(block_r *, char *, int, int *);
 
     /* evaluate an expression */
-    node_t * evaluate_expression(block_r *, char *, int, int);
-    node_t * evaluate_expression_recursive(block_r *, char **, int, int, logic_node_t *, rbt_tree_t * id_tree, int);
-    int evaluate_expression_sub(block_r *, char **, int *, int, logic_node_t *, rbt_tree_t *, int, node_t **);
-    int evaluate_expression_var(block_r *, char **, int *, int, logic_node_t *, int, node_t **);
+    node * evaluate_expression(block_r *, char *, int, int);
+    node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
+    int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
+    int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 
     /* evaluate a function with the expression
      *
@@ -387,21 +385,21 @@
      *
      * =.= forgot to add back the documentation
      */
-    int evaluate_function(block_r *, char **, int, int, var_res *, node_t *);
-    int evaluate_function_rand(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_groupranditem(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_readparam(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_getskilllv(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_isequipped(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_getequipid(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_gettime(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_callfunc(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_countitem(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_pow(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node_t *);
-    int evaluate_function_setoption(block_r *, int, int, var_res *, node_t *);
+    int evaluate_function(block_r *, char **, int, int, var_res *, node *);
+    int evaluate_function_rand(block_r *, int, int, var_res *, node *);
+    int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
+    int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
+    int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
+    int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
+    int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
+    int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
+    int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
+    int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
+    int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
+    int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
+    int evaluate_function_pow(block_r *, int, int, var_res *, node *);
+    int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
+    int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
 
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01
@@ -413,19 +411,19 @@
     #define NODE_TYPE_CONSTANT             0x20  /* const.txt */
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
-    int node_steal(node_t *, node_t *);
-    int node_structure(node_t *);
-    int node_evaluate(node_t *, FILE *, logic_node_t *, rbt_tree_t *, int);
-    int node_inherit(node_t *);
-    void node_dump(node_t *, FILE *);
+    int node_steal(node *, node *);
+    int node_structure(node *);
+    int node_evaluate(node *, FILE *, rbt_logic *, rbt_tree *, int);
+    int node_inherit(node *);
+    void node_dump(node *, FILE *);
 
     #define node_free(x) if(x) { node_deit(x->script, &x); }
-    int node_init(script_t *, node_t **);
-    int node_deit(script_t *, node_t **);
+    int node_init(script_t *, node **);
+    int node_deit(script_t *, node **);
     int node_release(script_t *);
-    int node_append(node_t *, node_t *);
-    int node_remove(node_t *);
+    int node_append(node *, node *);
+    int node_remove(node *);
 
-    int id_tree_add(rbt_tree_t *, char *);
+    int id_tree_add(rbt_tree *, char *);
     int id_tree_free(struct rbt_node *, void *, int);
 #endif

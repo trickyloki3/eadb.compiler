@@ -23,8 +23,8 @@
     <ClCompile Include="ic\db_search.c" />
     <ClCompile Include="ic\format.c" />
     <ClCompile Include="ic\ic.c" />
-    <ClCompile Include="ic\name_range.c" />
-    <ClCompile Include="ic\range.c" />
+    <ClCompile Include="ic\rbt_name_range.c" />
+    <ClCompile Include="ic\rbt_range.c" />
     <ClCompile Include="ic\script.c" />
   </ItemGroup>
   <ItemGroup>
@@ -32,8 +32,8 @@
     <ClInclude Include="common\util.h" />
     <ClInclude Include="ic\db_search.h" />
     <ClInclude Include="ic\format.h" />
-    <ClInclude Include="ic\name_range.h" />
-    <ClInclude Include="ic\range.h" />
+    <ClInclude Include="ic\rbt_name_range.h" />
+    <ClInclude Include="ic\rbt_range.h" />
     <ClInclude Include="ic\script.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

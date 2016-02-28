@@ -71,11 +71,9 @@ int block_reset(block_r * block) {
         block->set_node = NULL;
     }
 
-    /* logic trees are generated for if, else, and for block */
-    if(NULL != block->logic_tree) {
-        deepfreenamerange(block->logic_tree);
-        block->logic_tree = NULL;
-    }
+    /* if, else, and for blocks uses a logic tree
+     * to manage predicates for child blocks */
+    rbt_logic_deit(&block->logic);
 
     block->free = 1;
     return CHECK_PASSED;
@@ -259,7 +257,7 @@ int block_stack_reset(block_r * block, int type) {
     return CHECK_PASSED;
 }
 
-int block_stack_formula(block_r * block, int index, node_t * node, char ** out) {
+int block_stack_formula(block_r * block, int index, node * node, char ** out) {
     int ret = 0;
     char * buffer = NULL;
     char * prefix = NULL;
@@ -290,11 +288,11 @@ int block_stack_formula(block_r * block, int index, node_t * node, char ** out) 
 
     formula = node->formula;
     formula_len = (node->formula != NULL) ? strlen(formula) : 0;
-    if (formula_len <= 0 || node->cond_cnt <= 0) {
+    if (formula_len <= 0 || node->logic_count <= 0) {
         /* no formula */
         buffer = convert_string(prefix);
         /* formula must contain at least one function or variable */
-    } else if (node->cond_cnt > 0) {
+    } else if (node->logic_count > 0) {
         /* include formula */
         buffer_size = prefix_len + formula_len + 5; /* pad with 10 bytes for formatting with syntax and '\0' */
         buffer = calloc(buffer_size, sizeof(char));
@@ -336,7 +334,7 @@ int block_stack_dump(block_r * block, FILE * stream) {
                 (void *) iter->set,
                 iter->ptr_cnt,
                 iter->eng_cnt,
-                (void *) iter->logic_tree);
+                (void *) iter->logic);
             /* dump the stack */
             for(i = 0; i < iter->ptr_cnt; i++)
                 fprintf(stream, "  arg[%5d]: %s\n", i, iter->ptr[i]);
@@ -349,11 +347,8 @@ int block_stack_dump(block_r * block, FILE * stream) {
                     putc(iter->arg[i], stream);
             putc('\n', stream);
 
-            /* dump the logic tree */
-            if(iter->logic_tree != NULL) {
-                fprintf(stream," logic tree: ");
-                deepdmpnamerange(iter->logic_tree, stream, 0);
-            }
+
+            rbt_logic_dump(iter->logic);
             fprintf(stream, "------------;\n");
         }
         iter = iter->next;
@@ -827,115 +822,8 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                     if(script_analysis_(script, block->ptr[0], block, &set))
                         return SCRIPT_FAILED;
                     break;
-                case 62: /* parse for blocks */
-                    /* skip the starting parenthesis */
-                    if(token[i+1][0] != '(') {
-                        exit_func_safe("missing starting parenthesis for 'for' loop in "
-                        "item id %d current token is %s", script->item.id, token[i+1]);
-                        return SCRIPT_FAILED;
-                    } else {
-                        i++;
-                    }
-
-                    /* parse the for-loop initialization */
-                    if(script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_ALL_FLAGS))
-                        return SCRIPT_FAILED;
-
-                    /* check whether the initialization is empty */
-                    if(check_loop_expression(script, block->ptr[0], ";")) {
-                        exit_func_safe("missing initialization expression"
-                        " in for-loop for item id %d", script->item.id);
-                        return SCRIPT_FAILED;
-                    }
-
-                    /* parse the for-loop condition */
-                    if(script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_ALL_FLAGS))
-                        return SCRIPT_FAILED;
-
-                    /* check whether the initialization is empty */
-                    if(check_loop_expression(script, block->ptr[1], ";")) {
-                        exit_func_safe("missing conditional expression"
-                        " in for-loop for item id %d", script->item.id);
-                        return SCRIPT_FAILED;
-                    }
-
-                    /* parse the variant to know whether it goes up or down */
-                    if(script_parse(token_list, &i, block, '\0', ')', FLAG_PARSE_ALL_FLAGS))
-                        return SCRIPT_FAILED;
-
-                    if(check_loop_expression(script, block->ptr[2], ")")) {
-                        exit_func_safe("missing variant expression"
-                        " in for-loop for item id %d", script->item.id);
-                        return SCRIPT_FAILED;
-                    }
-
-                    /* compound or simple statement */
-                    if((token[i+1][0] == '{') ?
-                        script_parse(token_list, &i, block, '\0', '}', FLAG_PARSE_LAST_TOKEN):
-                        script_parse(token_list, &i, block, '\0', ';', FLAG_PARSE_LAST_TOKEN | FLAG_PARSE_KEEP_COMMA))
-                        return SCRIPT_FAILED;
-
-                    /* check that the compound or simple statement is not empty */
-                    if(check_loop_expression(script, block->ptr[3], ";"))
-                        return exit_func_safe("missing block expression"
-                        " in for-loop for item id %d", script->item.id);
-
-                    /* remove the semicolon in the condition */
-                    len = strlen(block->ptr[1]);
-                    for(j = len; j >= 0; j--)
-                        if(block->ptr[1][j] == ';') {
-                            block->ptr[1][j] = '\0';
-                            break;
-                        }
-
-                    /* remove the parenthesis in the variant */
-                    len = strlen(block->ptr[2]);
-                    for(j = len; j >= 0; j--)
-                        if(block->ptr[2][j] == ')') {
-                            block->ptr[2][j] = ';';
-                            break;
-                        }
-
-                    /* perform script_analysis on the init-expr of for */
-                    if(script_analysis_(script, block->ptr[0], parent, &set)) {
-                        return exit_func_safe("failed to create iterable set bl"
-                        "ock '%s' in item id %d", block->ptr[0], script->item.id);
-                    } else {
-                        /* the root block always points to the last block used */
-                        iterable_set_block = script->blocks;
-                    }
-
-                    /* perform script_analysis on the cond-expr of for */
-                    if(script_analysis_(script, block->ptr[2], parent, &set)) {
-                        return exit_func_safe("failed to create direction set bl"
-                        "ock '%s' in item id %d", block->ptr[2], script->item.id);
-                    } else {
-                        /* the root block always points to the last block used */
-                        direction_set_block = script->blocks;
-                    }
-
-                    /* rearranging the condition and set block in this format is a design choice
-                     * for building the initial condition tree over the entire integer range and
-                     * then depending on the direction, adjust the range from the set block to
-                     * produce the best 'guess' of the iterable range. */
-                    sprintf(subscript, "(%s) ? (%s) : 0", block->ptr[1], iterable_set_block->ptr[1]);
-                    if( block_stack_pop(iterable_set_block, TYPE_PTR) ||
-                        block_stack_push(iterable_set_block, TYPE_PTR, subscript))
-                        return SCRIPT_FAILED;
-                    iterable_set_block->flag |= EVALUATE_FLAG_ITERABLE_SET;
-
-                    /* cheap hack to evaluate a 0 (increasing) or 1 (decreasing) */
-                    sprintf(subscript, "(%s) < (%s)", direction_set_block->ptr[0], direction_set_block->ptr[1]);
-                    if( block_stack_pop(direction_set_block, TYPE_PTR) ||
-                        block_stack_push(direction_set_block, TYPE_PTR, subscript))
-                        return SCRIPT_FAILED;
-                    direction_set_block->flag |= EVALUATE_FLAG_VARIANT_SET;
-
-                    /* perform script_analysis on the statements of for */
-                    if(script_analysis_(script, block->ptr[3], parent, &set))
-                        return exit_func_safe("failed to create if block "
-                        "'%s' in item id %d", subscript, script->item.id);
-                    break;
+                case 62:    /* for */
+                    return exit_stop("for block are currently not supported");
                 case 28:
                     /* add new set block as the tail */
                     if(var != NULL) *var = block;
@@ -1094,213 +982,140 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
 }
 
 int script_translate(script_t * script) {
-    int ret = 0;
+    int status = 0;
+    int flag = 0;
+    rbt_logic * logic = NULL;
+    node * node = NULL;
     block_r * iter = NULL;
-    block_r * set = NULL;
-    node_t * node = NULL;
-    logic_node_t * logic_tree = NULL;
-
-    /* handling iterable set ranges */
-    range_t * iterable_range;
-    range_t * temp_range;
-    int val_min = 0;
-    int val_max = 0;
 
     /* check null paramaters */
-    exit_null_safe(1, script);
-
-    if (NULL == script->blocks)
-        return CHECK_FAILED;
+    if( exit_zero(1, script) ||
+        is_nil(script->blocks) )
+        return 1;
 
     /* translate each block */
     iter = script->blocks->next;
     do {
-        /* linked child block inherits logic tree from parent block */
-        if(iter->link != NULL && iter->link->logic_tree != NULL)
-            iter->logic_tree = copy_deep_any_tree(iter->link->logic_tree);
+        /* child block inherit logic tree from parent block */
+        if(iter->link != NULL && iter->link->logic != NULL)
+            if(rbt_logic_copy(&iter->logic, iter->link->logic))
+                return exit_stop("failed to copy parent logic tree");
 
         /* translate each block using a specific handle;
          * block numbers are define in the block_db.txt;
          * for example, 0 = bonus, 1 = bonus2, etc. */
         switch(iter->type) {
-            case 0: ret = translate_bonus(iter, "bonus"); break;                                                            /* bonus */
-            case 1: ret = translate_bonus(iter, "bonus2"); break;                                                           /* bonus2 */
-            case 2: ret = translate_bonus(iter, "bonus3"); break;                                                           /* bonus3 */
-            case 3: ret = translate_bonus(iter, "bonus4"); break;                                                           /* bonus4 */
-            case 4: ret = translate_bonus(iter, "bonus5"); break;                                                           /* bonus5 */
-            case 5: ret = translate_autobonus(iter, 0x01); break;                                                           /* autobonus */
-            case 6: ret = translate_autobonus(iter, 0x02); break;                                                           /* autobonus2 */
-            case 7: ret = translate_autobonus(iter, 0x04); break;                                                           /* autobonus3 */
-            case 8: ret = translate_heal(iter); break;                                                                      /* heal */
-            case 9: ret = translate_heal(iter); break;                                                                      /* percentheal */
-            case 10: ret = translate_heal(iter); break;                                                                     /* itemheal */
-            case 11: ret = translate_skill(iter); break;                                                                    /* skill */
-            case 12: ret = translate_itemskill(iter); break;                                                                /* itemskill */
-            case 13: ret = translate_skill_block(iter); break;                                                              /* unitskilluseid */
-            case 14: ret = translate_status(iter); break;                                                                   /* sc_start */
-            case 15: ret = translate_status(iter); break;                                                                   /* sc_start4 */
-            case 16: ret = translate_status_end(iter); break;                                                               /* sc_end */
-            case 17: ret = translate_getitem(iter); break;                                                                  /* getitem */
-            case 18: ret = translate_rentitem(iter); break;                                                                 /* rentitem */
-            case 19: ret = translate_delitem(iter); break;                                                                  /* delitem */
-            case 20: ret = translate_getrandgroupitem(iter); break;                                                         /* getrandgroupitem */
-            case 23: ret = block_stack_push(iter, TYPE_ENG, "Set new font."); break;                                        /* setfont */
-            case 24: ret = translate_buyingstore(iter); break;                                                              /* buyingstore */
-            case 25: ret = translate_searchstore(iter); break;                                                              /* searchstores */
-            case 30: ret = block_stack_push(iter, TYPE_ENG, "Send a message through the announcement system."); break;      /* announce */
-            case 31: ret = translate_callfunc(iter); break;                                                                 /* callfunc */
-            case 33: ret = translate_warp(iter); break;                                                                     /* warp */
-            case 35: ret = block_stack_push(iter, TYPE_ENG, "Hatch a pet egg."); break;                                     /* bpet */
-            case 34: ret = translate_pet_egg(iter); break;                                                                  /* pet */
-            case 36: ret = translate_hire_mercenary(iter); break;                                                           /* mercenary_create */
-            case 37: ret = translate_heal(iter); break;                                                                     /* mercenary_heal */
-            case 38: ret = translate_status(iter); break;                                                                   /* mercenary_sc_status */
-            case 39: ret = translate_produce(iter, iter->type); break;                                                      /* produce */
-            case 40: ret = translate_produce(iter, iter->type); break;                                                      /* cooking */
-            case 41: ret = translate_makerune(iter); break;                                                                 /* makerune */
-            case 42: ret = translate_getguildexp(iter); break;                                                              /* getguildexp */
-            case 43: ret = translate_getexp(iter); break;                                                                   /* getexp */
-            case 44: ret = translate_monster(iter); break;                                                                  /* monster */
-            case 45: ret = block_stack_push(iter, TYPE_ENG, "Evolve homunculus when requirements are met."); break;         /* homevolution */
-            case 46: ret = block_stack_push(iter, TYPE_ENG, "Change to Summer Outfit when worn."); break;                   /* setoption */
-            case 47: ret = block_stack_push(iter, TYPE_ENG, "Summon a creature to mount. [Work for all classes]."); break;  /* setmounting */
-            case 48: ret = translate_setfalcon(iter); break;                                                                /* setfalcon */
-            case 49: ret = translate_getgroupitem(iter); break;                                                             /* getgroupitem */
-            case 50: ret = block_stack_push(iter, TYPE_ENG, "Reset all status points."); break;                             /* resetstatus */
-            case 51: ret = translate_bonus_script(iter); break;                                                             /* bonus_script */
-            case 52: ret = block_stack_push(iter, TYPE_ENG, "Play another background song."); break;                        /* playbgm */
-            case 53: ret = translate_transform(iter); break;                                                                /* transform */
-            case 54: ret = translate_status(iter); break;                                                                   /* sc_start2 */
-            case 55: ret = translate_petloot(iter); break;                                                                  /* petloot */
-            case 56: ret = translate_petrecovery(iter); break;                                                              /* petrecovery */
-            case 57: ret = translate_petskillbonus(iter); break;                                                            /* petskillbonus */
-            case 58: ret = translate_petskillattack(iter); break;                                                           /* petskillattack */
-            case 59: ret = translate_petskillattack2(iter); break;                                                          /* petskillattack2 */
-            case 60: ret = translate_petskillsupport(iter); break;                                                          /* petskillsupport */
-            case 61: ret = translate_petheal(iter); break;                                                                  /* petheal */
-            /* non-simple structures */
-            case 26:
-                node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-                if(NULL == node)
-                    return exit_func_safe("failed to '%s' expression in item %d", iter->ptr[0], iter->item_id);
-                node_free(node);
-                break;                                                                                                      /* if */
-            case 27: /* invert the linked logic tree; only the top needs to be inverted */
-                if(iter->logic_tree != NULL) {
-                    logic_tree = iter->logic_tree;
-                    iter->logic_tree = inverse_logic_tree(iter->logic_tree);
-                    iter->logic_tree->stack = logic_tree->stack;
-                    freenamerange(logic_tree);
-                }
-
-                /* add the else if condition onto the stack */
-                if(iter->ptr_cnt > 1) {
-                    node = evaluate_expression(iter, iter->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL);
-                    if(NULL == node)
-                        return exit_func_safe("failed to '%s' expression in item %d", iter->ptr[0], iter->item_id);
-                    node_free(node);
-                }
-               break;                                                                                                       /* else */
-            case 28:
-                if(iter->flag & EVALUATE_FLAG_ITERABLE_SET) {
-                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                        EVALUATE_FLAG_EXPR_BOOL | EVALUATE_FLAG_ITERABLE_SET);
-                } else if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
-                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                        EVALUATE_FLAG_VARIANT_SET);
-                } else {
-                    iter->set_node = evaluate_expression(iter, iter->ptr[1], 1,
-                        EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE |
-                        EVALUATE_FLAG_WRITE_FORMULA | EVALUATE_FLAG_KEEP_TEMP_TREE |
-                        EVALUATE_FLAG_EXPR_BOOL );
-                }
-
-                /* special thanks to 'iterable' ranges for making set block 100x more complex! */
-                if(iter->set_node == NULL) {
-                    exit_func_safe("failed to evaluate set block expression "
-                    "'%s' on item id %d", iter->ptr[1], iter->item_id);
-                    return SCRIPT_FAILED;
-                }
-
-                /* calculate a reasonable iterable range */
-                if(iter->flag & EVALUATE_FLAG_VARIANT_SET) {
-                    set = iter->set;   /* the parent is the non-variant */
-
-                    /* check that the non-variant set block is linked */
-                    if(set == NULL) {
-                        exit_func_safe("failed to search non-variant set block "
-                        "for '%s' in item %d", iter->ptr[0], iter->item_id);
-                        return SCRIPT_FAILED;
-                    }
-
-                    /* check that the condition was successfully analysis */
-                    if(set->logic_tree == NULL) {
-                        exit_func_safe("failed to build logic tree for set "
-                        "expression '%s' int item %d", set->ptr[1], set->item_id);
-                    }
-
-                    /* search for the range of the set variable */
-                    iterable_range = search_tree_dependency_or(set->logic_tree, set->ptr[0], set->set_node->range);
-                    if(iterable_range == NULL) {
-                        exit_func_safe("failed to search iterable set block range '%s'"
-                        " from logic tree in item %d", set->ptr[0], set->item_id);
-                        dmpnamerange(set->logic_tree, stderr, 0);
-                        return SCRIPT_FAILED;
-                    } else {
-                        val_min = RANGE_MIN(iterable_range, set->set_node->range);
-                        val_max = RANGE_MAX(iterable_range, set->set_node->range);
-                        temp_range = iterable_range;
-                        if(IS_SUBSET_OF(set->set_node->range, iterable_range)) {
-                            switch(iter->set_node->range->min) {
-                                case -1: iterable_range = mkrange(INIT_OPERATOR, set->set_node->range->min, val_max, DONT_CARE); break;
-                                case  0: iterable_range = andrange(iterable_range, set->set_node->range); break;
-                                case  1: iterable_range = mkrange(INIT_OPERATOR, val_min, set->set_node->range->max, DONT_CARE); break;
-                                default: /* variant must evaluate to -1, 0, and 1 */
-                                    exit_func_safe("invalid variant value %d in item "
-                                    "id %d", iter->set_node->range->min, iter->item_id);
-                                    break;
-                            }
-                        } else {
-                            iterable_range = mkrange(INIT_OPERATOR, val_min, val_max, DONT_CARE); break;
-                        }
-                        freerange(temp_range);
-
-                        /* update the set block range to be iterable range */
-                        temp_range = iter->set_node->range;
-                        iter->set_node->min = minrange(iterable_range);
-                        iter->set_node->max = maxrange(iterable_range);
-                        iter->set_node->range = iterable_range;
-                        iter->set_node->range->id_min = set->set_node->min;
-                        iter->set_node->range->id_max = set->set_node->max;
-                        freerange(temp_range);
-                    }
-                }
-                break;                                                                                                      /* set */
-            case 62: break;
+            case 0: status = translate_bonus(iter, "bonus"); break;                                                            /* bonus */
+            case 1: status = translate_bonus(iter, "bonus2"); break;                                                           /* bonus2 */
+            case 2: status = translate_bonus(iter, "bonus3"); break;                                                           /* bonus3 */
+            case 3: status = translate_bonus(iter, "bonus4"); break;                                                           /* bonus4 */
+            case 4: status = translate_bonus(iter, "bonus5"); break;                                                           /* bonus5 */
+            case 5: status = translate_autobonus(iter, 0x01); break;                                                           /* autobonus */
+            case 6: status = translate_autobonus(iter, 0x02); break;                                                           /* autobonus2 */
+            case 7: status = translate_autobonus(iter, 0x04); break;                                                           /* autobonus3 */
+            case 8: status = translate_heal(iter); break;                                                                      /* heal */
+            case 9: status = translate_heal(iter); break;                                                                      /* percentheal */
+            case 10: status = translate_heal(iter); break;                                                                     /* itemheal */
+            case 11: status = translate_skill(iter); break;                                                                    /* skill */
+            case 12: status = translate_itemskill(iter); break;                                                                /* itemskill */
+            case 13: status = translate_skill_block(iter); break;                                                              /* unitskilluseid */
+            case 14: status = translate_status(iter); break;                                                                   /* sc_start */
+            case 15: status = translate_status(iter); break;                                                                   /* sc_start4 */
+            case 16: status = translate_status_end(iter); break;                                                               /* sc_end */
+            case 17: status = translate_getitem(iter); break;                                                                  /* getitem */
+            case 18: status = translate_rentitem(iter); break;                                                                 /* rentitem */
+            case 19: status = translate_delitem(iter); break;                                                                  /* delitem */
+            case 20: status = translate_getrandgroupitem(iter); break;                                                         /* getrandgroupitem */
+            case 23: status = block_stack_push(iter, TYPE_ENG, "Set new font."); break;                                        /* setfont */
+            case 24: status = translate_buyingstore(iter); break;                                                              /* buyingstore */
+            case 25: status = translate_searchstore(iter); break;                                                              /* searchstores */
+            case 30: status = block_stack_push(iter, TYPE_ENG, "Send a message through the announcement system."); break;      /* announce */
+            case 31: status = translate_callfunc(iter); break;                                                                 /* callfunc */
+            case 33: status = translate_warp(iter); break;                                                                     /* warp */
+            case 35: status = block_stack_push(iter, TYPE_ENG, "Hatch a pet egg."); break;                                     /* bpet */
+            case 34: status = translate_pet_egg(iter); break;                                                                  /* pet */
+            case 36: status = translate_hire_mercenary(iter); break;                                                           /* mercenary_create */
+            case 37: status = translate_heal(iter); break;                                                                     /* mercenary_heal */
+            case 38: status = translate_status(iter); break;                                                                   /* mercenary_sc_status */
+            case 39: status = translate_produce(iter, iter->type); break;                                                      /* produce */
+            case 40: status = translate_produce(iter, iter->type); break;                                                      /* cooking */
+            case 41: status = translate_makerune(iter); break;                                                                 /* makerune */
+            case 42: status = translate_getguildexp(iter); break;                                                              /* getguildexp */
+            case 43: status = translate_getexp(iter); break;                                                                   /* getexp */
+            case 44: status = translate_monster(iter); break;                                                                  /* monster */
+            case 45: status = block_stack_push(iter, TYPE_ENG, "Evolve homunculus when requirements are met."); break;         /* homevolution */
+            case 46: status = block_stack_push(iter, TYPE_ENG, "Change to Summer Outfit when worn."); break;                   /* setoption */
+            case 47: status = block_stack_push(iter, TYPE_ENG, "Summon a creature to mount. [Work for all classes]."); break;  /* setmounting */
+            case 48: status = translate_setfalcon(iter); break;                                                                /* setfalcon */
+            case 49: status = translate_getgroupitem(iter); break;                                                             /* getgroupitem */
+            case 50: status = block_stack_push(iter, TYPE_ENG, "Reset all status points."); break;                             /* resetstatus */
+            case 51: status = translate_bonus_script(iter); break;                                                             /* bonus_script */
+            case 52: status = block_stack_push(iter, TYPE_ENG, "Play another background song."); break;                        /* playbgm */
+            case 53: status = translate_transform(iter); break;                                                                /* transform */
+            case 54: status = translate_status(iter); break;                                                                   /* sc_start2 */
+            case 55: status = translate_petloot(iter); break;                                                                  /* petloot */
+            case 56: status = translate_petrecovery(iter); break;                                                              /* petrecovery */
+            case 57: status = translate_petskillbonus(iter); break;                                                            /* petskillbonus */
+            case 58: status = translate_petskillattack(iter); break;                                                           /* petskillattack */
+            case 59: status = translate_petskillattack2(iter); break;                                                          /* petskillattack2 */
+            case 60: status = translate_petskillsupport(iter); break;                                                          /* petskillsupport */
+            case 61: status = translate_petheal(iter); break;                                                                  /* petheal */
+            default: status = 1; break;
+            case 62:
             case 21: /* skilleffect */
             case 22: /* specialeffect2 */
             case 29: /* input */
             case 32: /* end */
             case 63: /* getmapxy */
             case 64: /* specialeffect */
-            case 65: /* showscript */
-                /* do nothing */
-               break;
-            default: return SCRIPT_FAILED;
+            case 65: status = 0; break;
+            case 26: /* if */
+                /* if block's logical experssion is in index 0 */
+                flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
+                node = evaluate_expression(iter, iter->ptr[0], 1, flag);
+                if(is_nil(node))
+                    return exit_stop("failed to evaluate if block's expression '%s'", iter->ptr[0]);
+                node_free(node);
+                break;
+            case 27: /* else */
+                /* else block must invert the logic tree of the if block */
+                if(is_nil(iter->logic)) {
+                    return exit_stop("else block's parent if block has an invalid logic tree");
+                } else {
+                    if(rbt_logic_not_all(iter->logic, &logic))
+                        return exit_stop("failed to invert else block's parent if block's logic tree");
+
+                    rbt_logic_deit(iter->logic);
+                    iter->logic = logic;
+                }
+
+                /* else-if block's logical expression is in index 0 */
+                if(iter->ptr_cnt) {
+                    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
+                    node = evaluate_expression(iter, iter->ptr[0], 1, flag);
+                    if(is_nil(node))
+                        return exit_stop("failed to evaluate else-if block's expression '%s'", iter->ptr[0]);
+                    node_free(node);
+                }
+                break;
+            case 28: /* set */
+                /* set block's expression is evaluated and substituted into
+                 * any expression that references the set block by name */
+                iter->set_node = evaluate_expression(iter, iter->ptr[1], 1, EVALUATE_FLAG_ALL);
+                if(is_nil(iter->set_node))
+                    return exit_stop("failed evaluate set block's expression '%s'", iter->ptr[i]);
+                break;
+
         }
 
-        /* script cannot be translated */
-        if(ret)
-            return SCRIPT_FAILED;
+        /* failed to translate the block */
+        if(status)
+            return 1;
 
         iter = iter->next;
     } while(iter != script->blocks->next && !iter->free);
 
-    return SCRIPT_PASSED;
+    return 0;
 }
 
 int script_generate(script_t * script) {
@@ -1515,8 +1330,8 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
     int cnt = 0;                /* total number of arguments pushed */
     int ret = CHECK_PASSED;
     item_t * item = NULL;
-    node_t * node = NULL;
-    range_t * iter = NULL;
+    node * node = NULL;
+    rbt_range * iter = NULL;
 
     /* check for null arguments */
     exit_null_safe(3, block, expr, argc);
@@ -1592,8 +1407,8 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
     int top = 0;
     int ret = CHECK_PASSED;
     skill_t * skill = NULL;
-    node_t * node = NULL;
-    range_t * iter = NULL;
+    node * node = NULL;
+    rbt_range * iter = NULL;
 
     /* check for null arguments */
     exit_null_safe(3, block, expr, argc);
@@ -5457,10 +5272,10 @@ int node_remove(node_t * node) {
     return CHECK_PASSED;
 }
 
-int id_tree_add(rbt_tree_t * tree, char * id) {
+int id_tree_add(rbt_tree * tree, char * id) {
     int hash;
     char * name = NULL;
-    rbt_node_t * node = NULL;
+    rbt_node * node = NULL;
 
     if(NULL == tree ||
        NULL == id )
