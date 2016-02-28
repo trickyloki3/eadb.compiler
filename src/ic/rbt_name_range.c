@@ -92,7 +92,7 @@ int rbt_logic_deit(struct rbt_logic ** logic) {
     struct rbt_logic * r;
 
     if( is_nil( logic) ||
-        is_nul(*logic) )
+        is_nil(*logic) )
         return 1;
 
     r = *logic;
@@ -229,12 +229,36 @@ static int rbt_logic_or_copy(struct rbt_logic ** object, struct rbt_logic * root
     return 0;
 }
 
-int rbt_logic_copy(struct rbt_logic ** object, struct rbt_logic * root) {
-    switch(root->type) {
-        case var: return rbt_logic_var_copy(object, root);
-        case and: return rbt_logic_and_copy(object, root);
-        case or:  return rbt_logic_or_copy(object, root);
-    }
+int rbt_logic_copy(struct rbt_logic ** object, struct rbt_logic * r) {
+    rbt_logic * i;
+    rbt_logic * c;
+    rbt_logic * logic = NULL;
+
+    i = r;
+    do {
+        c = NULL;
+        switch(i->type) {
+            case var: rbt_logic_var_copy(&c, i); break;
+            case and: rbt_logic_and_copy(&c, i); break;
+            case or:  rbt_logic_or_copy(&c, i); break;
+        }
+        if(is_nil(c))
+            goto failed;
+
+        /* build the stack of logic tree */
+        if(is_nil(logic))
+            logic = c;
+        else
+            rbt_logic_append(logic->prev, c);
+
+        i = i->next;
+    } while(i != r);
+
+    *object = logic;
+    return 0;
+
+failed:
+    free_ptr_call(logic, rbt_logic_deit);
     return 1;
 }
 
