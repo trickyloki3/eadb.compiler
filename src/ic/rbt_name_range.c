@@ -586,3 +586,29 @@ int rbt_logic_op(struct rbt_logic * l, struct rbt_logic * r, struct rbt_logic **
 
     return 1;
 }
+
+int rbt_logic_not_all(struct rbt_logic * r, struct rbt_logic ** object) {
+    rbt_logic * i;
+    rbt_logic * c;
+    rbt_logic * logic = NULL;
+
+    i = r;
+    do {
+        if(rbt_logic_op(i, NULL, &c, not))
+            goto failed;
+
+        if(is_nil(logic))
+            logic = c;
+        else
+            rbt_logic_append(logic->prev, c);
+
+        i = i->next;
+    } while(i != r);
+
+    *object = logic;
+    return 0;
+
+failed:
+    free_ptr_call(logic, rbt_logic_deit);
+    return 1;
+}
