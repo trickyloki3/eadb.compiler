@@ -28,6 +28,7 @@ static int rbt_logic_var(struct rbt_logic *, struct rbt_logic *, struct rbt_logi
 static int rbt_logic_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_not(struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_search_re(struct rbt_logic *, const char *, rbt_range **, int);
 
 static int str_dup(char * name, char ** buffer, size_t * length) {
     char * _buffer = NULL;
@@ -611,4 +612,48 @@ int rbt_logic_not_all(struct rbt_logic * r, struct rbt_logic ** object) {
 failed:
     free_ptr_call(logic, rbt_logic_deit);
     return 1;
+}
+
+static int rbt_logic_search_re(struct rbt_logic * r, const char * name, rbt_range ** range, int type) {
+    rbt_range * result = NULL;
+
+    if(var != r->type) {
+        if( rbt_logic_search_re(r->l, name, range, type) ||
+            rbt_logic_search_re(r->r, name, range, type) )
+            return 1;
+    } else {
+        if(0 == strcmp(name, r->name)) {
+            if(is_nil(*range)) {
+                if(rbt_range_dup(r->range, range))
+                    return 1;
+            } else {
+                switch(type) {
+                    case and: rbt_range_and(*range, r->range, &result); break;
+                    case or:  rbt_range_or (*range, r->range, &result); break;
+                }
+                if(is_nil(result))
+                    return 1;
+
+                rbt_range_deit(range);
+                *range = result;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int rbt_logic_search(struct rbt_logic * r, const char * name, rbt_range ** range, int type) {
+    rbt_logic * i = r;
+
+    do {
+        if(rbt_logic_search_re(i, name, range, type)) {
+            rbt_range_deit(range);
+            return 1;
+        }
+
+        i = i->next;
+    } while(i != r);
+
+    return *range ? 0 : 1;
 }

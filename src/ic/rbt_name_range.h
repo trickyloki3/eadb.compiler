@@ -43,6 +43,7 @@
     int rbt_logic_remove(struct rbt_logic *);
     int rbt_logic_op(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **, int);
     int rbt_logic_not_all(struct rbt_logic *, struct rbt_logic **);
+    int rbt_logic_search(struct rbt_logic *, const char *, rbt_range **, int);
 
     typedef struct rbt_logic rbt_logic;
 #endif
