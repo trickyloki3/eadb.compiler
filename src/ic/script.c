@@ -7,6 +7,12 @@
  */
 #include "script.h"
 
+#define calloc_ptr(x)       (NULL == ((x) = calloc(1, sizeof(*(x)))))
+#define free_ptr(x)         if(x) { free(x); (x) = NULL; }
+#define is_nil(x)           ((x) == NULL)
+#define is_ptr(x)           ((x) != NULL)
+#define is_last(x)          ((x) == (x)->next)
+
 FILE * node_dbg = NULL;
 
 int block_init(block_r ** block) {
@@ -1320,85 +1326,81 @@ int stack_ptr_call_(block_r * block, token_r * token, int * argc) {
  *      block->eng[n + 2] = "sword" (1103)
  *
  * but to prevent stack overflow on the block->eng stack;
- * if more than 5 items, then the list will cut off with
+ * if more than x items, then the list will cut off with
  * a note to indicate that not all items are listed.
  */
+struct item_work {
+    block_r * block;
+    item_t * item;
+    int count;
+    int total;
+};
+
+static int stack_eng_item_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    struct range * range = node->val;
+    struct item_work * work = context;
+
+    for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++)
+        if( item_id(work->block->script->db, work->item, i) ||
+            block_stack_push(work->block, TYPE_ENG, work->item->name))
+            return exit_mesg("failed to find item id %"
+            "d in item id %d", i, work->block->item_id);
+
+    return 0;
+}
+
 int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
-    int i = 0;
-    int len = 0;                /* length of the expression */
-    int top = 0;                /* top of the block->eng stack */
-    int cnt = 0;                /* total number of arguments pushed */
-    int ret = CHECK_PASSED;
+    int status = 0;
+    int len = 0;
+    int top = 0;
     item_t * item = NULL;
     node * node = NULL;
-    rbt_range * iter = NULL;
+    struct item_work work;
 
-    /* check for null arguments */
-    exit_null_safe(3, block, expr, argc);
+    if(exit_zero(3, block, expr, argc))
+        return 1;
+
+    /* track stack argument count */
+    top = block->eng_cnt;
 
     /* check for empty expression */
     len = strlen(expr);
-    if(0 >= len)
-        return CHECK_FAILED;
+    if(0 >= len || calloc_ptr(item))
+        return 1;
 
-    item = calloc(1, sizeof(item_t));
-    if(NULL == item)
-        return CHECK_FAILED;
-
-    top = block->eng_cnt;
-
-    /* if the expression begins with a letter or under
-     * score then the expression might be an item name */
-    if(isalpha(expr[0]) || expr[0] == '_') {
-        if(!item_name(block->script->db, item, expr, len)) {
-            if(block_stack_push(block, TYPE_ENG, item->name))
-                ret = CHECK_FAILED;
-            goto clean;
-        }
-    }
-
-    /* evaluate the expression for a single or multiple item id */
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == node) {
-        ret = CHECK_FAILED;
+    /* handle item name expressions */
+    if((isalpha(expr[0]) || '_' == expr[0]) &&
+       !item_name(block->script->db, item, expr, len)) {
+        if(block_stack_push(block, TYPE_ENG, item->name))
+            status = exit_stop("failed to push item name onto the stack");
     } else {
-        /* getitem can call another function that returns an item id like
-         * getitem getranditemgroup(IG_BLUEBOX), 1; rather than using the
-         * item id return, a more correct translation is to use the formula  */
-        if(node->return_type & ITEM_TYPE_FLAG &&
-           node->formula != NULL) {
-            if(flag & FLAG_GETITEM)
-                ret = block_stack_vararg(block, TYPE_ENG, "items from %s", node->formula);
-            else
-                ret = block_stack_vararg(block, TYPE_ENG, "%s", node->formula);
-            goto clean;
-        }
-        /* map each item id to name and write
-         * each item name to block->eng stack */
-        iter = node->range;
-        while(iter != NULL) {
-            for(i = iter->min; i <= iter->max && cnt < MAX_ITEM_LIST; i++) {
-                if( item_id(block->script->db, item, i) ||
-                    block_stack_push(block, TYPE_ENG, item->name)) {
-                    exit_func_safe("failed to find item id %d in item id %d", i, block->item_id);
-                    /* invalid item id or block->eng stacked overflow */
-                    ret = CHECK_FAILED;
-                    goto clean;
-                }
-                cnt++;
+        /* handle item id expressions */
+        node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+        if(is_nil(node)) {
+            status = exit_stop("failed to evaluate item id expression '%s'", expr);
+        } else {
+            /* getitem's item id expression may be a function call,
+             * which returns either a item group name or item name. */
+            if(node->return_type & ITEM_TYPE_FLAG && node->formula) {
+                status = (flag & FLAG_GETITEM) ?
+                    block_stack_vararg(block, TYPE_ENG, "items from %s", node->formula):
+                    block_stack_vararg(block, TYPE_ENG,            "%s", node->formula);
+            } else {
+                work.block = block;
+                work.item  = item;
+                work.count = 0;
+                work.total = MAX_ITEM_LIST;
+                if(rbt_range_work(node->value, stack_eng_item_work, &work))
+                    status = exit_stop("failed to push item names onto the stack");
             }
-            /* stop pushing item names onto the stack */
-            if(cnt >= MAX_ITEM_LIST)
-                break;
-            iter = iter->next;
         }
     }
 
-clean:
     *argc = block->eng_cnt - top;
-    SAFE_FREE(item);
+    free_ptr(item);
     node_free(node);
-    return ret;
+    return status;
 }
 
 int stack_eng_skill(block_r * block, char * expr, int * argc) {

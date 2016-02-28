@@ -25,8 +25,6 @@
     #include "rbt_range.h"
     #include "db_search.h"
 
-    #define is_nil(x)           ((x) == NULL)
-
     typedef struct rbt_node rbt_node;
     typedef struct rbt_tree rbt_tree;
 

@@ -35,7 +35,8 @@
     #define exit_abt_safe(X) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, (X))
 
     #define exit_stop(X) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, (X))
-    #define exit_zero(X) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)
+    #define exit_zero(X, ...) exit_null(__FILE__, __func__, __LINE__, (X), __VA_ARGS__)
+    #define exit_mesg(X, ...) exit_func(__FILE__, __func__, __LINE__, EXIT_FAILURE, exit_msg(err_buf, (X), __VA_ARGS__))
 
     char * exit_msg(char * buffer, char * format, ...);
     int exit_null(const char *, const char *, const int, int, ...);

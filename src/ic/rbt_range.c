@@ -630,3 +630,7 @@ failed:
     rbt_range_deit(&result);
     return 1;
 }
+
+int rbt_range_work(struct rbt_range * rbt_range, rbt_work work, void * context) {
+    return rbt_deploy(rbt_range->ranges, work, context);
+}

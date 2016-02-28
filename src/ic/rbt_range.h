@@ -32,6 +32,7 @@
     int rbt_range_not(struct rbt_range *, struct rbt_range **);                         /* logical not */
     int rbt_range_in(struct rbt_range *, int);                                          /* check whether integer in range */
     int rbt_range_op(struct rbt_range *, struct rbt_range *, struct rbt_range **, int); /* support arithmetic, relational, and equality operations */
+    int rbt_range_work(struct rbt_range *, rbt_work, void *);                           /* iterate the values in the range */
 
     typedef struct rbt_range rbt_range;
 #endif
