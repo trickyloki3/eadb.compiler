@@ -9,7 +9,17 @@
 static int rbt_logic_and_copy(struct rbt_logic **, struct rbt_logic *);
 static int rbt_logic_or_copy(struct rbt_logic **, struct rbt_logic *);
 static int rbt_logic_and_search(struct rbt_logic *, char *, struct rbt_logic **);
+static int rbt_logic_and_and_and_re(struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_and_and_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_and_var_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_and_var_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_and_and_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_and_or_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_or_var_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_or_and_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_or_var_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_or_and_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
+static int rbt_logic_or_or_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_base(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **, int);
 static int rbt_logic_and(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
 static int rbt_logic_or(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **);
@@ -38,6 +48,8 @@ int rbt_logic_var_init(struct rbt_logic ** logic, char * name, rbt_range * range
 
     if( is_nil( logic) ||
         is_ptr(*logic) ||
+        is_nil(name) ||
+        is_nil(range) ||
         calloc_ptr(object) ||
         rbt_range_dup(range, &object->range) ||
         str_dup(name, &object->name, &object->length) ) {
@@ -51,6 +63,9 @@ int rbt_logic_var_init(struct rbt_logic ** logic, char * name, rbt_range * range
 }
 
 int rbt_logic_var_copy(struct rbt_logic ** object, struct rbt_logic * logic) {
+    if(var != logic->type)
+        return 1;
+
     return rbt_logic_var_init(object, logic->name, logic->range);
 }
 
@@ -195,7 +210,6 @@ static int rbt_logic_and_and_and_re(struct rbt_logic * l, struct rbt_logic ** ob
     rbt_range * range = NULL;
 
     if(var == l->type) {
-
         if(rbt_logic_and_search(*object, l->name, &logic)) {
             if( rbt_logic_var_copy(&logic, l) ||
                 rbt_logic_init(&result, logic, *object, and) ) {
@@ -229,15 +243,166 @@ static int rbt_logic_and_var_and(struct rbt_logic * l_var, struct rbt_logic * r_
             rbt_logic_and_and_and_re(l_var, object);
 }
 
+static int rbt_logic_and_var_or(struct rbt_logic * l_var, struct rbt_logic * r_or, struct rbt_logic ** object) {
+    rbt_logic * l = NULL;
+    rbt_logic * r = NULL;
+
+    switch(r_or->l->type) {
+        case or: rbt_logic_and_var_or(l_var, r_or->l, &l); break;
+        default: rbt_logic_op(l_var, r_or->l, &l, and); break;
+    }
+
+    switch(r_or->r->type) {
+        case or: rbt_logic_and_var_or(l_var, r_or->r, &r); break;
+        default: rbt_logic_op(l_var, r_or->r, &r, and); break;
+    }
+
+    if(rbt_logic_init(object, l, r, or)) {
+        free_ptr_call(l, rbt_logic_deit);
+        free_ptr_call(r, rbt_logic_deit);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rbt_logic_and_and_or(struct rbt_logic * l_and, struct rbt_logic * r_or, struct rbt_logic ** object) {
+    return rbt_logic_and_var_or(l_and, r_or, object);
+}
+
+/* =.=; */
+static int rbt_logic_and_or_or(struct rbt_logic * l_or, struct rbt_logic * r_or, struct rbt_logic ** object) {
+    int status = 0;
+    rbt_logic * cross_1 = NULL;
+    rbt_logic * cross_2 = NULL;
+    rbt_logic * cross_3 = NULL;
+    rbt_logic * cross_4 = NULL;
+    rbt_logic * logic_1 = NULL;
+    rbt_logic * logic_2 = NULL;
+
+    if( rbt_logic_op(l_or->l, r_or->l, &cross_1, and) ||
+        rbt_logic_op(l_or->l, r_or->r, &cross_2, and) ||
+        rbt_logic_op(l_or->r, r_or->l, &cross_3, and) ||
+        rbt_logic_op(l_or->r, r_or->r, &cross_4, and) ||
+        rbt_logic_op(cross_1, cross_2, &logic_1, or) ||
+        rbt_logic_op(logic_1, cross_3, &logic_2, or) ||
+        rbt_logic_op(logic_1, cross_4, object, or) )
+        status = 1;
+
+    free_ptr_call(logic_2, rbt_logic_deit);
+    free_ptr_call(logic_1, rbt_logic_deit);
+    free_ptr_call(cross_4, rbt_logic_deit);
+    free_ptr_call(cross_3, rbt_logic_deit);
+    free_ptr_call(cross_2, rbt_logic_deit);
+    free_ptr_call(cross_1, rbt_logic_deit);
+    return status;
+}
+
+static int rbt_logic_or_var_and(struct rbt_logic * l_var, struct rbt_logic * r_and, struct rbt_logic ** object) {
+    rbt_logic * l = NULL;
+    rbt_logic * r = NULL;
+
+    if( rbt_logic_var_copy(&l, l_var) ||
+        rbt_logic_and_copy(&r, r_and) ||
+        rbt_logic_init(object, l, r, or) ) {
+        free_ptr_call(l, rbt_logic_deit);
+        free_ptr_call(r, rbt_logic_deit);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rbt_logic_or_and_and(struct rbt_logic * l_and, struct rbt_logic * r_and, struct rbt_logic ** object) {
+    rbt_logic * l = NULL;
+    rbt_logic * r = NULL;
+
+    if( rbt_logic_and_copy(&l, l_and) ||
+        rbt_logic_and_copy(&r, r_and) ||
+        rbt_logic_init(object, l, r, or) ) {
+        free_ptr_call(l, rbt_logic_deit);
+        free_ptr_call(r, rbt_logic_deit);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rbt_logic_or_var_or(struct rbt_logic * l_var, struct rbt_logic * r_or, struct rbt_logic ** object) {
+    rbt_logic * l = NULL;
+    rbt_logic * r = NULL;
+
+    if( rbt_logic_var_copy(&l, l_var) ||
+        rbt_logic_or_copy(&r, r_or) ||
+        rbt_logic_init(object, l, r, or) ) {
+        free_ptr_call(l, rbt_logic_deit);
+        free_ptr_call(r, rbt_logic_deit);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rbt_logic_or_and_or(struct rbt_logic * l_and, struct rbt_logic * r_or, struct rbt_logic ** object) {
+    rbt_logic * l = NULL;
+    rbt_logic * r = NULL;
+
+    if( rbt_logic_and_copy(&l, l_and) ||
+        rbt_logic_or_copy(&r, r_or) ||
+        rbt_logic_init(object, l, r, or) ) {
+        free_ptr_call(l, rbt_logic_deit);
+        free_ptr_call(r, rbt_logic_deit);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rbt_logic_or_or_or(struct rbt_logic * l_or, struct rbt_logic * r_or, struct rbt_logic ** object) {
+    rbt_logic * l = NULL;
+    rbt_logic * r = NULL;
+    rbt_logic * p = NULL;
+
+    if( rbt_logic_or_copy(&l, l_or) ||
+        rbt_logic_or_copy(&r, r_or) )
+        goto failed;
+
+    if(or != l->l->type) {
+        if(rbt_logic_init(&p, l->l, r, or))
+            goto failed;
+
+        l->l = p;
+    } else if(or != l->r->type) {
+        if(rbt_logic_init(&p, l->r, r, or))
+            goto failed;
+        l->r = p;
+    } else {
+        goto failed;
+    }
+
+    p->p = l;
+    *object = l;
+    return 0;
+
+failed:
+    free_ptr_call(l, rbt_logic_deit);
+    free_ptr_call(r, rbt_logic_deit);
+    return 1;
+}
+
 static int rbt_logic_base(struct rbt_logic * l, struct rbt_logic * r, struct rbt_logic ** object, int type) {
     rbt_range * range = NULL;
     rbt_logic * logic_1 = NULL;
     rbt_logic * logic_2 = NULL;
-    if( type == and &&
+    if( type != var &&
         0 == strcmp(l->name, r->name)) {
-        if( rbt_range_and(l->range, r->range, &range) ||
-            rbt_logic_var_init(&logic_1, l->name, range) )
+        switch(type) {
+            case or:    rbt_range_or (l->range, r->range, &range); break;
+            case and:   rbt_range_and(l->range, r->range, &range); break;
+        }
+        if(rbt_logic_var_init(&logic_1, l->name, range))
             goto failed;
+
         rbt_range_deit(&range);
         *object = logic_1;
     } else {
@@ -262,24 +427,21 @@ static int rbt_logic_and(struct rbt_logic * l, struct rbt_logic * r, struct rbt_
             switch(r->type) {
                 case var: return rbt_logic_base(l, r, object, and);
                 case and: return rbt_logic_and_var_and(l, r, object);
-                case or:
-                    break;
+                case or:  return rbt_logic_and_var_or(l, r, object);
             }
             break;
         case and:
             switch(r->type) {
                 case var: return rbt_logic_and_var_and(r, l, object);
                 case and: return rbt_logic_and_and_and(l, r, object);
-                case or:
-                    break;
+                case or:  return rbt_logic_and_and_or(l, r, object);
             }
             break;
         case or:
             switch(r->type) {
-                case var:
-                case and:
-                case or:
-                    break;
+                case var: return rbt_logic_and_var_or(r, l, object);
+                case and: return rbt_logic_and_and_or(r, l, object);
+                case or:  return rbt_logic_and_or_or(r, l, object);
             }
             break;
     }
@@ -292,23 +454,21 @@ static int rbt_logic_or(struct rbt_logic * l, struct rbt_logic * r, struct rbt_l
         case var:
             switch(r->type) {
                 case var: return rbt_logic_base(l, r, object, or);
-                case and:
-                case or:
-                    break;
+                case and: return rbt_logic_or_var_and(l, r, object);
+                case or:  return rbt_logic_or_var_or(l, r, object);
             }
             break;
         case and:
             switch(r->type) {
-                case var:
-                case and:
-                case or:
-                    break;
+                case var: return rbt_logic_or_var_and(r, l, object);
+                case and: return rbt_logic_or_and_and(l, r, object);
+                case or:  return rbt_logic_or_and_or(l, r, object);
             }
             break;
         case or:
             switch(r->type) {
-                case var:
-                case and:
+                case var: return rbt_logic_or_var_or(r, l, object);
+                case and: return rbt_logic_or_and_or(r, l, object);
                 case or:
                     break;
             }

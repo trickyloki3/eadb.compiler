@@ -91,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>$(SolutionDir)librbt\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)librbt\;$(SolutionDir)src\ic\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -107,7 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>$(SolutionDir)librbt\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)librbt\;$(SolutionDir)src\ic\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -125,7 +125,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>$(SolutionDir)librbt\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)librbt\;$(SolutionDir)src\ic\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -145,7 +145,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>$(SolutionDir)librbt\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)librbt\;$(SolutionDir)src\ic\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

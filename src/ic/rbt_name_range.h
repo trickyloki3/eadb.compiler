@@ -29,7 +29,6 @@
         struct rbt_logic * p; /* parent */
         struct rbt_logic * l; /* left */
         struct rbt_logic * r; /* right */
-        struct rbt_logic * s; /* stack */
     };
 
     int rbt_logic_var_init(struct rbt_logic **, char *, rbt_range *);
