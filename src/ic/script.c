@@ -1083,7 +1083,7 @@ int script_translate(script_t * script) {
                 flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
                 node = evaluate_expression(iter, iter->ptr[0], 1, flag);
                 if(is_nil(node))
-                    return exit_stop("failed to evaluate if block's expression '%s'", iter->ptr[0]);
+                    return exit_mesg("failed to evaluate if block's expression '%s'", iter->ptr[0]);
                 node_free(node);
                 break;
             case 27: /* else */
@@ -1103,7 +1103,7 @@ int script_translate(script_t * script) {
                     flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
                     node = evaluate_expression(iter, iter->ptr[0], 1, flag);
                     if(is_nil(node))
-                        return exit_stop("failed to evaluate else-if block's expression '%s'", iter->ptr[0]);
+                        return exit_mesg("failed to evaluate else-if block's expression '%s'", iter->ptr[0]);
                     node_free(node);
                 }
                 break;
@@ -1112,7 +1112,7 @@ int script_translate(script_t * script) {
                  * any expression that references the set block by name */
                 iter->set_node = evaluate_expression(iter, iter->ptr[1], 1, EVALUATE_FLAG_ALL);
                 if(is_nil(iter->set_node))
-                    return exit_stop("failed evaluate set block's expression '%s'", iter->ptr[i]);
+                    return exit_mesg("failed evaluate set block's expression '%s'", iter->ptr[1]);
                 break;
 
         }
@@ -1527,9 +1527,9 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
     node * node = NULL;
     double min;
     double max;
-    char format[16];
-    char buffer[64];
-    int  offset = 0;
+    char fmt[16];
+    char buf[64];
+    int  off = 0;
 
     if(exit_zero(2, block, expr))
         return 1;
@@ -1547,35 +1547,37 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
     }
 
     /* build the conversion specifier;
-     * %[+](.2f|d)[%] ~ %[+](.2f|d)[%] */
+     * %[+](.2f|d)[%%] ~ %[+](.2f|d)[%%] */
     if( (node->min != 0 && min == 0) ||
         (node->max != 0 && max == 0) )
         flag |= FORMAT_FLOAT;
     for(i = 0; i < 2; i++) {
-        format[offset++] = '%';
+        fmt[off++] = '%';
         if(flag & FORMAT_PLUS)
-            format[offset++] = '+';
+            fmt[off++] = '+';
         if(flag & FORMAT_FLOAT) {
-            format[offset++] = '.';
-            format[offset++] = '2';
-            format[offset++] = 'f';
+            fmt[off++] = '.';
+            fmt[off++] = '2';
+            fmt[off++] = 'f';
         } else {
-            format[offset++] = 'd';
+            fmt[off++] = 'd';
         }
-        if(flag & FORMAT_RATIO)
-            format[offset++] = '%';
+        if(flag & FORMAT_RATIO) {
+            fmt[off++] = '%';
+            fmt[off++] = '%';
+        }
         if(i == 0) {
-            format[offset++] = ' ';
-            format[offset++] = '~';
-            format[offset++] = ' ';
+            fmt[off++] = ' ';
+            fmt[off++] = '~';
+            fmt[off++] = ' ';
         }
     }
-    format[offset++] = '\0';
+    fmt[off++] = '\0';
 
     /* write buffer with formula */
-    if( !sprintf(buf, format, min, max) ||
+    if( !sprintf(buf, fmt, min, max) ||
         stack_aux_formula(block, node, buf) )
-        status = CHECK_FAILED;
+        status = exit_stop("failed to write integer expression");
 
     node_free(node);
     return status;
@@ -1599,97 +1601,79 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
  *      block->eng[n + 0] = "negative 10"
  *      *argc = 1;
  */
-int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char * pos, const char * neg, int flags) {
-    int ret = 0;
-    int min = 0;
-    int max = 0;
-    int len = 0;
+int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char * pos, const char * neg, int flag) {
+    int status = 0;
+    node * node = NULL;
+    double min;
+    double max;
+    char   cnv[16];
+    int    off = 0;
+    int    len = 0;
     char * buf = NULL;
-    char * symbol = NULL;
-    node_t * node = NULL;
+    char   fmt[64];
 
-    double fmin = 0;
-    double fmax = 0;
+    if(exit_zero(2, block, expr))
+        return 1;
 
-    /* error on invalid reference */
-    exit_null_safe(4, block, expr, pos, neg);
+    if(0 == modifier)
+        return exit_stop("division by zero modifier");
 
+    /* evaluate integer expression */
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node)) {
+        return exit_mesg("failed to evaluate integer expression '%s'", expr);
+    } else {
+        min = node->min / modifier;
+        max = node->max / modifier;
+    }
+
+    /* build the conversion specifier */
+    cnv[off++] = '%';
+    if(flag & FORMAT_PLUS)
+        cnv[off++] = '+';
+    if(flag & FORMAT_FLOAT) {
+        cnv[off++] = '.';
+        cnv[off++] = '2';
+        cnv[off++] = 'f';
+    } else {
+        cnv[off++] = 'd';
+    }
+    if(flag & FORMAT_RATIO) {
+        cnv[off++] = '%';
+        cnv[off++] = '%';
+    }
+    cnv[off++] = '\0';
+
+    /* build buffer */
     len = strlen(pos) + strlen(neg) + 128;
     buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
-
-    /* push the integer result on the stack */
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if (node == NULL)
-        goto failed;
-
-    min = node->min / modifier;
-    max = node->max / modifier;
-
-    /* use percentage symbol as postfix */
-    symbol = (flags & FORMAT_RATIO) ? "%" : "";
-
-    /* automatic float detection */
-    if((node->min != 0 && min == 0) ||
-       (node->max != 0 && max == 0)) {
-        fmin = ((double) node->min) / modifier;
-        fmax = ((double) node->max) / modifier;
-
-        /* write the positive and negative ranges */
-        if(min >= 0 && max >= 0) {
-            (min == max) ?
-                sprintf(buf, "%s %.2f%s", pos, fmin, symbol):
-                sprintf(buf, "%s %.2f%s ~ %.2f%s", pos, fmin, symbol, fmax, symbol);
-        } else if(min < 0 && max > 0) {
-            sprintf(buf, "%s 0 ~ %.2f%s or %s 0 ~ %.2f%s", neg, fabs(fmin), symbol, pos, fmax, symbol);
-        } else if(min > 0 && max < 0) {
-            sprintf(buf, "%s 0 ~ %.2f%s or %s 0 ~ %.2f%s", pos, fmin, symbol, neg, fabs(fmin), symbol);
-        } else {
-            (min == max) ?
-                sprintf(buf, "%s %.2f%s", neg, fabs(fmin), symbol):
-                sprintf(buf, "%s %.2f%s ~ %.2f%s", neg, fabs(fmin), symbol, fabs(fmin), symbol);
-        }
+    if(is_nil(buf)) {
+        status = exit_stop("out of memory");
     } else {
-        /* write the positive and negative ranges */
-        if(min >= 0 && max >= 0) {
-            (min == max) ?
-                sprintf(buf, "%s %d%s", pos, min, symbol):
-                sprintf(buf, "%s %d%s ~ %d%s", pos, min, symbol, max, symbol);
-        } else if(min < 0 && max > 0) {
-            sprintf(buf, "%s 0 ~ %d%s or %s 0 ~ %d%s", neg, abs(min), symbol, pos, max, symbol);
-        } else if(min > 0 && max < 0) {
-            sprintf(buf, "%s 0 ~ %d%s or %s 0 ~ %d%s", pos, min, symbol, neg, abs(max), symbol);
+        if(node->min >= 0 && node->max >= 0) {
+            /* positive */
+            status = (!sprintf(fmt, "%%s %s ~ %s", cnv, cnv) ||
+                      !sprintf(buf, fmt, pos, min, max) );
+        } else if(node->min < 0 && node->max >= 0) {
+            /* negative - positive */
+            status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
+                      !sprintf(buf, fmt, neg, abs(min), pos, max) );
+        } else if(node->min >= 0 && node->max < 0) {
+            /* positive - negative */
+            status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
+                      !sprintf(buf, fmt, neg, abs(max), pos, min) );
         } else {
-            (min == max) ?
-                sprintf(buf, "%s %d%s", neg, abs(min), symbol):
-                sprintf(buf, "%s %d%s ~ %d%s", neg, abs(min), symbol, abs(max), symbol);
+            /* negative */
+            status = (!sprintf(fmt, "%%s %s ~ %s", cnv, cnv) ||
+                      !sprintf(buf, fmt, neg, abs(min), abs(max)) );
         }
+        if(status || stack_aux_formula(block, node, buf))
+            status = exit_stop("failed to write integer expression");
     }
 
-    /* write buffer with formula */
-    if(stack_aux_formula(block, node, buf))
-        goto failed;
-
-clean:
+    free_ptr(buf);
     node_free(node);
-    SAFE_FREE(buf);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-}
-
-int stack_eng_int_bonus(block_r * block, char * expr, int modifier, int attr, int arg) {
-    int ret = 0;
-    switch(attr) {
-        case 1:     ret = stack_eng_int(block, expr, modifier, FORMAT_RATIO); break;
-        case 2:     ret = stack_eng_int(block, expr, modifier, FORMAT_PLUS); break;
-        default:    ret = stack_eng_int(block, expr, modifier, 0); break;
-    }
-
-    return ret;
+    return status;
 }
 
 /* evaluate the expression for a single or multiple item id
