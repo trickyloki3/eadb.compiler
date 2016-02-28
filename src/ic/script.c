@@ -1381,7 +1381,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
         /* handle item id expressions */
         node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
         if(is_nil(node)) {
-            status = exit_stop("failed to evaluate item id expression '%s'", expr);
+            status = exit_mesg("failed to evaluate item id expression '%s'", expr);
         } else {
             /* getitem's item id expression may be a function call,
              * which returns either a item group name or item name. */
@@ -1450,7 +1450,7 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
         /* handle skill id expressions */
         node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
         if(is_nil(node)) {
-            status = exit_stop("failed to evaluate skill id expression '%s'", expr);
+            status = exit_mesg("failed to evaluate skill id expression '%s'", expr);
         } else {
             work.block  = block;
             work.search = skill;
@@ -1476,7 +1476,7 @@ int stack_eng_grid(block_r * block, char * expr) {
 
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(is_nil(node))
-        return exit_stop("failed to evaluate grid expression '%s'", expr);
+        return exit_mesg("failed to evaluate grid expression '%s'", expr);
 
     /* calculate the grid */
     node->min = node->min * 2 + 1;
@@ -1501,7 +1501,7 @@ int stack_eng_coordinate(block_r * block, char * expr) {
 
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(is_nil(node))
-        return exit_stop("failed to evaluate coordinate expression '%s'", expr);
+        return exit_mesg("failed to evaluate coordinate expression '%s'", expr);
 
     switch(node->min) {
         case COORD_RANDOM:  status = block_stack_push(block, TYPE_ENG, "random");  break;
@@ -1521,49 +1521,64 @@ int stack_eng_coordinate(block_r * block, char * expr) {
  * if the expression is "getrefine() + 10" then
  *      block->eng[n + 0] = "10 ~ 25 (refine rate)"
  */
-int stack_eng_int(block_r * block, char * expr, int modifier, int flags) {
-    int ret = 0;
-    double min = 0;
-    double max = 0;
-    char buf[64];
-    char * symbol = NULL;
-    node_t * node = NULL;
+int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
+    int i = 0;
+    int status = 0;
+    node * node = NULL;
+    double min;
+    double max;
+    char format[16];
+    char buffer[64];
+    int  offset = 0;
 
-    exit_null_safe(2, block, expr);
+    if(exit_zero(2, block, expr))
+        return 1;
 
-    /* error on division by zero */
-    if(modifier == 0)
-        return CHECK_FAILED;
+    if(0 == modifier)
+        return exit_stop("division by zero modifier");
 
     /* evaluate integer expression */
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if (NULL == node)
-        return CHECK_FAILED;
-
-    /* percentage postfix */
-    symbol = (flags & FORMAT_RATIO) ? "%" : "";
-
-    min = ((double) node->min) / modifier;
-    max = ((double) node->max) / modifier;
-
-    /* automatic float detection */
-    if((node->min != 0 && (node->min / modifier) == 0) ||
-       (node->max != 0 && (node->max / modifier) == 0)) {
-        (node->min == node->max) ?
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s" : "%.2f%s", min, symbol):
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+.2f%s ~ %+.2f%s" : "%.2f%s ~ %.2f%s", min, symbol, max, symbol);
+    if(is_nil(node)) {
+        return exit_mesg("failed to evaluate integer expression '%s'", expr);
     } else {
-        (node->min == node->max) ?
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s" : "%d%s", (int) min, symbol):
-            sprintf(buf, (flags & FORMAT_PLUS) ? "%+d%s ~ %+d%s" : "%d%s ~ %d%s", (int) min, symbol, (int) max, symbol);
+        min = node->min / modifier;
+        max = node->max / modifier;
     }
 
+    /* build the conversion specifier;
+     * %[+](.2f|d)[%] ~ %[+](.2f|d)[%] */
+    if( (node->min != 0 && min == 0) ||
+        (node->max != 0 && max == 0) )
+        flag |= FORMAT_FLOAT;
+    for(i = 0; i < 2; i++) {
+        format[offset++] = '%';
+        if(flag & FORMAT_PLUS)
+            format[offset++] = '+';
+        if(flag & FORMAT_FLOAT) {
+            format[offset++] = '.';
+            format[offset++] = '2';
+            format[offset++] = 'f';
+        } else {
+            format[offset++] = 'd';
+        }
+        if(flag & FORMAT_RATIO)
+            format[offset++] = '%';
+        if(i == 0) {
+            format[offset++] = ' ';
+            format[offset++] = '~';
+            format[offset++] = ' ';
+        }
+    }
+    format[offset++] = '\0';
+
     /* write buffer with formula */
-    if(stack_aux_formula(block, node, buf))
-        ret = CHECK_FAILED;
+    if( !sprintf(buf, format, min, max) ||
+        stack_aux_formula(block, node, buf) )
+        status = CHECK_FAILED;
 
     node_free(node);
-    return ret;
+    return status;
 }
 
 /* evaluate an expression and select the prefix

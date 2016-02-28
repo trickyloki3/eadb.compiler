@@ -281,6 +281,7 @@
     /* stack_eng_int_* bitmask flags */
     #define FORMAT_RATIO                    0x01
     #define FORMAT_PLUS                     0x02
+    #define FORMAT_FLOAT                    0x04
 
     /* stack_eng_coordinate negative values */
     #define COORD_RANDOM                    -1
