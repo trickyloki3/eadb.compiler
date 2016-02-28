@@ -1771,78 +1771,70 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
  *      *argc = 16;
  */
 int stack_eng_produce(block_r * block, char * expr, int * argc) {
-    int i = 0;
-    int ret = 0;
+    int i;
+    int status = 0;
     int top = 0;
-    int level = 0;
-    item_t * item;
-    produce_t * produce = NULL;
-    produce_t * produces = NULL;
-    char buf[MAX_NAME_SIZE + 32];
+    int lvl = 0;
+    item_t * item = NULL;
+    produce_t * list = NULL;
+    produce_t * iter = NULL;
+    char * buf[MAX_NAME_SIZE + 32];
 
-    exit_null_safe(3, block, expr, argc);
+    if( exit_zero(3, block, expr, argc) ||
+        calloc_ptr(item) )
+        return 1;
 
-    item = calloc(1, sizeof(item_t));
-    if(NULL == item)
-        return CHECK_FAILED;
-
+    /* track stack argument count */
     top = block->eng_cnt;
 
-    /* write each item recipe on the stack */
-    if(evaluate_numeric_constant(block, expr, 1, &level) ||
-       produce_id(block->script->db, &produces, level))
-        goto failed;
-
-    /* write the produce header */
-    switch(level) {
-        case 1: ret = block_stack_push(block, TYPE_ENG, "Use to craft level 1 weapons.\n"); break;                     /* lv1 weapons */
-        case 2: ret = block_stack_push(block, TYPE_ENG, "Use to craft level 2 weapons.\n"); break;                     /* lv2 weapons */
-        case 3: ret = block_stack_push(block, TYPE_ENG, "Use to craft level 3 weapons.\n"); break;                     /* lv3 weapons */
-        case 11: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 5 success rate.\n"); break;    /* cooking sets */
-        case 12: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 4 success rate.\n"); break;
-        case 13: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 3 success rate.\n"); break;
-        case 14: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 2 success rate.\n"); break;
-        case 15: ret = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 1 success rate.\n"); break;
-        case 21: ret = block_stack_push(block, TYPE_ENG, "Use to manufacture metals.\n"); break;                       /* metals */
-        case 24: break;
-        default:
-            exit_func_safe("unsupported item level %d in item %d", level, block->item_id);
-            goto failed;
-    }
-    if(ret)
-        goto failed;
-
-    produce = produces;
-    while(produce != NULL) {
-        if(item_id(block->script->db, item, produce->item_id))
-            goto failed;
-
-        sprintf(buf, "Recipe for %s", item->name);
-
-        if(block_stack_push(block, TYPE_ENG, buf))
-            goto failed;
-
-        for(i = 0; i < produce->ingredient_count; i++) {
-            if(item_id(block->script->db, item, produce->item_id_req[i]))
-                goto failed;
-
-            sprintf(buf, " * %d %s", produce->item_amount_req[i], item->name);
-
-            if(block_stack_push(block, TYPE_ENG, buf))
-                goto failed;
+    if(evaluate_numeric_constant(block, expr, 1, &lvl)) {
+        status = exit_mesg("failed to evaluate level expression into a constant '%s'", expr);
+    } else if(produce_id(block->script->db, &list, lvl)) {
+        status = exit_mesg("failed to find produce entries for item level %d", lvl);
+    } else {
+        /* write produce header */
+        switch(lvl) {
+            case 1:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 1 weapons.\n"); break;                 /* lv1 weapons */
+            case 2:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 2 weapons.\n"); break;                 /* lv2 weapons */
+            case 3:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 3 weapons.\n"); break;                 /* lv3 weapons */
+            case 11: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 5 success rate.\n"); break; /* cooking sets */
+            case 12: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 4 success rate.\n"); break;
+            case 13: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 3 success rate.\n"); break;
+            case 14: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 2 success rate.\n"); break;
+            case 15: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 1 success rate.\n"); break;
+            case 21: status = block_stack_push(block, TYPE_ENG, "Use to manufacture metals.\n"); break;                    /* metals */
+            case 24: break;
+            default: status = exit_mesg("unsupported item level %d in item %d", lvl, block->item_id);
         }
-        produce = produce->next;
+        if(status) {
+            exit_stop("failed to write produce header");
+        } else {
+            /* write the produce recipes */
+            iter = list;
+            while(iter && !status) {
+                if(item_id(block->script->db, item, iter->item_id)) {
+                    status = exit_mesg("failed to find item id %d", iter->item_id);
+                /* write the produce item name */
+                } else if(!sprintf(buf, "Recipe for %s", item->name) && block_stack_push(block, TYPE_ENG, buf)) {
+                    status = exit_stop("failed to write item name");
+                /* write the produce ingredient item name */
+                } else {
+                    for(i = 0; i < iter->ingredient_count && !status; i++) {
+                        if( item_id(block->script->db, item, iter->item_id_req[i]) ||
+                            sprintf(buf, " * %d %s", iter->item_amount_req[i], item->name) ||
+                            block_stack_push(block, TYPE_ENG, buf) )
+                            status = exit_mesg("failed to find item id %d or write item name", iter->item_id);
+                    }
+                }
+                iter = iter->next;
+            }
+        }
     }
 
-clean:
     *argc = block->eng_cnt - top;
-    produce_free(&produces);
-    SAFE_FREE(item);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    produce_free(&list);
+    free_ptr(item);
+    return status;
 }
 
 /* evaluate the expression into an id
