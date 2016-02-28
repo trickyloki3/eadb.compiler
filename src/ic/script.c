@@ -1428,6 +1428,7 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
     int top = 0;
     skill_t * skill = NULL;
     node * node = NULL;
+    struct work work;
 
     if(exit_zero(3, block, expr, argc))
         return 1;
@@ -1492,20 +1493,26 @@ int stack_eng_grid(block_r * block, char * expr) {
 }
 
 int stack_eng_coordinate(block_r * block, char * expr) {
-    int err = 0;
-    node_t * node = NULL;
+    int status = 0;
+    node * node = NULL;
+
+    if(exit_zero(2, block, expr))
+        return 1;
 
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if (NULL == node)
-        return CHECK_FAILED;
+    if(is_nil(node))
+        return exit_stop("failed to evaluate coordinate expression '%s'", expr);
 
-    /* inefficient ; evaluates the same expression twice */
-    err = (node->min < 1 && node->max < 1) ?
-            block_stack_push(block, TYPE_ENG, "Random") :
-            stack_eng_int(block, expr, 1, 0);
+    switch(node->min) {
+        case COORD_RANDOM:  status = block_stack_push(block, TYPE_ENG, "random");  break;
+        case COORD_CURRENT: status = block_stack_push(block, TYPE_ENG, "current"); break;
+        default:            status = stack_eng_int(block, expr, 1, 0); break;
+    }
+    if(status)
+        exit_stop("failed to push coordinate onto the stack");
 
     node_free(node);
-    return err;
+    return status;
 }
 
 /* evaluate the expression and write the integer range

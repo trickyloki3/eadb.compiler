@@ -293,10 +293,10 @@
     /* script stack functions */
     int stack_ptr_call(block_r *, char *, int *);
     int stack_ptr_call_(block_r *, token_r *, int *);
-    int stack_eng_item(block_r *, char *, int *, int);
-    int stack_eng_skill(block_r *, char *, int *);
-    int stack_eng_grid(block_r *, char *);
-    int stack_eng_coordinate(block_r *, char *);
+    /* re */ int stack_eng_item(block_r *, char *, int *, int);
+    /* re */ int stack_eng_skill(block_r *, char *, int *);
+    /* re */ int stack_eng_grid(block_r *, char *);
+    /* re */ int stack_eng_coordinate(block_r *, char *);
     int stack_eng_int(block_r *, char *, int, int);
     int stack_eng_int_signed(block_r *, char *, int, const char *, const char *, int);
     int stack_eng_int_bonus(block_r *, char *, int, int, int);
