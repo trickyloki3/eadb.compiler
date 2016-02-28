@@ -5,7 +5,10 @@
 #define free_ptr_call(x, y) if(x) { y(&x); }
 #define is_nil(x)           ((x) == NULL)
 #define is_ptr(x)           ((x) != NULL)
+#define is_last(x)          ((x) == (x)->next)
 
+static int rbt_logic_deit_re(struct rbt_logic **);
+static int rbt_logic_link(struct rbt_logic **, struct rbt_logic *, struct rbt_logic *, int);
 static int rbt_logic_var_copy(struct rbt_logic **, struct rbt_logic *);
 static int rbt_logic_and_copy(struct rbt_logic **, struct rbt_logic *);
 static int rbt_logic_or_copy(struct rbt_logic **, struct rbt_logic *);
@@ -67,37 +70,7 @@ int rbt_logic_init(struct rbt_logic ** logic, char * name, rbt_range * range) {
     return 0;
 }
 
-static int rbt_logic_var_copy(struct rbt_logic ** object, struct rbt_logic * logic) {
-    if(var != logic->type)
-        return 1;
-
-    return rbt_logic_init(object, logic->name, logic->range);
-}
-
-int rbt_logic_link(struct rbt_logic ** logic, struct rbt_logic * l, struct rbt_logic * r, int type) {
-    struct rbt_logic * object = NULL;
-
-    if( is_nil( logic) ||
-        is_ptr(*logic) ||
-        is_nil(l) ||
-        is_nil(r) ||
-        calloc_ptr(object) ) {
-        rbt_logic_deit(&object);
-        return 1;
-    }
-
-    object->type = type;
-    object->l = l;
-    object->r = r;
-    l->p = object;
-    r->p = object;
-    object->next = object;
-    object->prev = object;
-    *logic = object;
-    return 0;
-}
-
-int rbt_logic_deit(struct rbt_logic ** logic) {
+static int rbt_logic_deit_re(struct rbt_logic ** logic) {
     struct rbt_logic * object = NULL;
 
     if( is_nil( logic) ||
@@ -111,6 +84,27 @@ int rbt_logic_deit(struct rbt_logic ** logic) {
     free_ptr_null(object->name);
     free_ptr_null(object);
     *logic = object;
+    return 0;
+}
+
+int rbt_logic_deit(struct rbt_logic ** logic) {
+    struct rbt_logic * t;
+    struct rbt_logic * r;
+
+    if( is_nil( logic) ||
+        is_nul(*logic) )
+        return 1;
+
+    r = *logic;
+    while(!is_last(r)) {
+        /* free child */
+        t = r->next;
+        rbt_logic_remove(t);
+        free_ptr_call(t, rbt_logic_deit_re);
+    }
+    /* free root */
+    free_ptr_call(r, rbt_logic_deit_re);
+    *logic = r;
 
     return 0;
 }
@@ -145,6 +139,36 @@ int rbt_logic_remove(struct rbt_logic * p) {
     p->next = p;
     p->prev = p;
     return 0;
+}
+
+static int rbt_logic_link(struct rbt_logic ** logic, struct rbt_logic * l, struct rbt_logic * r, int type) {
+    struct rbt_logic * object = NULL;
+
+    if( is_nil( logic) ||
+        is_ptr(*logic) ||
+        is_nil(l) ||
+        is_nil(r) ||
+        calloc_ptr(object) ) {
+        rbt_logic_deit(&object);
+        return 1;
+    }
+
+    object->type = type;
+    object->l = l;
+    object->r = r;
+    l->p = object;
+    r->p = object;
+    object->next = object;
+    object->prev = object;
+    *logic = object;
+    return 0;
+}
+
+static int rbt_logic_var_copy(struct rbt_logic ** object, struct rbt_logic * logic) {
+    if(var != logic->type)
+        return 1;
+
+    return rbt_logic_init(object, logic->name, logic->range);
 }
 
 static int rbt_logic_and_copy(struct rbt_logic ** object, struct rbt_logic * root) {

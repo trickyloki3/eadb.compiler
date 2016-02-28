@@ -97,7 +97,6 @@ int main(int argc, char * argv[]) {
     rbt_logic_deit(&logic_1);
 
     /* test not */
-    fprintf(stderr, "asd\n");
     rbt_logic_init(&logic_1, "a", range_1);
     rbt_logic_init(&logic_2, "b", range_2);
     rbt_logic_op(logic_1, logic_2, &logic_3, and);
