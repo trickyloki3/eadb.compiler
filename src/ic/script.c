@@ -1685,11 +1685,12 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
  *      *argc = 1;
  */
 int stack_eng_time(block_r * block, char * expr, int modifier) {
-    node_t * time = NULL;
+    int status = 0;
+    node * node = NULL;
     int tick_min = 0;
     int tick_max = 0;
-    int time_unit = 0;
     char * time_suffix = NULL;
+    int time_unit = 0;
 
     /* maximum 32-bit integer require up to 11 characters plus -
      * enough padding room for additional suffix and formatting
@@ -1697,17 +1698,17 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
     int len = 0;
     char buf[64];
 
-    /* check null */
-    exit_null_safe(2, block, expr);
+    if(exit_zero(2, block, expr))
+        return 1;
 
     /* evaluate the expression and convert to time string */
-    time = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
-    if (time == NULL)
-        return SCRIPT_FAILED;
+    node = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node))
+        return exit_mesg("failed to evaluate time expression '%s'", expr);
 
     /* get the minimum and maximum of the time expression */
-    tick_min = time->min;
-    tick_max = time->max;
+    tick_min = node->min;
+    tick_max = node->max;
 
     /* get the closest time metric that can divide the total number of milliseconds */
     if (tick_min / 86400000 != 0) {
@@ -1735,25 +1736,15 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
 
     /* write time string to buffer */
     len = (tick_min == tick_max) ?
-        sprintf(buf, "%d %s%s", tick_min, time_suffix, tick_min > 1 ? "s" : "") :
-        sprintf(buf, "%d ~ %d %ss", tick_min, tick_max, time_suffix);
+        sprintf(buf,      "%d %s%s", tick_min,           time_suffix, tick_min > 1 ? "s" : ""):
+        sprintf(buf, "%d ~ %d %s%s", tick_min, tick_max, time_suffix, tick_max > 1 ? "s" : "");
 
     /* check overflow but sprintf can crash in sprintf */
-    if (len > 64) {
-        exit_func_safe("buffer overflow in item %d", block->item_id);
-        goto failed;
-    }
+    if(len > 64 || stack_aux_formula(block, node, buf))
+        status = exit_stop("failed to write time expression");
 
-    /* write buffer with formula */
-    if(stack_aux_formula(block, time, buf))
-        goto failed;
-
-    node_free(time);
-    return CHECK_PASSED;
-
-failed:
-    node_free(time);
-    return CHECK_FAILED;
+    node_free(node);
+    return status;
 }
 
 /* evaluate the expression into an item level constant
