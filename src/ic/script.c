@@ -1467,35 +1467,28 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
 }
 
 int stack_eng_grid(block_r * block, char * expr) {
-    int ret = 0;
-    int splash_min = 0;
-    int splash_max = 0;
-    node_t * grid = NULL;
+    int status = 0;
+    node * node = NULL;
 
-    exit_null_safe(2, block, expr);
+    if(exit_zero(2, block, expr))
+        return 1;
 
-    /* evaluate the grid expression*/
-    grid = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == grid)
-        return CHECK_FAILED;
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node))
+        return exit_stop("failed to evaluate grid expression '%s'", expr);
 
-    /* calculate the splash grid */
-    if(grid->min != grid->max) {
-        splash_min = grid->min * 2 + 1;
-        splash_max = grid->max * 2 + 1;
-    } else {
-        splash_min = grid->min * 2 + 1;
-    }
+    /* calculate the grid */
+    node->min = node->min * 2 + 1;
+    node->max = node->max * 2 + 1;
 
-    if(splash_min > 0 && splash_max > 0)
-        ret = block_stack_vararg(block, TYPE_ENG, "%d x %d to %d x %d", splash_min, splash_min, splash_max, splash_max);
-    else if(splash_min > 0)
-        ret = block_stack_vararg(block, TYPE_ENG, "%d x %d", splash_min, splash_min);
-    else if(splash_max > 0)
-        ret = block_stack_vararg(block, TYPE_ENG, "%d x %d", splash_max, splash_max);
+    status = (node->min == node->max) ?
+        block_stack_vararg(block, TYPE_ENG, "%d x %d", node->min, node->min):
+        block_stack_vararg(block, TYPE_ENG, "%d x %d ~ %d x %d", node->min, node->min, node->max, node->max);
+    if(status)
+        exit_stop("failed to push grid onto the stack");
 
-    node_free(grid);
-    return ret;
+    node_free(node);
+    return status;
 }
 
 int stack_eng_coordinate(block_r * block, char * expr) {
