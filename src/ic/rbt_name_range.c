@@ -59,6 +59,9 @@ int rbt_logic_init(struct rbt_logic ** logic, char * name, rbt_range * range) {
     }
 
     object->type = var;
+    object->next = object;
+    object->prev = object;
+
     *logic = object;
     return 0;
 }
@@ -87,6 +90,8 @@ int rbt_logic_link(struct rbt_logic ** logic, struct rbt_logic * l, struct rbt_l
     object->r = r;
     l->p = object;
     r->p = object;
+    object->next = object;
+    object->prev = object;
     *logic = object;
     return 0;
 }
@@ -122,6 +127,22 @@ int rbt_logic_dump(struct rbt_logic * logic) {
     if(logic->range)
         return rbt_range_dump(logic->range, logic->name);
 
+    return 0;
+}
+
+int rbt_logic_append(struct rbt_logic * p, struct rbt_logic * c) {
+    p->next->prev = c->prev;
+    c->prev->next = p->next;
+    p->next = c;
+    c->prev = p;
+    return 0;
+}
+
+int rbt_logic_remove(struct rbt_logic * p) {
+    p->prev->next = p->next;
+    p->next->prev = p->prev;
+    p->next = p;
+    p->prev = p;
     return 0;
 }
 

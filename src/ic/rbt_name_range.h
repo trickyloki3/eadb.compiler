@@ -38,6 +38,8 @@
     int rbt_logic_deit(struct rbt_logic **);
     int rbt_logic_copy(struct rbt_logic **, struct rbt_logic *);
     int rbt_logic_dump(struct rbt_logic *);
+    int rbt_logic_append(struct rbt_logic *, struct rbt_logic *);
+    int rbt_logic_remove(struct rbt_logic *);
     int rbt_logic_op(struct rbt_logic *, struct rbt_logic *, struct rbt_logic **, int);
 
     typedef struct rbt_logic rbt_logic;
