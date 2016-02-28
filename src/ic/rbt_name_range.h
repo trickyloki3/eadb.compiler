@@ -18,7 +18,8 @@
     enum {
         var,
         and,
-        or
+        or,
+        not
     };
 
     struct rbt_logic {

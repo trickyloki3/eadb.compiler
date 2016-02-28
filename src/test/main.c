@@ -96,6 +96,26 @@ int main(int argc, char * argv[]) {
     rbt_logic_deit(&logic_2);
     rbt_logic_deit(&logic_1);
 
+    /* test not */
+    fprintf(stderr, "asd\n");
+    rbt_logic_init(&logic_1, "a", range_1);
+    rbt_logic_init(&logic_2, "b", range_2);
+    rbt_logic_op(logic_1, logic_2, &logic_3, and);
+    rbt_logic_deit(&logic_2);
+    rbt_logic_deit(&logic_1);
+    rbt_logic_init(&logic_1, "c", range_3);
+    rbt_logic_op(logic_1, logic_3, &logic_4, or);
+    rbt_logic_deit(&logic_3);
+    rbt_logic_deit(&logic_1);
+    rbt_logic_op(logic_4, NULL, &logic_5, not);
+    rbt_logic_deit(&logic_4);
+    rbt_logic_op(logic_5, NULL, &logic_4, not);
+    rbt_logic_dump(logic_5);
+    rbt_logic_dump(logic_4);
+    rbt_logic_deit(&logic_4);
+    rbt_logic_deit(&logic_5);
+
+
     rbt_range_deit(&range_3);
     rbt_range_deit(&range_2);
     rbt_range_deit(&range_1);
