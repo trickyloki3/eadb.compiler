@@ -15,6 +15,9 @@
 
 FILE * node_dbg = NULL;
 
+static int stack_eng_item_work(struct rbt_node *, void *, int);
+static int stack_eng_skill_work(struct rbt_node *, void *, int);
+
 int block_init(block_r ** block) {
     block_r * _block = NULL;
 
@@ -1326,12 +1329,11 @@ int stack_ptr_call_(block_r * block, token_r * token, int * argc) {
  *      block->eng[n + 2] = "sword" (1103)
  *
  * but to prevent stack overflow on the block->eng stack;
- * if more than x items, then the list will cut off with
- * a note to indicate that not all items are listed.
+ * if more than x item names, then the list will cut off.
  */
-struct item_work {
+struct work {
     block_r * block;
-    item_t * item;
+    void * search;
     int count;
     int total;
 };
@@ -1339,11 +1341,12 @@ struct item_work {
 static int stack_eng_item_work(struct rbt_node * node, void * context, int flag) {
     int i;
     struct range * range = node->val;
-    struct item_work * work = context;
+    struct work * work = context;
+    item_t * item = work->search;
 
     for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++)
-        if( item_id(work->block->script->db, work->item, i) ||
-            block_stack_push(work->block, TYPE_ENG, work->item->name))
+        if( item_id(work->block->script->db, item, i) ||
+            block_stack_push(work->block, TYPE_ENG, item->name))
             return exit_mesg("failed to find item id %"
             "d in item id %d", i, work->block->item_id);
 
@@ -1356,7 +1359,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
     int top = 0;
     item_t * item = NULL;
     node * node = NULL;
-    struct item_work work;
+    struct work work;
 
     if(exit_zero(3, block, expr, argc))
         return 1;
@@ -1387,10 +1390,10 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
                     block_stack_vararg(block, TYPE_ENG, "items from %s", node->formula):
                     block_stack_vararg(block, TYPE_ENG,            "%s", node->formula);
             } else {
-                work.block = block;
-                work.item  = item;
-                work.count = 0;
-                work.total = MAX_ITEM_LIST;
+                work.block  = block;
+                work.search = item;
+                work.count  = 0;
+                work.total  = MAX_ITEM_LIST;
                 if(rbt_range_work(node->value, stack_eng_item_work, &work))
                     status = exit_stop("failed to push item names onto the stack");
             }
@@ -1403,65 +1406,64 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
     return status;
 }
 
+/* stack_eng_skill allows the same pattern as stack_eng_item */
+static int stack_eng_skill_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    struct range * range = node->val;
+    struct work * work = context;
+    skill_t * skill = work->search;
+
+    for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++)
+        if( skill_id(work->block->script->db, skill, i) ||
+            block_stack_push(work->block, TYPE_ENG, skill->desc))
+            return exit_mesg("failed to find skill id %"
+            "d in item id %d", i, work->block->item_id);
+
+    return 0;
+}
+
 int stack_eng_skill(block_r * block, char * expr, int * argc) {
-    int i = 0;
+    int status = 0;
     int len = 0;
     int top = 0;
-    int ret = CHECK_PASSED;
     skill_t * skill = NULL;
     node * node = NULL;
-    rbt_range * iter = NULL;
 
-    /* check for null arguments */
-    exit_null_safe(3, block, expr, argc);
+    if(exit_zero(3, block, expr, argc))
+        return 1;
+
+    /* track stack argument count */
+    top = block->eng_cnt;
 
     /* check for empty expression */
     len = strlen(expr);
-    if(0 >= len)
-        return CHECK_FAILED;
+    if(0 >= len || calloc_ptr(skill))
+        return 1;
 
-    skill = calloc(1, sizeof(skill_t));
-    if(NULL == skill)
-        return CHECK_FAILED;
-
-    top = block->eng_cnt;
-
-    /* if the expression begins with a letter or under
-     * score then the expression might be an skill name */
-    if(isalpha(expr[0]) || expr[0] == '_') {
-        if(!skill_name(block->script->db, skill, expr, len)) {
-            if(block_stack_push(block, TYPE_ENG, skill->desc))
-                ret = CHECK_FAILED;
-            goto clean;
-        }
-    }
-
-    /* evaluate the expression for a single or multiple skill id */
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == node) {
-        ret = CHECK_FAILED;
+    /* handle skill name expressions */
+    if((isalpha(expr[0]) || '_' == expr[0]) &&
+       !skill_name(block->script->db, skill, expr, len)) {
+        if(block_stack_push(block, TYPE_ENG, skill->desc))
+            status = exit_stop("failed to push skill name onto the stack");
     } else {
-        /* map each skill id to name and write
-         * each skill name to block->eng stack */
-        iter = node->range;
-        while(iter != NULL) {
-            for(i = iter->min; i <= iter->max; i++) {
-                if( skill_id(block->script->db, skill, i) ||
-                    block_stack_push(block, TYPE_ENG, skill->desc)) {
-                    /* invalid skill id or block->eng stacked overflow */
-                    ret = CHECK_FAILED;
-                    goto clean;
-                }
-            }
-            iter = iter->next;
+        /* handle skill id expressions */
+        node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+        if(is_nil(node)) {
+            status = exit_stop("failed to evaluate skill id expression '%s'", expr);
+        } else {
+            work.block  = block;
+            work.search = skill;
+            work.count  = 0;
+            work.total  = MAX_ITEM_LIST;
+            if(rbt_range_work(node->value, stack_eng_skill_work, &work))
+                status = exit_stop("failed to push skill names onto the stack");
         }
     }
 
-clean:
     *argc = block->eng_cnt - top;
-    SAFE_FREE(skill);
+    free_ptr(skill);
     node_free(node);
-    return ret;
+    return status;
 }
 
 int stack_eng_grid(block_r * block, char * expr) {
