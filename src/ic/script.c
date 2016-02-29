@@ -2086,24 +2086,15 @@ int stack_eng_item_group(block_r * block, char * expr) {
 }
 
 int stack_eng_trigger_bt(block_r * block, char * expr) {
-    int ret = 0;
-    int off = 0;
-    int val = 0;
+    int status = 0;
+    int  off = 0;
+    int  val = 0;
     char buf[256];
-    node_t * trigger = NULL;
-
-    /* error on invalid references */
-    exit_null_safe(2, block, expr);
+    node * trigger = NULL;
 
     trigger = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == trigger)
-        goto failed;
-
-    /* trigger must be a constant */
-    if(trigger->min != trigger->max)
-        goto failed;
-
-    val = trigger->min;
+    if(is_nil(trigger))
+        return exit_mesg("failed to evaluate trigger expression '%s'", expr);
 
     /* write using the format:
      *  trigger on
@@ -2123,8 +2114,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         else if(BF_SHORT & val)
             off += sprintf(&buf[off], "meelee ");
         else
-            /* unsupported bit */
-            goto failed;
+            status = exit_mesg("unsupported trigger range bit %d", val);
     } else {
         /* default to meelee and range */
         off += sprintf(&buf[off], "meelee and range ");
@@ -2141,8 +2131,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         else if(BF_MISC & val)
             off += sprintf(&buf[off], "special ");
         else
-            /* unsupported bit */
-            goto failed;
+            status = exit_mesg("unsupported trigger type bit %d", val);
     } else {
         /* default to weapon */
         off += sprintf(&buf[off], "phyiscal ");
@@ -2155,8 +2144,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
         else if(BF_NORMAL & val)
             off += sprintf(&buf[off], "attacks");
         else
-            /* unsupported bit */
-            goto failed;
+            status = exit_mesg("unsupported trigger method bit %d", val);
     } else {
         /* default depends on trigger type */
         if(BF_MISC & val || BF_MAGIC & val)
@@ -2166,15 +2154,9 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
     }
 
     if(stack_aux_formula(block, trigger, buf))
-        goto failed;
+        status = exit_stop("failed to write trigger expression");
 
-clean:
-    node_free(trigger);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
 int stack_eng_trigger_atf(block_r * block, char * expr) {
