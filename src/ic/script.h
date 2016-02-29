@@ -129,10 +129,10 @@
 
     /* block list interface */
     int block_init(block_r **);                                                 /* allocate a new block */
+    int block_deit(block_r **);                                                 /* free the block memory */
     int block_append(block_r *, block_r *);                                     /* add the block to the list */
     int block_remove(block_r *);                                                /* remove the block from the list */
     int block_reset(block_r *);                                                 /* free the block's fields */
-    int block_deit(block_r **);                                                 /* free the block memory */
 
     /* block stack interface */
     #define TYPE_PTR 0x1                                                        /* block->ptr stack */
@@ -144,7 +144,6 @@
     int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
     int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
     int block_stack_dump(block_r *, FILE *);
-    #define script_block_dump(script, stream) block_stack_dump((script->blocks->next), (stream))
 
     /* high level block list interface */
     int script_block_new(script_t *, block_r **);                               /* create a new block or reused a free block and append to head */
@@ -290,7 +289,7 @@
     #define MAX_ITEM_LIST                  10
 
     /* script stack functions */
-    int stack_ptr_call(block_r *, char *, int *);
+    /* re */ int stack_ptr_call(block_r *, char *, int *);
     int stack_ptr_call_(block_r *, token_r *, int *);
     /* re */ int stack_eng_item(block_r *, char *, int *, int);
     /* re */ int stack_eng_skill(block_r *, char *, int *);
@@ -308,10 +307,8 @@
     /* re */ int stack_eng_options(block_r *, char *);
     /* re */ int stack_eng_script(block_r *, char *);
     /* re */ int stack_eng_status_value(block_r *, char *, int);
-    int stack_aux_formula(block_r *, node *, char *);
-
-    /* script stack functions for status */
-    int stack_eng_re_aspd(block_r *, char *);
+    /* re */ int stack_eng_renewal_aspd(block_r *, char *);
+    /* re */ int stack_aux_formula(block_r *, node *, char *);
 
     /* script stack-translation functions to prevent source code
      * repetitions by factoring and simplifying similar patterns */

@@ -38,6 +38,18 @@ int block_init(block_r ** block) {
     return CHECK_PASSED;
 }
 
+int block_deit(block_r ** block) {
+    block_r * _block = NULL;
+
+    exit_null_safe(2, block, *block);
+
+    _block = *block;
+    free(_block);
+    *block = NULL;
+
+    return CHECK_PASSED;
+}
+
 int block_append(block_r * parent, block_r * child) {
     exit_null_safe(2, parent, child);
 
@@ -88,18 +100,6 @@ int block_reset(block_r * block) {
     rbt_logic_deit(&block->logic);
 
     block->free = 1;
-    return CHECK_PASSED;
-}
-
-int block_deit(block_r ** block) {
-    block_r * _block = NULL;
-
-    exit_null_safe(2, block, *block);
-
-    _block = *block;
-    free(_block);
-    *block = NULL;
-
     return CHECK_PASSED;
 }
 
@@ -1180,42 +1180,28 @@ failed:
  * and the number of arguments pushed will be returned by argc
  */
 int stack_ptr_call(block_r * block, char * expr, int * argc) {
+    int status = 0;
     int len = 0;
-    int err = CHECK_PASSED;
     token_r * token = NULL;
 
-    /* check for null arguments */
-    exit_null_safe(3, block, expr, argc);
-
-    /* check for empty expression */
     len = strlen(expr);
-    if(0 >= len)
-        return CHECK_FAILED;
-
-    /* check for invalid syntax */
-    if(expr[0] != '(' && expr[len] != ')')
-        return CHECK_FAILED;
-
-    /* tokenize the expression */
-    token = calloc(1, sizeof(token_r));
-    if(NULL == token)
-        return CHECK_FAILED;
+    if( 0 >= len ||                             /* check empty expression */
+        (expr[0] != '(' && expr[len] != ')') || /* check empty argument */
+        calloc_ptr(token) )
+        return 1;
 
     if( script_lexical(token, expr) ||
         0 >= token->script_cnt ||
-        stack_ptr_call_(block, token, argc))
-        err = CHECK_FAILED;
+        stack_ptr_call_(block, token, argc) )
+        status = exit_stop("failed to parse call syntax '%s'", expr);
 
-    SAFE_FREE(token);
-    return err;
+    free_ptr(token);
+    return status;
 }
 
 int stack_ptr_call_(block_r * block, token_r * token, int * argc) {
     int pos = 0;
     int top = 0;
-
-    /* check for null arguments */
-    exit_null_safe(3, block, token, argc);
 
     /* remove the ending parenthesis */
     token->script_cnt--;
@@ -1231,7 +1217,7 @@ int stack_ptr_call_(block_r * block, token_r * token, int * argc) {
      * but script_parse just works but totally full of problems =.=
      * bandaids must be used. */
     if(script_parse(token, &pos, block, ',', '\0', FLAG_PARSE_NORMAL))
-        return CHECK_FAILED;
+        return 1;
 
     /* script_parse will not set the NULL for the lasted argument */
     block->arg[block->arg_cnt - 1] = '\0';
@@ -1241,7 +1227,7 @@ int stack_ptr_call_(block_r * block, token_r * token, int * argc) {
      * size. */
     *argc = block->ptr_cnt - top;
 
-    return CHECK_PASSED;
+    return 0;
 }
 
 /* evaluate the expression for a single or multiple item id
@@ -2215,73 +2201,68 @@ int stack_eng_status_value(block_r * block, char * expr, int type) {
     int ignore = 0;
     int status = CHECK_FAILED;
     switch(type) {
-        case 'a': status = stack_eng_re_aspd(block, expr); break;                                              /* calculate renewal aspd rate */
+        /* to-do: non-renewal aspd calculation */
+        case 'a': status = stack_eng_renewal_aspd(block, expr); break;                                          /* calculate renewal aspd rate */
         case 'e': status = stack_eng_map(block, expr, MAP_EFFECT_FLAG, &ignore); break;                         /* effect */
-        case 'n': status = stack_eng_int(block, expr, 1, FORMAT_PLUS); break;                                  /* +x;     add plus sign */
-        case 'o': status = stack_eng_int(block, expr, 10, FORMAT_PLUS); break;                                 /* +x/10;  add plus sign */
-        case 'p': status = stack_eng_int(block, expr, 1, FORMAT_PLUS | FORMAT_RATIO); break;                   /* +x%;    add plus and percentage sign */
-        case 'l': status = stack_eng_int(block, expr, 1, 0); break;                                            /*  x;     no signs */
-        case 's': status = stack_eng_int_signed(block, expr, 1, "Reduce", "Add", FORMAT_RATIO); break;         /* reduce x on positive, add x on negative */
-        case 'r': status = stack_eng_int_signed(block, expr, 1, "Regenerate", "Drain", FORMAT_RATIO); break;   /* regenerate x on positive, drain x on negative */
-        case '?': status = CHECK_PASSED; break;                                                                /* skip */
+        case 'n': status = stack_eng_int(block, expr, 1, FORMAT_PLUS); break;                                   /* +x;     add plus sign */
+        case 'o': status = stack_eng_int(block, expr, 10, FORMAT_PLUS); break;                                  /* +x/10;  add plus sign */
+        case 'p': status = stack_eng_int(block, expr, 1, FORMAT_PLUS | FORMAT_RATIO); break;                    /* +x%;    add plus and percentage sign */
+        case 'l': status = stack_eng_int(block, expr, 1, 0); break;                                             /*  x;     no signs */
+        case 's': status = stack_eng_int_signed(block, expr, 1, "Reduce", "Add", FORMAT_RATIO); break;          /* reduce x on positive, add x on negative */
+        case 'r': status = stack_eng_int_signed(block, expr, 1, "Regenerate", "Drain", FORMAT_RATIO); break;    /* regenerate x on positive, drain x on negative */
+        case '?': status = CHECK_PASSED; break;                                                                 /* skip */
     }
     if(status)
         exit_mesg("failed to evaluate '%s' with '%c' status type", expr, type);
     return status;
 }
 
-/* it is equivalent to printf("%s (%s)", block->eng[block->eng_cnt - 1], node->formula);
- * but more expensive because programming is hard. q.q I wanted to be an airplane pilot. */
-int stack_aux_formula(block_r * block, node_t * node, char * buf) {
-    char * formula = NULL;
-
-    /* get time expression formula */
-    if (block_stack_push(block, TYPE_ENG, buf) ||
-        block_stack_formula(block, block->eng_cnt - 1, node, &formula))
-        goto failed;
-
-    /* pop results and write final translated string */
-    if (block_stack_pop(block, TYPE_ENG) ||
-        block_stack_push(block, TYPE_ENG, formula))
-        goto failed;
-
-    SAFE_FREE(formula);
-    return CHECK_PASSED;
-
-failed:
-    SAFE_FREE(formula);
-    return CHECK_FAILED;
-}
-
 /* renewal aspd rate is calculated in status_calc_bl_main by
  * (status_calc_aspd * AGI / 200) * 10 ignoring the statuses
  * part in rathena  */
-int stack_eng_re_aspd(block_r * block, char * expr) {
-    int len = 0;
-    int err = 0;
+int stack_eng_renewal_aspd(block_r * block, char * expr) {
+    int status = 0;
+    int    len;
     char * buf = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(2, block, expr);
-
-    /* error on empty expression */
     len = strlen(expr);
     if(0 >= len)
-        return CHECK_FAILED;
+        return 1;
 
     len += 128;
-
     buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
+    if(is_nil(buf))
+        return 1;
 
     /* :D i am so smart */
-    snprintf(buf, len, "(%s) * readparam(bAgi) / 200", expr);
+    status = !snprintf(buf, len, "(%s) * readparam(bAgi) / 200", expr) ||
+             stack_eng_int(block, buf, 1, FORMAT_PLUS);
 
-    err = stack_eng_int(block, buf, 1, FORMAT_PLUS);
+    free_ptr(buf);
+    return status;
+}
 
-    SAFE_FREE(buf);
-    return err;
+int stack_aux_formula(block_r * block, node * node, char * expr) {
+    int status = 0;
+    int    len = 0;
+    char * buf = NULL;
+
+    if(is_nil(node->formula)) {
+        if(block_stack_push(block, TYPE_ENG, expr))
+            return 1;
+    } else {
+        len = strlen(expr) + strlen(node->formula) + 16;
+        buf = calloc(len, sizeof(char));
+        if(is_nil(buf))
+            return 1;
+
+        if( !snprintf(buf, len, "%s (%s)", expr, node->formula) &&
+            block_stack_push(block, TYPE_ENG, buf) )
+            status = exit_stop("failed to push expression onto stack");
+    }
+
+    free_ptr(buf);
+    return status;
 }
 
 /* translate getitem and delitem formats
