@@ -2090,149 +2090,144 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
     int  off = 0;
     int  val = 0;
     char buf[256];
-    node * trigger = NULL;
+    node * node = NULL;
 
-    trigger = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(is_nil(trigger))
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node))
         return exit_mesg("failed to evaluate trigger expression '%s'", expr);
 
-    /* write using the format:
-     *  trigger on
-     *  [meelee and range]
-     *  [weapon and magic or misc]
-     *  [normal attacks or skills]
-     */
+    if(node->min != node->max) {
+        status = exit_mesg("trigger expression is not a constant '%s'", expr);
+    } else {
+        val = node->min;
 
-    off += sprintf(&buf[off], "on ");
+        /* write using the format:
+         *  trigger on
+         *  [meelee and range]
+         *  [weapon and magic or misc]
+         *  [normal attacks or skills]
+         */
+        off += sprintf(&buf[off], "on ");
 
-    /* trigger range (inclusive) */
-    if(BF_RANGEMASK & val) {
-        if((BF_LONG | BF_SHORT) & val)
+        /* trigger range (inclusive) */
+        if(BF_RANGEMASK & val) {
+            if((BF_LONG | BF_SHORT) & val)
+                off += sprintf(&buf[off], "meelee and range ");
+            else if(BF_LONG & val)
+                off += sprintf(&buf[off], "range ");
+            else if(BF_SHORT & val)
+                off += sprintf(&buf[off], "meelee ");
+            else
+                status = exit_mesg("unsupported trigger range bit %d", val);
+        } else {
+            /* default to meelee and range */
             off += sprintf(&buf[off], "meelee and range ");
-        else if(BF_LONG & val)
-            off += sprintf(&buf[off], "range ");
-        else if(BF_SHORT & val)
-            off += sprintf(&buf[off], "meelee ");
-        else
-            status = exit_mesg("unsupported trigger range bit %d", val);
-    } else {
-        /* default to meelee and range */
-        off += sprintf(&buf[off], "meelee and range ");
-    }
+        }
 
-    /* trigger type (exclusive?) */
-    if(BF_WEAPONMASK & val) {
-        if(BF_WEAPON & val)
+        /* trigger type (exclusive?) */
+        if(BF_WEAPONMASK & val) {
+            if(BF_WEAPON & val)
+                off += sprintf(&buf[off], "phyiscal ");
+            else if((BF_MAGIC | BF_MISC) & val)
+                off += sprintf(&buf[off], "magical and special ");
+            else if(BF_MAGIC & val)
+                off += sprintf(&buf[off], "magical ");
+            else if(BF_MISC & val)
+                off += sprintf(&buf[off], "special ");
+            else
+                status = exit_mesg("unsupported trigger type bit %d", val);
+        } else {
+            /* default to weapon */
             off += sprintf(&buf[off], "phyiscal ");
-        else if((BF_MAGIC | BF_MISC) & val)
-            off += sprintf(&buf[off], "magical and special ");
-        else if(BF_MAGIC & val)
-            off += sprintf(&buf[off], "magical ");
-        else if(BF_MISC & val)
-            off += sprintf(&buf[off], "special ");
-        else
-            status = exit_mesg("unsupported trigger type bit %d", val);
-    } else {
-        /* default to weapon */
-        off += sprintf(&buf[off], "phyiscal ");
+        }
+
+        /* trigger method (exclusive) */
+        if(BF_SKILLMASK & val) {
+            if(BF_SKILL & val)
+                off += sprintf(&buf[off], "skills");
+            else if(BF_NORMAL & val)
+                off += sprintf(&buf[off], "attacks");
+            else
+                status = exit_mesg("unsupported trigger method bit %d", val);
+        } else {
+            /* default depends on trigger type */
+            if(BF_MISC & val || BF_MAGIC & val)
+                off += sprintf(&buf[off], "skills");
+            else
+                off += sprintf(&buf[off], "attacks");
+        }
+
+        if(stack_aux_formula(block, node, buf))
+            status = exit_stop("failed to write trigger expression");
     }
 
-    /* trigger method (exclusive) */
-    if(BF_SKILLMASK & val) {
-        if(BF_SKILL & val)
-            off += sprintf(&buf[off], "skills");
-        else if(BF_NORMAL & val)
-            off += sprintf(&buf[off], "attacks");
-        else
-            status = exit_mesg("unsupported trigger method bit %d", val);
-    } else {
-        /* default depends on trigger type */
-        if(BF_MISC & val || BF_MAGIC & val)
-            off += sprintf(&buf[off], "skills");
-        else
-            off += sprintf(&buf[off], "attacks");
-    }
-
-    if(stack_aux_formula(block, trigger, buf))
-        status = exit_stop("failed to write trigger expression");
-
+    node_free(node);
     return status;
 }
 
 int stack_eng_trigger_atf(block_r * block, char * expr) {
-    int ret = 0;
-    int off = 0;
-    int val = 0;
+    int status = 0;
+    int  off = 0;
+    int  val = 0;
     char buf[256];
-    node_t * trigger = NULL;
+    node * node = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(2, block, expr);
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node))
+        return exit_mesg("failed to evaluate trigger expression '%s'", expr);
 
-    trigger = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == trigger) {
-        goto failed;
+    if(node->min != node->max) {
+        status = exit_mesg("trigger expression is not a constant '%s'", expr);
+    } else {
+        val = node->min;
+
+        /* write using the format:
+         *  trigger on
+         *  [meelee and range]
+         *  [weapon or magic and misc]
+         *  [on self or target ]
+         */
+        off += sprintf(&buf[off], "on ");
+
+        /* trigger range (inclusive) */
+        if((ATF_LONG | ATF_SHORT) & val)
+            off += sprintf(&buf[off], "meelee and range ");
+        else if(ATF_LONG & val)
+            off += sprintf(&buf[off], "range ");
+        else if(ATF_SHORT & val)
+            off += sprintf(&buf[off], "meelee ");
+        else
+            /* default range is both */
+            off += sprintf(&buf[off], "meelee and range ");
+
+        /* trigger type (exclusive?) */
+        if(ATF_WEAPON & val)
+            off += sprintf(&buf[off], "weapon ");
+        else if((ATF_MAGIC | ATF_MISC) & val)
+            off += sprintf(&buf[off], "magic and misc ");
+        else if(ATF_MAGIC & val)
+            off += sprintf(&buf[off], "magic ");
+        else if(ATF_MISC & val)
+            off += sprintf(&buf[off], "misc ");
+        else
+            /* default is weapon */
+            off += sprintf(&buf[off], "weapon ");
+
+        /* trigger target */
+        if(ATF_SELF & val)
+            off += sprintf(&buf[off], "on self");
+        else if(ATF_TARGET & val)
+            off += sprintf(&buf[off], "on target");
+        else
+            /* default is target */
+            off += sprintf(&buf[off], "on target");
+
+        if(stack_aux_formula(block, node, buf))
+            status = exit_stop("failed to write trigger expression");
     }
 
-    /* trigger must be a constant */
-    if(trigger->min != trigger->max) {
-        goto failed;
-    }
-
-    val = trigger->min;
-
-    /* write using the format:
-     *  trigger on
-     *  [meelee and range]
-     *  [weapon or magic and misc]
-     *  [on self or target ]
-     */
-
-    off += sprintf(&buf[off], "on ");
-
-    /* trigger range (inclusive) */
-    if((ATF_LONG | ATF_SHORT) & val)
-        off += sprintf(&buf[off], "meelee and range ");
-    else if(ATF_LONG & val)
-        off += sprintf(&buf[off], "range ");
-    else if(ATF_SHORT & val)
-        off += sprintf(&buf[off], "meelee ");
-    else
-        /* default range is both */
-        off += sprintf(&buf[off], "meelee and range ");
-
-    /* trigger type (exclusive?) */
-    if(ATF_WEAPON & val)
-        off += sprintf(&buf[off], "weapon ");
-    else if((ATF_MAGIC | ATF_MISC) & val)
-        off += sprintf(&buf[off], "magic and misc ");
-    else if(ATF_MAGIC & val)
-        off += sprintf(&buf[off], "magic ");
-    else if(ATF_MISC & val)
-        off += sprintf(&buf[off], "misc ");
-    else
-        /* default is weapon */
-        off += sprintf(&buf[off], "weapon ");
-
-    /* trigger target */
-    if(ATF_SELF & val)
-        off += sprintf(&buf[off], "on self");
-    else if(ATF_TARGET & val)
-        off += sprintf(&buf[off], "on target");
-    else
-        /* default is target */
-        off += sprintf(&buf[off], "on target");
-
-    if(stack_aux_formula(block, trigger, buf))
-        goto failed;
-
-clean:
-    node_free(trigger);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    node_free(node);
+    return status;
 }
 
 int stack_eng_options(block_r * block, char * expr) {
