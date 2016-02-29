@@ -143,8 +143,6 @@
     int block_stack_vararg(block_r *, int, const char *, ...);
     int block_stack_push(block_r *, int, const char *);                         /* push a string to the block->ptr or block->eng stack */
     int block_stack_pop(block_r *, int);                                        /* pop a string from the block->ptr or block->eng stack */
-    int block_stack_reset(block_r *, int);                                      /* reset the stack; don't intermix block->ptr and block->eng stack */
-    int block_stack_formula(block_r *, int, node *, char **);                 /* concatenate a node's formula string with block->eng stack string */
     int block_stack_dump(block_r *, FILE *);
     #define script_block_dump(script, stream) block_stack_dump((script->blocks->next), (stream))
 

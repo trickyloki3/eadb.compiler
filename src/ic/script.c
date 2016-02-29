@@ -247,80 +247,6 @@ int block_stack_pop(block_r * block, int type) {
     return SCRIPT_PASSED;
 }
 
-int block_stack_reset(block_r * block, int type) {
-    int i = 0;
-    int cnt = 0;
-
-    /* error on invalid references */
-    exit_null_safe(1, block);
-
-    /* get the number of elements on the stack */
-    switch(type) {
-        case TYPE_PTR: cnt = block->ptr_cnt; break;
-        case TYPE_ENG: cnt = block->eng_cnt; break;
-        default:
-            return exit_func_safe("invalid stack type %d in item %d", type, block->item_id);
-    }
-
-    /* pop each element from the stack */
-    for(i = 0; i < cnt; i++)
-        block_stack_pop(block, type);
-
-    return CHECK_PASSED;
-}
-
-int block_stack_formula(block_r * block, int index, node * node, char ** out) {
-    int ret = 0;
-    char * buffer = NULL;
-    char * prefix = NULL;
-    char * formula = NULL;
-    int buffer_size = 0;
-    int prefix_len = 0;
-    int formula_len = 0;
-
-    exit_null_safe(2, block, node);
-
-    /* check output pointer */
-    if (out == NULL || *out != NULL)
-        return exit_func_safe("unsafe output pointer %p in item %d", (void *)out, block->item_id);
-
-    /* check index */
-    if (index >= block->eng_cnt)
-        return exit_func_safe("invalid index in translate array for item %d", block->item_id);
-
-    /* check null */
-    prefix = block->eng[index];
-    if (prefix == NULL)
-        return exit_func_safe("invalid translated string at index %d for item %d", index, block->item_id);
-
-    /* check empty string */
-    prefix_len = strlen(prefix);
-    if (prefix_len <= 0)
-        return exit_func_safe("empty translated string at index %d for item %d", index, block->item_id);
-
-    formula = node->formula;
-    formula_len = (node->formula != NULL) ? strlen(formula) : 0;
-    if (formula_len <= 0 || node->logic_count <= 0) {
-        /* no formula */
-        buffer = convert_string(prefix);
-        /* formula must contain at least one function or variable */
-    } else if (node->logic_count > 0) {
-        /* include formula */
-        buffer_size = prefix_len + formula_len + 5; /* pad with 10 bytes for formatting with syntax and '\0' */
-        buffer = calloc(buffer_size, sizeof(char));
-        if (buffer == NULL)
-            return exit_func_safe("out of memory in item %d", block->item_id);
-
-        /* check whether formula is wrap in parenthesis */
-        ret = (formula[0] == '(' && formula[formula_len - 1] == ')') ?
-            sprintf(buffer, "%s %s", prefix, formula) :
-            sprintf(buffer, "%s (%s)", prefix, formula);
-    }
-
-    *out = buffer;
-    return SCRIPT_PASSED;
-}
-
 int block_stack_dump(block_r * block, FILE * stream) {
     int i = 0;
     block_r * iter = NULL;
@@ -2514,8 +2440,7 @@ int translate_rentitem(block_r * block) {
             sprintf(&buf[off], "%s, ", block->eng[i]);
     off += sprintf(&buf[off], " for %s.", block->eng[argc]);
 
-    if(block_stack_reset(block, TYPE_ENG) ||
-       block_stack_push(block, TYPE_ENG, buf))
+    if(block_stack_push(block, TYPE_ENG, buf))
         ret = CHECK_FAILED;
 
     SAFE_FREE(buf);
