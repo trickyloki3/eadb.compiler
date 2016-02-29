@@ -286,11 +286,11 @@
 
     /* stack limits */
     #define MAX_SUB_GROUP                  4    /* set to MAX_ITEMGROUP_RANDGROUP for rathena */
-    #define MAX_ITEM_LIST                  10
+    #define MAX_STR_LIST                  10
 
     /* script stack functions */
     /* re */ int stack_ptr_call(block_r *, char *, int *);
-    int stack_ptr_call_(block_r *, token_r *, int *);
+    /* re */ int stack_ptr_call_(block_r *, token_r *, int *);
     /* re */ int stack_eng_item(block_r *, char *, int *, int);
     /* re */ int stack_eng_skill(block_r *, char *, int *);
     /* re */ int stack_eng_grid(block_r *, char *);
@@ -310,11 +310,8 @@
     /* re */ int stack_eng_renewal_aspd(block_r *, char *);
     /* re */ int stack_aux_formula(block_r *, node *, char *);
 
-    /* script stack-translation functions to prevent source code
-     * repetitions by factoring and simplifying similar patterns */
-    int translate_id_amount(block_r *, int *, int *, const char *);
-
     /* script translation functions */
+    int translate_id_amount(block_r *, int *, int *, const char *);
     int translate_getitem(block_r *);
     int translate_delitem(block_r *);
     int translate_rentitem(block_r *);

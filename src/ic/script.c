@@ -1305,7 +1305,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
                 work.block  = block;
                 work.search = item;
                 work.count  = 0;
-                work.total  = MAX_ITEM_LIST;
+                work.total  = MAX_STR_LIST;
                 if(rbt_range_work(node->value, stack_eng_item_work, &work))
                     status = exit_stop("failed to push item names onto the stack");
             }
@@ -1364,7 +1364,7 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
             work.block  = block;
             work.search = skill;
             work.count  = 0;
-            work.total  = MAX_ITEM_LIST;
+            work.total  = MAX_STR_LIST;
             if(rbt_range_work(node->value, stack_eng_skill_work, &work))
                 status = exit_stop("failed to push skill names onto the stack");
         }
@@ -1797,7 +1797,7 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
     } else {
         work.block = block;
         work.count = 0;
-        work.total = MAX_ITEM_LIST;
+        work.total = MAX_STR_LIST;
         if(rbt_range_work(node->value, stack_eng_map_work, &work))
             status = !(flag & MAP_NO_ERROR) ?
             exit_stop("failed to write map values for '%s' on"
@@ -1913,7 +1913,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
     } else {
         work.block = block;
         work.count = 0;
-        work.total = MAX_ITEM_LIST;
+        work.total = MAX_STR_LIST;
         if(rbt_range_work(node->value, stack_eng_db_work, &work))
             status = exit_stop("failed to resolve db values for '%"
             "s' on flag %d in item %d", expr, flag, block->item_id);
@@ -3290,7 +3290,7 @@ int translate_getrandgroupitem(block_r * block) {
 
 
     /* write either the item group summary or the list of items */
-    if(meta->item > MAX_ITEM_LIST) {
+    if(meta->item > MAX_STR_LIST) {
         if(meta->heal) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d healing items", meta->heal);
         if(meta->usable) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d usable items", meta->usable);
         if(meta->etc) err = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, " * %d etc items", meta->etc);
