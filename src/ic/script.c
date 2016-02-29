@@ -2233,9 +2233,8 @@ int stack_eng_trigger_atf(block_r * block, char * expr) {
 int stack_eng_options(block_r * block, char * expr) {
     int cnt = 0;
     int opt = 0;
-    int flag = 0;
+    int flag = TYPE_ENG | FLAG_EMPTY;
 
-    flag = TYPE_ENG | FLAG_EMPTY;
     if(evaluate_numeric_constant(block, expr, 1, &opt) || 0 >= opt ||
        (opt & OPT_SIGHT         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using sight,")) ||
        (opt & OPT_HIDE          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using hide,")) ||
@@ -2266,7 +2265,7 @@ int stack_eng_options(block_r * block, char * expr) {
        (opt & OPT_DRAGON5       && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "dragon 5,")) ||
        (opt & OPT_HANBOK        && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "hanbok,")) ||
        (opt & OPT_OKTOBERFEST   && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "oktoberfest,")))
-        return CHECK_FAILED;
+        return exit_mesg("failed to evaluate option expression into constant or invalid option value from '%s'", expr);
 
     /* remove the last comma and space */
     block->arg_cnt--;
@@ -2275,25 +2274,15 @@ int stack_eng_options(block_r * block, char * expr) {
 }
 
 int stack_eng_script(block_r * block, char * script) {
-    int ret = 0;
+    int status = 0;
     char * buf = NULL;
 
-    /* error on invalid reference */
-    exit_null_safe(2, block, script);
+    if( script_recursive(block->script->db, block->script->mode, block->script->map, script, &buf) ||
+        block_stack_push(block, TYPE_ENG, buf))
+        status = exit_mesg("failed to write or evaluate script '%s'", script);
 
-    /* compile and push the script on the stack */
-    if(script_recursive(block->script->db, block->script->mode, block->script->map, script, &buf) ||
-       block_stack_push(block, TYPE_ENG, buf))
-        goto failed;
-
-clean:
-    SAFE_FREE(buf);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
-
+    free_ptr(buf);
+    return status;
 }
 
 int stack_eng_status_val(block_r * block, char * expr, int type) {
