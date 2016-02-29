@@ -19,6 +19,7 @@ static int stack_eng_item_work(struct rbt_node *, void *, int);
 static int stack_eng_skill_work(struct rbt_node *, void *, int);
 static int stack_eng_map_work(struct rbt_node *, void *, int);
 static int stack_eng_db_work(struct rbt_node *, void *, int);
+static int stack_eng_group_name(char *, const char *);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -1363,9 +1364,6 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
     node * node = NULL;
     struct work work;
 
-    if(exit_zero(3, block, expr, argc))
-        return 1;
-
     /* track stack argument count */
     top = block->eng_cnt;
 
@@ -1432,9 +1430,6 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
     node * node = NULL;
     struct work work;
 
-    if(exit_zero(3, block, expr, argc))
-        return 1;
-
     /* track stack argument count */
     top = block->eng_cnt;
 
@@ -1473,9 +1468,6 @@ int stack_eng_grid(block_r * block, char * expr) {
     int status = 0;
     node * node = NULL;
 
-    if(exit_zero(2, block, expr))
-        return 1;
-
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(is_nil(node))
         return exit_mesg("failed to evaluate grid expression '%s'", expr);
@@ -1497,9 +1489,6 @@ int stack_eng_grid(block_r * block, char * expr) {
 int stack_eng_coordinate(block_r * block, char * expr) {
     int status = 0;
     node * node = NULL;
-
-    if(exit_zero(2, block, expr))
-        return 1;
 
     node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
     if(is_nil(node))
@@ -1532,9 +1521,6 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
     char fmt[16];
     char buf[64];
     int  off = 0;
-
-    if(exit_zero(2, block, expr))
-        return 1;
 
     if(0 == modifier)
         return exit_stop("division by zero modifier");
@@ -1613,9 +1599,6 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     int    len = 0;
     char * buf = NULL;
     char   fmt[64];
-
-    if(exit_zero(2, block, expr))
-        return 1;
 
     if(0 == modifier)
         return exit_stop("division by zero modifier");
@@ -1700,9 +1683,6 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
     int len = 0;
     char buf[64];
 
-    if(exit_zero(2, block, expr))
-        return 1;
-
     /* evaluate the expression and convert to time string */
     node = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
     if(is_nil(node))
@@ -1782,9 +1762,8 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
     produce_t * iter = NULL;
     char * buf[MAX_NAME_SIZE + 32];
 
-    if( exit_zero(3, block, expr, argc) ||
-        calloc_ptr(item) )
-        return 1;
+    if(calloc_ptr(item))
+        return exit_stop("out of memory");
 
     /* track stack argument count */
     top = block->eng_cnt;
@@ -1894,8 +1873,7 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
     node * node = NULL;
     struct work work;
 
-    if( exit_zero(3, block, expr, argc) ||
-        0 == flag )
+    if(0 == flag)
         return 1;
 
     /* track stack argument count */
@@ -2011,8 +1989,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
     node * node = NULL;
     struct work work;
 
-    if( exit_zero(3, block, expr, argc) ||
-        0 == flag )
+    if(0 == flag)
         return 1;
 
     /* track stack argument count */
@@ -2035,84 +2012,77 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
     return status;
 }
 
-int stack_eng_item_group(block_r * block, char * expr) {
+static int stack_eng_group_name(char ** target, const char * source) {
     int i = 0;
     int j = 0;
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
-    char * name = NULL;
-    node_t * group_id = NULL;
-    const_t group_str;
+    size_t length;
+    char * buffer;
 
-    /* evaluate the expression to a group id */
-    group_id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == group_id ||
-       group_id->min != group_id->max)
-        return CHECK_FAILED;
+    length = strlen(source);
+    if(0 >= length)
+        return 1;
+
+    buffer = calloc(length * 3, sizeof(char));
+    if(is_nil(buffer))
+        return 1;
+
+    /* =.=; i know */
+    for(i = 3 /* skip IG_ */; i < length; i++) {
+        /* add spacing on change in casing from upper to lower */
+        if(i != 3 && i + 1 < length && islower(source[i + 1]) && isupper(source[i])) {
+            buffer[j++] = ' ';
+            buffer[j++] = source[i];
+        } else {
+            /* word ending with digit; capatialize next character */
+            if((i + 1 < length && isdigit(source[i]) && !isdigit(source[i + 1])) ||
+               (i + 1 == length && isdigit(source[i])) ) {
+                buffer[j++] = ' ';
+                buffer[j++] = toupper(source[i]);
+            } else if(source[i] == '_') {
+                /* skip under scores */
+                continue;
+            } else {
+                /* capitalize first character, lower case remaining */
+                buffer[j++] = (i == 3) ? toupper(source[i]) : tolower(source[i]);
+            }
+        }
+    }
+
+    /* append group */
+    buffer[j++] = ' ';
+    snprintf( buffer[j], length * 3 - j, "group");
+
+    *target = buffer;
+    return 0;
+}
+
+int stack_eng_item_group(block_r * block, char * expr) {
+    int status = 0;
+    int group_id = 0;
+    const_t * group_const = NULL;
+    char * group_name = NULL;
+
+    if( evaluate_numeric_constant(block, expr, 1, &group_id) ||
+        calloc_ptr(group_const) )
+        return 1;
 
     switch(block->script->mode) {
         case EATHENA:
         case RATHENA:
-            /* search for the group name */
-            memset(&group_str, 0, sizeof(const_t));
-            if(item_group_name(block->script->db, &group_str, group_id->min)) {
-                exit_func_safe("failed to get group name for group"
-                " id %d in item %d", group_id->min, block->item_id);
-                goto failed;
-            } else {
-                name = group_str.name;
+            if(item_group_name(block->script->db, &group_const, group_id)) {
+                status = exit_mesg("failed to get group name for group id %d", group_id);
+            } else if(stack_eng_group_name(&group_name, group_const->name)) {
+                status = exit_mesg("failed to convert %s into a group name", group_const->name);
+            } else if(block_stack_push(block, TYPE_ENG, group_name)) {
+                status = exit_stop("failed to write group name onto stack");
             }
-
-            /* error on empty group name */
-            len = strlen(name);
-            if(0 >= len)
-                goto failed;
-
-            /* parse the group name;
-             * skip the initial IG_ */
-            buf = calloc(len * 3, sizeof(char));
-            if(NULL == buf)
-                goto failed;
-
-            for(i = 3; i < len; i++) {
-                /* converts RWCItem to RWC Item or RedPotion to Red Potion
-                 * but assume the first character is a capital letter */
-
-                /* don't waste your time figuring out this part, better
-                 * off write your own if its confusing. */
-                if(i != 3 && i + 1 < len && islower(name[i + 1]) && isupper(name[i])) {
-                    buf[j++] = ' ';
-                    buf[j++] = toupper(name[i]);
-                } else if((i + 1 < len && isdigit(name[i]) && !isdigit(name[i + 1])) ||
-                   (i + 1 == len && isdigit(name[i]))) {
-                    buf[j++] = ' ';
-                    buf[j++] = toupper(name[i]);
-                } else if(name[i] == '_') {
-                    continue;
-                } else {
-                    buf[j++] = (i == 3) ? toupper(name[i]) : tolower(name[i]);
-                }
-            }
-
-            /* append the 'group' postfix and push to stack */
-            buf[j++] = ' ';
-            sprintf(&buf[j], "group");
-
-            if(block_stack_push(block, TYPE_ENG, buf))
-                goto failed;
             break;
-        default:
-            goto failed;
+        default: status = exit_mesg("item group is not supported for %d mode", block->script->mode);
     }
 
-clean:
-    SAFE_FREE(buf);
-    node_free(group_id);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    free_ptr(group_const);
+    free_ptr(group_name);
+    return 0;
 }
 
 int stack_eng_trigger_bt(block_r * block, char * expr) {
