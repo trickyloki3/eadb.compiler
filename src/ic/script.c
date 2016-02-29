@@ -17,6 +17,7 @@ FILE * node_dbg = NULL;
 
 static int stack_eng_item_work(struct rbt_node *, void *, int);
 static int stack_eng_skill_work(struct rbt_node *, void *, int);
+static int stack_eng_map_work(struct rbt_node *, void *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -1845,96 +1846,76 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
  *      block->eng[n + 1] = ammo_type[i]
  *      *argc = 1;
  */
-int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
-    int i = 0;
-    int ret = 0;
-    int top = 0;
+static int stack_eng_map_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    struct range * range = node->val;
+    struct work * work = context;
     char * value = NULL;
-    node_t * id = NULL;
-    range_t * iter = NULL;
 
-    exit_null_safe(3, block, expr, argc);
-
-    if (0 == flag)
-        return CHECK_FAILED;
-
-    top = block->eng_cnt;
-
-    id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == id)
-        return CHECK_FAILED;
-
-    /* iterate the linked list of ranges */
-    iter = id->range;
-    while(NULL != iter) {
-        /* iterate the values within a range */
-        for(i = iter->min; i <= iter->max; i++) {
-            if(MAP_AMMO_FLAG & flag && !script_map_id(block, "ammo_type", i, &value))
-                goto found;
-            if(MAP_CAST_FLAG & flag && !script_map_id(block, "cast_flag", i, &value))
-                goto found;
-            if(MAP_CLASS_FLAG & flag && !script_map_id(block, "class_type", i, &value))
-                goto found;
-            if(MAP_EFFECT_FLAG & flag && !script_map_id(block, "effect_type", i, &value))
-                goto found;
-            if(MAP_ELEMENT_FLAG & flag && !script_map_id(block, "element_type", i, &value))
-                goto found;
-            if(MAP_LOCATION_FLAG & flag && !script_map_id(block, "item_location", i, &value))
-                goto found;
-            if(MAP_ITEM_FLAG & flag && !script_map_id(block, "item_type", i, &value))
-                goto found;
-            if(MAP_JOB_FLAG & flag && !script_map_id(block, "job_type", i, &value))
-                goto found;
-            if(MAP_RACE_FLAG & flag && !script_map_id(block, "race_type", i, &value))
-                goto found;
-            if(MAP_READPARAM_FLAG & flag && !script_map_id(block, "readparam", i, &value))
-                goto found;
-            if(MAP_REGEN_FLAG & flag && !script_map_id(block, "regen_flag", i, &value))
-                goto found;
-            if(MAP_SEARCHSTORE_FLAG & flag && !script_map_id(block, "search_store", i, &value))
-                goto found;
-            if(MAP_SIZE_FLAG & flag && !script_map_id(block, "size_type", i, &value))
-                goto found;
-            if(MAP_SP_FLAG & flag && !script_map_id(block, "sp_flag", i, &value))
-                goto found;
-            if(MAP_TARGET_FLAG & flag && !script_map_id(block, "target_flag", i, &value))
-                goto found;
-            if(MAP_WEAPON_FLAG & flag && !script_map_id(block, "weapon_type", i, &value))
-                goto found;
-            if(MAP_REFINE_FLAG & flag && !script_map_id(block, "refine_location", i, &value))
-                goto found;
-            if(MAP_ITEM_INFO_FLAG & flag && !script_map_id(block, "item_info", i, &value))
-                goto found;
-            if(MAP_TIME_FLAG & flag && !script_map_id(block, "time_type", i, &value))
-                goto found;
-            if(MAP_STRCHARINFO_FLAG & flag && !script_map_id(block, "strcharinfo", i, &value))
-                goto found;
-            if(MAP_STATUSEFFECT_FLAG & flag && !script_map_id(block, "status_effect", i, &value))
-                goto found;
-
-            /* failed to find resolve the id */
-            if(!(flag & MAP_NO_ERROR))
-                exit_func_safe("failed to map %d (%s) on flag "
-                "%d in item %d", i, expr, flag, block->item_id);
-            goto failed;
-found:
-            /* write the mapped value on the block->eng stack */
-            if(block_stack_push(block, TYPE_ENG, value))
-                goto failed;
-            SAFE_FREE(value);
+    for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++) {
+        if( (flag & MAP_AMMO_FLAG           && !script_map_id(work->block, "ammo_type", i, &value)) ||
+            (flag & MAP_CAST_FLAG           && !script_map_id(work->block, "cast_flag", i, &value)) ||
+            (flag & MAP_CLASS_FLAG          && !script_map_id(work->block, "class_type", i, &value)) ||
+            (flag & MAP_EFFECT_FLAG         && !script_map_id(work->block, "effect_type", i, &value)) ||
+            (flag & MAP_ELEMENT_FLAG        && !script_map_id(work->block, "element_type", i, &value)) ||
+            (flag & MAP_LOCATION_FLAG       && !script_map_id(work->block, "item_location", i, &value)) ||
+            (flag & MAP_ITEM_FLAG           && !script_map_id(work->block, "item_type", i, &value)) ||
+            (flag & MAP_JOB_FLAG            && !script_map_id(work->block, "job_type", i, &value)) ||
+            (flag & MAP_RACE_FLAG           && !script_map_id(work->block, "race_type", i, &value)) ||
+            (flag & MAP_READPARAM_FLAG      && !script_map_id(work->block, "readparam", i, &value)) ||
+            (flag & MAP_REGEN_FLAG          && !script_map_id(work->block, "regen_flag", i, &value)) ||
+            (flag & MAP_SEARCHSTORE_FLAG    && !script_map_id(work->block, "search_store", i, &value)) ||
+            (flag & MAP_SIZE_FLAG           && !script_map_id(work->block, "size_type", i, &value)) ||
+            (flag & MAP_SP_FLAG             && !script_map_id(work->block, "sp_flag", i, &value)) ||
+            (flag & MAP_TARGET_FLAG         && !script_map_id(work->block, "target_flag", i, &value)) ||
+            (flag & MAP_WEAPON_FLAG         && !script_map_id(work->block, "weapon_type", i, &value)) ||
+            (flag & MAP_REFINE_FLAG         && !script_map_id(work->block, "refine_location", i, &value)) ||
+            (flag & MAP_ITEM_INFO_FLAG      && !script_map_id(work->block, "item_info", i, &value)) ||
+            (flag & MAP_TIME_FLAG           && !script_map_id(work->block, "time_type", i, &value)) ||
+            (flag & MAP_STRCHARINFO_FLAG    && !script_map_id(work->block, "strcharinfo", i, &value)) ||
+            (flag & MAP_STATUSEFFECT_FLAG   && !script_map_id(work->block, "status_effect", i, &value)) ) {
+            if(block_stack_push(work->block, TYPE_ENG, value)) {
+                free_ptr(value);
+                return 1;
+            }
+        } else {
+            return 1;
         }
-        iter = iter->next;
+        free_ptr(value);
     }
 
-clean:
-    *argc = block->eng_cnt - top;
-    SAFE_FREE(value);
-    node_free(id);
-    return ret;
+    return 0;
+}
 
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
+    int status = 0;
+    int top = 0;
+    node * node = NULL;
+    struct work work;
+
+    if( exit_zero(3, block, expr, argc) ||
+        0 == flag )
+        return 1;
+
+    /* track stack argument count */
+    top = block->eng_cnt;
+
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node)) {
+        status = exit_mesg("failed to evaluate integer expression '%s'", expr);
+    } else {
+        work.block = block;
+        work.count = 0;
+        work.total = MAX_ITEM_LIST;
+        if(rbt_range_work(node->value, stack_eng_map_work, &work))
+            if (!(flag & MAP_NO_ERROR))
+                status = exit_stop("failed to write map values for '%s"
+                "' on flag %d in item %d", expr, flag, block->item_id);
+    }
+
+    *argc = block->eng_cnt - top;
+    node_free(node);
+    return status;
 }
 
 /* evaluate the expression into an id
