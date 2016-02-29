@@ -2285,27 +2285,27 @@ int stack_eng_script(block_r * block, char * script) {
     return status;
 }
 
-int stack_eng_status_val(block_r * block, char * expr, int type) {
-    int cnt = 0;
-    int err = CHECK_FAILED;
+int stack_eng_status_value(block_r * block, char * expr, int type) {
+    int ignore = 0;
+    int status = CHECK_FAILED;
     switch(type) {
-        case 'a': err = stack_eng_re_aspd(block, expr); break;                                              /* calculate renewal aspd rate */
-        case 'e': err = stack_eng_map(block, expr, MAP_EFFECT_FLAG, &cnt); break;                           /* effect */
-        case 'n': err = stack_eng_int(block, expr, 1, FORMAT_PLUS); break;                                  /* +x;     add plus sign */
-        case 'o': err = stack_eng_int(block, expr, 10, FORMAT_PLUS); break;                                 /* +x/10;  add plus sign */
-        case 'p': err = stack_eng_int(block, expr, 1, FORMAT_PLUS | FORMAT_RATIO); break;                   /* +x%;    add plus and percentage sign */
-        case 'l': err = stack_eng_int(block, expr, 1, 0); break;                                            /*  x;     no signs */
-        case 's': err = stack_eng_int_signed(block, expr, 1, "Reduce", "Add", FORMAT_RATIO); break;         /* reduce x on positive, add x on negative */
-        case 'r': err = stack_eng_int_signed(block, expr, 1, "Regenerate", "Drain", FORMAT_RATIO); break;   /* regenerate x on positive, drain x on negative */
-        case '?': err = CHECK_PASSED; break;                                                                /* skip */
+        case 'a': status = stack_eng_re_aspd(block, expr); break;                                              /* calculate renewal aspd rate */
+        case 'e': status = stack_eng_map(block, expr, MAP_EFFECT_FLAG, &ignore); break;                         /* effect */
+        case 'n': status = stack_eng_int(block, expr, 1, FORMAT_PLUS); break;                                  /* +x;     add plus sign */
+        case 'o': status = stack_eng_int(block, expr, 10, FORMAT_PLUS); break;                                 /* +x/10;  add plus sign */
+        case 'p': status = stack_eng_int(block, expr, 1, FORMAT_PLUS | FORMAT_RATIO); break;                   /* +x%;    add plus and percentage sign */
+        case 'l': status = stack_eng_int(block, expr, 1, 0); break;                                            /*  x;     no signs */
+        case 's': status = stack_eng_int_signed(block, expr, 1, "Reduce", "Add", FORMAT_RATIO); break;         /* reduce x on positive, add x on negative */
+        case 'r': status = stack_eng_int_signed(block, expr, 1, "Regenerate", "Drain", FORMAT_RATIO); break;   /* regenerate x on positive, drain x on negative */
+        case '?': status = CHECK_PASSED; break;                                                                /* skip */
     }
-    return err;
+    if(status)
+        exit_mesg("failed to evaluate '%s' with '%c' status type", expr, type);
+    return status;
 }
 
-/* append the formula expression onto the top of block->eng stack
- *
- * printf("%s (%s)", block->eng[block->eng_cnt - 1], node->formula);
- */
+/* it is equivalent to printf("%s (%s)", block->eng[block->eng_cnt - 1], node->formula);
+ * but more expensive because programming is hard. q.q I wanted to be an airplane pilot. */
 int stack_aux_formula(block_r * block, node_t * node, char * buf) {
     char * formula = NULL;
 
@@ -2627,10 +2627,10 @@ int translate_status(block_r * block) {
         return exit_func_safe("%s is not implemented in item %d", status.name, block->item_id);
 
     /* evaluate the values by type */
-    if( stack_eng_status_val(block, block->ptr[5], status.val4) ||
-        stack_eng_status_val(block, block->ptr[4], status.val3) ||
-        stack_eng_status_val(block, block->ptr[3], status.val2) ||
-        stack_eng_status_val(block, block->ptr[2], status.val1))
+    if( stack_eng_status_value(block, block->ptr[5], status.val4) ||
+        stack_eng_status_value(block, block->ptr[4], status.val3) ||
+        stack_eng_status_value(block, block->ptr[3], status.val2) ||
+        stack_eng_status_value(block, block->ptr[2], status.val1))
         return CHECK_FAILED;
 
     /* write the format */
