@@ -299,10 +299,10 @@
     /* re */ int stack_eng_grid(block_r *, char *);
     /* re */ int stack_eng_coordinate(block_r *, char *);
     /* re */ int stack_eng_int(block_r *, char *, int, int);
-    /* re */int stack_eng_int_signed(block_r *, char *, int, const char *, const char *, int);
+    /* re */ int stack_eng_int_signed(block_r *, char *, int, const char *, const char *, int);
     /* re */ int stack_eng_time(block_r *, char *, int);
-    int stack_eng_produce(block_r *, char *, int *);
-    int stack_eng_map(block_r *, char *, int, int *);
+    /* re */ int stack_eng_produce(block_r *, char *, int *);
+    /* re */ int stack_eng_map(block_r *, char *, int, int *);
     int stack_eng_db(block_r *, char *, int, int *);
     int stack_eng_item_group(block_r *, char *);
     int stack_eng_trigger_bt(block_r *, char *);

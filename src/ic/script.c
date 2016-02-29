@@ -18,6 +18,7 @@ FILE * node_dbg = NULL;
 static int stack_eng_item_work(struct rbt_node *, void *, int);
 static int stack_eng_skill_work(struct rbt_node *, void *, int);
 static int stack_eng_map_work(struct rbt_node *, void *, int);
+static int stack_eng_db_work(struct rbt_node *, void *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -1908,9 +1909,9 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
         work.count = 0;
         work.total = MAX_ITEM_LIST;
         if(rbt_range_work(node->value, stack_eng_map_work, &work))
-            if (!(flag & MAP_NO_ERROR))
-                status = exit_stop("failed to write map values for '%s"
-                "' on flag %d in item %d", expr, flag, block->item_id);
+            status = !(flag & MAP_NO_ERROR) ?
+            exit_stop("failed to write map values for '%s' on"
+            " flag %d in item %d", expr, flag, block->item_id) : 1;
     }
 
     *argc = block->eng_cnt - top;
@@ -1926,13 +1927,13 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
  *      block->eng[n + 1] = "sword"
  *      *argc = 1;
  */
-int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
-    int i = 0;
-    int ret = 0;
-    int top = 0;
-    node_t * id = NULL;
-    range_t * iter = NULL;
 
+static int stack_eng_db_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    struct range * range = node->val;
+    struct work * work = context;
+
+    int status = 0;
     skill_t * skill = NULL;
     item_t * item = NULL;
     mob_t * mob = NULL;
@@ -1940,137 +1941,98 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
     pet_t * pet = NULL;
     map_res * map = NULL;
 
-    exit_null_safe(3, block, expr, argc);
+    if(flag & DB_SKILL_ID)
+        calloc_ptr(skill);
+    if(flag & DB_ITEM_ID)
+        calloc_ptr(item);
+    if(flag & DB_MOB_ID)
+        calloc_ptr(mob);
+    if(flag & DB_MERC_ID)
+        calloc_ptr(merc);
+    if(flag & DB_PET_ID)
+        calloc_ptr(pet);
+    if(flag & DB_MAP_ID)
+        calloc_ptr(map);
 
-    if (0 == flag)
-        return exit_func_safe("invalid flag in item %d", block->item_id);
-
-    top = block->eng_cnt;
-
-    id = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if (NULL == id)
-        return exit_func_safe("fail to evaluate id in item %d", block->item_id);
-
-    /* iterate the linked list of ranges */
-    iter = id->range;
-    while(NULL != iter) {
-        /* iterate the values within a range */
-        for(i = iter->min; i <= iter->max; i++) {
-            if(DB_SKILL_ID & flag) {
-                skill = calloc(1, sizeof(skill_t));
-                if(NULL == skill)
-                    goto failed;
-
-                if(skill_id(block->script->db, skill, i) ||
-                   block_stack_push(block, TYPE_ENG, skill->desc))
-                    goto failed;
-
-                SAFE_FREE(skill);
-                continue;
+    for(i = range->min; i <= range->max && work->count < work->total && !status; i++, work->count++) {
+        if(flag & DB_SKILL_ID) {
+            if( is_nil(skill) ||
+                skill_id(work->block->script->db, skill, i) ||
+                block_stack_push(work->block, TYPE_ENG, skill->desc) )
+                status = exit_mesg("failed to write or search for skill id %d", i);
+        } else if(flag & DB_ITEM_ID) {
+            if( is_nil(item) ||
+                item_id(work->block->script->db, item, i) ||
+                block_stack_push(work->block, TYPE_ENG, item->name) )
+                status = exit_mesg("failed to write or search for item id %d", i);
+        } else if(flag & DB_MOB_ID) {
+            /* negative map id is special map */
+            switch(i) {
+                case -1: status = block_stack_push(work->block, TYPE_ENG, "random monster"); break;
+                case -2: status = block_stack_push(work->block, TYPE_ENG, "random poring monster"); break;
+                case -3: status = block_stack_push(work->block, TYPE_ENG, "random mvp monster"); break;
+                case -4: status = block_stack_push(work->block, TYPE_ENG, "random monster"); break;
+                default: status = is_nil(mob) ||
+                                  mob_id(work->block->script->db, mob, i) ||
+                                  block_stack_push(work->block, TYPE_ENG, mob->name);
             }
-            if(DB_ITEM_ID & flag) {
-                item = calloc(1, sizeof(item_t));
-                if(NULL == item)
-                    goto failed;
-
-                if(item_id(block->script->db, item, i) ||
-                   block_stack_push(block, TYPE_ENG, item->name))
-                    goto failed;
-
-                SAFE_FREE(item);
-                continue;
-            }
-            if(DB_MOB_ID & flag) {
-                mob = calloc(1, sizeof(mob_t));
-                if(NULL == mob)
-                    goto failed;
-
-                /* negative map id is special map */
-                switch (i) {
-                case -1:
-                    if (block_stack_push(block, TYPE_ENG, "random monster"))
-                        goto failed;
-                    break;
-                case -2:
-                    if (block_stack_push(block, TYPE_ENG, "random poring monster"))
-                        goto failed;
-                    break;
-                case -3:
-                    if (block_stack_push(block, TYPE_ENG, "random MVP monster"))
-                        goto failed;
-                    break;
-                case -4:
-                    if (block_stack_push(block, TYPE_ENG, "random monster"))
-                        goto failed;
-                    break;
-                default:
-                    if (mob_id(block->script->db, mob, i) ||
-                        block_stack_push(block, TYPE_ENG, mob->name))
-                        goto failed;
-                }
-
-                SAFE_FREE(mob);
-                continue;
-            }
-            if(DB_MERC_ID & flag) {
-                merc = calloc(1, sizeof(merc_t));
-                if(NULL == merc)
-                    goto failed;
-
-                if(merc_id(block->script->db, merc, i) ||
-                   block_stack_push(block, TYPE_ENG, merc->name))
-                    goto failed;
-
-                SAFE_FREE(merc);
-                continue;
-            }
-            if(DB_PET_ID & flag) {
-                pet = calloc(1, sizeof(pet_t));
-                if(NULL == pet)
-                    goto failed;
-
-                if(pet_id(block->script->db, pet, i) ||
-                   block_stack_push(block, TYPE_ENG, pet->name))
-                    goto failed;
-
-                SAFE_FREE(pet);
-                continue;
-            }
-            if(DB_MAP_ID & flag) {
-                map = calloc(1, sizeof(map_res));
-                if(NULL == map)
-                    goto failed;
-
-                if (map_id(block->script->db, map, i) ||
-                    block_stack_push(block, TYPE_ENG, map->name))
-                    goto failed;
-
-                SAFE_FREE(map);
-                continue;
-            }
-
-            /* failed to find resolve the id */
-            exit_func_safe("failed to map %d (%s) on flag "
-            "%d in item %d", i, expr, flag, block->item_id);
-            goto failed;
+            if(status)
+                exit_mesg("failed to write or search for mob id %d", i);
+        } else if(flag & DB_MERC_ID) {
+            if( is_nil(merc) ||
+                merc_id(work->block->script->db, merc, i) ||
+                block_stack_push(work->block, TYPE_ENG, merc->name) )
+                status = exit_mesg("failed to write or search for mercenary id %d", i);
+        } else if(flag & DB_PET_ID) {
+            if( is_nil(pet) ||
+                pet_id(work->block->script->db, pet, i) ||
+                block_stack_push(work->block, TYPE_ENG, pet->name) )
+                status = exit_mesg("failed to write or search for pet id %d", i);
+        } else if(flag & DB_MAP_ID) {
+            if( is_nil(map) ||
+                map_id(work->block->script->db, map, i) ||
+                block_stack_push(work->block, TYPE_ENG, map->name) )
+                status = exit_mesg("failed to write or search for mob id %d", i);
         }
-        iter = iter->next;
     }
 
-clean:
-    *argc = block->eng_cnt - top;
-    SAFE_FREE(skill);
-    SAFE_FREE(item);
-    SAFE_FREE(mob);
-    SAFE_FREE(merc);
-    SAFE_FREE(pet);
-    SAFE_FREE(map);
-    node_free(id);
-    return ret;
+    free_ptr(skill);
+    free_ptr(item);
+    free_ptr(mob);
+    free_ptr(merc);
+    free_ptr(pet);
+    free_ptr(map);
+    return 0;
+}
 
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
+    int status = 0;
+    int top = 0;
+    node * node = NULL;
+    struct work work;
+
+    if( exit_zero(3, block, expr, argc) ||
+        0 == flag )
+        return 1;
+
+    /* track stack argument count */
+    top = block->eng_cnt;
+
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node)) {
+        status = exit_mesg("failed to evaluate integer expression '%s'", expr);
+    } else {
+        work.block = block;
+        work.count = 0;
+        work.total = MAX_ITEM_LIST;
+        if(rbt_range_work(node->value, stack_eng_db_work, &work))
+            status = exit_stop("failed to resolve db values for '%"
+            "s' on flag %d in item %d", expr, flag, block->item_id);
+    }
+
+    *argc = block->eng_cnt - top;
+    node_free(node);
+    return status;
 }
 
 int stack_eng_item_group(block_r * block, char * expr) {
