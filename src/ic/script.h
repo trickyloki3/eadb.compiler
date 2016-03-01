@@ -315,8 +315,8 @@
     int translate_getitem(block_r *);
     int translate_delitem(block_r *);
     int translate_rentitem(block_r *);
-    int translate_heal(block_r *);
-    int translate_produce(block_r *, int);
+    /* re */ int translate_heal(block_r *);
+    /* re */ int translate_produce(block_r *, int);
     int translate_status(block_r *);
     int translate_status_end(block_r *);
     int translate_pet_egg(block_r *);

@@ -2470,8 +2470,9 @@ int translate_heal(block_r * block) {
 
 int translate_produce(block_r * block, int handler) {
     int i = 0;
-    int arg_off = 0;
-    int arg_cnt = 0;
+    int status = 0;
+    int top = 0;
+    int cnt = 0;
 
     /* error on invalid argument */
     if(1 > block->ptr_cnt)
@@ -2480,19 +2481,18 @@ int translate_produce(block_r * block, int handler) {
 
     /* get total number of items pushed onto block->eng
      * stack and the length bytes written to the buffer */
-    arg_off = block->eng_cnt;
-    if(stack_eng_produce(block, block->ptr[0], &arg_cnt))
+    top = block->eng_cnt;
+    if(stack_eng_produce(block, block->ptr[0], &cnt))
         return CHECK_FAILED;
 
-    /* write the produce recipes */
-    arg_cnt += arg_off;
-    for(i = arg_off; i < arg_cnt; i++)
-        if((block->eng_cnt == 0) ?
-            block_stack_vararg(block, TYPE_ENG, "%s", block->eng[i]):
-            block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", block->eng[i]))
-            return CHECK_FAILED;
+    cnt += top;
 
-    return CHECK_PASSED;
+    /* write the produce recipes */
+    status = block_stack_vararg(block, TYPE_ENG, "%s", block->eng[top]);
+    for(i = top + 1; i < cnt && !status; i++)
+        status = block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", block->eng[i]);
+
+    return status ? exit_stop("failed to write produce expression") : 0;
 }
 
 int translate_status(block_r * block) {
