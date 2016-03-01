@@ -349,17 +349,16 @@
 
     /* evaluate_expression bitmask flags */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */
-    #define EVALUATE_FLAG_KEEP_NODE        0x002 /* keep the root node */
     #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators returns 0 or 1 rather than range */
     #define EVALUATE_FLAG_WRITE_FORMULA    0x008 /* write the formula for expression */
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x010 /* keep logic tree for ?: operators; set blocks */
     #define EVALUATE_FLAG_ALL              0xfff
 
     /* higher level wrappers over evaluate expression */
-    int evaluate_numeric_constant(block_r *, char *, int, int *);
+    int evaluate_numeric_constant(block_r *, char *, int *);
 
     /* evaluate an expression */
-    node * evaluate_expression(block_r *, char *, int, int);
+    node * evaluate_expression(block_r *, char *, int);
     node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
     int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
     int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);

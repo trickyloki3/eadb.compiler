@@ -1011,8 +1011,8 @@ int script_translate(script_t * script) {
             case 65: status = 0; break;
             case 26: /* if */
                 /* if block's logical experssion is in index 0 */
-                flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
-                node = evaluate_expression(iter, iter->ptr[0], 1, flag);
+                flag = EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
+                node = evaluate_expression(iter, iter->ptr[0], flag);
                 if(is_nil(node))
                     return exit_mesg("failed to evaluate if block's expression '%s'", iter->ptr[0]);
                 node_free(node);
@@ -1025,14 +1025,14 @@ int script_translate(script_t * script) {
                     if(rbt_logic_not_all(iter->logic, &logic))
                         return exit_stop("failed to invert else block's parent if block's logic tree");
 
-                    rbt_logic_deit(iter->logic);
+                    rbt_logic_deit(&iter->logic);
                     iter->logic = logic;
                 }
 
                 /* else-if block's logical expression is in index 0 */
                 if(iter->ptr_cnt) {
-                    flag = EVALUATE_FLAG_KEEP_NODE | EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
-                    node = evaluate_expression(iter, iter->ptr[0], 1, flag);
+                    flag = EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
+                    node = evaluate_expression(iter, iter->ptr[0], flag);
                     if(is_nil(node))
                         return exit_mesg("failed to evaluate else-if block's expression '%s'", iter->ptr[0]);
                     node_free(node);
@@ -1041,7 +1041,7 @@ int script_translate(script_t * script) {
             case 28: /* set */
                 /* set block's expression is evaluated and substituted into
                  * any expression that references the set block by name */
-                iter->set_node = evaluate_expression(iter, iter->ptr[1], 1, EVALUATE_FLAG_ALL);
+                iter->set_node = evaluate_expression(iter, iter->ptr[1], EVALUATE_FLAG_ALL);
                 if(is_nil(iter->set_node))
                     return exit_mesg("failed evaluate set block's expression '%s'", iter->ptr[1]);
                 break;
@@ -1293,7 +1293,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
             status = exit_stop("failed to push item name onto the stack");
     } else {
         /* handle item id expressions */
-        node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+        node = evaluate_expression(block, expr, 0);
         if(is_nil(node)) {
             status = exit_mesg("failed to evaluate item id expression '%s'", expr);
         } else {
@@ -1359,7 +1359,7 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
             status = exit_stop("failed to push skill name onto the stack");
     } else {
         /* handle skill id expressions */
-        node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+        node = evaluate_expression(block, expr, 0);
         if(is_nil(node)) {
             status = exit_mesg("failed to evaluate skill id expression '%s'", expr);
         } else {
@@ -1382,7 +1382,7 @@ int stack_eng_grid(block_r * block, char * expr) {
     int status = 0;
     node * node = NULL;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node))
         return exit_mesg("failed to evaluate grid expression '%s'", expr);
 
@@ -1404,7 +1404,7 @@ int stack_eng_coordinate(block_r * block, char * expr) {
     int status = 0;
     node * node = NULL;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node))
         return exit_mesg("failed to evaluate coordinate expression '%s'", expr);
 
@@ -1482,7 +1482,7 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
     int status;
     node * node;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node)) {
         status = exit_mesg("failed to evaluate integer expression '%s'", expr);
     } else if(stack_eng_int_re(block, node, modifier, flag)) {
@@ -1558,15 +1558,15 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
         } else if(node->min < 0 && node->max >= 0) {
             /* negative - positive */
             status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, neg, abs(min), pos, max) );
+                      !sprintf(buf, fmt, neg, fabs(min), pos, max) );
         } else if(node->min >= 0 && node->max < 0) {
             /* positive - negative */
             status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, neg, abs(max), pos, min) );
+                      !sprintf(buf, fmt, neg, fabs(max), pos, min) );
         } else {
             /* negative */
             status = (!sprintf(fmt, "%%s %s ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, neg, abs(min), abs(max)) );
+                      !sprintf(buf, fmt, neg, fabs(min), fabs(max)) );
         }
         if(status || stack_aux_formula(block, node, buf))
             status = exit_stop("failed to write integer expression");
@@ -1580,10 +1580,10 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     int status = 0;
     node * node;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node)) {
         status = exit_mesg("failed to evaluate integer expression '%s'", expr);
-    } else if(stack_eng_int_signed(block, node, modifier, pos, neg, flag)) {
+    } else if(stack_eng_int_signed_re(block, node, modifier, pos, neg, flag)) {
         status = exit_mesg("failed write integer expression");
     }
 
@@ -1614,7 +1614,7 @@ int stack_eng_time(block_r * block, char * expr, int modifier) {
     char buf[64];
 
     /* evaluate the expression and convert to time string */
-    node = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node))
         return exit_mesg("failed to evaluate time expression '%s'", expr);
 
@@ -1690,7 +1690,7 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
     item_t * item = NULL;
     produce_t * list = NULL;
     produce_t * iter = NULL;
-    char * buf[MAX_NAME_SIZE + 32];
+    char buf[MAX_NAME_SIZE + 32];
 
     if(calloc_ptr(item))
         return exit_stop("out of memory");
@@ -1698,7 +1698,7 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
     /* track stack argument count */
     top = block->eng_cnt;
 
-    if(evaluate_numeric_constant(block, expr, 1, &lvl)) {
+    if(evaluate_numeric_constant(block, expr, &lvl)) {
         status = exit_mesg("failed to evaluate level expression into a constant '%s'", expr);
     } else if(produce_id(block->script->db, &list, lvl)) {
         status = exit_mesg("failed to find produce entries for item level %d", lvl);
@@ -1809,7 +1809,7 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
     /* track stack argument count */
     top = block->eng_cnt;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node)) {
         status = exit_mesg("failed to evaluate integer expression '%s'", expr);
     } else {
@@ -1925,7 +1925,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
     /* track stack argument count */
     top = block->eng_cnt;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node)) {
         status = exit_mesg("failed to evaluate integer expression '%s'", expr);
     } else {
@@ -1945,7 +1945,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
 static int stack_eng_group_name(char ** target, const char * source) {
     int i = 0;
     int j = 0;
-    size_t length;
+    int length;
     char * buffer;
 
     length = strlen(source);
@@ -1980,7 +1980,7 @@ static int stack_eng_group_name(char ** target, const char * source) {
 
     /* append group */
     buffer[j++] = ' ';
-    snprintf( buffer[j], length * 3 - j, "group");
+    snprintf(&buffer[j], length * 3 - j, "group");
 
     *target = buffer;
     return 0;
@@ -1992,14 +1992,14 @@ int stack_eng_item_group(block_r * block, char * expr) {
     const_t * group_const = NULL;
     char * group_name = NULL;
 
-    if( evaluate_numeric_constant(block, expr, 1, &group_id) ||
+    if( evaluate_numeric_constant(block, expr, &group_id) ||
         calloc_ptr(group_const) )
         return 1;
 
     switch(block->script->mode) {
         case EATHENA:
         case RATHENA:
-            if(item_group_name(block->script->db, &group_const, group_id)) {
+            if(item_group_name(block->script->db, group_const, group_id)) {
                 status = exit_mesg("failed to get group name for group id %d", group_id);
             } else if(stack_eng_group_name(&group_name, group_const->name)) {
                 status = exit_mesg("failed to convert %s into a group name", group_const->name);
@@ -2022,7 +2022,7 @@ int stack_eng_trigger_bt(block_r * block, char * expr) {
     char buf[256];
     node * node = NULL;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node))
         return exit_mesg("failed to evaluate trigger expression '%s'", expr);
 
@@ -2102,7 +2102,7 @@ int stack_eng_trigger_atf(block_r * block, char * expr) {
     char buf[256];
     node * node = NULL;
 
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    node = evaluate_expression(block, expr, 0);
     if(is_nil(node))
         return exit_mesg("failed to evaluate trigger expression '%s'", expr);
 
@@ -2165,7 +2165,7 @@ int stack_eng_options(block_r * block, char * expr) {
     int opt = 0;
     int flag = TYPE_ENG | FLAG_EMPTY;
 
-    if(evaluate_numeric_constant(block, expr, 1, &opt) || 0 >= opt ||
+    if(evaluate_numeric_constant(block, expr, &opt) || 0 >= opt ||
        (opt & OPT_SIGHT         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using sight,")) ||
        (opt & OPT_HIDE          && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using hide,")) ||
        (opt & OPT_CLOAK         && block_stack_vararg(block, flag | (cnt++ ? FLAG_CONCAT : 0), "using cloak,")) ||
@@ -2446,8 +2446,8 @@ int translate_heal(block_r * block) {
         return exit_func_safe("missing hp or sp argument "
         "for %s in item %d", block->name, block->item_id);
 
-    hp = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    sp = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+    hp = evaluate_expression(block, block->ptr[0], 0);
+    sp = evaluate_expression(block, block->ptr[1], 0);
 
     if(is_nil(hp)) {
         status = exit_mesg("failed to evaluate hp expression '%s'", block->ptr[0]);
@@ -2517,7 +2517,7 @@ int translate_status(block_r * block) {
         return exit_func_safe("missing status id, time, or values"
         " argument for %s in item %d", block->name, block->item_id);
 
-    if(evaluate_numeric_constant(block, block->ptr[0], 1, &id) ||
+    if(evaluate_numeric_constant(block, block->ptr[0], &id) ||
        status_id(block->script->db, &status, id) ||
        stack_eng_time(block, block->ptr[1], 1))
         return exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
@@ -2526,7 +2526,7 @@ int translate_status(block_r * block) {
     if(id == 289) {
         item = calloc(1, sizeof(item_t));
         if(NULL == item ||
-           evaluate_numeric_constant(block, block->ptr[2], 1, &id) ||
+           evaluate_numeric_constant(block, block->ptr[2], &id) ||
            item_id(block->script->db, item, id) ||
            script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buffer) ||
            block_stack_push(block, TYPE_ENG, buffer))
@@ -2616,7 +2616,7 @@ int translate_pet_egg(block_r * block) {
         "for %s in item %d", block->name, block->item_id);
 
     /* search for pet */
-    if( evaluate_numeric_constant(block, block->ptr[0], 1, &id) ||
+    if( evaluate_numeric_constant(block, block->ptr[0], &id) ||
         pet_id(block->script->db, &pet, id))
         return exit_func_safe("invalid pet id %d in item %d\n", id, block->item_id);
 
@@ -2761,7 +2761,7 @@ int translate_skill(block_r * block) {
     /* evaluate skill name, level, and flag */
     if(stack_eng_skill(block, block->ptr[0], &cnt) || cnt != 1 ||
        stack_eng_int(block, block->ptr[1], 1, 0) ||
-       evaluate_numeric_constant(block, block->ptr[2], 1, &flag))
+       evaluate_numeric_constant(block, block->ptr[2], &flag))
         return CHECK_FAILED;
 
     switch(flag) {
@@ -2924,16 +2924,16 @@ int translate_getexp(block_r * block) {
         return exit_mesg("missing base exprience or job exprience "
         "argument for %s in item %d", block->name, block->item_id);
 
-    base = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    job  = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
+    base = evaluate_expression(block, block->ptr[0], 0);
+    job  = evaluate_expression(block, block->ptr[1], 0);
 
     if(is_nil(base)) {
         status = exit_mesg("failed to evaluate base expression '%s'", block->ptr[0]);
     } else if(is_nil(job)) {
         status = exit_mesg("failed to evaluate job expression '%s'",  block->ptr[1]);
     } else {
-        if( stack_eng_int(block, base, 1, 0) ||
-            stack_eng_int(block, job, 1, 0) ) {
+        if( stack_eng_int_re(block, base, 1, 0) ||
+            stack_eng_int_re(block, job, 1, 0) ) {
             status = exit_stop("failed to write base or job expression");
         } else {
             if(base->min > 0) {
@@ -3094,7 +3094,7 @@ int translate_callfunc(block_r * block) {
     char * buf = NULL;
 
    if(0 == ncs_strcmp(block->ptr[0],"F_CashCity")) {
-        if(evaluate_numeric_constant(block, block->ptr[1], 1, &value))
+        if(evaluate_numeric_constant(block, block->ptr[1], &value))
             return exit_mesg("failed to evaluate F_CashCity expression '%s'", block->ptr[1]);
         switch(value) {
              case 1: buf = "Teleport to any town or city."; break;
@@ -3107,7 +3107,7 @@ int translate_callfunc(block_r * block) {
                  "ent %d in item id %d", value, block->item_id);
         }
    } else if(0 == ncs_strcmp(block->ptr[0],"F_CashTele")) {
-        if(evaluate_numeric_constant(block, block->ptr[1], 1, &value))
+        if(evaluate_numeric_constant(block, block->ptr[1], &value))
             return exit_mesg("failed to evaluate F_CashTele expression '%s'", block->ptr[1]);
         switch(value) {
             case 1: buf = "Teleport to the Save Point, Prontera, Geffen, Al De Baran or Izlude."; break;
@@ -3215,9 +3215,9 @@ int translate_getrandgroupitem(block_r * block) {
         "ult arguments in item %d", block->item_id);
 
     /* get the group id, quantity, and subgroup id constants */
-    if( evaluate_numeric_constant(block, block->ptr[arg_off + 0], 1, &group_id) ||
-        evaluate_numeric_constant(block, block->ptr[arg_off + 1], 1, &quantity) ||
-        evaluate_numeric_constant(block, block->ptr[arg_off + 2], 1, &subgroup_id))
+    if( evaluate_numeric_constant(block, block->ptr[arg_off + 0], &group_id) ||
+        evaluate_numeric_constant(block, block->ptr[arg_off + 1], &quantity) ||
+        evaluate_numeric_constant(block, block->ptr[arg_off + 2], &subgroup_id))
         return exit_func_safe("failed to evaluate group id, q"
         "uantity, or subgroup id in item %d", block->item_id);
 
@@ -3323,7 +3323,7 @@ int translate_getgroupitem(block_r * block) {
         "sing group id in item %d", block->item_id);
 
     /* grab a empty block */
-    if(evaluate_numeric_constant(block, block->ptr[0], 1, &group_id) ||
+    if(evaluate_numeric_constant(block, block->ptr[0], &group_id) ||
        item_subgroup_id(block->script->db, subgroup_id, &subgroup_len, group_id) ||
        script_block_new(block->script, &subgroup))
         return SCRIPT_FAILED;
@@ -3429,7 +3429,7 @@ int translate_setfalcon(block_r * block) {
         return exit_func_safe("setfalcon is missing"
         " flag argument in item %d", block->item_id);
 
-    if(evaluate_numeric_constant(block, block->ptr[0], 1, &flag) ||
+    if(evaluate_numeric_constant(block, block->ptr[0], &flag) ||
        block_stack_vararg(block, TYPE_ENG, "%s", (flag) ? "Release a falcon." : "Summon a falcon."))
         return CHECK_FAILED;
 
@@ -3455,83 +3455,59 @@ int translate_makerune(block_r * block) {
     return CHECK_PASSED;
 }
 
-int evaluate_numeric_constant(block_r * block, char * expr, int modifier, int * constant) {
-    node_t * result = NULL;
+int evaluate_numeric_constant(block_r * block, char * expr, int * constant) {
+    int status = 0;
+    node * node;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, expr, constant);
+    node = evaluate_expression(block, expr, 0);
+    if(is_nil(node))
+        return 1;
 
-    /* evaluate the constant expression */
-    result = evaluate_expression(block, expr, modifier, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == result)
-        return CHECK_FAILED;
+    if(node->min != node->max) {
+        status = exit_mesg("expression '%s' does not evaluate to a constant", expr);
+    } else {
+        *constant = node->min;
+    }
 
-    if(result->min != result->max)
-        return exit_func_safe("%s evaluated to a non-constant value in item %d", expr, block->item_id);
-
-    /* set the constant value */
-    *constant = result->min;
-
-    node_free(result);
-    return CHECK_PASSED;
+    node_free(node);
+    return status;;
 }
 
 /* lowest level function for evaluating expressions
  * stack_eng_* and evaluate_function_* are both one
  * level above */
-node_t * evaluate_expression(block_r * block, char * expr, int modifier, int flag) {
-    node_t * result = NULL;
+node * evaluate_expression(block_r * block, char * expr, int flag) {
+    int status = 0;
+    rbt_tree id_tree;
     token_r * tokens = NULL;
-    rbt_tree_t id_tree;
-    logic_node_t * temp;
+    node * node = NULL;
+    rbt_logic * logic = NULL;
 
-
-    /* check null */
-    if (NULL == block ||
-        NULL == expr ||
-        rbt_tree_init_static(&id_tree) )
-        return NULL;
-
-    tokens = calloc(1, sizeof(token_r));
-    if(NULL == tokens)
-        return NULL;
-
-    /* tokenize the expression */
-    if (script_lexical(tokens, expr) || tokens->script_cnt <= 0) {
-        exit_func_safe("failed to tokenize '%s' in item %d", expr, block->item_id);
-        goto clean;
-    }
-
-    /* evaluate expression */
-    result = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic_tree, &id_tree, flag);
-    if (result == NULL) {
-        exit_func_safe("failed to evaluate '%s' in item %d", expr, block->item_id);
-        goto clean;
-    }
-
-    /* keep logic tree in node */
-    if (EVALUATE_FLAG_KEEP_LOGIC_TREE & flag)
-        if (result->cond != NULL) {
-            if (block->logic_tree == NULL) {
-                block->logic_tree = copy_deep_any_tree(result->cond);
+    if( rbt_tree_init_static(&id_tree) ||
+        calloc_ptr(tokens) ||
+        script_lexical(tokens, expr) ||
+        0 >= tokens->script_cnt ) {
+        status = 1;
+    } else {
+        node = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic, &id_tree, flag);
+        if(is_nil(node)) {
+            status = 1;
+        } else if(EVALUATE_FLAG_KEEP_LOGIC_TREE & flag && node->logic) {
+            if(rbt_logic_copy(&logic, node->logic)) {
+                status = 1;
             } else {
-                /* new logic trees are stack onot the previous logic tree */
-                temp = block->logic_tree;
-                block->logic_tree = copy_deep_any_tree(result->cond);
-                block->logic_tree->stack = temp;
+                /* set the root to the latest logic tree */
+                if (block->logic)
+                    rbt_logic_append(logic, block->logic);
+                block->logic = logic;
             }
         }
+    }
 
-clean:
-    rbt_deploy(&id_tree, id_tree_free, expr);
+    rbt_deploy(&id_tree, id_tree_free, NULL);
     rbt_tree_deit_static(&id_tree);
-    SAFE_FREE(tokens);
-    /* return the root node */
-    if (EVALUATE_FLAG_KEEP_NODE & flag)
-        return result;
-
-    node_free(result);
-    return NULL;
+    free_ptr(tokens);
+    return node;
 }
 
 node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag) {
@@ -3955,7 +3931,7 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
 
     switch(cnt) {
         case 1: /* [0, max) */
-            operand_1 = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+            operand_1 = evaluate_expression(block, block->ptr[off], 0);
             if(NULL == operand_1)
                 goto failed;
 
@@ -3963,11 +3939,11 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
             node->max = maxrange(operand_1->range) - 1;
             break;
         case 2: /* [min, max] */
-            operand_1 = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+            operand_1 = evaluate_expression(block, block->ptr[off], 0);
             if(NULL == operand_1)
                 goto failed;
 
-            operand_2 = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
+            operand_2 = evaluate_expression(block, block->ptr[off + 1], 0);
             if(NULL == operand_2)
                 goto failed;
 
@@ -4017,8 +3993,8 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
 
     /* query for item group records */
     memset(&item_group, 0, sizeof(item_group_t));
-    if( evaluate_numeric_constant(block, block->ptr[off + 0], 1, &group_id) ||
-        evaluate_numeric_constant(block, block->ptr[off + 1], 1, &subgroup_id) ||
+    if( evaluate_numeric_constant(block, block->ptr[off + 0], &group_id) ||
+        evaluate_numeric_constant(block, block->ptr[off + 1], &subgroup_id) ||
         item_group_id(block->script->db, &item_group, group_id, subgroup_id) ||
         stack_eng_item_group(block, block->ptr[off + 0]) ||
         0 >= item_group.size)
@@ -4115,7 +4091,7 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
         goto found;
 
     /* fallback by evaluating expression for skill id */
-    id = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+    id = evaluate_expression(block, block->ptr[off], 0);
     if(NULL == id)
         goto failed;
 
@@ -4290,7 +4266,7 @@ int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func,
         return exit_func_safe("invalid argument count to "
         "function '%s' in %d", func->name, block->item_id);
 
-    type = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+    type = evaluate_expression(block, block->ptr[off], 0);
     if(NULL == type ||
        type->min != type->max)
         goto failed;
@@ -4338,7 +4314,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
                 return exit_func_safe("invalid argument count to "
                 "function '%s' in %d", func->name, block->item_id);
 
-            count = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
+            count = evaluate_expression(block, block->ptr[off + 1], 0);
             if(NULL == count ||
                count->min != count->max)
                 goto failed;
@@ -4351,7 +4327,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
 
             /* evaluate all the arguments */
             for(i = 0; i < count->min; i++) {
-                result = evaluate_expression(block, block->ptr[off + 2 + i], 1, EVALUATE_FLAG_KEEP_NODE);
+                result = evaluate_expression(block, block->ptr[off + 2 + i], 0);
                 if(NULL == result)
                     goto failed;
 
@@ -4381,7 +4357,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
 
             /* evaluate all the arguments */
             for(i = 1; i < cnt; i++) {
-                result = evaluate_expression(block, block->ptr[off + i], 1, EVALUATE_FLAG_KEEP_NODE);
+                result = evaluate_expression(block, block->ptr[off + i], 0);
                 if(NULL == result)
                     goto failed;
 
@@ -4457,11 +4433,11 @@ int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, nod
         return exit_func_safe("invalid argument count to "
         "function '%s' in %d", func->name, block->item_id);
 
-    base = evaluate_expression(block, block->ptr[off], 1, EVALUATE_FLAG_KEEP_NODE);
+    base = evaluate_expression(block, block->ptr[off], 0);
     if(NULL == base)
         goto failed;
 
-    expo = evaluate_expression(block, block->ptr[off + 1], 1, EVALUATE_FLAG_KEEP_NODE);
+    expo = evaluate_expression(block, block->ptr[off + 1], 0);
     if(NULL == expo)
         goto failed;
 
@@ -5012,9 +4988,8 @@ int id_tree_add(rbt_tree * tree, char * id) {
     char * name = NULL;
     rbt_node * node = NULL;
 
-    if(NULL == tree ||
-       NULL == id )
-        return CHECK_FAILED;
+    if(is_nil(tree) || is_nil(id))
+        return 1;
 
     hash = (int) sdbm( (unsigned char * ) id);
 
@@ -5024,22 +4999,15 @@ int id_tree_add(rbt_tree * tree, char * id) {
         if( NULL == name ||
             rbt_node_init(&node, hash, name) ||
             rbt_insert(tree, node)) {
-            SAFE_FREE(name);
+            free_ptr(name);
             rbt_node_deit(&node);
         }
     }
 
-    return CHECK_PASSED;
+    return 0;
 }
 
 int id_tree_free(struct rbt_node * node, void * data, int flag) {
-    /* dump the variables */
-    char * expr = data;
-    if(flag & RBT_FIRST)
-        fprintf(stdout, "%s [", expr);
-    fprintf(stdout, "%s ", (char *) node->val);
-    if(flag & RBT_LAST)
-        fprintf(stdout, "]\n");
-    SAFE_FREE(node->val);
-    return CHECK_PASSED;
+    free_ptr(node->val);
+    return 0;
 }
