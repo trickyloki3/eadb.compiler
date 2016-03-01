@@ -20,6 +20,7 @@ static int stack_eng_skill_work(struct rbt_node *, void *, int);
 static int stack_eng_map_work(struct rbt_node *, void *, int);
 static int stack_eng_db_work(struct rbt_node *, void *, int);
 static int stack_eng_group_name(char *, const char *);
+static int stack_eng_int_re(block_r *, node *, int, int);
 static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
 
 int block_init(block_r ** block) {
@@ -1425,10 +1426,9 @@ int stack_eng_coordinate(block_r * block, char * expr) {
  * if the expression is "getrefine() + 10" then
  *      block->eng[n + 0] = "10 ~ 25 (refine rate)"
  */
-int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
+static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag) {
     int i = 0;
     int status = 0;
-    node * node = NULL;
     double min;
     double max;
     char fmt[16];
@@ -1439,13 +1439,8 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
         return exit_stop("division by zero modifier");
 
     /* evaluate integer expression */
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(is_nil(node)) {
-        return exit_mesg("failed to evaluate integer expression '%s'", expr);
-    } else {
-        min = node->min / modifier;
-        max = node->max / modifier;
-    }
+    min = node->min / modifier;
+    max = node->max / modifier;
 
     /* build the conversion specifier;
      * %[+](.2f|d)[%%] ~ %[+](.2f|d)[%%] */
@@ -1479,6 +1474,20 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
     if( !sprintf(buf, fmt, min, max) ||
         stack_aux_formula(block, node, buf) )
         status = exit_stop("failed to write integer expression");
+
+    return status;
+}
+
+int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
+    int status;
+    node * node;
+
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node)) {
+        status = exit_mesg("failed to evaluate integer expression '%s'", expr);
+    } else if(stack_eng_int_re(block, node, modifier, flag)) {
+        status = exit_stop("failed to write integer expression");
+    }
 
     node_free(node);
     return status;
@@ -2441,9 +2450,9 @@ int translate_heal(block_r * block) {
     sp = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
 
     if(is_nil(hp)) {
-        status = exit_stop("failed to evaluate hp expression '%s'", block->ptr[0]);
+        status = exit_mesg("failed to evaluate hp expression '%s'", block->ptr[0]);
     } else if(is_nil(sp)) {
-        status = exit_stop("failed to evaluate sp expression '%s'", block->ptr[1]);
+        status = exit_mesg("failed to evaluate sp expression '%s'", block->ptr[1]);
     } else {
         /* format the hp or sp using positive or negative prefixes */
         if( stack_eng_int_signed_re(block, hp, 1, "Recover HP by", "Drain HP by", 0) ||
@@ -2915,44 +2924,42 @@ int translate_petskillsupport(block_r * block) {
 }
 
 int translate_getexp(block_r * block) {
-    int ret = 0;
-    int flag = 0;
-    node_t * base = NULL;
-    node_t * job = NULL;
+    int status = 0;
+    int flag = TYPE_ENG;
+    node * base = NULL;
+    node * job = NULL;
 
-    /* error on invalid argument */
     if(2 > block->ptr_cnt)
-        return exit_func_safe("missing base exprience or job exprien"
-        "ce argument for %s in item %d", block->name, block->item_id);
+        return exit_mesg("missing base exprience or job exprience "
+        "argument for %s in item %d", block->name, block->item_id);
 
-    /* inefficient - base and job expression is evaluated twice */
     base = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == base)
-        goto failed;
+    job  = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
 
-    job = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == job)
-        goto failed;
-
-    if(stack_eng_int(block, block->ptr[0], 1, 0) ||
-       stack_eng_int(block, block->ptr[1], 1, 0))
-        goto failed;
-
-    if(base->min > 0)
-        ret = block_stack_vararg(block, TYPE_ENG, "Gain %s base experience.", block->eng[0]);
-
-    if(job->min > 0) {
-        flag = TYPE_ENG | (block->eng_cnt > 0) ? FLAG_CONCAT : 0;
-        ret = block_stack_vararg(block, flag, "Gain %s job experience.", block->eng[1]);
+    if(is_nil(base)) {
+        status = exit_mesg("failed to evaluate base expression '%s'", block->ptr[0]);
+    } else if(is_nil(job)) {
+        status = exit_mesg("failed to evaluate job expression '%s'",  block->ptr[1]);
+    } else {
+        if( stack_eng_int(block, base, 1, 0) ||
+            stack_eng_int(block, job, 1, 0) ) {
+            status = exit_stop("failed to write base or job expression");
+        } else {
+            if(base->min > 0) {
+                if(block_stack_vararg(block, flag, "Gain %s base experience.", block->eng[0]))
+                    status = exit_stop("failed to write base expression");
+                flag |= FLAG_CONCAT;
+            }
+            if(job->min > 0) {
+                if(block_stack_vararg(block, flag, "Gain %s job experience.", block->eng[1]))
+                    status = exit_stop("failed to write job expression");
+            }
+        }
     }
 
-clean:
     node_free(base);
     node_free(job);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
 int translate_getguildexp(block_r * block) {
