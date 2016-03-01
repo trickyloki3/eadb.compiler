@@ -22,7 +22,7 @@ FILE * node_dbg = NULL;
 /* re */ static int stack_eng_group_name(char *, const char *);
 /* re */ static int stack_eng_int_re(block_r *, node *, int, int);
 /* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
-static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
+/* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
 static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 /* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
 
@@ -3522,7 +3522,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
     node * root;
     node * iter;
     node * temp;
-    node * result;
+    node * result = NULL;
 
     /* create the doubly linked list's root node */
     if(node_init(block->script, &root))
@@ -3593,7 +3593,6 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
         root->free = root->next->free;
     }
 
-    /* free every node except the root */
     iter = root->free;
     while(iter != NULL) {
         temp = iter;
@@ -3607,44 +3606,43 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
 static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** result) {
     int  i = 0;
     char c = 0;
-    int  level = 0;
-    node * _node = NULL;
+    int  p = 0;
+    int status = 0;
+    node * node = NULL;
 
     /* find the ending parenthesis */
     for(i = *start; i < end; i++) {
         c = expr[i][0];
         if('(' == c) {
-            level++;
+            p++;
         } else if(')' == c) {
-            level--;
-
-            /* ending parenthesis founded */
-            if(0 == level)
+            p--;
+            if(0 == p) /* ending parenthesis founded */
                 break;
         }
     }
 
-    /* error on missing parenthesis */
-    if(0 < level || i >= end)
-        return exit_mesg("missing parenthesis in item %d", block->item_id);
+    if(p || i >= end) {
+        status = exit_mesg("unmatch parenthesis in item %d", block->item_id);
+    } else if(1 == (i - *start)) {
+        status = exit_mesg("empty subexpression in item %d", block->item_id);
+    } else {
+        if(i + 1 < end && expr[i + 1][0] == '?')
+            flag |= EVALUATE_FLAG_EXPR_BOOL;
 
-    /* error on empty subexpression */
-    if(1 == (i - *start))
-        return exit_mesg("empty subexpression in item %d", block->item_id);
+        node = evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag);
+        if(is_nil(node)) {
+            status = 1;
+        } else {
+            node->type = NODE_TYPE_SUB;
 
-    /* peek ahead to check if subexpression is part of ? operator */
-    _node = (i + 1 < end && expr[i + 1][0] == '?') ?
-        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag | EVALUATE_FLAG_EXPR_BOOL):
-        evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag);
-    if(NULL == _node)
-        return exit_mesg("failed to evaluate subexpression in item %d", block->item_id);
+            /* return expression node and skip evaluated sub expression */
+            *result = node;
+            *start = i;
+        }
+    }
 
-    /* set node type is subexpression */
-    _node->type = NODE_TYPE_SUB;
-
-    *result = _node;
-    *start = i;
-    return CHECK_PASSED;
+    return status;
 }
 
 static int evaluate_expression_var(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, int flag, node ** result) {
