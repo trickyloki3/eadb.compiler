@@ -15,15 +15,16 @@
 
 FILE * node_dbg = NULL;
 
-static int stack_eng_item_work(struct rbt_node *, void *, int);
-static int stack_eng_skill_work(struct rbt_node *, void *, int);
-static int stack_eng_map_work(struct rbt_node *, void *, int);
-static int stack_eng_db_work(struct rbt_node *, void *, int);
-static int stack_eng_group_name(char *, const char *);
-static int stack_eng_int_re(block_r *, node *, int, int);
-static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+/* re */ static int stack_eng_item_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_skill_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_map_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_db_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_group_name(char *, const char *);
+/* re */ static int stack_eng_int_re(block_r *, node *, int, int);
+/* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
 static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
 static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
+/* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -3514,137 +3515,93 @@ node * evaluate_expression(block_r * block, char * expr, int flag) {
 
 node * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag) {
     int  i = 0;
-    char c = 0;
-    int operand = 0;
+    int  status = 0;
+    char operator = 0;
+    int  operand = 0;
 
-    /* linked list builder */
-    node * root_node = NULL;
-    node * iter_node = NULL;
-    node * temp_node = NULL;
+    node * root;
+    node * iter;
+    node * temp;
+    node * result;
 
-    /* initialize the root node */
-    if(node_init(block->script, &root_node))
-        return NULL;
+    /* create the doubly linked list's root node */
+    if(node_init(block->script, &root))
+        return exit_stop("out of memory");
 
-    iter_node = root_node;
+    for(i = start, iter = root; i < end && !status; i++) {
+        temp = NULL;
 
-    /* circularly link the free and node list */
-    root_node->list = root_node;
-    root_node->next = root_node;
-    root_node->prev = root_node;
-
-    for(i = start; i < end; i++) {
         if(expr[i][0] == '(') {
             /* create subexpression node */
-            if(evaluate_expression_sub(block, expr, &i, end, logic_tree, id_tree, flag, &temp_node))
-                goto failed;
+            status = evaluate_expression_sub(block, expr, &i, end, logic_tree, id_tree, flag, &temp);
+            operand++;
+        } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
+            /* create variables, functions, and identifiers node */
+            status = evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp);
             operand++;
         } else if(SCRIPT_BINARY(expr[i][0])) {
-            /* create single or dual operator node */
-            if(node_init(block->script, &temp_node))
-                goto failed;
-
-            /* set the operator symbol and type */
-            temp_node->op = expr[i][0];
-            temp_node->type = (operand) ? NODE_TYPE_OPERATOR : NODE_TYPE_UNARY;
-
-            /* check for dual operators */
-            if(NODE_TYPE_OPERATOR == temp_node->type) {
-                /* peek ahead for dual operator */
-                if(i + 1 < end) {
-                    c = expr[i + 1][0];
-                    if(SCRIPT_BINARY(c) && !SCRIPT_UNARY(c)) {
-                        /* consume the operator */
-                        temp_node->op += expr[i + 1][0];
-                        i++;
+            /* create operator node */
+            if(!node_init(block->script, &temp)) {
+                /* set operator symbol and type */
+                temp->op   = expr[i][0];
+                temp->type = (operand) ? NODE_TYPE_OPERATOR : NODE_TYPE_UNARY;
+                if(NODE_TYPE_OPERATOR == temp->type && i + 1 < end) {
+                    /* check for dual operator */
+                    operator = expr[i + 1][0];
+                    if(SCRIPT_BINARY(operator) && !SCRIPT_UNARY(operator)) {
+                        temp->op += expr[i + 1][0];
+                        i++; /* consume the operator */
                     }
                 }
-                /* reset the operand count */
+                /* reset operand count */
                 operand = 0;
             }
         } else if(isdigit(expr[i][0])) {
-            /* create numeric constant */
-            if(node_init(block->script, &temp_node))
-                goto failed;
-
-            temp_node->type = NODE_TYPE_OPERAND;
-            temp_node->min = convert_integer(expr[i], 10);
-            temp_node->max = temp_node->min;
-            operand++;
-        } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
-            /* create variables, functions, and identifiers */
-            if(evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp_node))
-                goto failed;
-            operand++;
-        } else {
-            /* something has gone wrong during processing */
-            exit_mesg("invalid token '%s' in item %d", expr[i], block->item_id);
-            goto failed;
+            /* create literal integer node */
+            if(!node_init(block->script, &temp)) {
+                temp->type = NODE_TYPE_OPERAND;
+                temp->max = convert_integer(expr[i], 10);
+                temp->min = temp->max;
+                if(rbt_range_init(temp->value, temp->min, temp->max, 0))
+                    node_free(temp);
+                operand++;
+            }
         }
 
-        /* circular linked the free list before checking errors
-         * otherwise failed will attempt to deference a null */
-        iter_node->list = temp_node;
-        temp_node->list = root_node;
+        if(operand > 1 && is_nil(temp)) {
+            status = exit_mesg("invalid token detected in item id %d", block->item_id);
+        } else {
+            /* add node to doubly list for structuring */
+            node_append(iter, temp);
+            iter = temp;
+        }
 
-        /* doubly link the nodes */
-        iter_node->next = temp_node;
-        temp_node->prev = iter_node;
-        root_node->prev = temp_node;
-        temp_node->next = root_node;
-
-
-        if( operand > 1 ||      /* error on operator without operand */
-            NULL == temp_node)  /* error on invalid node */
-            goto failed;
-
-
-        /* create range if no range */
-        if(0x3E & temp_node->type && is_nil(temp_node->value))
-            if(rbt_range_init(&temp_node->value, temp_node->min, temp_node->max, 0))
-                goto failed;
-
-        /* iterator set to the tail */
-        iter_node = temp_node;
-
-        /* reset the temp_node reference */
-        temp_node = NULL;
+        /* add node to singly list for freeing */
+        iter->free = temp;
     }
 
-    /* error on empty node list */
-    if(root_node == iter_node)
-        goto failed;
+    if( status ||
+        root == iter ||
+        node_structure(root) ||
+        node_evaluate(root->next, node_dbg, logic_tree, id_tree, flag) ) {
+        status = exit_mesg("invalid expression detected in item id %d", block->item_id);
+    } else {
+        /* :D */
+        result = root->next;
 
-    /* the actual result is in root_node->next so we need
-     * to copy any value we want to return using the root
-     * node */
-    if(node_structure(root_node) ||
-       node_evaluate(root_node->next, node_dbg, logic_tree, id_tree, flag) ||
-       node_steal(root_node->next, root_node)) {
-        exit_mesg("failed to evaluate node tree in item %d", block->item_id);
-        goto failed;
+        /* remove result from free list */
+        root->free = root->next->free;
     }
 
     /* free every node except the root */
-    iter_node = root_node->list;
-    while(iter_node != root_node) {
-        temp_node = iter_node;
-        iter_node = iter_node->list;
-        node_free(temp_node);
+    iter = root->free;
+    while(iter != NULL) {
+        temp = iter;
+        iter = iter->free;
+        node_free(temp);
     }
 
-    return root_node;
-
-failed:
-    /* free every node */
-    iter_node = root_node->list;
-    while(iter_node != root_node) {
-        temp_node = iter_node;
-        iter_node = iter_node->list;
-        node_free(temp_node);
-    }
-    node_free(root_node);
-    return NULL;
+    return result;
 }
 
 static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** result) {
@@ -4502,26 +4459,6 @@ int evaluate_function_setoption(block_r * block, int off, int cnt, var_res * fun
     return CHECK_PASSED;
 }
 
-int node_steal(node_t * src, node_t * des) {
-    exit_null_safe(2, src, des);
-
-    des->id = src->id;
-    des->formula = src->formula;
-    des->cond = src->cond;
-    des->range = src->range;
-    des->min = minrange(des->range);
-    des->max = maxrange(des->range);
-    des->cond_cnt = src->cond_cnt;
-    des->type = (src->type == NODE_TYPE_OPERATOR) ? NODE_TYPE_SUB : src->type;
-    des->return_type |= src->return_type;
-
-    src->id = NULL;
-    src->formula = NULL;
-    src->cond = NULL;
-    src->range = NULL;
-    return CHECK_PASSED;
-}
-
 int node_structure(node_t * root_node) {
     int i = 0;
     int j = 0;
@@ -4962,24 +4899,19 @@ int node_release(script_t * script) {
     return CHECK_PASSED;
 }
 
-int node_append(node_t * parent, node_t * child) {
-    exit_null_safe(2, parent, child);
-
-    parent->next->prev = child->prev;
-    child->prev->next = parent->next;
-    parent->next = child;
-    child->prev = parent;
+int node_append(node_t * p, node_t * c) {
+    p->next->prev = c->prev;
+    c->prev->next = p->next;
+    p->next = c;
+    c->prev = p;
     return CHECK_PASSED;
 }
 
-int node_remove(node_t * node) {
-    exit_null_safe(1, node);
-
-    node->prev->next = node->next;
-    node->next->prev = node->prev;
-    node->next = node;
-    node->prev = node;
-
+int node_remove(node_t * p) {
+    p->prev->next = p->next;
+    p->next->prev = p->prev;
+    p->next = p;
+    p->prev = p;
     return CHECK_PASSED;
 }
 

@@ -63,7 +63,7 @@
         rbt_logic * logic;                                                      /* logic tree to keep track of predicates */
         int logic_count;                                                        /* total number of predicates in logic tree */
         char * formula;                                                         /* user-friendly representation of expression */
-        struct node * list;                                                     /* singly linked list for memory management */
+        struct node * free;                                                     /* singly linked list for memory management */
         struct script_t * script;                                               /* context containing the node cache */
         /* expression precedence and associative */
         struct node * left;
@@ -357,7 +357,6 @@
     /* evaluate an expression */
     /* re */ int evaluate_numeric_constant(block_r *, char *, int *);
     /* re */ node * evaluate_expression(block_r *, char *, int);
-    node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
 
     /* evaluate a function with the expression
      *
@@ -389,14 +388,13 @@
      /* node types */
     #define NODE_TYPE_OPERATOR             0x01
     #define NODE_TYPE_OPERAND              0x02
-    #define NODE_TYPE_UNARY                0x80  /* unary operator */
     #define NODE_TYPE_FUNCTION             0x04  /* var.txt function */
     #define NODE_TYPE_VARIABLE             0x08  /* var.txt variable */
     #define NODE_TYPE_LOCAL                0x10  /* set block variable */
     #define NODE_TYPE_CONSTANT             0x20  /* const.txt */
+    #define NODE_TYPE_UNARY                0x80  /* unary operator */
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
-    int node_steal(node *, node *);
     int node_structure(node *);
     int node_evaluate(node *, FILE *, rbt_logic *, rbt_tree *, int);
     int node_inherit(node *);
