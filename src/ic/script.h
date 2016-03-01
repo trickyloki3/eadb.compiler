@@ -354,14 +354,10 @@
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x010 /* keep logic tree for ?: operators; set blocks */
     #define EVALUATE_FLAG_ALL              0xfff
 
-    /* higher level wrappers over evaluate expression */
-    int evaluate_numeric_constant(block_r *, char *, int *);
-
     /* evaluate an expression */
-    node * evaluate_expression(block_r *, char *, int);
+    /* re */ int evaluate_numeric_constant(block_r *, char *, int *);
+    /* re */ node * evaluate_expression(block_r *, char *, int);
     node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
-    int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
-    int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 
     /* evaluate a function with the expression
      *

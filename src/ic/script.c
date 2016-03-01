@@ -22,6 +22,8 @@ static int stack_eng_db_work(struct rbt_node *, void *, int);
 static int stack_eng_group_name(char *, const char *);
 static int stack_eng_int_re(block_r *, node *, int, int);
 static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
+static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -3510,15 +3512,15 @@ node * evaluate_expression(block_r * block, char * expr, int flag) {
     return node;
 }
 
-node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag) {
+node * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag) {
     int  i = 0;
     char c = 0;
     int operand = 0;
 
     /* linked list builder */
-    node_t * root_node = NULL;
-    node_t * iter_node = NULL;
-    node_t * temp_node = NULL;
+    node * root_node = NULL;
+    node * iter_node = NULL;
+    node * temp_node = NULL;
 
     /* initialize the root node */
     if(node_init(block->script, &root_node))
@@ -3576,7 +3578,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
             operand++;
         } else {
             /* something has gone wrong during processing */
-            exit_func_safe("invalid token '%s' in item %d", expr[i], block->item_id);
+            exit_mesg("invalid token '%s' in item %d", expr[i], block->item_id);
             goto failed;
         }
 
@@ -3591,22 +3593,16 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
         root_node->prev = temp_node;
         temp_node->next = root_node;
 
-        /* error on operator without operand */
-        if(operand > 1) {
-            exit_func_safe("operand '%s' without operator in item %d", expr[i], block->item_id);
-            goto failed;
-        }
 
-        /* error on invalid node */
-        if(NULL == temp_node) {
-            exit_func_safe("invalid node in item %d", block->item_id);
+        if( operand > 1 ||      /* error on operator without operand */
+            NULL == temp_node)  /* error on invalid node */
             goto failed;
-        }
+
 
         /* create range if no range */
-        if(0x3E & temp_node->type &&
-           NULL == temp_node->range)
-            temp_node->range = mkrange(INIT_OPERATOR, temp_node->min, temp_node->max, DONT_CARE);
+        if(0x3E & temp_node->type && is_nil(temp_node->value))
+            if(rbt_range_init(&temp_node->value, temp_node->min, temp_node->max, 0))
+                goto failed;
 
         /* iterator set to the tail */
         iter_node = temp_node;
@@ -3625,7 +3621,7 @@ node_t * evaluate_expression_recursive(block_r * block, char ** expr, int start,
     if(node_structure(root_node) ||
        node_evaluate(root_node->next, node_dbg, logic_tree, id_tree, flag) ||
        node_steal(root_node->next, root_node)) {
-        exit_func_safe("failed to evaluate node tree in item %d", block->item_id);
+        exit_mesg("failed to evaluate node tree in item %d", block->item_id);
         goto failed;
     }
 
@@ -3651,11 +3647,11 @@ failed:
     return NULL;
 }
 
-int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag, node_t ** node) {
+static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** result) {
     int  i = 0;
     char c = 0;
     int  level = 0;
-    node_t * _node = NULL;
+    node * _node = NULL;
 
     /* find the ending parenthesis */
     for(i = *start; i < end; i++) {
@@ -3673,40 +3669,40 @@ int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end,
 
     /* error on missing parenthesis */
     if(0 < level || i >= end)
-        return exit_func_safe("missing parenthesis in item %d", block->item_id);
+        return exit_mesg("missing parenthesis in item %d", block->item_id);
 
     /* error on empty subexpression */
     if(1 == (i - *start))
-        return exit_func_safe("empty subexpression in item %d", block->item_id);
+        return exit_mesg("empty subexpression in item %d", block->item_id);
 
     /* peek ahead to check if subexpression is part of ? operator */
     _node = (i + 1 < end && expr[i + 1][0] == '?') ?
         evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag | EVALUATE_FLAG_EXPR_BOOL):
         evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag);
     if(NULL == _node)
-        return exit_func_safe("failed to evaluate subexpression in item %d", block->item_id);
+        return exit_mesg("failed to evaluate subexpression in item %d", block->item_id);
 
     /* set node type is subexpression */
     _node->type = NODE_TYPE_SUB;
 
-    *node = _node;
+    *result = _node;
     *start = i;
     return CHECK_PASSED;
 }
 
-int evaluate_expression_var(block_r * block, char ** expr, int * start, int end, logic_node_t * logic_tree, int flag, node_t ** node) {
+static int evaluate_expression_var(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, int flag, node ** result) {
     int  i = 0;
     char c = 0;
     int  level = 0;
     int len = 0;
-    node_t * _node = NULL;  /* node */
+    node * _node = NULL;    /* node */
     db_t * db = NULL;       /* resource or athena database */
     var_res var;            /* variable or function search */
     option_res opt;
     map_res map;            /* mapping search */
     const_t constant;       /* constant search */
     block_r * set = NULL;   /* search variable */
-    node_t * __node = NULL; /* set node */
+    node * __node = NULL;   /* set node */
 
     /* error on empty identifer */
     len = strlen(expr[*start]);
@@ -3723,7 +3719,7 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
     if(!var_name(db, &var, expr[*start], len)) {
         /* copy the variable id */
         _node->var = var.id;
-        _node->cond_cnt = 1;
+        _node->logic_count = 1;
 
         /* copy the variable or function name */
         _node->id = convert_string(var.desc);
@@ -3732,9 +3728,10 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
 
         if(var.flag & VARI_FLAG) {
             _node->type = NODE_TYPE_VARIABLE;
-            _node->range = mkrange(INIT_OPERATOR, var.min, var.max, DONT_CARE);
-            _node->min = minrange(_node->range);
-            _node->max = minrange(_node->range);
+            _node->min = var.min;
+            _node->max = var.max;
+            if(rbt_range_init(&_node->value, var.min, var.max, 0))
+                goto failed;
         } else if(var.flag & FUNC_FLAG) {
             _node->type = NODE_TYPE_FUNCTION;
 
@@ -3818,14 +3815,17 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
                     _node->var = 0;
 
                     /* copy the range */
-                    _node->range = copyrange(__node->range);
-                    _node->min = minrange(_node->range);
-                    _node->max = maxrange(_node->range);
+                    if( rbt_range_dup(__node->value, &_node->value) ||
+                        rbt_range_min(_node->value, &_node->min) ||
+                        rbt_range_max(_node->value, &_node->max) )
+                        goto failed;
 
                     /* copy the logic tree */
-                    if(NULL != __node->cond)
-                        _node->cond = copy_deep_any_tree(__node->cond);
-                    _node->cond_cnt = __node->cond_cnt;
+                    if(NULL != __node->logic) {
+                        if(rbt_logic_copy(&_node->logic, __node->logic))
+                            goto failed;
+                    }
+                    _node->logic_count = __node->logic_count;
 
                     /* copy the formula */
                     if(NULL != __node->formula)
@@ -3840,7 +3840,7 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
     }
 
     /* set the result */
-    *node = _node;
+    *result = _node;
     return CHECK_PASSED;
 
 failed:
@@ -3854,7 +3854,7 @@ failed:
  * would result in breaking the evaluate_function when
  * we start popping values.
  */
-int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node_t * node) {
+int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node * node) {
     int i = 0;
     int ret = 0;
     int arg_off = 0;
@@ -4587,10 +4587,10 @@ int node_structure(node_t * root_node) {
  * to get a real good understanding of how this algorithm works,
  * simply draw a few examples and work through it by hand; which
  * was how the algorithm was developed. !D */
-int node_evaluate(node_t * node, FILE * stm, logic_node_t * logic_tree, rbt_tree_t * id_tree, int flag) {
+int node_evaluate(node_t * node, FILE * stm, rbt_logic * logic_tree, rbt_tree_t * id_tree, int flag) {
     range_t * temp = NULL;
     range_t * result = NULL;
-    logic_node_t * new_tree = NULL;
+    rbt_logic * new_tree = NULL;
 
     if(node->left == node->right) {
         /* unary operator has one expression
