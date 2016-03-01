@@ -320,7 +320,7 @@
     int translate_status(block_r *);
     int translate_status_end(block_r *);
     int translate_pet_egg(block_r *);
-    int translate_bonus(block_r *, char *);
+    /* re */ int translate_bonus(block_r *, char *);
     int translate_skill(block_r *);
     int translate_itemskill(block_r *);
     int translate_petloot(block_r *);

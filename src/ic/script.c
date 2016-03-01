@@ -2623,134 +2623,117 @@ int translate_pet_egg(block_r * block) {
 }
 
 int translate_bonus(block_r * block, char * prefix) {
+    int status = 0;
     int i = 0;
     int j = 0;
-    int ret = 0;
     int cnt = 0;
     bonus_res * bonus = NULL;
 
-    /* error on invalid arguments */
-    if (0 >= block->ptr_cnt)
-        return CHECK_FAILED;
+    if (0 >= block->ptr_cnt) {
+        status = exit_stop("bonus block has zero arguments");
+    } else if(calloc_ptr(bonus)) {
+        status = exit_stop("out of memory");
+    } else if(bonus_name(block->script->db, bonus, prefix, strlen(prefix), block->ptr[0], strlen(block->ptr[0]))) {
+        status = exit_mesg("failed to evaluate bonus argument '%s' from item id %d", block->ptr[0], block->item_id);
+    } else {
+        /* translate each bonus argument by argument type */
+        for(i = 0, j = 1; i < bonus->type_cnt && !status; i++, j++) {
+            /* push the argument on the block->eng stack */
+            switch(bonus->type[i]) {
+                /* integer and percentage arguments */
+                case '0': status = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO);          break;
+                case '1': status = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO);         break;
+                case '2': status = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO);        break;
+                case '3': status = stack_eng_int(block, block->ptr[j], 1, FORMAT_RATIO);                        break;
+                case '4': status = stack_eng_int(block, block->ptr[j], 10, FORMAT_RATIO);                       break;
+                case '5': status = stack_eng_int(block, block->ptr[j], 100, FORMAT_RATIO);                      break;
+                case '6': status = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS);                         break;
+                case '7': status = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS);                        break;
+                case '8': status = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS);                       break;
+                case '9': status = stack_eng_int(block, block->ptr[j], 1, 0);                                   break;
+                /* special arguments */
+                case 'h': status = stack_eng_map(block, block->ptr[j], MAP_SP_FLAG, &cnt);                      break; /* SP Gain Bool */
+                case 'a': status = stack_eng_time(block, block->ptr[j], 1);                                     break; /* Time */
+                case 'r': status = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                    break; /* Race */
+                case 'l': status = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                 break; /* Element */
+                case 'w': status = stack_eng_grid(block, block->ptr[j]);                                        break; /* Splash */
+                case 'e': status = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                  break; /* Effect */
+                case 'k': status = stack_eng_skill(block, block->ptr[j], &cnt);                                 break; /* Skill */
+                case 's': status = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                    break; /* Size */
+                case 'c': status = (stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt) &&
+                                    stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt));  break; /* Monster Class & Job ID * Monster ID */
+                case 'm': status = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                        break; /* Item ID */
+                case 'g': status = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                   break; /* Regen */
+                case 'v': status = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                    break; /* Cast Self, Enemy */
+                case 't': status = stack_eng_trigger_bt(block, block->ptr[j]);                                  break; /* Trigger BT */
+                case 'y': status = (stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt)
+                                    && stack_eng_item_group(block, block->ptr[j]));                             break; /* Item Group */
+                case 'd': status = stack_eng_trigger_atf(block, block->ptr[j]);                                 break; /* Triger ATF */
+                case 'b': status = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                  break; /* Flag Bitfield */
+                case 'i': status = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                  break; /* Weapon Type */
+                case 'j': status = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
+                                    && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                    break; /* Class Group & Monster */
+                default:  status = CHECK_FAILED;
+            }
 
-    /* search for bonus information */
-    bonus = calloc(1, sizeof(bonus_res));
-    if(NULL == bonus)
-        return SCRIPT_FAILED;
-
-    if(bonus_name(block->script->db, bonus, prefix, strlen(prefix), block->ptr[0], strlen(block->ptr[0]))) {
-        exit_func_safe("the '%s %s' bonus is not supported for item %d", prefix, block->ptr[0], block->item_id);
-        goto failed;
-    }
-
-    /* translate each bonus argument by argument type */
-    for(i = 0, j = 1; i < bonus->type_cnt; i++, j++) {
-
-        /* push the argument on the block->eng stack */
-        switch(bonus->type[i]) {
-            /* integer and percentage arguments */
-            case '0': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS | FORMAT_RATIO); break;
-            case '1': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS | FORMAT_RATIO); break;
-            case '2': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS | FORMAT_RATIO); break;
-            case '3': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_RATIO); break;
-            case '4': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_RATIO); break;
-            case '5': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_RATIO); break;
-            case '6': ret = stack_eng_int(block, block->ptr[j], 1, FORMAT_PLUS); break;
-            case '7': ret = stack_eng_int(block, block->ptr[j], 10, FORMAT_PLUS); break;
-            case '8': ret = stack_eng_int(block, block->ptr[j], 100, FORMAT_PLUS); break;
-            case '9': ret = stack_eng_int(block, block->ptr[j], 1, 0); break;
-            /* special arguments */
-            case 'h': ret = stack_eng_map(block, block->ptr[j], MAP_SP_FLAG, &cnt);                     break; /* SP Gain Bool */
-            case 'a': ret = stack_eng_time(block, block->ptr[j], 1);                                    break; /* Time */
-            case 'r': ret = stack_eng_map(block, block->ptr[j], MAP_RACE_FLAG, &cnt);                   break; /* Race */
-            case 'l': ret = stack_eng_map(block, block->ptr[j], MAP_ELEMENT_FLAG, &cnt);                break; /* Element */
-            case 'w': ret = stack_eng_grid(block, block->ptr[j]);                                       break; /* Splash */
-            case 'e': ret = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                 break; /* Effect */
-            case 'k': ret = stack_eng_skill(block, block->ptr[j], &cnt);                                break; /* Skill */
-            case 's': ret = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                   break; /* Size */
-            case 'c': ret = (stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt) &&
-                             stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt)); break; /* Monster Class & Job ID * Monster ID */
-            case 'm': ret = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                       break; /* Item ID */
-            case 'g': ret = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                  break; /* Regen */
-            case 'v': ret = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                   break; /* Cast Self, Enemy */
-            case 't': ret = stack_eng_trigger_bt(block, block->ptr[j]);                                 break; /* Trigger BT */
-            case 'y': ret = (stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt)
-                            && stack_eng_item_group(block, block->ptr[j]));                             break; /* Item Group */
-            case 'd': ret = stack_eng_trigger_atf(block, block->ptr[j]);                                break; /* Triger ATF */
-            case 'b': ret = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                 break; /* Flag Bitfield */
-            case 'i': ret = stack_eng_map(block, block->ptr[j], MAP_WEAPON_FLAG, &cnt);                 break; /* Weapon Type */
-            case 'j': ret = (stack_eng_map(block, block->ptr[j], MAP_CLASS_FLAG | MAP_NO_ERROR, &cnt)
-                             && stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt));                   break; /* Class Group & Monster */
-            default: ret = CHECK_FAILED;
+            if(status) {
+                status = exit_mesg("failed to evaluate '%s' for item %d", block->ptr[j], block->item_id);
+            } else if(cnt > 1) {
+                status = exit_mesg("'%s' is not a constant value for item %d", block->ptr[j], block->item_id);
+            }
         }
 
-        /* failed to push values onto the stack */
-        if(ret) {
-            exit_func_safe("failed to evaluate argument '%c' for item %d", bonus->type[i], block->item_id);
-            goto failed;
-        }
-
-        /* stack_eng_map and stack_eng_db may push
-         * multiple values on the  stack, which is
-         * not supported */
-        if(cnt > 1) {
-            exit_func_safe("non-constant value for item %d", block->item_id);
-            goto failed;
+        if(status) {
+            switch(bonus->type_cnt) {
+                case 0:
+                    block_stack_vararg(block,
+                        TYPE_ENG, bonus->format);
+                    break;
+                case 1:
+                    block_stack_vararg(block,
+                        TYPE_ENG, bonus->format,
+                        block->eng[bonus->order[0]]);
+                    break;
+                case 2:
+                    block_stack_vararg(block,
+                        TYPE_ENG, bonus->format,
+                        block->eng[bonus->order[0]],
+                        block->eng[bonus->order[1]]);
+                    break;
+                case 3:
+                    block_stack_vararg(block,
+                        TYPE_ENG, bonus->format,
+                        block->eng[bonus->order[0]],
+                        block->eng[bonus->order[1]],
+                        block->eng[bonus->order[2]]);
+                    break;
+                case 4:
+                    block_stack_vararg(block,
+                        TYPE_ENG, bonus->format,
+                        block->eng[bonus->order[0]],
+                        block->eng[bonus->order[1]],
+                        block->eng[bonus->order[2]],
+                        block->eng[bonus->order[3]]);
+                    break;
+                case 5:
+                    block_stack_vararg(block,
+                        TYPE_ENG, bonus->format,
+                        block->eng[bonus->order[0]],
+                        block->eng[bonus->order[1]],
+                        block->eng[bonus->order[2]],
+                        block->eng[bonus->order[3]],
+                        block->eng[bonus->order[4]]);
+                    break;
+                default:
+                    status = exit_func_safe("unsupport bonus argument coun"
+                    "t %d on %s in item %d", bonus->type_cnt, bonus->bonus,
+                    block->item_id);
+            }
         }
     }
 
-    switch(bonus->type_cnt) {
-        case 0:
-            block_stack_vararg(block,
-                TYPE_ENG, bonus->format);
-            break;
-        case 1:
-            block_stack_vararg(block,
-                TYPE_ENG, bonus->format,
-                block->eng[bonus->order[0]]);
-            break;
-        case 2:
-            block_stack_vararg(block,
-                TYPE_ENG, bonus->format,
-                block->eng[bonus->order[0]],
-                block->eng[bonus->order[1]]);
-            break;
-        case 3:
-            block_stack_vararg(block,
-                TYPE_ENG, bonus->format,
-                block->eng[bonus->order[0]],
-                block->eng[bonus->order[1]],
-                block->eng[bonus->order[2]]);
-            break;
-        case 4:
-            block_stack_vararg(block,
-                TYPE_ENG, bonus->format,
-                block->eng[bonus->order[0]],
-                block->eng[bonus->order[1]],
-                block->eng[bonus->order[2]],
-                block->eng[bonus->order[3]]);
-            break;
-        case 5:
-            block_stack_vararg(block,
-                TYPE_ENG, bonus->format,
-                block->eng[bonus->order[0]],
-                block->eng[bonus->order[1]],
-                block->eng[bonus->order[2]],
-                block->eng[bonus->order[3]],
-                block->eng[bonus->order[4]]);
-            break;
-        default:
-            return exit_func_safe("unsupport bonus argument count"
-            " %d on %s in item %d", bonus->type_cnt, bonus->bonus,
-            block->item_id);
-    }
-
-    SAFE_FREE(bonus);
-    return CHECK_PASSED;
-
-failed:
-    SAFE_FREE(bonus);
-    return CHECK_FAILED;
+    free_ptr(bonus);
+    return status;
 }
 
 int translate_skill(block_r * block) {
