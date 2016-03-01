@@ -3090,31 +3090,26 @@ int translate_monster(block_r * block) {
 }
 
 int translate_callfunc(block_r * block) {
-    int ret = 0;
+    int value = 0;
     char * buf = NULL;
-    node_t * result = NULL;
 
    if(0 == ncs_strcmp(block->ptr[0],"F_CashCity")) {
-        result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(NULL == result ||
-           result->min != result->max)
-             return CHECK_FAILED;
-        switch(result->min) {
+        if(evaluate_numeric_constant(block, block->ptr[1], 1, &value))
+            return exit_mesg("failed to evaluate F_CashCity expression '%s'", block->ptr[1]);
+        switch(value) {
              case 1: buf = "Teleport to any town or city."; break;
              case 2: buf = "Teleport to Juno, Lighthalzen, Einbroch, or Hugel."; break;
              case 3: buf = "Teleport to Rachel or Veins."; break;
              case 4: buf = "Teleport to Ayothaya, Amatsu, Louyang, or Kunlun."; break;
              case 5: buf = "Teleport to any town, city, etc."; break;
              default:
-                 return exit_func_safe("unsupported F_CashCity argume"
-                 "nt %d in item id %d", result->min, block->item_id);
+                 return exit_mesg("unsupported F_CashCity argum"
+                 "ent %d in item id %d", value, block->item_id);
         }
    } else if(0 == ncs_strcmp(block->ptr[0],"F_CashTele")) {
-        result = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-        if(NULL == result ||
-           result->min != result->max)
-            return CHECK_FAILED;
-        switch(result->min) {
+        if(evaluate_numeric_constant(block, block->ptr[1], 1, &value))
+            return exit_mesg("failed to evaluate F_CashTele expression '%s'", block->ptr[1]);
+        switch(value) {
             case 1: buf = "Teleport to the Save Point, Prontera, Geffen, Al De Baran or Izlude."; break;
             case 2: buf = "Teleport to the Save Point, Payon, Alberta, Morocc or Comodo Island."; break;
             case 3: buf = "Teleport to the Save Point, Dragon City, Gonryun, Amatsu or Ayothaya."; break;
@@ -3122,8 +3117,8 @@ int translate_callfunc(block_r * block) {
             case 5: buf = "Teleport to the Save Point, Juno, Einbroch, Lighthalzen, or Hugel."; break;
             case 6: buf = "Teleport to the Save Point, Rachel, or Veins."; break;
             default:
-                return exit_func_safe("unsupported F_CashTele argume"
-                "nt %d in item id %d", result->min, block->item_id);
+                return exit_mesg("unsupported F_CashTele argum"
+                 "ent %d in item id %d", value, block->item_id);
         }
     } else if(0 == ncs_strcmp(block->ptr[0], "F_CashSiegeTele")) {
         buf = "Warp to any guild castle.";
@@ -3155,10 +3150,10 @@ int translate_callfunc(block_r * block) {
         "s' in item %d", block->ptr[0], block->item_id);
     }
 
-    ret = block_stack_push(block, TYPE_ENG, buf);
+    if(block_stack_push(block, TYPE_ENG, buf))
+        return exit_stop("failed to write expression");
 
-    node_free(result);
-    return ret;
+    return 0;
 }
 
 /* getrandgroupitem require special attention because of
