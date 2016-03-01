@@ -2483,7 +2483,6 @@ int translate_produce(block_r * block, int handler) {
     int top = 0;
     int cnt = 0;
 
-    /* error on invalid argument */
     if(1 > block->ptr_cnt)
         return exit_func_safe("missing item level argument"
         " for %s in item %d", block->name, block->item_id);
@@ -2750,7 +2749,6 @@ int translate_skill(block_r * block) {
     int cnt = 0;
     int flag = 0;
 
-    /* error on invalid argument */
     if(2 > block->ptr_cnt)
         return exit_func_safe("missing skill id or level argu"
         "ment for %s in item %d", block->name, block->item_id);
@@ -2789,7 +2787,6 @@ int translate_skill(block_r * block) {
 int translate_itemskill(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(2 > block->ptr_cnt)
         return exit_func_safe("missing skill id or level argu"
         "ment for %s in item %d", block->name, block->item_id);
@@ -2803,7 +2800,6 @@ int translate_itemskill(block_r * block) {
 }
 
 int translate_petloot(block_r * block) {
-    /* error on invalid argument */
     if(0 >= block->ptr_cnt)
         return exit_func_safe("missing pet loot amount argum"
         "ent for %s in item %d", block->name, block->item_id);
@@ -2817,7 +2813,6 @@ int translate_petloot(block_r * block) {
 }
 
 int translate_petheal(block_r * block) {
-    /* error on invalid argument */
     if(4 > block->ptr_cnt)
         return exit_func_safe("missing heal minimum, maximum, level, or i"
         "nterval argument for %s in item %d", block->name, block->item_id);
@@ -2834,7 +2829,6 @@ int translate_petheal(block_r * block) {
 }
 
 int translate_petrecovery(block_r * block) {
-    /* error on invalid argument */
     if(2 > block->ptr_cnt)
         return exit_func_safe("missing status type or delay arg"
         "ument for %s in item %d", block->name, block->item_id);
@@ -2849,7 +2843,6 @@ int translate_petrecovery(block_r * block) {
 }
 
 int translate_petskillbonus(block_r * block) {
-    /* error on invalid argument */
     if(4 > block->ptr_cnt)
         return exit_func_safe("missing bonus type, value, duration, or "
         "delay argument for %s in item %d", block->name, block->item_id);
@@ -2886,7 +2879,6 @@ int translate_petskillattack(block_r * block) {
 int translate_petskillattack2(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(5 > block->ptr_cnt)
         return exit_func_safe("missing skill id, damage, attack count, normal rat"
         "e, loyalty rate argument for %s in item %d", block->name, block->item_id);
@@ -2906,7 +2898,6 @@ int translate_petskillattack2(block_r * block) {
 int translate_petskillsupport(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(4 > block->ptr_cnt)
         return exit_func_safe("missing skill id, level, hp minimum, or sp "
         "minimum argument for %s in item %d", block->name, block->item_id);
@@ -2963,7 +2954,6 @@ int translate_getexp(block_r * block) {
 }
 
 int translate_getguildexp(block_r * block) {
-    /* error on invalid argument */
     if(1 > block->ptr_cnt)
         return exit_func_safe("missing guild exprience argum"
         "ent for %s in item %d", block->name, block->item_id);
@@ -2979,7 +2969,6 @@ int translate_autobonus(block_r * block, int flag) {
     int ret = 0;
     char * buf = NULL;
 
-    /* error on invalid argument */
     if(3 > block->ptr_cnt)
         return exit_func_safe("missing bonus script, rate, or durati"
         "on argument for %s in item %d", block->name, block->item_id);
@@ -3003,7 +2992,6 @@ int translate_autobonus(block_r * block, int flag) {
 int translate_hire_mercenary(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(2 > block->ptr_cnt)
         return exit_func_safe("missing mercenary id or duration a"
         "rgument for %s in item %d", block->name, block->item_id);
@@ -3034,7 +3022,6 @@ int translate_buyingstore(block_r * block) {
 int translate_searchstore(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(2 > block->ptr_cnt)
         return exit_func_safe("searchstore is missing "
         "amount or effect in item %d", block->item_id);
@@ -3051,7 +3038,6 @@ int translate_searchstore(block_r * block) {
 int translate_skill_block(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(3 > block->ptr_cnt)
         return exit_func_safe("unitskilluseid is missing"
         " skill id or level in item %d", block->item_id);
@@ -3068,7 +3054,6 @@ int translate_skill_block(block_r * block) {
 int translate_warp(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(3 > block->ptr_cnt)
         return exit_func_safe("warp is missing map name, x coo"
         "rdinate, or y coordinate in item %d", block->item_id);
@@ -3086,7 +3071,6 @@ int translate_warp(block_r * block) {
 int translate_monster(block_r * block) {
     int cnt = 0;
 
-    /* error on invalid argument */
     if(6 > block->ptr_cnt)
         return exit_func_safe("monster is missing map name, x coordinate, "
         "y coordinate, name, mob id, or amount in item %d", block->item_id);
@@ -3446,7 +3430,6 @@ int translate_transform(block_r * block) {
 int translate_setfalcon(block_r * block) {
     int flag = 0;
 
-    /* error on invalid argument */
     if(1 != block->ptr_cnt)
         return exit_func_safe("setfalcon is missing"
         " flag argument in item %d", block->item_id);
