@@ -20,6 +20,7 @@ static int stack_eng_skill_work(struct rbt_node *, void *, int);
 static int stack_eng_map_work(struct rbt_node *, void *, int);
 static int stack_eng_db_work(struct rbt_node *, void *, int);
 static int stack_eng_group_name(char *, const char *);
+static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -1501,9 +1502,8 @@ int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
  *      block->eng[n + 0] = "negative 10"
  *      *argc = 1;
  */
-int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char * pos, const char * neg, int flag) {
+static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, const char * pos, const char * neg, int flag) {
     int status = 0;
-    node * node = NULL;
     double min;
     double max;
     char   cnv[16];
@@ -1516,13 +1516,8 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
         return exit_stop("division by zero modifier");
 
     /* evaluate integer expression */
-    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
-    if(is_nil(node)) {
-        return exit_mesg("failed to evaluate integer expression '%s'", expr);
-    } else {
-        min = node->min / modifier;
-        max = node->max / modifier;
-    }
+    min = node->min / modifier;
+    max = node->max / modifier;
 
     /* build the conversion specifier */
     cnv[off++] = '%';
@@ -1569,6 +1564,20 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     }
 
     free_ptr(buf);
+    return status;
+}
+
+int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char * pos, const char * neg, int flag) {
+    int status = 0;
+    node * node;
+
+    node = evaluate_expression(block, expr, 1, EVALUATE_FLAG_KEEP_NODE);
+    if(is_nil(node)) {
+        status = exit_mesg("failed to evaluate integer expression '%s'", expr);
+    } else if(stack_eng_int_signed(block, node, modifier, pos, neg, flag)) {
+        status = exit_mesg("failed write integer expression");
+    }
+
     node_free(node);
     return status;
 }
@@ -2277,9 +2286,6 @@ int translate_id_amount(block_r * block, int * argc, int * size, const char * fu
     int _argc = 0;
     int _size = 0;
 
-    /* check for null references */
-    exit_null_safe(4, block, argc, size, func);
-
     /* check for function call syntax, i.e. (a, b, c) */
     _argc = block->ptr_cnt;
     if(1 == _argc && '(' == block->ptr[0][0])
@@ -2311,8 +2317,6 @@ int translate_getitem(block_r * block) {
     int argc = 0;
     int size = 0;
     char * buf = NULL;
-
-    exit_null_safe(1, block);
 
     if(translate_id_amount(block, &argc, &size, "getitem"))
         return CHECK_FAILED;
@@ -2348,8 +2352,6 @@ int translate_delitem(block_r * block) {
     int size = 0;
     char * buf = NULL;
 
-    exit_null_safe(1, block);
-
     if(translate_id_amount(block, &argc, &size, "getitem"))
         return CHECK_FAILED;
 
@@ -2383,9 +2385,6 @@ int translate_rentitem(block_r * block) {
     int argc = 0;
     int size = 0;
     char * buf = NULL;
-
-    /* check for null references */
-    exit_null_safe(1, block);
 
     /* check for function call syntax, i.e. (a, b, c) */
     argc = block->ptr_cnt;
@@ -2429,42 +2428,44 @@ int translate_rentitem(block_r * block) {
 }
 
 int translate_heal(block_r * block) {
-    int ret = 0;
-    node_t * hp = NULL;
-    node_t * sp = NULL;
+    int status = 0;
+    node * hp = NULL;
+    node * sp = NULL;
+    int flag = TYPE_ENG;
 
-    /* error on invalid argument count */
     if(2 > block->ptr_cnt)
-        return exit_func_safe("missing hp or sp argument for %s in item %d", block->name, block->item_id);
+        return exit_func_safe("missing hp or sp argument "
+        "for %s in item %d", block->name, block->item_id);
 
-    /* inefficient - hp and sp expression is evaluated twice */
     hp = evaluate_expression(block, block->ptr[0], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == hp)
-        goto failed;
-
     sp = evaluate_expression(block, block->ptr[1], 1, EVALUATE_FLAG_KEEP_NODE);
-    if(NULL == sp)
-        goto failed;
 
-    if( stack_eng_int_signed(block, block->ptr[0], 1, "Recover HP by", "Drain HP by", 0) ||
-        stack_eng_int_signed(block, block->ptr[1], 1, "Recover SP by", "Drain SP by", 0))
-        return CHECK_FAILED;
+    if(is_nil(hp)) {
+        status = exit_stop("failed to evaluate hp expression '%s'", block->ptr[0]);
+    } else if(is_nil(sp)) {
+        status = exit_stop("failed to evaluate sp expression '%s'", block->ptr[1]);
+    } else {
+        /* format the hp or sp using positive or negative prefixes */
+        if( stack_eng_int_signed_re(block, hp, 1, "Recover HP by", "Drain HP by", 0) ||
+            stack_eng_int_signed_re(block, sp, 1, "Recover SP by", "Drain SP by", 0) ) {
+            status = exit_stop("failed to write hp or sp expression");
+        } else {
+            /* build the final description */
+            if(hp->min > 0) {
+                if(block_stack_vararg(block, flag, "%s.", block->eng[0]))
+                    status = exit_stop("failed to write hp expression");
+                flag |= FLAG_CONCAT;
+            }
+            if(sp->min > 0) {
+                if(block_stack_vararg(block, flag, "%s.", block->eng[1]))
+                    status = exit_stop("failed to write sp expression");
+            }
+        }
+    }
 
-    if(hp->min > 0)
-        block_stack_vararg(block, TYPE_ENG, "%s.", block->eng[0]);
-    if(sp->min > 0)
-        if((block->eng_cnt == 0) ?
-            block_stack_vararg(block, TYPE_ENG, "%s.", block->eng[1]):
-            block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s.", block->eng[1]))
-            goto failed;
-
-clean:
     node_free(hp);
     node_free(sp);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
 int translate_produce(block_r * block, int handler) {
@@ -3891,11 +3892,6 @@ int evaluate_expression_var(block_r * block, char ** expr, int * start, int end,
                 /* iterate the set blocks */
                 set = set->set;
             }
-
-            /* set the range 0 to INT_MAX on 'for'
-             * block's condition expression */
-            if(flag & EVALUATE_FLAG_ITERABLE_SET)
-                _node->max = 2147483647;
         }
     }
 
