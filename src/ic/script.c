@@ -22,6 +22,7 @@ FILE * node_dbg = NULL;
 /* re */ static int stack_eng_group_name(char *, const char *);
 /* re */ static int stack_eng_int_re(block_r *, node *, int, int);
 /* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+/* re */ static int evaluate_expression_end_parenthesis(char **, int, int, int *);
 /* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
 static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 /* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
@@ -3603,15 +3604,13 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
     return result;
 }
 
-static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** result) {
-    int  i = 0;
+static int evaluate_expression_end_parenthesis(char ** expr, int start, int end, int * index) {
+    int  i;
     char c = 0;
     int  p = 0;
-    int status = 0;
-    node * node = NULL;
 
     /* find the ending parenthesis */
-    for(i = *start; i < end; i++) {
+    for(i = start; i < end; i++) {
         c = expr[i][0];
         if('(' == c) {
             p++;
@@ -3622,15 +3621,27 @@ static int evaluate_expression_sub(block_r * block, char ** expr, int * start, i
         }
     }
 
-    if(p || i >= end) {
+    if(p || i >= end)
+        return 1;
+
+    *index = i;
+    return 0;
+}
+
+static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** result) {
+    int index = 0;
+    int status = 0;
+    node * node = NULL;
+
+    if(evaluate_expression_end_parenthesis(expr, start, end, &index)) {
         status = exit_mesg("unmatch parenthesis in item %d", block->item_id);
-    } else if(1 == (i - *start)) {
+    } else if(1 == (index - *start)) {
         status = exit_mesg("empty subexpression in item %d", block->item_id);
     } else {
-        if(i + 1 < end && expr[i + 1][0] == '?')
+        if(index + 1 < end && expr[index + 1][0] == '?')
             flag |= EVALUATE_FLAG_EXPR_BOOL;
 
-        node = evaluate_expression_recursive(block, expr, *start + 1, i, logic_tree, id_tree, flag);
+        node = evaluate_expression_recursive(block, expr, *start + 1, index, logic_tree, id_tree, flag);
         if(is_nil(node)) {
             status = 1;
         } else {
@@ -3638,7 +3649,7 @@ static int evaluate_expression_sub(block_r * block, char ** expr, int * start, i
 
             /* return expression node and skip evaluated sub expression */
             *result = node;
-            *start = i;
+            *start = index;
         }
     }
 
