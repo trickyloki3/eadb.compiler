@@ -325,42 +325,13 @@
     int translate_setfalcon(block_r *);
     int translate_makerune(block_r *);
 
-    /* evaluate_expression bitmask flags */
+    /* block expression evaluation interface */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */
     #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x002 /* keep the logic tree for ?: operators and set blocks */
     #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators evaluate to 0 ~ 1 */
     #define EVALUATE_FLAG_ALL              0xfff
-
-    /* evaluate an expression */
     /* re */ int evaluate_numeric_constant(block_r *, char *, int *);
     /* re */ node * evaluate_expression(block_r *, char *, int);
-
-    /* evaluate a function with the expression
-     *
-     * arguments with complex expressions can cause stack overflow
-     * problems or produce results that are difficult to translate
-     * therefore, complex expressions are typically not supported.
-     *
-     * vararg - variable support
-     * const  - constant support
-     *
-     * =.= forgot to add back the documentation
-     */
-    int evaluate_function(block_r *, char **, int, int, var_res *, node *);
-    int evaluate_function_rand(block_r *, int, int, var_res *, node *);
-    int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
-    int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
-    int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
-    int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
-    int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
-    int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
-    int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
-    int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
-    int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
-    int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
-    int evaluate_function_pow(block_r *, int, int, var_res *, node *);
-    int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
-    int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
 
     /* node interface */
     struct node {

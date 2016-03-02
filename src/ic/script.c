@@ -26,6 +26,21 @@ FILE * node_dbg = NULL;
 /* re */ static int evaluate_expression_end_parenthesis(char **, int, int, int *);
 /* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
 /* re */ static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
+int evaluate_function(block_r *, char **, int, int, var_res *, node *);
+int evaluate_function_rand(block_r *, int, int, var_res *, node *);
+int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
+int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
+int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
+int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
+int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
+int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
+int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
+int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
+int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
+int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
+int evaluate_function_pow(block_r *, int, int, var_res *, node *);
+int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
+int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -3734,7 +3749,6 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
             if(rbt_range_init(&object->value, object->min, object->max, 0))
                 status = exit_stop("out of memory");
         } else {
-            object->type = NODE_TYPE_LOCAL;
             object->min = 0;
             object->max = 0;
 
@@ -3751,6 +3765,8 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
             if(is_nil(set))
                 if(rbt_range_init(&object->value, object->min, object->max, 0))
                     status = exit_stop("out of memory");
+
+            object->type = NODE_TYPE_LOCAL;
         }
     }
 
