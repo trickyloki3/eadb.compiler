@@ -3482,18 +3482,16 @@ int evaluate_numeric_constant(block_r * block, char * expr, int * constant) {
  * level above */
 node * evaluate_expression(block_r * block, char * expr, int flag) {
     int status = 0;
-    rbt_tree id_tree;
     token_r * tokens = NULL;
     node * node = NULL;
     rbt_logic * logic = NULL;
 
-    if( rbt_tree_init_static(&id_tree) ||
-        calloc_ptr(tokens) ||
+    if( calloc_ptr(tokens) ||
         script_lexical(tokens, expr) ||
         0 >= tokens->script_cnt ) {
         status = 1;
     } else {
-        node = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic, &id_tree, flag);
+        node = evaluate_expression_recursive(block, tokens->script_ptr, 0, tokens->script_cnt, block->logic, NULL, flag);
         if(is_nil(node)) {
             status = 1;
         } else if(EVALUATE_FLAG_KEEP_LOGIC_TREE & flag && node->logic) {
@@ -3508,8 +3506,6 @@ node * evaluate_expression(block_r * block, char * expr, int flag) {
         }
     }
 
-    rbt_deploy(&id_tree, id_tree_free, NULL);
-    rbt_tree_deit_static(&id_tree);
     free_ptr(tokens);
     return node;
 }
@@ -3628,7 +3624,7 @@ static int evaluate_expression_end_parenthesis(char ** expr, int start, int end,
     return 0;
 }
 
-static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** result) {
+static int evaluate_expression_sub(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag, node ** temp) {
     int index = 0;
     int status = 0;
     node * node = NULL;
@@ -3648,7 +3644,7 @@ static int evaluate_expression_sub(block_r * block, char ** expr, int * start, i
             node->type = NODE_TYPE_SUB;
 
             /* return expression node and skip evaluated sub expression */
-            *result = node;
+            *temp = node;
             *start = index;
         }
     }
@@ -4758,12 +4754,6 @@ int node_evaluate(node_t * node, FILE * stm, rbt_logic * logic_tree, rbt_tree_t 
      * stream */
     node_dump(node, stm);
 
-    /* steal formula or identifier string */
-    if(node->formula)
-        id_tree_add(id_tree, node->formula);
-    if(node->type & NODE_TYPE_VARIABLE)
-        id_tree_add(id_tree, node->id);
-
     return SCRIPT_PASSED;
 }
 
@@ -4809,106 +4799,108 @@ int node_inherit(node_t * node) {
     return SCRIPT_PASSED;
 }
 
-void node_dump(node_t * node, FILE * stream) {
-    if(node != NULL && stream != NULL) {
-        fprintf(stream," -- Node %p --\n", (void *) node);
+int node_init(script_t * script, node ** result) {
+    node * object = NULL;
+
+    if(is_nil(script->free_nodes)) {
+        if(calloc_ptr(object))
+            return exit_stop("out of memory");
+        object->script = script;
+    } else {
+        if(is_last(script->free_nodes)) {
+            object = script->free_nodes;
+            script->free_nodes = NULL;
+        } else {
+            object = script->free_nodes;
+            script->free_nodes = object->next;
+            node_remove(object);
+        }
+    }
+
+    object->next = object;
+    object->prev = object;
+    *result = object;
+    return 0;
+}
+
+int node_deit(script_t * script, node ** result) {
+    node * object = *result;
+
+    rbt_logic_deit(&object->logic);
+    rbt_range_deit(&object->value);
+    free_ptr(object->formula);
+    free_ptr(object->id);
+    object->free = NULL;
+    object->left = NULL;
+    object->right = NULL;
+
+    if(is_nil(script->free_nodes)) {
+        script->free_nodes = object;
+    } else {
+        node_append(script->free_nodes, object);
+    }
+
+    *result = NULL;
+    return 0;
+}
+
+void node_dump(node * node, FILE * stream) {
+    if( is_nil(stream)||
+        is_nil(node) )
+        return 0;
+
+        fprintf(stream," -- Node [%p] --\n       ", (void *) node);
         switch(node->type) {
             case NODE_TYPE_OPERATOR:
                 switch(node->op) {
-                     case '<' + '=':    fprintf(stream,"     Type: Operator <=\n"); break;
-                     case '>' + '=':    fprintf(stream,"     Type: Operator >=\n"); break;
-                     case '!' + '=':    fprintf(stream,"     Type: Operator !=\n"); break;
-                     case '=' + '=':    fprintf(stream,"     Type: Operator ==\n"); break;
-                     case '&' + '&':    fprintf(stream,"     Type: Operator &&\n"); break;
-                     case '|' + '|':    fprintf(stream,"     Type: Operator ||\n"); break;
-                     default:           fprintf(stream,"     Type: Operator %c\n", node->op); break;
+                     case '<' + '=':    fprintf(stream,"type: operator <=\n"); break;
+                     case '>' + '=':    fprintf(stream,"type: operator >=\n"); break;
+                     case '!' + '=':    fprintf(stream,"type: operator !=\n"); break;
+                     case '=' + '=':    fprintf(stream,"type: operator ==\n"); break;
+                     case '&' + '&':    fprintf(stream,"type: operator &&\n"); break;
+                     case '|' + '|':    fprintf(stream,"type: operator ||\n"); break;
+                     default:           fprintf(stream,"type: operator %c\n", node->op); break;
                  }
                  break;
-            case NODE_TYPE_UNARY:       fprintf(stream,"     Type: Operator %c\n", node->op); break;
-            case NODE_TYPE_OPERAND:     fprintf(stream,"     Type: Literal %d:%d\n", node->min, node->max); break;
-            case NODE_TYPE_FUNCTION:    fprintf(stream,"     Type: Function %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_VARIABLE:    fprintf(stream,"     Type: Variable %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_LOCAL:       fprintf(stream,"     Type: Local %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_CONSTANT:    fprintf(stream,"     Type: Constant %s; %d:%d\n", node->id, node->min, node->max); break;
-            case NODE_TYPE_SUB:         fprintf(stream,"     Type: Subexpression %s; %d:%d\n", node->formula, node->min, node->max); break;
-            default:                    fprintf(stream,"     Type: %d\n", node->op); break;
+            case NODE_TYPE_UNARY:       fprintf(stream,"type: operator %c\n", node->op); break;
+            case NODE_TYPE_OPERAND:     fprintf(stream,"type:  literal %d:%d\n", node->min, node->max); break;
+            case NODE_TYPE_FUNCTION:    fprintf(stream,"type: function %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_VARIABLE:    fprintf(stream,"type: variable %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_LOCAL:       fprintf(stream,"type:    local %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_CONSTANT:    fprintf(stream,"type: constant %s; %d:%d\n", node->id, node->min, node->max); break;
+            case NODE_TYPE_SUB:         fprintf(stream,"type:  subexpr %s; %d:%d\n", node->formula, node->min, node->max); break;
+            default:                    fprintf(stream,"type: %d\n", node->op); break;
         }
-        fprintf(stream," Variable: %d\n", node->var);
-        fprintf(stream,"  Formula: %s\n", node->formula);
-        fprintf(stream,"   R-Type: %d\n", node->return_type);
-        dmprange(node->range, stream, "Range; ");
-        dmpnamerange(node->cond, stream, 0);
-        fprintf(stream,"\n");
-    }
-}
+        fprintf(stream,
+                "   variable: %d\n"
+                "    formula: %s\n"
+                "return type: %d\n",
+                node->var,
+                node->formula,
+                node->return_type);
 
-int node_init(script_t * script, node_t ** node) {
-    exit_null_safe(2, script, node);
-
-    /* grab a free node from the free list */
-    if(NULL != script->free_nodes) {
-        if(script->free_nodes == script->free_nodes->next) {
-            *node = script->free_nodes;
-            script->free_nodes = NULL;
-        } else {
-            *node = script->free_nodes;
-            script->free_nodes = script->free_nodes->next;
-            node_remove(*node);
-        }
-        return CHECK_PASSED;
-    }
-
-    *node = calloc(1, sizeof(node_t));
-    (*node)->script = script;
-    return *node ? CHECK_PASSED : CHECK_FAILED;
-}
-
-int node_deit(script_t * script, node_t ** node) {
-    node_t * temp;
-
-    exit_null_safe(2, script, node);
-
-    /* free the node's resources */
-    temp = *node;
-    if(NULL != temp->cond)
-        freenamerange(temp->cond);
-    if(NULL != temp->range)
-        freerange(temp->range);
-    SAFE_FREE(temp->formula);
-    SAFE_FREE(temp->id);
-
-    /* reset node links and add to free list */
-    memset(temp, 0, sizeof(node_t));
-    temp->prev = temp;
-    temp->next = temp;
-    temp->script = script;
-    if(NULL != script->free_nodes) {
-        node_append(script->free_nodes, temp);
-    } else {
-        script->free_nodes = temp;
-    }
-
-    return CHECK_PASSED;
+        rbt_range_dump(node->value, "Range: ");
+        rbt_logic_dump(node->logic);
 }
 
 int node_release(script_t * script) {
-    node_t * temp = NULL;
-    if (NULL == script ||
-        NULL == script->free_nodes)
-        return CHECK_FAILED;
+    node * object;
 
-    while(script->free_nodes != script->free_nodes->next) {
-        temp = script->free_nodes;
-        script->free_nodes = script->free_nodes->next;
-        node_remove(temp);
-        SAFE_FREE(temp);
+    if( is_nil(script) ||
+        is_nil(script->free_nodes) )
+        return 1;
+
+    while(!is_last(script->free_nodes)) {
+        object = script->free_nodes->next;
+        node_remove(object);
+        free_ptr(object);
     }
-    SAFE_FREE(script->free_nodes);
+    free_ptr(script->free_nodes);
 
-    return CHECK_PASSED;
+    return 0;
 }
 
-int node_append(node_t * p, node_t * c) {
+int node_append(node * p, node * c) {
     p->next->prev = c->prev;
     c->prev->next = p->next;
     p->next = c;
@@ -4916,39 +4908,10 @@ int node_append(node_t * p, node_t * c) {
     return CHECK_PASSED;
 }
 
-int node_remove(node_t * p) {
+int node_remove(node * p) {
     p->prev->next = p->next;
     p->next->prev = p->prev;
     p->next = p;
     p->prev = p;
     return CHECK_PASSED;
-}
-
-int id_tree_add(rbt_tree * tree, char * id) {
-    int hash;
-    char * name = NULL;
-    rbt_node * node = NULL;
-
-    if(is_nil(tree) || is_nil(id))
-        return 1;
-
-    hash = (int) sdbm( (unsigned char * ) id);
-
-    /* skip collisions */
-    if(rbt_search(tree, &node, hash)) {
-        name = convert_string(id);
-        if( NULL == name ||
-            rbt_node_init(&node, hash, name) ||
-            rbt_insert(tree, node)) {
-            free_ptr(name);
-            rbt_node_deit(&node);
-        }
-    }
-
-    return 0;
-}
-
-int id_tree_free(struct rbt_node * node, void * data, int flag) {
-    free_ptr(node->val);
-    return 0;
 }

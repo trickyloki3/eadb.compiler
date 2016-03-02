@@ -398,15 +398,12 @@
     int node_structure(node *);
     int node_evaluate(node *, FILE *, rbt_logic *, rbt_tree *, int);
     int node_inherit(node *);
-    void node_dump(node *, FILE *);
 
     #define node_free(x) if(x) { node_deit(x->script, &x); }
-    int node_init(script_t *, node **);
-    int node_deit(script_t *, node **);
-    int node_release(script_t *);
-    int node_append(node *, node *);
-    int node_remove(node *);
-
-    int id_tree_add(rbt_tree *, char *);
-    int id_tree_free(struct rbt_node *, void *, int);
+    /* re */  int node_init(script_t *, node **);                /* create new node or get from script object */
+    /* re */  int node_deit(script_t *, node **);                /* reset and return node to script object */
+    /* re */ void node_dump(node *, FILE *);                     /* dump node information */
+    /* re */  int node_release(script_t *);                      /* free node memory from script object */
+    /* re */  int node_append(node *, node *);                   /* append to doubly linked list */
+    /* re */  int node_remove(node *);                           /* remove from doubly linked list */
 #endif
