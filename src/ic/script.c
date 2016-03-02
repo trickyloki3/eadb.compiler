@@ -639,7 +639,6 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     block_r * set = (var != NULL) ? *var : NULL;
     block_r * iterable_set_block = NULL;
     block_r * direction_set_block = NULL;
-    char subscript[BUF_SIZE];
 
     /* check null paramaters */
     exit_null_safe(2, script, token_list);
@@ -1199,7 +1198,7 @@ int stack_ptr_call(block_r * block, char * expr, int * argc) {
     if( script_lexical(token, expr) ||
         0 >= token->script_cnt ||
         stack_ptr_call_(block, token, argc) )
-        status = exit_stop("failed to parse call syntax '%s'", expr);
+        status = exit_mesg("failed to parse call syntax '%s'", expr);
 
     free_ptr(token);
     return status;
@@ -1822,7 +1821,7 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
         work.total = MAX_STR_LIST;
         if(rbt_range_work(node->value, stack_eng_map_work, &work))
             status = !(flag & MAP_NO_ERROR) ?
-            exit_stop("failed to write map values for '%s' on"
+            exit_mesg("failed to write map values for '%s' on"
             " flag %d in item %d", expr, flag, block->item_id) : 1;
     }
 
@@ -1937,7 +1936,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
         work.count = 0;
         work.total = MAX_STR_LIST;
         if(rbt_range_work(node->value, stack_eng_db_work, &work))
-            status = exit_stop("failed to resolve db values for '%"
+            status = exit_mesg("failed to resolve db values for '%"
             "s' on flag %d in item %d", expr, flag, block->item_id);
     }
 
@@ -3559,7 +3558,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
                 temp->type = NODE_TYPE_OPERAND;
                 temp->max = convert_integer(expr[i], 10);
                 temp->min = temp->max;
-                if(rbt_range_init(temp->value, temp->min, temp->max, 0))
+                if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
                     node_free(temp);
                 operand++;
             }
@@ -3579,8 +3578,8 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
 
     if( status ||
         root == iter ||
-        node_structure(root) ||
-        node_evaluate(root->next, node_dbg, logic_tree, id_tree, flag) ) {
+        node_eval_tree(root) ||
+        node_eval(root->next, node_dbg, logic_tree, id_tree, flag) ) {
         status = exit_mesg("invalid expression detected in item id %d", block->item_id);
     } else {
         /* :D */
@@ -3629,7 +3628,7 @@ static int evaluate_expression_sub(block_r * block, char ** expr, int * start, i
     int status = 0;
     node * node = NULL;
 
-    if(evaluate_expression_end_parenthesis(expr, start, end, &index)) {
+    if(evaluate_expression_end_parenthesis(expr, *start, end, &index)) {
         status = exit_mesg("unmatch parenthesis in item %d", block->item_id);
     } else if(1 == (index - *start)) {
         status = exit_mesg("empty subexpression in item %d", block->item_id);
@@ -4464,341 +4463,6 @@ int evaluate_function_setoption(block_r * block, int off, int cnt, var_res * fun
     return CHECK_PASSED;
 }
 
-int node_structure(node_t * root_node) {
-    int i = 0;
-    int j = 0;
-    node_t * iter_node = NULL;
-
-    /* operator precedence tree */
-    static int op_pred[11][5] = {
-        {'*'          ,'/'          ,'\0' ,'\0'         ,'\0'},
-        {'+'          ,'-'          ,'\0' ,'\0'         ,'\0'},
-        {'<'          ,'<' + '='    ,'>'  ,'>' + '='    ,'\0'},
-        {'&'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'|'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'=' + '='    ,'!' + '='    ,'\0' ,'\0'         ,'\0'},
-        {'&' + '&'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'|' + '|'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {':'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'?'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
-        {'='          ,'\0'         ,'\0' ,'\0'         ,'\0'}
-    };
-
-    /* structre the tree unary operators */
-    iter_node = root_node;
-    do {
-        /* assume all unary operator have same precedences */
-        if(iter_node->type == NODE_TYPE_UNARY) {
-            /* unary operator (forward) expansion */
-            iter_node->left = iter_node->next;
-            iter_node->right = iter_node->next;
-            iter_node->next->next->prev = iter_node;
-            iter_node->next = iter_node->next->next;
-        }
-        iter_node = iter_node->next;
-    } while(iter_node != root_node);
-
-    /* structure the tree binary operators */
-    for(i = 0; i < 11; i++) {
-        iter_node = root_node;
-        do {
-            if(iter_node->type == NODE_TYPE_OPERATOR) {
-                for(j = 0; j < 5; j++) {
-                    if(iter_node->op == op_pred[i][j] && op_pred[i][j] != '\0') {
-                        /* binary operator vertical expansion */
-                        iter_node->left = iter_node->prev;
-                        iter_node->right = iter_node->next;
-                        iter_node->prev->prev->next = iter_node;
-                        iter_node->next->next->prev = iter_node;
-                        iter_node->next = iter_node->next->next;
-                        iter_node->prev = iter_node->prev->prev;
-                    }
-                }
-            }
-            iter_node = iter_node->next;
-        } while(iter_node != root_node);
-    }
-
-    return CHECK_PASSED;
-}
-
-/* node_evaluate uses the post-order traversal of a binary tree;
- * evaluate the left expression, then the right expression, and
- * then the current expression.
- *
- * to get a real good understanding of how this algorithm works,
- * simply draw a few examples and work through it by hand; which
- * was how the algorithm was developed. !D */
-int node_evaluate(node_t * node, FILE * stm, rbt_logic * logic_tree, rbt_tree_t * id_tree, int flag) {
-    range_t * temp = NULL;
-    range_t * result = NULL;
-    rbt_logic * new_tree = NULL;
-
-    if(node->left == node->right) {
-        /* unary operator has one expression
-         * (operator) (expression) */
-        if(node->left != NULL)
-            if(node_evaluate(node->left, stm, logic_tree, id_tree, flag))
-                return SCRIPT_FAILED;
-    } else {
-        /* binary operators has two expression
-         * (left-expression) (operator) (right-expression) */
-
-        /* : operator node's left child is the (true) expression
-         * and the node's right child is the (false) expression */
-        if(node->type == NODE_TYPE_OPERATOR && node->op == ':' && logic_tree != NULL) {
-            /* (condition) ? (true) : (false)
-             *
-             * explanation
-             *  a logic tree represents a tree of conditions and each condition
-             *  represents a range of values for a variable or function; (true)
-             *  uses the logic tree generated from (condition) and (false) uses
-             *  an inverse of the logic tree generated from (condition).
-             *
-             * example
-             *  (getrefine() < 5) ? getrefine() + 5 : getrefine() - 5;
-             *
-             *  (condition)
-             *  getrefine(0 - 4)     ; original logic tree use by (true)
-             *  getrefine(5 - 15)    ; inverse logic tree use by (false)
-             *
-             *  (true)
-             *  getrefine() + 5
-             *  (0 - 4) + 5
-             *  (5 - 9)
-             *
-             *  (false)
-             *  getrefine() - 5
-             *  (5 - 15) - 5
-             *  (0 - 10)
-             *
-             *  (result)
-             *  0 ~ 10 (refine rate)
-             */
-
-            /* (true)  original logic tree */
-            if(node->left != NULL)
-                if(node_evaluate(node->left, stm, logic_tree, id_tree, flag))
-                    return SCRIPT_FAILED;
-
-            /* (false) inverse logic tree */
-            new_tree = inverse_logic_tree(logic_tree);
-            if(node->right != NULL)
-                if(node_evaluate(node->right, stm, new_tree, id_tree, flag))
-                    return SCRIPT_FAILED;
-            freenamerange(new_tree);
-
-        /* normal traversal
-         * evaluate the left expression before the right expression */
-        } else {
-            if(node->left != NULL)
-                if(node_evaluate(node->left, stm, logic_tree, id_tree, flag))
-                    return SCRIPT_FAILED;
-
-            /* ? operator node's left child is the (condition) expression and
-             * the node's right child is the (true) : (false) expression */
-            if(node->type == NODE_TYPE_OPERATOR && node->op == '?' && node->left->cond != NULL) {
-                /* stack the (condition) on the existing logic tree;
-                 * the search algorithm will search for variable and
-                 * function from top to bottom */
-                new_tree = node->left->cond;
-                new_tree->stack = logic_tree;
-                /* keep the logic tree of ? conditional */
-                if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag)
-                    node->cond = copy_any_tree(new_tree);
-                /* evaluate the (true) : (false) expression */
-                if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, new_tree, id_tree, flag))
-                        return SCRIPT_FAILED;
-            } else {
-                if(node->right != NULL)
-                    if(node_evaluate(node->right, stm, logic_tree, id_tree, flag))
-                        return SCRIPT_FAILED;
-            }
-        }
-    }
-
-    /* handle variable and function nodes; generate condition node */
-    if( (node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) ||
-        ((node->type & NODE_TYPE_LOCAL) && (flag & EVALUATE_FLAG_ITERABLE_SET))) {
-        /* error on invalid variable, function, or athena variable name */
-        if(node->id == NULL)
-            return SCRIPT_FAILED;
-
-        /* search logic tree for variable, function or athena variable name */
-        if(logic_tree != NULL) {
-            result = search_tree_dependency(logic_tree, node->id, node->range);
-            if(result != NULL) {
-                temp = node->range;
-                node->range = copyrange(result);
-                node->min = minrange(node->range);
-                node->max = maxrange(node->range);
-                freerange(result);
-                freerange(temp);
-            }
-        }
-
-        /* create a condition node that can be added to a logic tree */
-        node->cond = make_cond(node->var, node->id, node->range, NULL);
-
-    /* handle unary operator nodes */
-    } else if(node->type & NODE_TYPE_UNARY) {
-        /* error on invalid node */
-        if(node->left == NULL ||
-           node->left->range == NULL)
-            return SCRIPT_FAILED;
-
-        /* evaluate the unary operator */
-        switch(node->op) {
-            case '-': node->range = negaterange(node->left->range); break;
-            case '!': node->range = notrange(node->left->range); break;
-            default: return SCRIPT_FAILED;
-        }
-
-        node_inherit(node);
-    /* handle binary operator nodes */
-    } else if(node->type & NODE_TYPE_OPERATOR) {
-        /* error on invalid nodes */
-        if(node->left == NULL ||
-           node->right == NULL ||
-           node->left->range == NULL ||
-           node->right->range == NULL)
-            return SCRIPT_FAILED;
-
-        /* calculate range for operator node */
-        switch(node->op) {
-            case '*':
-            case '/':
-            case '+':
-            case '-':
-                node->range = calcrange(node->op, node->left->range, node->right->range);
-                node_inherit(node);
-                break;
-            case '<' + '=':
-            case '<':
-            case '>' + '=':
-            case '>':
-            case '!' + '=':
-            case '=' + '=':
-                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    /* typically, scripts use boolean expressions like 100 + 600 * (getrefine() > 5),
-                     * which can be interpreted wrong for non-boolean expression, which should result
-                     * in either 0 or 1 rather than range. */
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                } else if(flag & EVALUATE_FLAG_VARIANT_SET) {
-                    /* variant need to determine whether the loop is increasing or decreasing
-                     * -1 less than (increasing), 0 equal, 1 greater than (decreasing) */
-                    if(IS_EQUALSET(node->left->range, node->right->range)) {
-                        node->range = mkrange(INIT_OPERATOR, 0, 0, DONT_CARE);
-                    } else if(maxrange(node->left->range) <  maxrange(node->right->range)) {
-                        node->range = mkrange(INIT_OPERATOR, -1, -1, DONT_CARE);
-                    } else {
-                        node->range = mkrange(INIT_OPERATOR, 1, 1, DONT_CARE);
-                    }
-                } else {
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
-                }
-
-                /* variable and functions generate logic trees that are inherited by up until the root node */
-                node_inherit(node);
-                break;
-            case '&':
-            case '|':
-                node->range = calcrange(node->op, node->left->range, node->right->range);
-                /* variable and functions generate logic trees that are inherited by up until the root node */
-                node_inherit(node);
-                break;
-            case '&' + '&':
-                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                    if(node->left->cond != NULL && node->right->cond != NULL)
-                        node->cond = new_cond(LOGIC_NODE_AND, node->left->cond, node->right->cond);
-                } else {
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
-                }
-                break;
-            case '|' + '|':
-                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    node->range = calcrange(node->op, node->left->range, node->right->range);
-                    if(node->left->cond != NULL && node->right->cond != NULL)
-                        node->cond = new_cond(LOGIC_NODE_OR, node->left->cond, node->right->cond);
-                } else {
-                    node->range = mkrange(INIT_OPERATOR, 0, 1, 0);
-                }
-                break;
-            case ':':
-                /* iterable use the ? operator to handle the for condition */
-                node->range = (flag & EVALUATE_FLAG_ITERABLE_SET) ?
-                    copyrange(node->left->range) :
-                    orrange(node->left->range, node->right->range);
-                break;
-            case '?':
-                node->range = copyrange(node->right->range); /* right node is : operator */
-                break;
-            default:
-                exit_func_safe("unsupported operator %c", node->op);
-                return SCRIPT_FAILED;
-        }
-
-        /* track total number of conditions */
-        node->cond_cnt = node->left->cond_cnt + node->right->cond_cnt;
-    }
-
-    /* calculate min and max */
-    node->min = minrange(node->range);
-    node->max = maxrange(node->range);
-
-    /* dump the node list at each step;
-     * used only for debugging and you
-     * need to set the global node_dbg
-     * stream */
-    node_dump(node, stm);
-
-    return SCRIPT_PASSED;
-}
-
-/* function must be called AFTER node->range is calc */
-int node_inherit(node_t * node) {
-    exit_null_safe(1, node);
-
-    /* inherit only from left or right but not both;
-     * conditions cannot be accurately interpreted */
-    if(node->left->cond != NULL && node->right->cond == NULL) {
-        /* inherit the logic tree from the left node */
-        node->cond = make_cond(
-            node->left->cond->var,
-            node->left->cond->name,
-            node->range,
-            node->left->cond);
-        if(NULL == node->cond)
-            return exit_abt_safe("failed to inherit condition");
-    } else if(node->left->cond == NULL && node->right->cond != NULL) {
-        /* inherit the logic tree from the right node */
-        node->cond = make_cond(
-            node->right->cond->var,
-            node->right->cond->name,
-            node->range,
-            node->right->cond);
-        if(NULL == node->cond)
-            return exit_abt_safe("failed to inherit condition");
-    } else if(node->left == node->right && node->left->cond != NULL) {
-        /* inherit for unary operator */
-        node->cond = make_cond(
-            node->left->cond->var,
-            node->left->cond->name,
-            node->range,
-            node->left->cond);
-        if(NULL == node->cond)
-            return exit_abt_safe("failed to inherit condition");
-    }
-
-    /* inherit the return type */
-    node->return_type |= node->left->return_type;
-    node->return_type |= node->right->return_type;
-
-    return SCRIPT_PASSED;
-}
-
 int node_init(script_t * script, node ** result) {
     node * object = NULL;
 
@@ -4844,10 +4508,319 @@ int node_deit(script_t * script, node ** result) {
     return 0;
 }
 
-void node_dump(node * node, FILE * stream) {
-    if( is_nil(stream)||
-        is_nil(node) )
+int node_eval_tree(node * root) {
+    int i = 0;
+    int j = 0;
+    node * iter = NULL;
+
+    /* operator precedence tree */
+    static int op_pred[11][5] = {
+        {'*'          ,'/'          ,'\0' ,'\0'         ,'\0'},
+        {'+'          ,'-'          ,'\0' ,'\0'         ,'\0'},
+        {'<'          ,'<' + '='    ,'>'  ,'>' + '='    ,'\0'},
+        {'&'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'|'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'=' + '='    ,'!' + '='    ,'\0' ,'\0'         ,'\0'},
+        {'&' + '&'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'|' + '|'    ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {':'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'?'          ,'\0'         ,'\0' ,'\0'         ,'\0'},
+        {'='          ,'\0'         ,'\0' ,'\0'         ,'\0'}
+    };
+
+    /* structure unary operators */
+    iter = root;
+    do {
+        if(iter->type == NODE_TYPE_UNARY) {
+            /* unary operator (forward) expansion */
+            iter->left = iter->next;
+            iter->right = iter->next;
+
+            /* realign doubly linked list */
+            iter->next->next->prev = iter;
+            iter->next = iter->next->next;
+        }
+        iter = iter->next;
+    } while(iter != root);
+
+    /* structure binary operators */
+    for(i = 0; i < 11; i++) {
+        iter = root;
+        do {
+            if(iter->type == NODE_TYPE_OPERATOR) {
+                for(j = 0; j < 5; j++) {
+                    if(iter->op == op_pred[i][j] && op_pred[i][j] != '\0') {
+                        /* binary operator vertical expansion */
+                        iter->left = iter->prev;
+                        iter->right = iter->next;
+
+                        /* realign doubly linked list */
+                        iter->prev->prev->next = iter;
+                        iter->next->next->prev = iter;
+                        iter->next = iter->next->next;
+                        iter->prev = iter->prev->prev;
+                    }
+                }
+            }
+            iter = iter->next;
+        } while(iter != root);
+    }
+
+    return 0;
+}
+
+/* node_eval uses the post-order traversal of a binary tree;
+ * evaluate the left expression,  then the right expression,
+ * and then the current expression.
+ *
+ * to get a real good understanding of how this algorithm works,
+ * simply draw a few examples and work through it by hand; which
+ * was how the algorithm was developed. !D */
+int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tree, int flag) {
+    int status = 0;
+    rbt_logic * logic = NULL;
+    rbt_logic * clone = NULL;
+    rbt_range * limit = NULL;
+
+    if(node->left == node->right) {
+        /* unary operator has one expression
+         * (operator) (expression) */
+        if(is_ptr(node->left))
+            if(node_eval(node->left, stm, logic_tree, id_tree, flag))
+                return 1;
+    } else {
+        /* binary operators has two expression
+         * (left-expression) (operator) (right-expression) */
+
+        /* : operator node's left child is the (true) expression
+         * and the node's right child is the (false) expression */
+        if(node->type == NODE_TYPE_OPERATOR && node->op == ':' && is_ptr(logic_tree)) {
+            /* (condition) ? (true) : (false)
+             *
+             * explanation
+             *  a logic tree represents a tree of conditions and each condition
+             *  represents a range of values for a variable or function; (true)
+             *  uses the logic tree generated from (condition) and (false) uses
+             *  an inverse of the logic tree generated from (condition).
+             *
+             * example
+             *  (getrefine() < 5) ? getrefine() + 5 : getrefine() - 5;
+             *
+             *  (condition)
+             *  getrefine(0 - 4)     ; original logic tree use by (true)
+             *  getrefine(5 - 15)    ; inverse logic tree use by (false)
+             *
+             *  (true)
+             *  getrefine() + 5
+             *  (0 - 4) + 5
+             *  (5 - 9)
+             *
+             *  (false)
+             *  getrefine() - 5
+             *  (5 - 15) - 5
+             *  (0 - 10)
+             *
+             *  (result)
+             *  0 ~ 10 (refine rate)
+             */
+
+            /* (true)  original logic tree */
+            if(is_ptr(node->left))
+                if(node_eval(node->left, stm, logic_tree, id_tree, flag))
+                    return 1;
+
+            /* (false) inverse logic tree */
+            if(rbt_logic_not_all(logic_tree, &logic))
+                return 1;
+
+            if(is_ptr(node->right))
+                if(node_eval(node->right, stm, logic, id_tree, flag))
+                    status = 1;
+
+            rbt_logic_deit(&logic);
+
+            if(status)
+                return status;
+        /* normal traversal
+         * evaluate the left expression before the right expression */
+        } else {
+            if(is_ptr(node->left))
+                if(node_eval(node->left, stm, logic_tree, id_tree, flag))
+                    return 1;
+
+            /* ? operator node's left child is the (condition) expression and
+             * the node's right child is the (true) : (false) expression */
+            if(node->type == NODE_TYPE_OPERATOR && node->op == '?' && is_ptr(node->left->logic)) {
+                /* stack the (condition) on the existing logic tree;
+                 * the search algorithm will search for variable and
+                 * function from top to bottom */
+                if( rbt_logic_copy(&logic, node->left->logic) ||
+                    rbt_logic_copy(&clone, logic_tree) ) {
+                    rbt_logic_deit(&logic);
+                    return 1;
+                } else {
+                    rbt_logic_append(logic, clone);
+                }
+
+                /* evaluate the (true) : (false) expression */
+                if(node->right != NULL)
+                    if(node_eval(node->right, stm, logic, id_tree, flag))
+                        status = 1;
+
+                /* keep the logic tree of ? conditional */
+                if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag && !status)
+                    node->logic = logic;
+                else
+                    rbt_logic_deit(&logic);
+
+                if(status)
+                    return status;
+            } else {
+                if(node->right != NULL)
+                    if(node_eval(node->right, stm, logic_tree, id_tree, flag))
+                        return SCRIPT_FAILED;
+            }
+        }
+    }
+
+    if( node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE) ) {
+        /* handle functions and variables */
+        if(is_nil(node->id))
+            return 1;
+
+        /* search for predicate limit of variable or function */
+        if(is_ptr(logic_tree)) {
+            if(!rbt_logic_search(logic_tree, node->id, &limit, and)) {
+                rbt_range_deit(&node->value);
+                node->value = limit;
+            }
+        }
+
+        if(rbt_logic_init(&node->logic, node->id, node->value))
+            return 1;
+    } else if(node->type & NODE_TYPE_UNARY) {
+        /* handle unary operators */
+        if( is_nil(node->left) ||
+            is_nil(node->left->value) )
+            return 1;
+
+        /* evaluate the unary operator */
+        switch(node->op) {
+            case '-': rbt_range_not(node->left->value, &node->value); break;
+            case '!': rbt_range_neg(node->left->value, &node->value); break;
+            default: return SCRIPT_FAILED;
+        }
+
+        if(node_inherit(node))
+            return 1;
+
+        node->logic_count = node->left->logic_count;
+    /* handle binary operator nodes */
+    } else if(node->type & NODE_TYPE_OPERATOR) {
+        /* error on invalid nodes */
+        if( is_nil(node->left)        ||
+            is_nil(node->right)       ||
+            is_nil(node->left->value) ||
+            is_nil(node->right->value) )
+            return 1;
+
+        /* calculate range for operator node */
+        switch(node->op) {
+            case '*':
+            case '/':
+            case '+':
+            case '-':
+            case '&':
+            case '|':
+                if( rbt_range_op(node->left->value, node->right->value, &node->value, node->op) ||
+                    node_inherit(node) )
+                    return 1;
+                break;
+            case '<' + '=':
+            case '<':
+            case '>' + '=':
+            case '>':
+            case '!' + '=':
+            case '=' + '=':
+                status = (flag & EVALUATE_FLAG_EXPR_BOOL) ?
+                            rbt_range_op(node->left->value, node->right->value, &node->value, node->op) :
+                            rbt_range_init(&node->value, 0, 1, 0);
+                if(status || node_inherit(node))
+                    return 1;
+                break;
+            case '&' + '&':
+                if((flag & EVALUATE_FLAG_EXPR_BOOL) ?
+                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and) :
+                    rbt_range_init(&node->value, 0, 1, 0) )
+                    return 1;
+                break;
+            case '|' + '|':
+                if((flag & EVALUATE_FLAG_EXPR_BOOL) ?
+                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or) :
+                    rbt_range_init(&node->value, 0, 1, 0) )
+                    return 1;
+                break;
+            case ':':
+                /* iterable use the ? operator to handle the for condition */
+                if(rbt_range_op(node->left->value, node->right->value, &node->value, or))
+                    return 1;
+                break;
+            case '?':
+                /* right node is : operator */
+                if(rbt_range_dup(node->right->value, &node->value))
+                    return 1;
+                break;
+            default:
+                return 1;
+        }
+
+        node->logic_count = node->left->logic_count + node->right->logic_count;
+    }
+
+    if( rbt_range_min(node->value, &node->min) ||
+        rbt_range_max(node->value, &node->max) )
+        return 1;
+
+    /* dump the node list at each step;
+     * used only for debugging and you
+     * need to set the global node_dbg
+     * stream */
+    node_dump(node, stm);
+
+    return 0;
+}
+
+int node_inherit(node * node) {
+    int status = 0;
+
+    if(is_nil(node))
         return 0;
+
+    /* inherit only from left or right but not both;
+     * predciates cannot be accurately interpreted */
+    if( is_ptr(node->left->logic) && is_nil(node->right->logic) ) {
+        status = rbt_logic_copy(&node->logic, node->left->logic);
+    } else if( is_nil(node->left->logic) && is_ptr(node->right->logic) ) {
+        status = rbt_logic_copy(&node->logic, node->right->logic);
+    } else if( node->left == node->right && is_ptr(node->left->logic) ) {
+        status = rbt_logic_copy(&node->logic, node->left->logic);
+    }
+
+    /* inherit the return type */
+    if(status) {
+        exit_stop("failed to copy logic tree");
+    } else {
+        node->return_type |= node->left->return_type;
+        node->return_type |= node->right->return_type;
+    }
+
+    return status;
+}
+
+void node_dump(node * node, FILE * stream) {
+    if (is_nil(stream) ||
+        is_nil(node))
+        return;
 
         fprintf(stream," -- Node [%p] --\n       ", (void *) node);
         switch(node->type) {

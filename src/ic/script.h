@@ -395,15 +395,14 @@
     #define NODE_TYPE_UNARY                0x80  /* unary operator */
     #define NODE_TYPE_SUB                  0x40  /* subexpression node */
 
-    int node_structure(node *);
-    int node_evaluate(node *, FILE *, rbt_logic *, rbt_tree *, int);
-    int node_inherit(node *);
-
     #define node_free(x) if(x) { node_deit(x->script, &x); }
-    /* re */  int node_init(script_t *, node **);                /* create new node or get from script object */
-    /* re */  int node_deit(script_t *, node **);                /* reset and return node to script object */
-    /* re */ void node_dump(node *, FILE *);                     /* dump node information */
-    /* re */  int node_release(script_t *);                      /* free node memory from script object */
-    /* re */  int node_append(node *, node *);                   /* append to doubly linked list */
-    /* re */  int node_remove(node *);                           /* remove from doubly linked list */
+    /* re */  int node_init(script_t *, node **);                           /* create new node or get from script object */
+    /* re */  int node_deit(script_t *, node **);                           /* reset and return node to script object */
+    /* re */ void node_dump(node *, FILE *);                                /* dump node information */
+    /* re */  int node_eval_tree(node *);                                   /* build expression tree by expanding operators */
+    /* re */  int node_eval(node *, FILE *, rbt_logic *, rbt_tree *, int);  /* evaluate the expression */
+    /* re */  int node_inherit(node *);                                     /* inherit logic tree from operands */
+    /* re */  int node_release(script_t *);                                 /* free node memory from script object */
+    /* re */  int node_append(node *, node *);                              /* append to doubly linked list */
+    /* re */  int node_remove(node *);                                      /* remove from doubly linked list */
 #endif

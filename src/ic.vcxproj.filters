@@ -18,9 +18,6 @@
     <ClCompile Include="ic\db_search.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ic\format.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ic\ic.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,9 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ic\db_search.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ic\format.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ic\script.h">
