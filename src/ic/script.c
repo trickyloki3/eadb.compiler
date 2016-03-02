@@ -22,10 +22,10 @@ FILE * node_dbg = NULL;
 /* re */ static int stack_eng_group_name(char *, const char *);
 /* re */ static int stack_eng_int_re(block_r *, node *, int, int);
 /* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+/* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
 /* re */ static int evaluate_expression_end_parenthesis(char **, int, int, int *);
 /* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
-static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
-/* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
+/* re */ static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -3532,7 +3532,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             status = evaluate_expression_sub(block, expr, &i, end, logic_tree, id_tree, flag, &temp);
             operand++;
         } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
-            /* create variables, functions, and identifiers node */
+            /* create variables, functions, and set node */
             status = evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp);
             operand++;
         } else if(SCRIPT_BINARY(expr[i][0])) {
@@ -3651,162 +3651,118 @@ static int evaluate_expression_sub(block_r * block, char ** expr, int * start, i
     return status;
 }
 
-static int evaluate_expression_var(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, int flag, node ** result) {
-    int  i = 0;
-    char c = 0;
-    int  level = 0;
-    int len = 0;
-    node * _node = NULL;    /* node */
-    db_t * db = NULL;       /* resource or athena database */
-    var_res var;            /* variable or function search */
-    option_res opt;
-    map_res map;            /* mapping search */
-    const_t constant;       /* constant search */
-    block_r * set = NULL;   /* search variable */
-    node * __node = NULL;   /* set node */
+static int evaluate_expression_var(block_r * block, char ** expr, int * start, int end, rbt_logic * logic_tree, int flag, node ** temp) {
+    node * object = NULL;
+    db_t * db = block->script->db;
+    char * str = expr[*start];
+    size_t len = strlen(str);
 
-    /* error on empty identifer */
-    len = strlen(expr[*start]);
+    int index = 0;
+    int status = 0;
+    var_res *    var = NULL;
+    option_res * opt = NULL;
+    map_res *    map = NULL;
+    const_t *    cst = NULL;
+    block_r *    set = NULL;
+
     if(0 >= len)
-        return CHECK_FAILED;
+        return exit_stop("identifier is empty");
 
-    /* create the variable and function node */
-    if(node_init(block->script, &_node))
-        return CHECK_FAILED;
+    if(node_init(block->script, &object))
+        return exit_stop("out of memory");
 
-    /* search the database */
-    db = block->script->db;
-
-    if(!var_name(db, &var, expr[*start], len)) {
-        /* copy the variable id */
-        _node->var = var.id;
-        _node->logic_count = 1;
-
-        /* copy the variable or function name */
-        _node->id = convert_string(var.desc);
-        if(NULL == _node->id)
-            goto failed;
-
-        if(var.flag & VARI_FLAG) {
-            _node->type = NODE_TYPE_VARIABLE;
-            _node->min = var.min;
-            _node->max = var.max;
-            if(rbt_range_init(&_node->value, var.min, var.max, 0))
-                goto failed;
-        } else if(var.flag & FUNC_FLAG) {
-            _node->type = NODE_TYPE_FUNCTION;
-
-            /* find the ending parenthesis */
-            for(i = *start; i < end; i++) {
-                c = expr[i][0];
-                if('(' == c) {
-                    level++;
-                } else if(')' == c) {
-                    level--;
-
-                    /* ending parenthesis founded */
-                    if(0 == level)
-                        break;
-                }
-            }
-
-            /* error on missing parenthesis */
-            if(0 < level || i >= end) {
-                exit_func_safe("missing parenthesis in item %d", block->item_id);
-                goto failed;
-            }
-
-            /* set the functions return type */
-            _node->return_type |= var.type;
-
-            if(var.flag & FUNC_CONST_FLAG) {
-                /* function uses a static min, max, and desc */
-                _node->formula = convert_string(var.desc);
-                _node->min = var.min;
-                _node->max = var.max;
-            } else {
-                /* evaluate the function */
-                if(evaluate_function(block, expr, *start + 1, i, &var, _node))
-                    goto failed;
-            }
-
-            /* skip the function's argument list */
-            *start = i;
+    if( calloc_ptr(var) ||
+        !var_name(db, var, str, len) ) {
+        object->var = var->id;
+        object->logic_count = 1;
+        object->id = convert_string(var->desc);
+        if(is_nil(object->id)) {
+            status = exit_stop("out of memory");
         } else {
-            goto failed;
+            if(var->flag & VARI_FLAG) {
+                object->type = NODE_TYPE_VARIABLE;
+                object->min = var->min;
+                object->max = var->max;
+                if(rbt_range_init(&object->value, object->min, object->max, 0))
+                    status = exit_stop("out of memory");
+            } else if(var->flag & FUNC_FLAG) {
+                object->type = NODE_TYPE_FUNCTION;
+                object->return_type |= var->type;
+                if(evaluate_expression_end_parenthesis(expr, *start, end, &index)) {
+                    status = exit_mesg("unmatch parenthesis in item %d", block->item_id);
+                } else {
+                    if(var->flag & FUNC_CONST_FLAG) {
+                        object->min = var->min;
+                        object->max = var->max;
+                        object->formula = convert_string(var->desc);
+                        if( is_nil(object->formula) ||
+                            rbt_range_init(&object->value, object->min, object->max, 0) )
+                            status = exit_stop("out of memory");
+                    } else if(evaluate_function(block, expr, *start + 1, index, var, object)) {
+                        status = 1;
+                    }
+                    /* skip function's call arguments */
+                    *start = index;
+                }
+            } else {
+                status = exit_mesg("variable %d is has invalid flag", var->id);
+            }
         }
     } else {
-        /* copied the identifier */
-        _node->id = convert_string(expr[*start]);
-        if(NULL == _node->id)
-            goto failed;
-
-        if(!opt_name(db, &opt, expr[*start], len)) {
-            /* option name */
-            _node->type = NODE_TYPE_CONSTANT;
-            _node->min = opt.flag;
-            _node->max = opt.flag;
-            _node->formula = convert_string(opt.name);
-        } else if(!map_name(db, &map, expr[*start], len)) {
-            /* map name */
-            _node->type = NODE_TYPE_CONSTANT;
-            _node->min = map.id;
-            _node->max = map.id;
-            _node->formula = convert_string(map.name);
-        } else if(!const_name(db, &constant, expr[*start], len)) {
-            /* constant name */
-            _node->type = NODE_TYPE_CONSTANT;
-            _node->min = constant.value;
-            _node->max = constant.value;
+        object->id = convert_string(str);
+        if(is_nil(object->id)) {
+            status = exit_stop("out of memory");
+        } else if(calloc_ptr(opt) || !opt_name(db, opt, str, len)) {
+            object->type = NODE_TYPE_CONSTANT;
+            object->min = opt->flag;
+            object->max = opt->flag;
+            object->formula = convert_string(opt->name);
+            if( is_nil(object->formula) ||
+                rbt_range_init(&object->value, object->min, object->max, 0) )
+                status = exit_stop("out of memory");
+        } else if(calloc_ptr(map) || !map_name(db, map, str, len)) {
+            object->type = NODE_TYPE_CONSTANT;
+            object->min = map->id;
+            object->max = map->id;
+            if( is_nil(object->formula) ||
+                rbt_range_init(&object->value, object->min, object->max, 0) )
+                status = exit_stop("out of memory");
+        } else if(!const_name(db, cst, str, len)) {
+            object->type = NODE_TYPE_CONSTANT;
+            object->min = cst->value;
+            object->max = cst->value;
+            if(rbt_range_init(&object->value, object->min, object->max, 0))
+                status = exit_stop("out of memory");
         } else {
-            /* set default value */
-            _node->type = NODE_TYPE_LOCAL;
-            _node->min = 0;
-            _node->max = 0;
+            object->type = NODE_TYPE_LOCAL;
+            object->min = 0;
+            object->max = 0;
 
             /* find the set variable in the linked list */
             set = block->set;
-            while(NULL != set) {
-                /* copy the set block's node */
-                if(0 == ncs_strcmp(set->ptr[0], expr[*start])) {
-                    __node = set->set_node;
-                    if(NULL == __node)
-                        goto failed;
-
-                    _node->var = 0;
-
-                    /* copy the range */
-                    if( rbt_range_dup(__node->value, &_node->value) ||
-                        rbt_range_min(_node->value, &_node->min) ||
-                        rbt_range_max(_node->value, &_node->max) )
-                        goto failed;
-
-                    /* copy the logic tree */
-                    if(NULL != __node->logic) {
-                        if(rbt_logic_copy(&_node->logic, __node->logic))
-                            goto failed;
-                    }
-                    _node->logic_count = __node->logic_count;
-
-                    /* copy the formula */
-                    if(NULL != __node->formula)
-                        _node->formula = convert_string(__node->formula);
+            while(set && status) {
+                if( 0 == strcmp(set->ptr[0], str) &&
+                    !node_copy(object, set->set_node) )
                     break;
-                }
-
-                /* iterate the set blocks */
                 set = set->set;
             }
+
+            /* default to zero min and max */
+            if(is_nil(set))
+                if(rbt_range_init(&object->value, object->min, object->max, 0))
+                    status = exit_stop("out of memory");
         }
     }
 
     /* set the result */
-    *result = _node;
+    if(status)
+        node_free(object);
+    free_ptr(cst);
+    free_ptr(map);
+    free_ptr(opt);
+    free_ptr(var);
+    *temp = object;
     return CHECK_PASSED;
-
-failed:
-    node_free(_node);
-    return CHECK_FAILED;
 }
 
 /* NOTE
@@ -4507,6 +4463,37 @@ int node_deit(script_t * script, node ** result) {
     *result = NULL;
     return 0;
 }
+
+int node_copy(node * source, node * target) {
+    if( is_nil(source) ||
+        is_nil(target) )
+        return 1;
+
+    target->var = 0;
+    target->type = source->type;
+    target->op = source->op;
+    target->return_type = source->return_type;
+
+    if( rbt_range_dup(source->value, &target->value) ||
+        rbt_range_min(target->value, &target->min) ||
+        rbt_range_max(target->value, &target->max) )
+        return 1;
+
+    if(is_ptr(source->logic))
+        if(rbt_logic_copy(&target->logic, source->logic))
+           return 1;
+
+    target->logic_count = source->logic_count;
+
+    if(is_ptr(source->formula)) {
+        target->formula = convert_string(source->formula);
+        if(is_nil(target->formula))
+            return 1;
+    }
+
+    return 0;
+}
+
 
 int node_eval_tree(node * root) {
     int i = 0;

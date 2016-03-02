@@ -43,36 +43,14 @@
      * =.= postfix does not make sense */
     struct script_t;
     struct block_r;
+    struct node;
+    typedef struct node node;
 
     typedef struct {
          char script[BUF_SIZE];
          char * script_ptr[PTR_SIZE];
          int script_cnt;
     } token_r;
-
-    struct node {
-        int var;                                                                /* variable or function identifier number from var_db.txt */
-        int type;                                                               /* type of node, i.e. function, variable, constant, etc */
-        char * id;                                                              /* name of node, i.e. function name, variable name, constant name, etc*/
-        int op;                                                                 /* operator, i.e. '+', '-', '*', etc */
-        int return_type;                                                        /* bitmask of return types use for check formula compatibility */
-        /* value range, logic tree, and node cache */
-        int min;                                                                /* rbt_range_min value */
-        int max;                                                                /* rbt_range_max value */
-        rbt_range * value;                                                      /* range to keep track of a set of values */
-        rbt_logic * logic;                                                      /* logic tree to keep track of predicates */
-        int logic_count;                                                        /* total number of predicates in logic tree */
-        char * formula;                                                         /* user-friendly representation of expression */
-        struct node * free;                                                     /* singly linked list for memory management */
-        struct script_t * script;                                               /* context containing the node cache */
-        /* expression precedence and associative */
-        struct node * left;
-        struct node * right;
-        struct node * next;
-        struct node * prev;
-    };
-
-    typedef struct node node;
 
     typedef struct block_r {
         int item_id;                                                            /* item id defined in item_db.txt */
@@ -349,9 +327,8 @@
 
     /* evaluate_expression bitmask flags */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */
-    #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators returns 0 or 1 rather than range */
-    #define EVALUATE_FLAG_WRITE_FORMULA    0x008 /* write the formula for expression */
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x010 /* keep logic tree for ?: operators; set blocks */
+    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x002 /* keep the logic tree for ?: operators and set blocks */
+    #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators evaluate to 0 ~ 1 */
     #define EVALUATE_FLAG_ALL              0xfff
 
     /* evaluate an expression */
@@ -385,7 +362,29 @@
     int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
     int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
 
-     /* node types */
+    /* node interface */
+    struct node {
+        int var;                                                                /* variable or function identifier number from var_db.txt */
+        int type;                                                               /* type of node, i.e. function, variable, constant, etc */
+        char * id;                                                              /* name of node, i.e. function name, variable name, constant name, etc*/
+        int op;                                                                 /* operator, i.e. '+', '-', '*', etc */
+        int return_type;                                                        /* bitmask of return types use for check formula compatibility */
+        /* value range, logic tree, and node cache */
+        int min;                                                                /* rbt_range_min value */
+        int max;                                                                /* rbt_range_max value */
+        rbt_range * value;                                                      /* range to keep track of a set of values */
+        rbt_logic * logic;                                                      /* logic tree to keep track of predicates */
+        int logic_count;                                                        /* total number of predicates in logic tree */
+        char * formula;                                                         /* user-friendly representation of expression */
+        struct node * free;                                                     /* singly linked list for memory management */
+        struct script_t * script;                                               /* context containing the node cache */
+        /* expression precedence and associative */
+        struct node * left;
+        struct node * right;
+        struct node * next;
+        struct node * prev;
+    };
+
     #define NODE_TYPE_OPERATOR             0x01
     #define NODE_TYPE_OPERAND              0x02
     #define NODE_TYPE_FUNCTION             0x04  /* var.txt function */
@@ -398,6 +397,7 @@
     #define node_free(x) if(x) { node_deit(x->script, &x); }
     /* re */  int node_init(script_t *, node **);                           /* create new node or get from script object */
     /* re */  int node_deit(script_t *, node **);                           /* reset and return node to script object */
+    /* re */  int node_copy(node *, node *);                                /* copy node */
     /* re */ void node_dump(node *, FILE *);                                /* dump node information */
     /* re */  int node_eval_tree(node *);                                   /* build expression tree by expanding operators */
     /* re */  int node_eval(node *, FILE *, rbt_logic *, rbt_tree *, int);  /* evaluate the expression */
