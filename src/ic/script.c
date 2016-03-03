@@ -3781,75 +3781,59 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
     return CHECK_PASSED;
 }
 
-/* NOTE
- * All function arguments must be pushed before pushing
- * function translations because intermixing the stack
- * would result in breaking the evaluate_function when
- * we start popping values.
- */
 int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node * node) {
     int i = 0;
-    int ret = 0;
+    int status = 0;
     int arg_off = 0;
     int arg_cnt = 0;
     int eng_off = 0;
     token_r * token = NULL;
 
-    /* error on invalid indexes */
     if(start > end)
-        return CHECK_FAILED;
+        return exit_stop("invalid start and end index");
 
-    /* substitute with malloc to improve performance */
-    token = calloc(1, sizeof(token_r));
-    if(NULL == token)
-        return CHECK_FAILED;
+    if(calloc_ptr(token))
+        return exit_stop("out of memory");
 
     for(i = start; i <= end; i++)
         token->script_ptr[token->script_cnt++] = expr[i];
 
-    /* save block->eng stack top */
     eng_off = block->eng_cnt;
-
-    /* push function arguments onto the block->ptr stack */
     arg_off = block->ptr_cnt;
-    ret = stack_ptr_call_(block, token, &arg_cnt);
-    if(ret)
-        goto clean;
 
-    /* execute the proper handler for the function */
-    switch(func->id) {
-        case 2: ret = evaluate_function_getequiprefinerycnt(block, arg_off, arg_cnt, func, node);   break; /* getequiprefinerycnt */
-        case 3: ret = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);             break; /* readparam */
-        case 4: ret = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);            break; /* getskilllv */
-        case 5: ret = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                  break; /* rand */
-        case 6: ret = evaluate_function_pow(block, arg_off, arg_cnt, func, node);                   break; /* pow */
-        case 8: ret = evaluate_function_getiteminfo(block, arg_off, arg_cnt, func, node);           break; /* getiteminfo */
-        case 9: ret = evaluate_function_getequipid(block, arg_off, arg_cnt, func, node);            break; /* getequipid */
-        case 10: ret = evaluate_function_gettime(block, arg_off, arg_cnt, func, node);              break; /* gettime */
-        case 13: ret = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
-        case 26: ret = evaluate_function_callfunc(block, arg_off, arg_cnt, func, node);             break; /* callfunc */
-        case 29: ret = evaluate_function_strcharinfo(block, arg_off, arg_cnt, func, node);          break; /* strcharinfo */
-        case 30: ret = evaluate_function_countitem(block, arg_off, arg_cnt, func, node);            break; /* countitem */
-        case 31: ret = evaluate_function_setoption(block, arg_off, arg_cnt, func, node);            break; /* setoption */
-        case 49: ret = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
-        default:
-            exit_func_safe("unsupported function '%s' in item %d", func->name, block->item_id);
-            goto clean;
+    if(stack_ptr_call_(block, token, &arg_cnt)) {
+        status = exit_stop("failed to parse function call syntax for item %d", block->item_id);
+    } else {
+        switch(func->id) {
+            case 2:  status = evaluate_function_getequiprefinerycnt(block, arg_off, arg_cnt, func, node);  break; /* getequiprefinerycnt */
+            case 3:  status = evaluate_function_readparam(block, arg_off, arg_cnt, func, node);            break; /* readparam */
+            case 4:  status = evaluate_function_getskilllv(block, arg_off, arg_cnt, func, node);           break; /* getskilllv */
+            case 5:  status = evaluate_function_rand(block, arg_off, arg_cnt, func, node);                 break; /* rand */
+            case 6:  status = evaluate_function_pow(block, arg_off, arg_cnt, func, node);                  break; /* pow */
+            case 8:  status = evaluate_function_getiteminfo(block, arg_off, arg_cnt, func, node);          break; /* getiteminfo */
+            case 9:  status = evaluate_function_getequipid(block, arg_off, arg_cnt, func, node);           break; /* getequipid */
+            case 10: status = evaluate_function_gettime(block, arg_off, arg_cnt, func, node);              break; /* gettime */
+            case 13: status = evaluate_function_isequipped(block, arg_off, arg_cnt, func, node);           break; /* isequipped */
+            case 26: status = evaluate_function_callfunc(block, arg_off, arg_cnt, func, node);             break; /* callfunc */
+            case 29: status = evaluate_function_strcharinfo(block, arg_off, arg_cnt, func, node);          break; /* strcharinfo */
+            case 30: status = evaluate_function_countitem(block, arg_off, arg_cnt, func, node);            break; /* countitem */
+            case 31: status = evaluate_function_setoption(block, arg_off, arg_cnt, func, node);            break; /* setoption */
+            case 49: status = evaluate_function_groupranditem(block, arg_off, arg_cnt, func, node);        break; /* groupranditem */
+            default: status = exit_mesg("unsupported function '%s' in item %d", func->name, block->item_id);
+        }
+        if(!status) {
+            /* pop function call arguments */
+            for(i = eng_off; i < block->eng_cnt;)
+                block_stack_pop(block, TYPE_ENG);
+
+            /* pop evaluate function translations */
+            while(block->ptr_cnt != arg_off)
+                block_stack_pop(block, TYPE_PTR);
+        }
     }
 
-    /* pop the any translation pushed onto the block->eng stack */
-    for(i = eng_off; i < block->eng_cnt;)
-        if(block_stack_pop(block, TYPE_ENG))
-            return CHECK_FAILED;
-
-    /* pop the function arguments from the block->ptr stack */
-    while(block->ptr_cnt != arg_off)
-        if(block_stack_pop(block, TYPE_PTR))
-            return CHECK_FAILED;
-
-clean:
-    SAFE_FREE(token);
-    return ret;
+    free_ptr(token);
+    return status;
 }
 
 /* rand takes one or two arguments; [0, max) for
