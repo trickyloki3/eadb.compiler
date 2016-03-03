@@ -28,7 +28,7 @@ FILE * node_dbg = NULL;
 /* re */ static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 /* re */ int evaluate_function(block_r *, char **, int, int, var_res *, node *);
 /* re */ int evaluate_function_rand(block_r *, int, int, var_res *, node *);
-int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
 int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
 int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
 int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
@@ -1829,7 +1829,7 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
 
     node = evaluate_expression(block, expr, 0);
     if(is_nil(node)) {
-        status = exit_mesg("failed to evaluate integer expression '%s'", expr);
+        status = exit_mesg("failed to evaluate map id expression '%s'", expr);
     } else {
         work.block = block;
         work.count = 0;
@@ -1945,7 +1945,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
 
     node = evaluate_expression(block, expr, 0);
     if(is_nil(node)) {
-        status = exit_mesg("failed to evaluate integer expression '%s'", expr);
+        status = exit_mesg("failed to evaluate id expression '%s'", expr);
     } else {
         work.block = block;
         work.count = 0;
@@ -3785,8 +3785,8 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     int i = 0;
     int status = 0;
     int arg_off = 0;
-    int arg_cnt = 0;
     int eng_off = 0;
+    int arg_cnt = 0;
     token_r * token = NULL;
 
     if(start > end)
@@ -3798,9 +3798,8 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     for(i = start; i <= end; i++)
         token->script_ptr[token->script_cnt++] = expr[i];
 
-    eng_off = block->eng_cnt;
     arg_off = block->ptr_cnt;
-
+    eng_off = block->eng_cnt;
     if(stack_ptr_call_(block, token, &arg_cnt)) {
         status = exit_stop("failed to parse function call syntax for item %d", block->item_id);
     } else {
@@ -3873,77 +3872,66 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
 }
 
 /* groupranditem takes on a constant id or value */
-int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int i = 0;
-    int ret = 0;
+int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int i;
+    int status = 0;
     int min = 0;
-    int group_id = 0;
-    int subgroup_id = 0;
+    int max = 0;
+    int group_id;
+    int subgroup_id;
     item_group_t item_group;
-    range_t * temp = NULL;
-    range_t * iter = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    /* error on invalid argument count */
-    if(0 >= cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
-
-    /* use default subgroup id 1 if none specified */
-    if(cnt == 1)
+    if(0 >= cnt) {
+        return exit_mesg("invalid argument count to fu"
+        "nction '%s' in %d", func->name, block->item_id);
+    } else if(cnt == 1) {
+        /* subgroup id default to 1 */
         if(block_stack_push(block, TYPE_PTR, "1"))
-            goto failed;
-
-    /* query for item group records */
-    memset(&item_group, 0, sizeof(item_group_t));
-    if( evaluate_numeric_constant(block, block->ptr[off + 0], &group_id) ||
-        evaluate_numeric_constant(block, block->ptr[off + 1], &subgroup_id) ||
-        item_group_id(block->script->db, &item_group, group_id, subgroup_id) ||
-        stack_eng_item_group(block, block->ptr[off + 0]) ||
-        0 >= item_group.size)
-        goto failed;
-
-    if(1 == item_group.size) {
-        /* special case for one item group record */
-        node->min = item_group.item_id[0];
-        node->max = item_group.item_id[0];
-        goto clean;
-    } else {
-        /* build linked list of discontinous item id in item group */
-        min = item_group.item_id[0];
-        for (i = 0; i < item_group.size; i++) {
-            /* build linked list of discontinous item id in item group */
-            if (((i + 1) < item_group.size && item_group.item_id[i] + 1 != item_group.item_id[i + 1]) ||
-                ((i + 1) >= item_group.size)) {
-                if (node->range == NULL) {
-                    /* create the root range */
-                    iter = node->range = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
-                } else {
-                    /* append the new range to the list */
-                    temp = mkrange(INIT_OPERATOR, min, item_group.item_id[i], DONT_CARE);
-                    iter->next = temp;
-                    temp->prev = iter;
-                    iter = temp;
-                }
-                if((i + 1) < item_group.size)
-                    min = item_group.item_id[i + 1];
-            }
-        }
-        /* write group name into formula, which
-         * is calculated by stack_eng_item_group */
-        node->formula = convert_string(block->eng[block->eng_cnt - 1]);
-        node->min = minrange(node->range);
-        node->max = maxrange(node->range);
+            return exit_stop("failed to push default subgroup id argument");
     }
 
-clean:
+    memset(&item_group, 0, sizeof(item_group));
+
+    /* might have gotten carry away with the error messages */
+    if(evaluate_numeric_constant(block, block->ptr[off + 0], &group_id)) {
+        status = exit_mesg("failed to group id is not constant in item %d", block->item_id);
+    } else if(evaluate_numeric_constant(block, block->ptr[off + 1], &subgroup_id)) {
+        status = exit_mesg("failed to subgroup id is not constant in item %d", block->item_id);
+    } else if(item_group_id(block->script->db, &item_group, group_id, subgroup_id)) {
+        status = exit_mesg("failed to find group id %d and subgroup id %d", group_id, subgroup_id);
+    } else if(stack_eng_item_group(block, block->ptr[off + 0])) {
+        status = exit_mesg("failed to write group name for group id %d", group_id);
+    } else if(0 >= item_group.size) {
+        status = exit_mesg("item group id %d subgroup id %d is empty", group_id, subgroup_id);
+    } else {
+        min = item_group.item_id[0];
+        for(i = 1; i < item_group.size && !status; i++) {
+            if(item_group.item_id[i - 1] + 1 != item_group.item_id[i]) {
+                status = is_nil(temp->value) ?
+                    rbt_range_init(&temp->value, min, item_group.item_id[i], 0) :
+                    rbt_range_add(temp->value,   min, item_group.item_id[i], NULL) ;
+                min = item_group.item_id[i];
+            }
+        }
+        if( status ||
+            is_nil(temp->value) ?
+                rbt_range_init(&temp->value, min, item_group.item_id[i - 1], 0) :
+                rbt_range_add(temp->value,   min, item_group.item_id[i - 1], NULL) ) {
+            status = exit_stop("out of memory");
+        } else {
+            temp->formula = convert_string(block->eng[block->eng_cnt - 1]);
+            if(is_nil(temp->formula)) {
+                status = exit_stop("out of memory");
+            } else {
+                if( rbt_range_min(temp->value, &temp->min) ||
+                    rbt_range_max(temp->value, &temp->max) )
+                    status = exit_stop("fail to get min and max from range");
+            }
+        }
+    }
+
     item_group_free(&item_group);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
 int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * func, node_t * node) {
