@@ -26,8 +26,8 @@ FILE * node_dbg = NULL;
 /* re */ static int evaluate_expression_end_parenthesis(char **, int, int, int *);
 /* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
 /* re */ static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
-int evaluate_function(block_r *, char **, int, int, var_res *, node *);
-int evaluate_function_rand(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function(block_r *, char **, int, int, var_res *, node *);
+/* re */ int evaluate_function_rand(block_r *, int, int, var_res *, node *);
 int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
 int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
 int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
@@ -3795,9 +3795,6 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     int eng_off = 0;
     token_r * token = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(4, block, expr, func, node);
-
     /* error on invalid indexes */
     if(start > end)
         return CHECK_FAILED;
@@ -3872,9 +3869,9 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
         case 2: /* [min, max] */
             if( is_nil(min = evaluate_expression(block, block->ptr[off], 0)) ||
                 is_nil(max = evaluate_expression(block, block->ptr[off + 1], 0)) ||
-                rbt_range_or(min->value, max->value, &temp->value) ||
-                rbt_range_min(temp->value, &temp->min) ||
-                rbt_range_max(temp->value, &temp->max) ) {
+                rbt_range_min(min->value, &temp->min) ||
+                rbt_range_max(max->value, &temp->max) ||
+                rbt_range_init(&temp->value, temp->min, temp->max, 0) )
                 status = 1;
             break;
         default:
