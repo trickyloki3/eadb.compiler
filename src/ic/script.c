@@ -3488,7 +3488,7 @@ int evaluate_numeric_constant(block_r * block, char * expr, int * constant) {
     }
 
     node_free(node);
-    return status;;
+    return status;
 }
 
 /* lowest level function for evaluating expressions
@@ -3857,47 +3857,38 @@ clean:
 
 /* rand takes one or two arguments; [0, max) for
  * one argument and [min, max] for two arguments */
-int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    node_t * operand_1 = NULL;
-    node_t * operand_2 = NULL;
+int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    node * min = NULL;
+    node * max = NULL;
 
     switch(cnt) {
         case 1: /* [0, max) */
-            operand_1 = evaluate_expression(block, block->ptr[off], 0);
-            if(NULL == operand_1)
-                goto failed;
-
-            node->min = 0;
-            node->max = maxrange(operand_1->range) - 1;
+            if( is_nil(min = evaluate_expression(block, block->ptr[off], 0)) ||
+                rbt_range_max(min->value, &temp->max) )
+                status = 1;
+            temp->min = 0;
             break;
         case 2: /* [min, max] */
-            operand_1 = evaluate_expression(block, block->ptr[off], 0);
-            if(NULL == operand_1)
-                goto failed;
-
-            operand_2 = evaluate_expression(block, block->ptr[off + 1], 0);
-            if(NULL == operand_2)
-                goto failed;
-
-            node->min = RANGE_MIN(operand_1->range, operand_2->range);
-            node->max = RANGE_MAX(operand_1->range, operand_2->range);
+            if( is_nil(min = evaluate_expression(block, block->ptr[off], 0)) ||
+                is_nil(max = evaluate_expression(block, block->ptr[off + 1], 0)) ||
+                rbt_range_or(min->value, max->value, &temp->value) ||
+                rbt_range_min(temp->value, &temp->min) ||
+                rbt_range_max(temp->value, &temp->max) ) {
+                status = 1;
             break;
         default:
-            return exit_func_safe("invalid argument count to "
-            "function '%s' in %d", func->name, block->item_id);
+            return exit_mesg("invalid argument count to fun"
+            "ction '%s' in %d", func->name, block->item_id);
     }
 
-    node->formula = convert_string("Random");
+    temp->formula = convert_string("random");
+    if(is_nil(temp->formula))
+        status = exit_stop("out of memory");
 
-clean:
-    node_free(operand_1);
-    node_free(operand_2);
-    return ret;
-
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    node_free(min);
+    node_free(max);
+    return status;
 }
 
 /* groupranditem takes on a constant id or value */
