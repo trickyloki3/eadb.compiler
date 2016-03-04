@@ -31,7 +31,7 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
-int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
 int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
 int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
 int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
@@ -3960,7 +3960,7 @@ int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * fun
 
 int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * func, node * temp) {
     int status = 1;
-    int length;
+    int len;
     int id = 0;
     skill_t * skill = NULL;
 
@@ -3971,12 +3971,11 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
     if(calloc_ptr(skill))
         return exit_stop("out of memory");
 
+    /* search by skill name or id */
     if( isalpha(block->ptr[off][0]) || '_' == block->ptr[off][0] )
         status = skill_name(block->script->db, skill, block->ptr[off], strlen(block->ptr[off]));
-
-    if (status)
-        if (!evaluate_numeric_constant(block, block->ptr[off], &id))
-            status = skill_id(block->script->db, skill, id);
+    if (status &&!evaluate_numeric_constant(block, block->ptr[off], &id))
+        status = skill_id(block->script->db, skill, id);
 
     if(status) {
         exit_mesg("failed to resolve '%s' into a skill name", block->ptr[off]);
@@ -3986,12 +3985,12 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
         if(rbt_range_init(&temp->value, temp->min, temp->max, 0)) {
             exit_stop("out of memory");
         } else {
-            length = strlen(skill->desc) + 16;
-            temp->formula = calloc(length, sizeof(char));
+            len = strlen(skill->desc) + 16;
+            temp->formula = calloc(len, sizeof(char));
             if(is_nil(temp->formula)) {
                 status = exit_stop("out of memory");
             } else {
-                snprintf(temp->formula, length, "%s Level", skill->desc);
+                snprintf(temp->formula, len, "%s Level", skill->desc);
             }
         }
     }
@@ -4000,56 +3999,47 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
     return status;
 }
 
-int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int i = 0;
-    int ret = 0;
-    int len = 0;
-    int offset = 0;
-    char * buf = NULL;
-    int item_off = 0;
-    int item_cnt = 0;
+int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int i;
+    int len;
+    int off;
+    int top;
+    int status = 0;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    /* error on invalid argument count */
     if(0 == cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
-    /* push item names into the block->eng stack */
+    /* track the length and offset of the items */
     len = block->arg_cnt;
-    item_off = block->eng_cnt;
-    for(i = 0; i < cnt; i++)
-        if(stack_eng_item(block, block->ptr[off + i], &item_cnt, 0))
-            return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 128;
+    top = block->eng_cnt;
 
-    /* write the isequip string */
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
+    for(i = 0; i < cnt && !status; i++)
+        if(stack_eng_item(block, block->ptr[off + i]))
+            status = exit_mesg("failed to resolve '%s' to an item name", block->ptr[off + i]);
 
-    offset += sprintf(&buf[offset], "%s", block->eng[item_off]);
-    if(block->eng_cnt - offset == 2) {
-        /* <item> and <item> */
-        offset += sprintf(&buf[offset], " and %s", block->eng[item_off + 1]);
-    } else {
-        /* <item>, <item>, and <item> */
-        for(i = item_off + 1; i < block->eng_cnt; i++)
-            offset += (i + 1 == block->eng_cnt) ?
-                sprintf(&buf[offset], ", and %s", block->eng[i]):
-                sprintf(&buf[offset], ", %s", block->eng[i]);
+    if(!status) {
+        len = block->arg_cnt - len + 32;
+        temp->formula = calloc(len, sizeof(char));
+        if(is_nil(temp->formula)) {
+            status = exit_stop("out of memory");
+        } else {
+            for(i = top, off = 0; i < block->eng_cnt - 1; i++)
+                off += sprintf(&temp->formula[off], "%s, ", block->eng[i]);
+            switch(block->eng_cnt - top) {
+                case 0:  sprintf(&temp->formula[off - 2], "%s is equipped", block->eng[i]); break;
+                case 1:  sprintf(&temp->formula[off - 2], "and %s is equipped", block->eng[i]); break;
+                default: sprintf(&temp->formula[off - 2], ", and %s is equipped", block->eng[i]); break;
+            }
+
+            temp->min = 0;
+            temp->max = 1;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
     }
-    offset += sprintf(&buf[offset], " is equipped");
 
-    /* isequipped is a boolean function */
-    node->formula = convert_string(buf);
-    node->min = 0;
-    node->max = 1;
-
-    SAFE_FREE(buf);
-    return ret;
+    return status;
 }
 
 int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var_res * func, node_t * node) {
