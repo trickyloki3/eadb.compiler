@@ -4027,9 +4027,9 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
             for(i = top, off = 0; i < block->eng_cnt - 1; i++)
                 off += sprintf(&temp->formula[off], "%s, ", block->eng[i]);
             switch(block->eng_cnt - top) {
-                case 0:  sprintf(&temp->formula[off - 2], "%s is equipped", block->eng[i]); break;
+                case 0:  sprintf(&temp->formula[off], "%s is equipped", block->eng[i]); break;
                 case 1:  sprintf(&temp->formula[off - 2], "and %s is equipped", block->eng[i]); break;
-                default: sprintf(&temp->formula[off - 2], ", and %s is equipped", block->eng[i]); break;
+                default: sprintf(&temp->formula[off], "and %s is equipped", block->eng[i]); break;
             }
 
             temp->min = 0;
@@ -4042,40 +4042,36 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
     return status;
 }
 
-int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    int len = 0;
-    char * buf = NULL;
-    int equip_cnt = 0;
+int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int len;
+    int unused;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    /* error on invalid argument count */
     if(1 != cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
-    /* push equip location into the block->eng stack */
     len = block->arg_cnt;
-    if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &equip_cnt) ||
-       equip_cnt != 1)
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + strlen(node->id) + 32;
+    if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &unused)) {
+        status = exit_mesg("failed to resolve '%s' to an refinement slot", block->ptr[off]);
+    } else {
+        len = block->arg_cnt - len + strlen(temp->id) + 16;
 
-    buf = calloc(len, sizeof(char));
-    if(NULL == buf)
-        return CHECK_FAILED;
+        temp->formula = calloc(len, sizeof(char));
+        if(is_nil(temp->formula)) {
+            status = exit_stop("out of memory");
+        } else {
+            sprintf(temp->formula, "%s's %s", block->eng[block->eng_cnt - 1], temp->id);
 
-    sprintf(buf, "%s's %s", block->eng[block->eng_cnt - 1], node->id);
+            temp->min = func->min;
+            temp->max = func->max;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
 
-    /* refine rate is a fixed range */
-    node->formula = convert_string(buf);
-    node->min = func->min;
-    node->max = func->max;
+    }
 
-    SAFE_FREE(buf);
-    return ret;
+    return status;
 }
 
 int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
