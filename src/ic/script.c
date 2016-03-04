@@ -19,7 +19,7 @@ FILE * node_dbg = NULL;
 /* re */ static int stack_eng_skill_work(struct rbt_node *, void *, int);
 /* re */ static int stack_eng_map_work(struct rbt_node *, void *, int);
 /* re */ static int stack_eng_db_work(struct rbt_node *, void *, int);
-/* re */ static int stack_eng_group_name(char *, const char *);
+/* re */ static int stack_eng_group_name(char **, const char *);
 /* re */ static int stack_eng_int_re(block_r *, node *, int, int);
 /* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
 /* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
@@ -32,9 +32,9 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
-int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
-int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
-int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
 int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
 int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
 int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
@@ -3537,7 +3537,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
 
     /* create the doubly linked list's root node */
     if(node_init(block->script, &root))
-        return exit_stop("out of memory");
+        return (void *) exit_stop("out of memory");
 
     for(i = start, iter = root; i < end && !status; i++) {
         temp = NULL;
@@ -3801,7 +3801,7 @@ int evaluate_function(block_r * block, char ** expr, int start, int end, var_res
     arg_off = block->ptr_cnt;
     eng_off = block->eng_cnt;
     if(stack_ptr_call_(block, token, &arg_cnt)) {
-        status = exit_stop("failed to parse function call syntax for item %d", block->item_id);
+        status = exit_mesg("failed to parse function call syntax for item %d", block->item_id);
     } else {
         switch(func->id) {
             case 2:  status = evaluate_function_getequiprefinerycnt(block, arg_off, arg_cnt, func, node);  break; /* getequiprefinerycnt */
@@ -4002,9 +4002,9 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
 int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * func, node * temp) {
     int i;
     int len;
-    int off;
     int top;
     int status = 0;
+    int unused;
 
     if(0 == cnt)
         return exit_mesg("invalid argument count to fun"
@@ -4015,7 +4015,7 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
     top = block->eng_cnt;
 
     for(i = 0; i < cnt && !status; i++)
-        if(stack_eng_item(block, block->ptr[off + i]))
+        if(stack_eng_item(block, block->ptr[off + i], &unused, 0))
             status = exit_mesg("failed to resolve '%s' to an item name", block->ptr[off + i]);
 
     if(!status) {
@@ -4068,101 +4068,98 @@ int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var
             if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
                 status = exit_stop("out of memory");
         }
-
     }
 
     return status;
 }
 
-int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int len = 0;
-    int argc = 0;
-
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
+int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int len;
+    int argc;
 
     if(2 != cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
-    /* evaluate the item info type */
     len = block->arg_cnt;
-    if(stack_eng_item(block, block->ptr[off], &argc, 0) || argc != 1 ||
-       stack_eng_map(block, block->ptr[off+1], MAP_ITEM_INFO_FLAG, &argc) || argc != 1)
-        return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 32;
 
-    node->formula = calloc(len, sizeof(char));
-    if(NULL == node->formula)
-        return CHECK_FAILED;
+    if( stack_eng_item(block, block->ptr[off], &argc, 0)                     || argc != 1 ||
+        stack_eng_map(block, block->ptr[off + 1], MAP_ITEM_INFO_FLAG, &argc) || argc != 1 ) {
+        status = exit_stop("failed to evaluate getiteminfo argument into constants");
+    } else {
+        len = block->arg_cnt - len + 32;
+        temp->formula = calloc(len, sizeof(char));
+        if(is_nil(temp->formula)) {
+            exit_stop("out of memory");
+        } else {
+            sprintf(temp->formula, "%s's %s", block->eng[block->eng_cnt - 2], block->eng[block->eng_cnt - 1]);
 
-    sprintf(node->formula, "%s's %s", block->eng[block->eng_cnt - 2], block->eng[block->eng_cnt - 1]);
-    node->min = func->min;
-    node->max = func->max;
-
-    return CHECK_PASSED;
-}
-
-int evaluate_function_getequipid(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int argc = 0;
-
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    if(1 != cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
-
-    if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &argc) ||
-       argc != 1)
-        return CHECK_FAILED;
-
-    node->formula = convert_string(block->eng[block->eng_cnt - 1]);
-    node->min = func->min;
-    node->max = func->max;
-
-    return CHECK_PASSED;
-}
-
-int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    node_t * type = NULL;
-
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    if(1 != cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
-
-    type = evaluate_expression(block, block->ptr[off], 0);
-    if(NULL == type ||
-       type->min != type->max)
-        goto failed;
-
-    /* get the time type string */
-    script_map_id(block, "time_type", type->min, &node->formula);
-    if(NULL == node->formula)
-        goto failed;
-
-    /* different time type has different limits */
-    switch(type->min) {
-        case 1: node->min = 0; node->max = 60; break;
-        case 2: node->min = 0; node->max = 60; break;
-        case 3: node->min = 0; node->max = 24; break;
-        case 4: node->min = 1; node->max = 7; break;
-        case 5: node->min = 1; node->max = 7; break;
-        case 6: node->min = 1; node->max = 12; break;
-        case 7: node->min = 0; node->max = 9999; break;
-        case 8: node->min = 0; node->max = 365; break;
+            temp->min = func->min;
+            temp->max = func->max;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
     }
 
-clean:
-    node_free(type);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
+}
+
+int evaluate_function_getequipid(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int unused = 0;
+
+    if(1 != cnt)
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
+
+    if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &unused)) {
+        status = exit_mesg("failed to resolve '%s' into equip id", block->ptr[off]);
+    } else {
+        temp->formula = convert_string(block->eng[block->eng_cnt - 1]);
+        if(is_nil(temp->formula)) {
+            status = exit_stop("out of memory");
+        } else {
+            temp->min = func->min;
+            temp->max = func->max;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
+    }
+
+    return status;
+}
+
+int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int type;
+
+    if(1 != cnt)
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
+
+    if(evaluate_numeric_constant(block, block->ptr[off], &type)) {
+        status = exit_mesg("failed to resolve '%s' into a time type", block->ptr[off]);
+    } else {
+        if(script_map_id(block, "time_type", type, &temp->formula)) {
+            status = exit_mesg("failed to index 'time_type' on %d", type);
+        } else {
+            switch(type) {
+                case 1: temp->min = 0; temp->max = 60; break;
+                case 2: temp->min = 0; temp->max = 60; break;
+                case 3: temp->min = 0; temp->max = 24; break;
+                case 4: temp->min = 1; temp->max = 7; break;
+                case 5: temp->min = 1; temp->max = 7; break;
+                case 6: temp->min = 1; temp->max = 12; break;
+                case 7: temp->min = 0; temp->max = 9999; break;
+                case 8: temp->min = 0; temp->max = 365; break;
+            }
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
+    }
+
+    return status;
 }
 
 int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func, node_t * node) {
