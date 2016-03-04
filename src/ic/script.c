@@ -29,8 +29,8 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function(block_r *, char **, int, int, var_res *, node *);
 /* re */ int evaluate_function_rand(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
-int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
-int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
 int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
 int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
 int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
@@ -3934,80 +3934,70 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
     return status;
 }
 
-int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    int argc = 0;
+int evaluate_function_readparam(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int unused = 0;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    /* error on invalid argument count */
     if(1 != cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
-    /* write the dependency */
-    if (stack_eng_map(block, block->ptr[off], MAP_READPARAM_FLAG, &argc) ||
-        argc != 1)
-        goto failed;
+    if(stack_eng_map(block, block->ptr[off], MAP_READPARAM_FLAG, &unused)) {
+        status = exit_mesg("failed resolve '%s' into a paramater", block->ptr[off]);
+    } else {
+        temp->formula = convert_string(block->eng[block->eng_cnt - 1]);
+        if(is_nil(temp->formula))
+            status = exit_stop("out of memory");
 
-    node->formula = convert_string(block->eng[block->eng_cnt - 1]);
+        temp->min = func->min;
+        temp->max = func->max;
+        if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+            status = exit_stop("out of memory");
+    }
 
-    /* readparam is a fixed range */
-    node->min = func->min;
-    node->max = func->max;
-
-clean:
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
-int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    int len = 0;
-    skill_t skill;
-    node_t * id = NULL;
+int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 1;
+    int length;
+    int id = 0;
+    skill_t * skill = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    /* error on invalid argument count */
     if(1 != cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
-    /* search for skill by name */
-    if( SCRIPT_STRING(block->ptr[off][0]) &&
-        !skill_name(block->script->db, &skill, block->ptr[off], strlen(block->ptr[off])))
-        goto found;
+    if(calloc_ptr(skill))
+        return exit_stop("out of memory");
 
-    /* fallback by evaluating expression for skill id */
-    id = evaluate_expression(block, block->ptr[off], 0);
-    if(NULL == id)
-        goto failed;
+    if( isalpha(block->ptr[off][0]) || '_' == block->ptr[off][0] )
+        status = skill_name(block->script->db, skill, block->ptr[off], strlen(block->ptr[off]));
 
-    /* support constant only */
-    if(id->min != id->max ||
-       skill_id(block->script->db, &skill, id->min))
-        goto failed;
+    if (status)
+        if (!evaluate_numeric_constant(block, block->ptr[off], &id))
+            status = skill_id(block->script->db, skill, id);
 
-found:
-    len = strlen(skill.desc) + 16;
-    node->formula = calloc(len, sizeof(char));
-    if(NULL == node->formula)
-        goto failed;
-    sprintf(node->formula, "%s Level", skill.desc);
-    node->min = 0;
-    node->max = skill.maxlv;
+    if(status) {
+        exit_mesg("failed to resolve '%s' into a skill name", block->ptr[off]);
+    } else {
+        temp->min = 0;
+        temp->max = skill->maxlv;
+        if(rbt_range_init(&temp->value, temp->min, temp->max, 0)) {
+            exit_stop("out of memory");
+        } else {
+            length = strlen(skill->desc) + 16;
+            temp->formula = calloc(length, sizeof(char));
+            if(is_nil(temp->formula)) {
+                status = exit_stop("out of memory");
+            } else {
+                snprintf(temp->formula, length, "%s Level", skill->desc);
+            }
+        }
+    }
 
-clean:
-    node_free(id);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    free_ptr(skill);
+    return status;
 }
 
 int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * func, node_t * node) {
