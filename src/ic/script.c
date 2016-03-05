@@ -1476,10 +1476,8 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
         } else {
             fmt[off++] = 'd';
         }
-        if(flag & FORMAT_RATIO) {
+        if(flag & FORMAT_RATIO)
             fmt[off++] = '%';
-            fmt[off++] = '%';
-        }
         if(i == 0) {
             fmt[off++] = ' ';
             fmt[off++] = '~';
@@ -3579,7 +3577,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             operand++;
         }
 
-        if(operand > 1 && is_nil(temp)) {
+        if(operand > 1 || is_nil(temp)) {
             status = exit_mesg("invalid token detected in item id %d", block->item_id);
         } else {
             /* add node to doubly list for structuring */
@@ -3767,7 +3765,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
             }
 
             /* default to zero min and max */
-            if(is_nil(set))
+            if(is_nil(object->value))
                 if(rbt_range_init(&object->value, object->min, object->max, 0))
                     status = exit_stop("out of memory");
 
@@ -4597,11 +4595,12 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                 /* stack the (condition) on the existing logic tree;
                  * the search algorithm will search for variable and
                  * function from top to bottom */
-                if( rbt_logic_copy(&logic, node->left->logic) ||
-                    rbt_logic_copy(&clone, logic_tree) ) {
-                    rbt_logic_deit(&logic);
+                if(rbt_logic_copy(&logic, node->left->logic))
                     return 1;
-                } else {
+
+                if(logic_tree) {
+                    if(rbt_logic_copy(&clone, logic_tree))
+                        return 1;
                     rbt_logic_append(logic, clone);
                 }
 
@@ -4693,13 +4692,15 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                 break;
             case '&' + '&':
                 if((flag & EVALUATE_FLAG_EXPR_BOOL) ?
-                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and) :
+                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and) ||
+                    rbt_range_op(node->left->value, node->right->value, &node->value, and) :
                     rbt_range_init(&node->value, 0, 1, 0) )
                     return 1;
                 break;
             case '|' + '|':
                 if((flag & EVALUATE_FLAG_EXPR_BOOL) ?
-                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or) :
+                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or) ||
+                    rbt_range_op(node->left->value, node->right->value, &node->value, or) :
                     rbt_range_init(&node->value, 0, 1, 0) )
                     return 1;
                 break;
