@@ -234,7 +234,7 @@
 
     /* server item database queries */
     #define EA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ea;"
-    #define RA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra where id == 1148;"
+    #define RA_ITEM_ITERATE                 "SELECT id, eathena, type, buy, sell, weight, matk, atk, def, range, slots, job, upper, gender, loc, wlv, elv, refineable, view, script from item_ra where id = 1175;"
     #define HE_ITEM_ITERATE                 "SELECT Id, Name, Type, Buy, Sell, Weight, Matk, Atk, Def, Range, Slots, Job, Upper, Gender, Loc, WeaponLv, EquipLvMin, Refine, View, Script,"\
                                             "BindOnEquip, BuyingStore, Delay, override, nodrop, notrade, partneroverride, noselltonpc, nocart, nostorage, nogstorage, nomail, noauction,"\
                                             "StackAmount, StackType from item_he;"

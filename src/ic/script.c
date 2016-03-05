@@ -2751,7 +2751,7 @@ int translate_bonus(block_r * block, char * prefix) {
             }
         }
 
-        if(status) {
+        if(!status) {
             switch(bonus->type_cnt) {
                 case 0:
                     block_stack_vararg(block,
@@ -3621,40 +3621,45 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             operand++;
         }
 
-        if(operand > 1 || is_nil(temp)) {
-            status = exit_mesg("invalid token detected in item id %d", block->item_id);
+        if(operand > 1) {
+            status = exit_mesg("invalid token '%s' detected in item id %d", expr[i], block->item_id);
         } else {
-            /* add node to doubly list for structuring */
-            node_append(iter, temp);
-            iter = temp;
+            if(is_ptr(temp)) {
+                /* add node to doubly list for structuring */
+                node_append(iter, temp);
+                iter = temp;
+            } else {
+                status = 1;
+            }
         }
 
         /* add node to singly list for freeing */
         iter->free = temp;
     }
 
-    if( status ||
-        root == iter ||
-        node_eval_tree(root) ||
-        node_eval(root->next, node_dbg, logic_tree, id_tree, flag) ) {
-        status = exit_mesg("invalid expression detected in item id %d", block->item_id);
-    } else {
-        result = root->next;
+    if(!status) {
+        if( root == iter ||
+            node_eval_tree(root) ||
+            node_eval(root->next, node_dbg, logic_tree, id_tree, flag) ) {
+            status = exit_mesg("invalid expression detected in item id %d", block->item_id);
+        } else {
+            result = root->next;
 
-        /* remove result from the free list */
-        iter = root->free;
-        while (iter != NULL) {
-            if (iter->next == root->next)
-                iter->next = root->next->next;
-            iter = iter->next;
+            /* remove result from the free list */
+            iter = root->free;
+            while (iter != NULL) {
+                if (iter->next == root->next)
+                    iter->next = root->next->next;
+                iter = iter->next;
+            }
+
+            /* =.= */
+            result->free = NULL;
+            result->left = NULL;
+            result->right = NULL;
+            result->next = result;
+            result->prev = result;
         }
-
-        /* =.= */
-        result->free = NULL;
-        result->left = NULL;
-        result->right = NULL;
-        result->next = result;
-        result->prev = result;
     }
 
     iter = root->free;
@@ -3712,10 +3717,10 @@ static int evaluate_expression_sub(block_r * block, char ** expr, int * start, i
 
             /* return expression node and skip evaluated sub expression */
             *temp = node;
-            *start = index;
         }
     }
 
+    *start = index;
     return status;
 }
 
