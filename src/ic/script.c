@@ -1271,6 +1271,7 @@ struct work {
     void * search;
     int count;
     int total;
+    int flag;
 };
 
 static int stack_eng_item_work(struct rbt_node * node, void * context, int flag) {
@@ -1449,7 +1450,7 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
     int status = 0;
     double min;
     double max;
-    char fmt[16];
+    char fmt[32];
     char buf[64];
     int  off = 0;
 
@@ -1463,8 +1464,13 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
     /* build the conversion specifier;
      * %[+](.2f|d)[%%] ~ %[+](.2f|d)[%%] */
     if( (node->min != 0 && min == 0) ||
-        (node->max != 0 && max == 0) )
+        (node->max != 0 && max == 0) ) {
         flag |= FORMAT_FLOAT;
+    } else {
+        node->min /= modifier;
+        node->max /= modifier;
+    }
+
     for(i = 0; i < 2; i++) {
         fmt[off++] = '%';
         if(flag & FORMAT_PLUS)
@@ -1476,8 +1482,14 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
         } else {
             fmt[off++] = 'd';
         }
-        if(flag & FORMAT_RATIO)
+        if(flag & FORMAT_RATIO) {
             fmt[off++] = '%';
+            fmt[off++] = '%';
+        }
+        /* one %[+](.2f|d)[%%] required don't
+         * compare equality using doubles o.o */
+        if (node->min == node->max)
+            break;
         if(i == 0) {
             fmt[off++] = ' ';
             fmt[off++] = '~';
@@ -1487,8 +1499,17 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
     fmt[off++] = '\0';
 
     /* write buffer with formula */
-    if( !sprintf(buf, fmt, min, max) ||
-        stack_aux_formula(block, node, buf) )
+    if(node->min == node->max) {
+        status = flag & FORMAT_FLOAT ?
+            !sprintf(buf, fmt, min, max) :
+            !sprintf(buf, fmt, node->min, node->max);
+    } else {
+        status = flag & FORMAT_FLOAT ?
+            !sprintf(buf, fmt, max) :
+            !sprintf(buf, fmt, node->max);
+    }
+
+    if (status || stack_aux_formula(block, node, buf) )
         status = exit_stop("failed to write integer expression");
 
     return status;
@@ -1545,6 +1566,14 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
     max = node->max / modifier;
 
     /* build the conversion specifier */
+    if( (node->min != 0 && min == 0) ||
+        (node->max != 0 && max == 0) ) {
+        flag |= FORMAT_FLOAT;
+    } else {
+        node->min /= modifier;
+        node->max /= modifier;
+    }
+
     cnv[off++] = '%';
     if(flag & FORMAT_PLUS)
         cnv[off++] = '+';
@@ -1567,22 +1596,35 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
     if(is_nil(buf)) {
         status = exit_stop("out of memory");
     } else {
-        if(node->min >= 0 && node->max >= 0) {
+        if(node->min == node->max) {
+            status = !sprintf(fmt, "%%s %s", cnv) ||
+                        (flag & FORMAT_FLOAT) ?
+                        !sprintf(buf, fmt, (node->max >= 0) ? pos : neg, max) :
+                        !sprintf(buf, fmt, (node->max >= 0) ? pos : neg, node->max);
+        } else if(node->min >= 0 && node->max >= 0) {
             /* positive */
             status = (!sprintf(fmt, "%%s %s ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, pos, min, max) );
+                        (flag & FORMAT_FLOAT) ?
+                        !sprintf(buf, fmt, pos, min, max) :
+                        !sprintf(buf, fmt, pos, node->min, node->max) );
         } else if(node->min < 0 && node->max >= 0) {
             /* negative - positive */
             status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, neg, fabs(min), pos, max) );
+                        (flag & FORMAT_FLOAT) ?
+                        !sprintf(buf, fmt, neg, fabs(min), pos, max) :
+                        !sprintf(buf, fmt, neg, abs(node->min), pos, node->max) );
         } else if(node->min >= 0 && node->max < 0) {
             /* positive - negative */
             status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, neg, fabs(max), pos, min) );
+                        (flag & FORMAT_FLOAT) ?
+                        !sprintf(buf, fmt, neg, fabs(max), pos, min) :
+                        !sprintf(buf, fmt, neg, fabs(node->max), pos, node->min) );
         } else {
             /* negative */
             status = (!sprintf(fmt, "%%s %s ~ %s", cnv, cnv) ||
-                      !sprintf(buf, fmt, neg, fabs(min), fabs(max)) );
+                        (flag & FORMAT_FLOAT) ?
+                        !sprintf(buf, fmt, neg, fabs(min), fabs(max)) :
+                        !sprintf(buf, fmt, neg, abs(node->min), abs(node->max)) );
         }
         if(status || stack_aux_formula(block, node, buf))
             status = exit_stop("failed to write integer expression");
@@ -1779,27 +1821,27 @@ static int stack_eng_map_work(struct rbt_node * node, void * context, int flag) 
     char * value = NULL;
 
     for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++) {
-        if( (flag & MAP_AMMO_FLAG           && !script_map_id(work->block, "ammo_type", i, &value)) ||
-            (flag & MAP_CAST_FLAG           && !script_map_id(work->block, "cast_flag", i, &value)) ||
-            (flag & MAP_CLASS_FLAG          && !script_map_id(work->block, "class_type", i, &value)) ||
-            (flag & MAP_EFFECT_FLAG         && !script_map_id(work->block, "effect_type", i, &value)) ||
-            (flag & MAP_ELEMENT_FLAG        && !script_map_id(work->block, "element_type", i, &value)) ||
-            (flag & MAP_LOCATION_FLAG       && !script_map_id(work->block, "item_location", i, &value)) ||
-            (flag & MAP_ITEM_FLAG           && !script_map_id(work->block, "item_type", i, &value)) ||
-            (flag & MAP_JOB_FLAG            && !script_map_id(work->block, "job_type", i, &value)) ||
-            (flag & MAP_RACE_FLAG           && !script_map_id(work->block, "race_type", i, &value)) ||
-            (flag & MAP_READPARAM_FLAG      && !script_map_id(work->block, "readparam", i, &value)) ||
-            (flag & MAP_REGEN_FLAG          && !script_map_id(work->block, "regen_flag", i, &value)) ||
-            (flag & MAP_SEARCHSTORE_FLAG    && !script_map_id(work->block, "search_store", i, &value)) ||
-            (flag & MAP_SIZE_FLAG           && !script_map_id(work->block, "size_type", i, &value)) ||
-            (flag & MAP_SP_FLAG             && !script_map_id(work->block, "sp_flag", i, &value)) ||
-            (flag & MAP_TARGET_FLAG         && !script_map_id(work->block, "target_flag", i, &value)) ||
-            (flag & MAP_WEAPON_FLAG         && !script_map_id(work->block, "weapon_type", i, &value)) ||
-            (flag & MAP_REFINE_FLAG         && !script_map_id(work->block, "refine_location", i, &value)) ||
-            (flag & MAP_ITEM_INFO_FLAG      && !script_map_id(work->block, "item_info", i, &value)) ||
-            (flag & MAP_TIME_FLAG           && !script_map_id(work->block, "time_type", i, &value)) ||
-            (flag & MAP_STRCHARINFO_FLAG    && !script_map_id(work->block, "strcharinfo", i, &value)) ||
-            (flag & MAP_STATUSEFFECT_FLAG   && !script_map_id(work->block, "status_effect", i, &value)) ) {
+        if( (work->flag & MAP_AMMO_FLAG           && !script_map_id(work->block, "ammo_type", i, &value)) ||
+            (work->flag & MAP_CAST_FLAG           && !script_map_id(work->block, "cast_flag", i, &value)) ||
+            (work->flag & MAP_CLASS_FLAG          && !script_map_id(work->block, "class_type", i, &value)) ||
+            (work->flag & MAP_EFFECT_FLAG         && !script_map_id(work->block, "effect_type", i, &value)) ||
+            (work->flag & MAP_ELEMENT_FLAG        && !script_map_id(work->block, "element_type", i, &value)) ||
+            (work->flag & MAP_LOCATION_FLAG       && !script_map_id(work->block, "item_location", i, &value)) ||
+            (work->flag & MAP_ITEM_FLAG           && !script_map_id(work->block, "item_type", i, &value)) ||
+            (work->flag & MAP_JOB_FLAG            && !script_map_id(work->block, "job_type", i, &value)) ||
+            (work->flag & MAP_RACE_FLAG           && !script_map_id(work->block, "race_type", i, &value)) ||
+            (work->flag & MAP_READPARAM_FLAG      && !script_map_id(work->block, "readparam", i, &value)) ||
+            (work->flag & MAP_REGEN_FLAG          && !script_map_id(work->block, "regen_flag", i, &value)) ||
+            (work->flag & MAP_SEARCHSTORE_FLAG    && !script_map_id(work->block, "search_store", i, &value)) ||
+            (work->flag & MAP_SIZE_FLAG           && !script_map_id(work->block, "size_type", i, &value)) ||
+            (work->flag & MAP_SP_FLAG             && !script_map_id(work->block, "sp_flag", i, &value)) ||
+            (work->flag & MAP_TARGET_FLAG         && !script_map_id(work->block, "target_flag", i, &value)) ||
+            (work->flag & MAP_WEAPON_FLAG         && !script_map_id(work->block, "weapon_type", i, &value)) ||
+            (work->flag & MAP_REFINE_FLAG         && !script_map_id(work->block, "refine_location", i, &value)) ||
+            (work->flag & MAP_ITEM_INFO_FLAG      && !script_map_id(work->block, "item_info", i, &value)) ||
+            (work->flag & MAP_TIME_FLAG           && !script_map_id(work->block, "time_type", i, &value)) ||
+            (work->flag & MAP_STRCHARINFO_FLAG    && !script_map_id(work->block, "strcharinfo", i, &value)) ||
+            (work->flag & MAP_STATUSEFFECT_FLAG   && !script_map_id(work->block, "status_effect", i, &value)) ) {
             if(block_stack_push(work->block, TYPE_ENG, value)) {
                 free_ptr(value);
                 return 1;
@@ -1832,6 +1874,7 @@ int stack_eng_map(block_r * block, char * expr, int flag, int * argc) {
         work.block = block;
         work.count = 0;
         work.total = MAX_STR_LIST;
+        work.flag = flag;
         if(rbt_range_work(node->value, stack_eng_map_work, &work))
             status = !(flag & MAP_NO_ERROR) ?
             exit_mesg("failed to write map values for '%s' on"
@@ -1865,31 +1908,31 @@ static int stack_eng_db_work(struct rbt_node * node, void * context, int flag) {
     pet_t * pet = NULL;
     map_res * map = NULL;
 
-    if(flag & DB_SKILL_ID)
+    if(work->flag & DB_SKILL_ID)
         calloc_ptr(skill);
-    if(flag & DB_ITEM_ID)
+    if(work->flag & DB_ITEM_ID)
         calloc_ptr(item);
-    if(flag & DB_MOB_ID)
+    if(work->flag & DB_MOB_ID)
         calloc_ptr(mob);
-    if(flag & DB_MERC_ID)
+    if(work->flag & DB_MERC_ID)
         calloc_ptr(merc);
-    if(flag & DB_PET_ID)
+    if(work->flag & DB_PET_ID)
         calloc_ptr(pet);
-    if(flag & DB_MAP_ID)
+    if(work->flag & DB_MAP_ID)
         calloc_ptr(map);
 
     for(i = range->min; i <= range->max && work->count < work->total && !status; i++, work->count++) {
-        if(flag & DB_SKILL_ID) {
+        if(work->flag & DB_SKILL_ID) {
             if( is_nil(skill) ||
                 skill_id(work->block->script->db, skill, i) ||
                 block_stack_push(work->block, TYPE_ENG, skill->desc) )
                 status = exit_mesg("failed to write or search for skill id %d", i);
-        } else if(flag & DB_ITEM_ID) {
+        } else if(work->flag & DB_ITEM_ID) {
             if( is_nil(item) ||
                 item_id(work->block->script->db, item, i) ||
                 block_stack_push(work->block, TYPE_ENG, item->name) )
                 status = exit_mesg("failed to write or search for item id %d", i);
-        } else if(flag & DB_MOB_ID) {
+        } else if(work->flag & DB_MOB_ID) {
             /* negative map id is special map */
             switch(i) {
                 case -1: status = block_stack_push(work->block, TYPE_ENG, "random monster"); break;
@@ -1902,17 +1945,17 @@ static int stack_eng_db_work(struct rbt_node * node, void * context, int flag) {
             }
             if(status)
                 exit_mesg("failed to write or search for mob id %d", i);
-        } else if(flag & DB_MERC_ID) {
+        } else if(work->flag & DB_MERC_ID) {
             if( is_nil(merc) ||
                 merc_id(work->block->script->db, merc, i) ||
                 block_stack_push(work->block, TYPE_ENG, merc->name) )
                 status = exit_mesg("failed to write or search for mercenary id %d", i);
-        } else if(flag & DB_PET_ID) {
+        } else if(work->flag & DB_PET_ID) {
             if( is_nil(pet) ||
                 pet_id(work->block->script->db, pet, i) ||
                 block_stack_push(work->block, TYPE_ENG, pet->name) )
                 status = exit_mesg("failed to write or search for pet id %d", i);
-        } else if(flag & DB_MAP_ID) {
+        } else if(work->flag & DB_MAP_ID) {
             if( is_nil(map) ||
                 map_id(work->block->script->db, map, i) ||
                 block_stack_push(work->block, TYPE_ENG, map->name) )
@@ -1948,6 +1991,7 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
         work.block = block;
         work.count = 0;
         work.total = MAX_STR_LIST;
+        work.flag = flag;
         if(rbt_range_work(node->value, stack_eng_db_work, &work))
             status = exit_mesg("failed to resolve db values for '%"
             "s' on flag %d in item %d", expr, flag, block->item_id);
