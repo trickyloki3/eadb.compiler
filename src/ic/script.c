@@ -4405,9 +4405,10 @@ int node_deit(script_t * script, node ** result) {
     rbt_range_deit(&object->value);
     free_ptr(object->formula);
     free_ptr(object->id);
-    object->free = NULL;
-    object->left = NULL;
-    object->right = NULL;
+    memset(object, 0, sizeof(node));
+    object->script = script;
+    object->next = object;
+    object->prev = object;
 
     if(is_nil(script->free_nodes)) {
         script->free_nodes = object;
