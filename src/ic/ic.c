@@ -1,8 +1,8 @@
 #include <script.h>
 
-#define RE_PATH     "resource.db"
-#define RA_PATH     "rathena.db"
-#define MAP_PATH    "db/athena_db.txt"
+#define RE_PATH     "D:\\Git\\eadb.compiler\\build\\resource.db"
+#define RA_PATH     "D:\\Git\\eadb.compiler\\build\\rathena.db"
+#define MAP_PATH    "D:\\Git\\eadb.compiler\\db\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
     script_t * context = NULL;

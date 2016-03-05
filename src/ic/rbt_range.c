@@ -111,6 +111,9 @@ int rbt_range_dump(struct rbt_range * rbt_range, char * tag) {
     rbt_node * i, * r;
     struct range * range;
 
+    if(is_nil(rbt_range))
+        return 0;
+
     fprintf(stderr, "[%s] [Min: %d Max: %d]\n", tag,
     rbt_range->global->min, rbt_range->global->max);
 

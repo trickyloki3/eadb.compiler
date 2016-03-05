@@ -3546,10 +3546,6 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             /* create subexpression node */
             status = evaluate_expression_sub(block, expr, &i, end, logic_tree, id_tree, flag, &temp);
             operand++;
-        } else if(SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
-            /* create variables, functions, and set node */
-            status = evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp);
-            operand++;
         } else if(SCRIPT_BINARY(expr[i][0])) {
             /* create operator node */
             if(!node_init(block->script, &temp)) {
@@ -3577,6 +3573,10 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
                     node_free(temp);
                 operand++;
             }
+        } else if (SCRIPT_STRING(expr[i][0]) || SCRIPT_SYMBOL(expr[i][0])) {
+            /* create variables, functions, and set node */
+            status = evaluate_expression_var(block, expr, &i, end, logic_tree, flag, &temp);
+            operand++;
         }
 
         if(operand > 1 && is_nil(temp)) {
@@ -3600,8 +3600,13 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
         /* :D */
         result = root->next;
 
-        /* remove result from free list */
-        root->free = root->next->free;
+        /* remove result from the free list */
+        iter = root->free;
+        while (iter != NULL) {
+            if (iter->next == root->next)
+                iter->next = root->next->next;
+            iter = iter->next;
+        }
     }
 
     iter = root->free;
@@ -3742,7 +3747,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
             if( is_nil(object->formula) ||
                 rbt_range_init(&object->value, object->min, object->max, 0) )
                 status = exit_stop("out of memory");
-        } else if(!const_name(db, cst, str, len)) {
+        } else if(calloc_ptr(cst) || !const_name(db, cst, str, len)) {
             object->type = NODE_TYPE_CONSTANT;
             object->min = cst->value;
             object->max = cst->value;
