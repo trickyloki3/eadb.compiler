@@ -4699,7 +4699,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                 break;
             case '&' + '&':
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    if(rbt_range_op(node->left->value, node->right->value, &node->value, and))
+                    if(rbt_range_and(node->left->value, node->right->value, &node->value))
                         return exit_mesg("failed on node %p", node);
                     if(node->left->logic && node->right->logic)
                         if(rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and))
@@ -4711,7 +4711,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                 break;
             case '|' + '|':
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
-                    if(rbt_range_op(node->left->value, node->right->value, &node->value, or))
+                    if(rbt_range_or(node->left->value, node->right->value, &node->value))
                         return exit_mesg("failed on node %p", node);
                     if(node->left->logic && node->right->logic)
                         if(rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or))
