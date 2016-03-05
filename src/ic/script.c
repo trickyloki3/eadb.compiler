@@ -35,8 +35,8 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
-int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
-int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
 int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
 int evaluate_function_pow(block_r *, int, int, var_res *, node *);
 int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
@@ -4162,100 +4162,89 @@ int evaluate_function_gettime(block_r * block, int off, int cnt, var_res * func,
     return status;
 }
 
-int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int i = 0;
-    int ret = 0;
-    node_t * count = NULL;
-    node_t * result = NULL;
-    range_t * temp = NULL;
+int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int i;
+    int status = 0;
+    int count;
+    node * value = NULL;
+    rbt_range * range = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    if(block->script->mode == EATHENA) {
-        /* <function name>, <count>, <0> to <count arguments */
-        if(0 == ncs_strcmp(block->ptr[off], "F_Rand") ||
-           0 == ncs_strcmp(block->ptr[off], "F_RandMes")) {
-            if(cnt < 2)
-                return exit_func_safe("invalid argument count to "
-                "function '%s' in %d", func->name, block->item_id);
-
-            count = evaluate_expression(block, block->ptr[off + 1], 0);
-            if(NULL == count ||
-               count->min != count->max)
-                goto failed;
-
-            /* check whether the number of argument match the actual argument list */
-            if(count->min != cnt - 2) {
-                exit_func_safe("argument mismatch for '%s' in item id %d", block->ptr[off], block->item_id);
-                goto failed;
-            }
-
-            /* evaluate all the arguments */
-            for(i = 0; i < count->min; i++) {
-                result = evaluate_expression(block, block->ptr[off + 2 + i], 0);
-                if(NULL == result)
-                    goto failed;
-
-                /* combine the ranges for all arguments */
-                if(node->range == NULL) {
-                    node->range = copyrange(result->range);
+    switch(block->script->mode) {
+        case EATHENA:
+            /* <function name>, <count>, <0 to count arguments> */
+            if( 0 == ncs_strcmp(block->ptr[off], "F_Rand") ||
+                0 == ncs_strcmp(block->ptr[off], "F_RandMes") ) {
+                if(cnt < 2) {
+                    status = exit_mesg("invalid argument count to func"
+                    "tion '%s' in %d", block->ptr[off], block->item_id);
+                } else if(evaluate_numeric_constant(block, block->ptr[off + 1], &count)) {
+                    status = exit_mesg("failed to evaluate '%s' into a constant", block->ptr[off + 1]);
+                } else if(count != cnt - 2) {
+                    status = exit_mesg("mismatch in argument count and number of arg"
+                    "uments in function '%s' in %d", block->ptr[off], block->item_id);
                 } else {
-                    temp = node->range;
-                    node->range = orrange(node->range, result->range);
-                    freerange(temp);
+                    for(i = 0; i < count && !status; i++) {
+                        value = evaluate_expression(block, block->ptr[off + 2 + i], 0);
+                        if(is_nil(value)) {
+                            status = exit_stop("out of memory");
+                        } else {
+                            if( temp->value ?
+                                rbt_range_or(value->value, temp->value, &range) :
+                                rbt_range_dup(value->value, &range) ) {
+                                status = exit_stop("out of memory");
+                            } else {
+                                rbt_range_deit(&temp->value);
+                                temp->value = range;
+                            }
+                            node_free(value);
+                        }
+                    }
                 }
-
-                node_free(result);
-                result = NULL;
+            } else {
+                status = exit_mesg("unsupported function '%s' "
+                "in item %d", block->ptr[off], block->item_id);
             }
-
-            node->formula = convert_string("Random");
-            node->min = minrange(node->range);
-            node->max = maxrange(node->range);
-            goto clean;
-        }
-    } else if(block->script->mode == RATHENA) {
-        if(0 == ncs_strcmp(block->ptr[off], "F_Rand")) {
-            if(cnt < 1)
-                return exit_func_safe("invalid argument count to "
-                "function '%s' in %d", func->name, block->item_id);
-
-            /* evaluate all the arguments */
-            for(i = 1; i < cnt; i++) {
-                result = evaluate_expression(block, block->ptr[off + i], 0);
-                if(NULL == result)
-                    goto failed;
-
-                /* combine the ranges for all arguments */
-                if(node->range == NULL) {
-                    node->range = copyrange(result->range);
+            break;
+        case RATHENA:
+            if(0 == ncs_strcmp(block->ptr[off], "F_Rand")) {
+                if(cnt < 1) {
+                    status = exit_mesg("invalid argument count to func"
+                    "tion '%s' in %d", block->ptr[off], block->item_id);
                 } else {
-                    temp = node->range;
-                    node->range = orrange(node->range, result->range);
-                    freerange(temp);
+                    for(i = 1; i < cnt && !status; i++) {
+                        value = evaluate_expression(block, block->ptr[off + i], 0);
+                        if(is_nil(value)) {
+                            status = exit_stop("out of memory");
+                        } else {
+                            if( temp->value ?
+                                rbt_range_or(value->value, temp->value, &range) :
+                                rbt_range_dup(value->value, &range) ) {
+                                status = exit_stop("out of memory");
+                            } else {
+                                rbt_range_deit(&temp->value);
+                                temp->value = range;
+                            }
+                            node_free(value);
+                        }
+                    }
                 }
-
-                node_free(result);
-                result = NULL;
             }
 
-            node->formula = convert_string("Random");
-            node->min = minrange(node->range);
-            node->max = maxrange(node->range);
-            goto clean;
-        }
+            break;
+        default:
+            status = exit_mesg("unsupported mode for functio"
+            "n '%s' in item %d", func->name, block->item_id);
     }
 
-    goto failed;
+    if(!status) {
+        temp->formula = convert_string("random");
+        if( is_nil(temp->formula) ||
+            rbt_range_min(temp->value, &temp->min) ||
+            rbt_range_max(temp->value, &temp->max) )
+            status = exit_stop("out of memory");
+    }
 
-clean:
-    node_free(count);
-    node_free(result);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return 0;
 }
 
 int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * func, node_t * node) {
