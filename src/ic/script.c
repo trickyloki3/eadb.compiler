@@ -1495,7 +1495,7 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
 }
 
 int stack_eng_int(block_r * block, char * expr, int modifier, int flag) {
-    int status;
+    int status = 0;
     node * node;
 
     node = evaluate_expression(block, expr, 0);
