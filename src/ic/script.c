@@ -4723,7 +4723,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                 break;
             case ':':
                 /* iterable use the ? operator to handle the for condition */
-                if(rbt_range_op(node->left->value, node->right->value, &node->value, or))
+                if(rbt_range_or(node->left->value, node->right->value, &node->value))
                     return exit_mesg("failed on node %p", node);
                 break;
             case '?':

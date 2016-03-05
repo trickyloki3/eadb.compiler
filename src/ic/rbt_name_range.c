@@ -595,7 +595,9 @@ int rbt_logic_not_all(struct rbt_logic * r, struct rbt_logic ** object) {
 
     i = r;
     do {
-        if(rbt_logic_op(i, NULL, &c, not))
+        c = NULL;
+
+        if(rbt_logic_not(i, &c))
             goto failed;
 
         if(is_nil(logic))
