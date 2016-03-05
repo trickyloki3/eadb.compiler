@@ -3595,7 +3595,6 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
         node_eval(root->next, node_dbg, logic_tree, id_tree, flag) ) {
         status = exit_mesg("invalid expression detected in item id %d", block->item_id);
     } else {
-        /* :D */
         result = root->next;
 
         /* remove result from the free list */
@@ -3605,6 +3604,13 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
                 iter->next = root->next->next;
             iter = iter->next;
         }
+
+        /* =.= */
+        result->free = NULL;
+        result->left = NULL;
+        result->right = NULL;
+        result->next = result;
+        result->prev = result;
     }
 
     iter = root->free;
@@ -4528,7 +4534,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
          * (operator) (expression) */
         if(is_ptr(node->left))
             if(node_eval(node->left, stm, logic_tree, id_tree, flag))
-                return 1;
+                return exit_mesg("failed on node %p", node);
     } else {
         /* binary operators has two expression
          * (left-expression) (operator) (right-expression) */
@@ -4563,16 +4569,17 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
              *
              *  (result)
              *  0 ~ 10 (refine rate)
+
              */
 
             /* (true)  original logic tree */
             if(is_ptr(node->left))
                 if(node_eval(node->left, stm, logic_tree, id_tree, flag))
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
 
             /* (false) inverse logic tree */
             if(rbt_logic_not_all(logic_tree, &logic))
-                return 1;
+                return exit_mesg("failed on node %p", node);
 
             if(is_ptr(node->right))
                 if(node_eval(node->right, stm, logic, id_tree, flag))
@@ -4587,7 +4594,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
         } else {
             if(is_ptr(node->left))
                 if(node_eval(node->left, stm, logic_tree, id_tree, flag))
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
 
             /* ? operator node's left child is the (condition) expression and
              * the node's right child is the (true) : (false) expression */
@@ -4596,11 +4603,11 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                  * the search algorithm will search for variable and
                  * function from top to bottom */
                 if(rbt_logic_copy(&logic, node->left->logic))
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
 
                 if(logic_tree) {
                     if(rbt_logic_copy(&clone, logic_tree))
-                        return 1;
+                        return exit_mesg("failed on node %p", node);
                     rbt_logic_append(logic, clone);
                 }
 
@@ -4628,7 +4635,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
     if( node->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE) ) {
         /* handle functions and variables */
         if(is_nil(node->id))
-            return 1;
+            return exit_mesg("failed on node %p", node);
 
         /* search for predicate limit of variable or function */
         if(is_ptr(logic_tree)) {
@@ -4639,12 +4646,12 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
         }
 
         if(rbt_logic_init(&node->logic, node->id, node->value))
-            return 1;
+            return exit_mesg("failed on node %p", node);
     } else if(node->type & NODE_TYPE_UNARY) {
         /* handle unary operators */
         if( is_nil(node->left) ||
             is_nil(node->left->value) )
-            return 1;
+            return exit_mesg("failed on node %p", node);
 
         /* evaluate the unary operator */
         switch(node->op) {
@@ -4654,7 +4661,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
         }
 
         if(node_inherit(node))
-            return 1;
+            return exit_mesg("failed on node %p", node);
 
         node->logic_count = node->left->logic_count;
     /* handle binary operator nodes */
@@ -4664,7 +4671,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
             is_nil(node->right)       ||
             is_nil(node->left->value) ||
             is_nil(node->right->value) )
-            return 1;
+            return exit_mesg("failed on node %p", node);
 
         /* calculate range for operator node */
         switch(node->op) {
@@ -4676,7 +4683,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
             case '|':
                 if( rbt_range_op(node->left->value, node->right->value, &node->value, node->op) ||
                     node_inherit(node) )
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
                 break;
             case '<' + '=':
             case '<':
@@ -4688,44 +4695,44 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                             rbt_range_op(node->left->value, node->right->value, &node->value, node->op) :
                             rbt_range_init(&node->value, 0, 1, 0);
                 if(status || node_inherit(node))
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
                 break;
             case '&' + '&':
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
                     if(rbt_range_op(node->left->value, node->right->value, &node->value, and))
-                        return 1;
+                        return exit_mesg("failed on node %p", node);
                     if(node->left->logic && node->right->logic)
                         if(rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and))
-                            return 1;
+                            return exit_mesg("failed on node %p", node);
                 } else {
                     if(rbt_range_init(&node->value, 0, 1, 0))
-                        return 1;
+                        return exit_mesg("failed on node %p", node);
                 }
                 break;
             case '|' + '|':
                 if(flag & EVALUATE_FLAG_EXPR_BOOL) {
                     if(rbt_range_op(node->left->value, node->right->value, &node->value, or))
-                        return 1;
+                        return exit_mesg("failed on node %p", node);
                     if(node->left->logic && node->right->logic)
                         if(rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or))
-                            return 1;
+                            return exit_mesg("failed on node %p", node);
                 } else {
                     if(rbt_range_init(&node->value, 0, 1, 0))
-                        return 1;
+                        return exit_mesg("failed on node %p", node);
                 }
                 break;
             case ':':
                 /* iterable use the ? operator to handle the for condition */
                 if(rbt_range_op(node->left->value, node->right->value, &node->value, or))
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
                 break;
             case '?':
                 /* right node is : operator */
                 if(rbt_range_dup(node->right->value, &node->value))
-                    return 1;
+                    return exit_mesg("failed on node %p", node);
                 break;
             default:
-                return 1;
+                return exit_mesg("failed on node %p", node);
         }
 
         node->logic_count = node->left->logic_count + node->right->logic_count;
@@ -4733,7 +4740,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
 
     if( rbt_range_min(node->value, &node->min) ||
         rbt_range_max(node->value, &node->max) )
-        return 1;
+        return exit_mesg("failed on node %p", node);
 
     /* dump the node list at each step;
      * used only for debugging and you
