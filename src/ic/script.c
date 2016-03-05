@@ -37,10 +37,10 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
-int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
-int evaluate_function_pow(block_r *, int, int, var_res *, node *);
-int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
-int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_pow(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
+/* re */ int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -4247,114 +4247,126 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
     return 0;
 }
 
-int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int len = 0;
-    int argc = 0;
-
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
+int evaluate_function_countitem(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int len;
+    int unused;
 
     if(cnt != 1)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_item(block, block->ptr[off], &argc, 0) ||
-       argc != 1)
-       return CHECK_FAILED;
-    len = (block->arg_cnt - len) + 32;
 
-    node->formula = calloc(len, sizeof(char));
-    if(NULL == node->formula)
-        return CHECK_FAILED;
+    if(stack_eng_item(block, block->ptr[off], &unused, 0)) {
+       status = exit_mesg("failed to resolve '%s' into an item name", block->ptr[off]);
+    } else {
+        len = block->arg_cnt - len + 16;
+        temp->formula = calloc(len, sizeof(char));
+        if(is_nil(temp->formula)) {
+            status = exit_stop("out of memory");
+        } else {
+            sprintf(temp->formula, "%s Count", block->eng[block->eng_cnt - 1]);
+            temp->min = func->min;
+            temp->max = func->max;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
+    }
 
-    sprintf(node->formula, "%s Count", block->eng[block->eng_cnt - 1]);
-    node->min = func->min;
-    node->max = func->max;
-    /*node->type = NODE_TYPE_CONSTANT;*/
-
-    return CHECK_PASSED;
+    return status;
 }
 
-int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int ret = 0;
-    node_t * base = NULL;
-    node_t * expo = NULL;
-
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
+int evaluate_function_pow(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    node * base = NULL;
+    node * expo = NULL;
 
     if(cnt != 2)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
     base = evaluate_expression(block, block->ptr[off], 0);
-    if(NULL == base)
-        goto failed;
+    if(is_nil(base)) {
+        status = exit_mesg("failed to evaluate '%s' i"
+        "n item %d", block->ptr[off], block->item_id);
+    } else {
+        expo = evaluate_expression(block, block->ptr[off + 1], 0);
+        if(is_nil(expo)) {
+            status = exit_mesg("failed to evaluate '%s' in "
+            "item %d", block->ptr[off + 1], block->item_id);
+        } else {
+            temp->min = (int) pow(base->min, expo->min);
+            temp->max = (int) pow(base->max, expo->max);
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
+    }
 
-    expo = evaluate_expression(block, block->ptr[off + 1], 0);
-    if(NULL == expo)
-        goto failed;
-
-    node->min = (int) pow(base->min, expo->min);
-    node->max = (int) pow(base->max, expo->max);
-
-clean:
     node_free(base);
     node_free(expo);
-    return ret;
-failed:
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
-int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * func, node_t * node) {
-    int len = 0;
-    int argc = 0;
+int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
+    int len;
+    int unused;
 
-    /* error on invalid references */
-    exit_null_safe(3, block, func, node);
-
-    if(1 > cnt || 2 < cnt)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+    if(cnt != 1 || cnt != 2)
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_map(block, block->ptr[off], MAP_STRCHARINFO_FLAG, &argc))
-        return CHECK_FAILED;
-    len = block->arg_cnt - len;
 
-    node->formula = calloc(len, sizeof(char));
-    if(NULL == node->formula)
-        return CHECK_FAILED;
+    if(stack_eng_map(block, block->ptr[off], MAP_STRCHARINFO_FLAG, &unused)) {
+        status = exit_mesg("failed to evaluate '%s' "
+        "into a strcharinfo string", block->ptr[off]);
+    } else {
+        len = block->arg_cnt - len;
+        temp->formula = calloc(len, sizeof(char));
+        if(is_nil(temp->formula)) {
+            status = exit_stop("out of memory");
+        } else {
+            sprintf(temp->formula, "%s", block->eng[block->eng_cnt - 1]);
+            temp->min = func->min;
+            temp->max = func->max;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
+    }
 
-    sprintf(node->formula, "%s", block->eng[block->eng_cnt - 1]);
-    node->min = func->min;
-    node->max = func->max;
-
-    return CHECK_PASSED;
+    return status;
 }
 
-int evaluate_function_setoption(block_r * block, int off, int cnt, var_res * func, node_t * node) {
+int evaluate_function_setoption(block_r * block, int off, int cnt, var_res * func, node * temp) {
+    int status = 0;
     int len = 0;
 
     if(cnt != 1)
-        return exit_func_safe("invalid argument count to "
-        "function '%s' in %d", func->name, block->item_id);
+        return exit_mesg("invalid argument count to fun"
+        "ction '%s' in %d", func->name, block->item_id);
 
     len = block->arg_cnt;
-    if(stack_eng_options(block, block->ptr[off]))
-        return CHECK_FAILED;
-    len = block->arg_cnt - len;
 
-    node->formula = calloc(len, sizeof(char));
-    if(NULL == node->formula)
-        return CHECK_FAILED;
+    if(stack_eng_options(block, block->ptr[off])) {
+        status = exit_mesg("failed to evaluate '%s"
+        "' into an option string", block->ptr[off]);
+    } else {
+        len = block->arg_cnt - len;
+        temp->formula = calloc(len, sizeof(char));
+        if(is_nil(temp->formula)) {
+            status = exit_stop("out of memory");
+        } else {
+            sprintf(temp->formula, "%s", block->eng[block->eng_cnt - 1]);
+            temp->min = func->min;
+            temp->max = func->max;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = exit_stop("out of memory");
+        }
+    }
 
-    sprintf(node->formula, "%s", block->eng[block->eng_cnt - 1]);
-    node->min = func->min;
-    node->max = func->max;
-    return CHECK_PASSED;
+    return status;
 }
 
 int node_init(script_t * script, node ** result) {
