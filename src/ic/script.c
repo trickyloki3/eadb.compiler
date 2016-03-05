@@ -4691,18 +4691,28 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                     return 1;
                 break;
             case '&' + '&':
-                if((flag & EVALUATE_FLAG_EXPR_BOOL) ?
-                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and) ||
-                    rbt_range_op(node->left->value, node->right->value, &node->value, and) :
-                    rbt_range_init(&node->value, 0, 1, 0) )
-                    return 1;
+                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
+                    if(rbt_range_op(node->left->value, node->right->value, &node->value, and))
+                        return 1;
+                    if(node->left->logic && node->right->logic)
+                        if(rbt_logic_op(node->left->logic, node->right->logic, &node->logic, and))
+                            return 1;
+                } else {
+                    if(rbt_range_init(&node->value, 0, 1, 0))
+                        return 1;
+                }
                 break;
             case '|' + '|':
-                if((flag & EVALUATE_FLAG_EXPR_BOOL) ?
-                    rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or) ||
-                    rbt_range_op(node->left->value, node->right->value, &node->value, or) :
-                    rbt_range_init(&node->value, 0, 1, 0) )
-                    return 1;
+                if(flag & EVALUATE_FLAG_EXPR_BOOL) {
+                    if(rbt_range_op(node->left->value, node->right->value, &node->value, or))
+                        return 1;
+                    if(node->left->logic && node->right->logic)
+                        if(rbt_logic_op(node->left->logic, node->right->logic, &node->logic, or))
+                            return 1;
+                } else {
+                    if(rbt_range_init(&node->value, 0, 1, 0))
+                        return 1;
+                }
                 break;
             case ':':
                 /* iterable use the ? operator to handle the for condition */
