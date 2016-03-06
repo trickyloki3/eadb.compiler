@@ -858,8 +858,8 @@ int item_group_id(db_t * db, item_group_t * item_group, int group_id, int subgro
         return CHECK_FAILED;
 
     /* create array for item id and rate */
-    item_group->item_id = malloc(item_group->size * sizeof(int));
-    item_group->rate = malloc(item_group->size * sizeof(int));
+    item_group->item_id = malloc((item_group->size + 1) * sizeof(int));
+    item_group->rate = malloc((item_group->size + 1) * sizeof(int));
     if(NULL == item_group->item_id ||
        NULL == item_group->rate) {
         item_group_free(item_group);

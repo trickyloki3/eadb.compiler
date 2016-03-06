@@ -551,6 +551,7 @@ static int rbt_logic_or(struct rbt_logic * l, struct rbt_logic * r, struct rbt_l
 
 /* de morgan's law */
 static int rbt_logic_not(struct rbt_logic * l, struct rbt_logic ** object) {
+    int status = 0;
     int type;
     rbt_range * range = NULL;
     rbt_logic * logic_1 = NULL;
@@ -559,23 +560,20 @@ static int rbt_logic_not(struct rbt_logic * l, struct rbt_logic ** object) {
     if(var == l->type) {
         if( rbt_range_not(l->range, &range) ||
             rbt_logic_init(object, l->name, range) )
-            goto failed;
+            status = 1;
         free_ptr_call(range, rbt_range_deit);
     } else {
         type = or == l->type ? and : or;
         if( rbt_logic_not(l->l, &logic_1) ||
             rbt_logic_not(l->r, &logic_2) ||
             rbt_logic_op(logic_1, logic_2, object, type) )
-            goto failed;
+            status = 1;
     }
 
-    return 0;
-
-failed:
     free_ptr_call(logic_2, rbt_logic_deit);
     free_ptr_call(logic_1, rbt_logic_deit);
     free_ptr_call(range, rbt_range_deit);
-    return 1;
+    return status;
 }
 
 int rbt_logic_op(struct rbt_logic * l, struct rbt_logic * r, struct rbt_logic ** object, int type) {

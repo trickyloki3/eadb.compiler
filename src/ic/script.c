@@ -1031,7 +1031,7 @@ int script_translate(script_t * script) {
                 flag = EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
                 node = evaluate_expression(iter, iter->ptr[0], flag);
                 if(is_nil(node))
-                    return exit_mesg("failed to evaluate if block's expression '%s'", iter->ptr[0]);
+                    status = exit_mesg("failed to evaluate if block's expression '%s'", iter->ptr[0]);
                 node_free(node);
                 break;
             case 27: /* else */
