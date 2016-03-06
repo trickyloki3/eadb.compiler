@@ -1790,7 +1790,7 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
                 } else {
                     for(i = 0; i < iter->ingredient_count && !status; i++) {
                         if( item_id(block->script->db, item, iter->item_id_req[i]) ||
-                            sprintf(buf, " * %d %s", iter->item_amount_req[i], item->name) ||
+                            !sprintf(buf, " * %d %s", iter->item_amount_req[i], item->name) ||
                             block_stack_push(block, TYPE_ENG, buf) )
                             status = exit_mesg("failed to find item id %d or write item name", iter->item_id);
                     }
@@ -1926,12 +1926,12 @@ static int stack_eng_db_work(struct rbt_node * node, void * context, int flag) {
             if( is_nil(skill) ||
                 skill_id(work->block->script->db, skill, i) ||
                 block_stack_push(work->block, TYPE_ENG, skill->desc) )
-                status = exit_mesg("failed to write or search for skill id %d", i);
+                status = (DB_NO_ERROR & work->flag) ? 1 : exit_mesg("failed to write or search for skill id %d", i);
         } else if(work->flag & DB_ITEM_ID) {
             if( is_nil(item) ||
                 item_id(work->block->script->db, item, i) ||
                 block_stack_push(work->block, TYPE_ENG, item->name) )
-                status = exit_mesg("failed to write or search for item id %d", i);
+                status = (DB_NO_ERROR & work->flag) ? 1 : exit_mesg("failed to write or search for item id %d", i);
         } else if(work->flag & DB_MOB_ID) {
             /* negative map id is special map */
             switch(i) {
@@ -1944,22 +1944,22 @@ static int stack_eng_db_work(struct rbt_node * node, void * context, int flag) {
                                   block_stack_push(work->block, TYPE_ENG, mob->name);
             }
             if(status)
-                exit_mesg("failed to write or search for mob id %d", i);
+                (DB_NO_ERROR & work->flag) ? 1 : exit_mesg("failed to write or search for mob id %d", i);
         } else if(work->flag & DB_MERC_ID) {
             if( is_nil(merc) ||
                 merc_id(work->block->script->db, merc, i) ||
                 block_stack_push(work->block, TYPE_ENG, merc->name) )
-                status = exit_mesg("failed to write or search for mercenary id %d", i);
+                status = (DB_NO_ERROR & work->flag) ? 1 : exit_mesg("failed to write or search for mercenary id %d", i);
         } else if(work->flag & DB_PET_ID) {
             if( is_nil(pet) ||
                 pet_id(work->block->script->db, pet, i) ||
                 block_stack_push(work->block, TYPE_ENG, pet->name) )
-                status = exit_mesg("failed to write or search for pet id %d", i);
+                status = (DB_NO_ERROR & work->flag) ? 1 : exit_mesg("failed to write or search for pet id %d", i);
         } else if(work->flag & DB_MAP_ID) {
             if( is_nil(map) ||
                 map_id(work->block->script->db, map, i) ||
                 block_stack_push(work->block, TYPE_ENG, map->name) )
-                status = exit_mesg("failed to write or search for mob id %d", i);
+                status = (DB_NO_ERROR & work->flag) ? 1 : exit_mesg("failed to write or search for mob id %d", i);
         }
     }
 
@@ -1969,7 +1969,7 @@ static int stack_eng_db_work(struct rbt_node * node, void * context, int flag) {
     free_ptr(merc);
     free_ptr(pet);
     free_ptr(map);
-    return 0;
+    return status;
 }
 
 int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
@@ -1993,8 +1993,8 @@ int stack_eng_db(block_r * block, char * expr, int flag, int * argc) {
         work.total = MAX_STR_LIST;
         work.flag = flag;
         if(rbt_range_work(node->value, stack_eng_db_work, &work))
-            status = exit_mesg("failed to resolve db values for '%"
-            "s' on flag %d in item %d", expr, flag, block->item_id);
+            status = (DB_NO_ERROR & flag) ? 1 : exit_mesg("failed to resolve db "
+            "values for '%s' on flag %d in item %d", expr, flag, block->item_id);
     }
 
     *argc = block->eng_cnt - top;
@@ -2734,7 +2734,7 @@ int translate_bonus(block_r * block, char * prefix) {
                 case 'g': status = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                   break; /* Regen */
                 case 'v': status = stack_eng_map(block, block->ptr[j], MAP_CAST_FLAG, &cnt);                    break; /* Cast Self, Enemy */
                 case 't': status = stack_eng_trigger_bt(block, block->ptr[j]);                                  break; /* Trigger BT */
-                case 'y': status = (stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt)
+                case 'y': status = (stack_eng_db(block, block->ptr[j], DB_ITEM_ID | DB_NO_ERROR, &cnt)
                                     && stack_eng_item_group(block, block->ptr[j]));                             break; /* Item Group */
                 case 'd': status = stack_eng_trigger_atf(block, block->ptr[j]);                                 break; /* Triger ATF */
                 case 'b': status = stack_eng_map(block, block->ptr[j], MAP_TARGET_FLAG, &cnt);                  break; /* Flag Bitfield */

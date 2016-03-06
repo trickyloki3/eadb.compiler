@@ -196,6 +196,7 @@
     #define DB_MERC_ID                     0x08
     #define DB_PET_ID                      0x10
     #define DB_MAP_ID                      0x20
+    #define DB_NO_ERROR                    0x40
 
     /* stack_eng_trigger_bt bitmask flags */
     #define BF_WEAPON                      0x0001
