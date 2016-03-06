@@ -643,8 +643,6 @@ int script_lexical(token_r * token, char * script) {
 
 int script_analysis(script_t * script, token_r * token_list, block_r * parent, block_r ** var) {
     int i = 0;
-    int j = 0;
-    int len = 0;
     int block_cnt = 0;
     char ** token = NULL;
     int token_cnt = 0;
@@ -652,8 +650,6 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     block_r * block = NULL;                         /* current block being parsed */
     block_r * link = parent;                        /* link blocks to if, else-if, else, and for */
     block_r * set = (var != NULL) ? *var : NULL;
-    block_r * iterable_set_block = NULL;
-    block_r * direction_set_block = NULL;
 
     /* check null paramaters */
     exit_null_safe(2, script, token_list);
@@ -1620,7 +1616,7 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
             status = (!sprintf(fmt, "%%s 0 ~ %s or %%s 0 ~ %s", cnv, cnv) ||
                         (flag & FORMAT_FLOAT) ?
                         !sprintf(buf, fmt, neg, fabs(max), pos, min) :
-                        !sprintf(buf, fmt, neg, fabs(node->max), pos, node->min) );
+                        !sprintf(buf, fmt, neg, abs(node->max), pos, node->min) );
         } else {
             /* negative */
             status = (!sprintf(fmt, "%%s %s ~ %s", cnv, cnv) ||
@@ -1644,7 +1640,7 @@ int stack_eng_int_signed(block_r * block, char * expr, int modifier, const char 
     if(is_nil(node)) {
         status = exit_mesg("failed to evaluate integer expression '%s'", expr);
     } else if(stack_eng_int_signed_re(block, node, modifier, pos, neg, flag)) {
-        status = exit_mesg("failed write integer expression");
+        status = exit_stop("failed write integer expression");
     }
 
     node_free(node);
@@ -3481,7 +3477,7 @@ int translate_transform(block_r * block) {
                 translate_status(sc_start4) ) {
                 status = exit_mesg("failed to evaluate transform status in item %d", block->item_id);
             } else if(block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", sc_start4->eng[sc_start4->eng_cnt - 1]) ) {
-                status = exit_mesg("failed to write transform ");
+                status = exit_mesg("failed to write transform string in item %d", block->item_id);
             }
             script_block_free(block->script, &sc_start4);
         }
@@ -3594,8 +3590,10 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
     node * result = NULL;
 
     /* create the doubly linked list's root node */
-    if(node_init(block->script, &root))
-        return (void *) exit_stop("out of memory");
+    if(node_init(block->script, &root)) {
+        exit_stop("out of memory");
+        return NULL;
+    }
 
     for(i = start, iter = root; i < end && !status; i++) {
         temp = NULL;
@@ -3954,7 +3952,6 @@ int evaluate_function_groupranditem(block_r * block, int off, int cnt, var_res *
     int i;
     int status = 0;
     int min = 0;
-    int max = 0;
     int group_id;
     int subgroup_id;
     item_group_t item_group;
@@ -4849,7 +4846,7 @@ int node_inherit(node * temp) {
                 if (rbt_range_dup(temp->value, &temp->logic->range))
                     status = exit_stop("out of memory");
             }
-        } 
+        }
     }
 
     /* inherit the return type */

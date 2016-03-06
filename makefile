@@ -12,7 +12,7 @@ CM_DIR=src/common
 CFLAGS+=-I$(DB_DIR) -I$(IC_DIR) -I$(CM_DIR)
 
 # item script compiler object files
-IC_OBJ:=db_search.c format.c name_range.c range.c rbt_range.c script.c util.c libsort/libsort.a
+IC_OBJ:=db_search.c rbt_name_range.c rbt_range.c script.c util.c libsort/libsort.a
 IC_OBJ:=$(patsubst %.c,$(OBJ_DIR)/%.o,$(IC_OBJ))
 
 # item database loader object files

@@ -25,9 +25,6 @@
     #include "rbt_range.h"
     #include "db_search.h"
 
-    typedef struct rbt_node rbt_node;
-    typedef struct rbt_tree rbt_tree;
-
     #define SCRIPT_PASSED                         CHECK_PASSED
     #define SCRIPT_FAILED                         CHECK_FAILED
     #define BUF_SIZE                              4096                         /* total size of script, stack, and etc */
