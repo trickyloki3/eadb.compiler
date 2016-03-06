@@ -3505,6 +3505,7 @@ int translate_setfalcon(block_r * block) {
     if(status)
         exit_mesg("failed to write setfalcon string in item %d", block->item_id);
 
+    node_free(node);
     return CHECK_PASSED;
 }
 
