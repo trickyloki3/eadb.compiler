@@ -3917,7 +3917,10 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
             if( is_nil(min = evaluate_expression(block, block->ptr[off], 0)) ||
                 rbt_range_max(min->value, &temp->max) )
                 status = 1;
+
             temp->min = 0;
+            if(rbt_range_init(&temp->value, temp->min, temp->max, 0))
+                status = 1;
             break;
         case 2: /* [min, max] */
             if( is_nil(min = evaluate_expression(block, block->ptr[off], 0)) ||
