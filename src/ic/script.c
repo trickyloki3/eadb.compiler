@@ -3938,10 +3938,6 @@ int evaluate_function_rand(block_r * block, int off, int cnt, var_res * func, no
             "ction '%s' in %d", func->name, block->item_id);
     }
 
-    temp->formula = convert_string("random");
-    if(is_nil(temp->formula))
-        status = exit_stop("out of memory");
-
     node_free(min);
     node_free(max);
     return status;
@@ -4312,9 +4308,7 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
     }
 
     if(!status) {
-        temp->formula = convert_string("random");
-        if( is_nil(temp->formula) ||
-            rbt_range_min(temp->value, &temp->min) ||
+        if( rbt_range_min(temp->value, &temp->min) ||
             rbt_range_max(temp->value, &temp->max) )
             status = exit_stop("out of memory");
     }
