@@ -781,6 +781,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
                         return SCRIPT_FAILED;
                     break;
                 case 62:    /* for */
+                    /* to-do: add support for for blocks */
                     return exit_stop("for block are currently not supported");
                 case 28:
                     /* add new set block as the tail */
@@ -795,8 +796,10 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             block->ptr_cnt--;
         } else {
             /* skip single semicolon; treat as empty statement */
-            if(token[i][0] != ';')
-                return exit_func_safe("invalid block %s in item %d", token[i], script->item.id);
+            if(token[i][0] != ';') {
+                /* to-do: translate script engine variables */
+                continue;
+            }
         }
     }
 
@@ -4719,8 +4722,8 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
 
         /* evaluate the unary operator */
         switch(node->op) {
-            case '-': rbt_range_not(node->left->value, &node->value); break;
-            case '!': rbt_range_neg(node->left->value, &node->value); break;
+            case '!': rbt_range_not(node->left->value, &node->value); break;
+            case '-': rbt_range_neg(node->left->value, &node->value); break;
             default: return SCRIPT_FAILED;
         }
 
