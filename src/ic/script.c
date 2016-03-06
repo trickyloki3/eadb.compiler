@@ -1119,7 +1119,7 @@ int script_generate(script_t * script) {
         }
         iter = iter->next;
     } while (iter != script->blocks->next && !iter->free);
-    
+
     return SCRIPT_PASSED;
 }
 
@@ -1501,7 +1501,7 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
     fmt[off++] = '\0';
 
     /* write buffer with formula */
-    if(node->min == node->max) {
+    if(node->min != node->max) {
         status = flag & FORMAT_FLOAT ?
             !sprintf(buf, fmt, min, max) :
             !sprintf(buf, fmt, node->min, node->max);
@@ -2282,7 +2282,7 @@ int stack_eng_status_value(block_r * block, char * expr, int type) {
     int status = CHECK_FAILED;
     switch(type) {
         /* to-do: non-renewal aspd calculation */
-        case 'a': status = stack_eng_renewal_aspd(block, expr); break;                                          /* calculate renewal aspd rate */
+        case 'a': status = stack_eng_aspd(block, expr); break;                                                  /* calculate aspd rate */
         case 'e': status = stack_eng_map(block, expr, MAP_EFFECT_FLAG, &ignore); break;                         /* effect */
         case 'n': status = stack_eng_int(block, expr, 1, FORMAT_PLUS); break;                                   /* +x;     add plus sign */
         case 'o': status = stack_eng_int(block, expr, 10, FORMAT_PLUS); break;                                  /* +x/10;  add plus sign */
@@ -2300,7 +2300,7 @@ int stack_eng_status_value(block_r * block, char * expr, int type) {
 /* renewal aspd rate is calculated in status_calc_bl_main by
  * (status_calc_aspd * AGI / 200) * 10 ignoring the statuses
  * part in rathena  */
-int stack_eng_renewal_aspd(block_r * block, char * expr) {
+int stack_eng_aspd(block_r * block, char * expr) {
     int status = 0;
     int    len;
     char * buf = NULL;
@@ -2314,8 +2314,9 @@ int stack_eng_renewal_aspd(block_r * block, char * expr) {
     if(is_nil(buf))
         return 1;
 
-    /* :D i am so smart */
-    status = !snprintf(buf, len, "(%s) * readparam(bAgi) / 200", expr) ||
+    status = (block->script->mode == RATHENA) ?
+             !snprintf(buf, len, "(%s) * readparam(bAgi) / 200", expr) ||
+             stack_eng_int(block, buf, 1, FORMAT_PLUS):
              stack_eng_int(block, buf, 1, FORMAT_PLUS);
 
     free_ptr(buf);

@@ -286,7 +286,7 @@
     /* re */ int stack_eng_options(block_r *, char *);
     /* re */ int stack_eng_script(block_r *, char *);
     /* re */ int stack_eng_status_value(block_r *, char *, int);
-    /* re */ int stack_eng_renewal_aspd(block_r *, char *);
+    /* re */ int stack_eng_aspd(block_r *, char *);
     /* re */ int stack_aux_formula(block_r *, node *, char *);
 
     /* script translation functions */
