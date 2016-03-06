@@ -682,7 +682,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
             block->type = block_type.id;
 
             /* link to parent or link else-if and else with if blocks */
-            link = (link != parent && link->type != 27) ? parent : link;
+            link = is_nil(link) ? parent : link;
             block->link = link;
 
             /* link the end of the current set list; blocks will not
@@ -1051,7 +1051,7 @@ int script_translate(script_t * script) {
                 }
 
                 /* else-if block's logical expression is in index 0 */
-                if(iter->ptr_cnt) {
+                if(iter->ptr_cnt > 1) {
                     flag = EVALUATE_FLAG_KEEP_LOGIC_TREE | EVALUATE_FLAG_EXPR_BOOL;
                     node = evaluate_expression(iter, iter->ptr[0], flag);
                     if(is_nil(node))
@@ -1119,6 +1119,7 @@ int script_generate(script_t * script) {
         }
         iter = iter->next;
     } while (iter != script->blocks->next && !iter->free);
+    
     return SCRIPT_PASSED;
 }
 
