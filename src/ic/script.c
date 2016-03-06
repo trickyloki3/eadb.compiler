@@ -3829,9 +3829,9 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
 
             /* find the set variable in the linked list */
             set = block->set;
-            while(set && status) {
+            while(set) {
                 if( 0 == strcmp(set->ptr[0], str) &&
-                    !node_copy(object, set->set_node) )
+                    !node_copy(set->set_node, object) )
                     break;
                 set = set->set;
             }
@@ -4503,10 +4503,11 @@ int node_copy(node * source, node * target) {
     target->op = source->op;
     target->return_type = source->return_type;
 
-    if( rbt_range_dup(source->value, &target->value) ||
-        rbt_range_min(target->value, &target->min) ||
-        rbt_range_max(target->value, &target->max) )
-        return 1;
+    if(is_ptr(source->value))
+        if( rbt_range_dup(source->value, &target->value) ||
+            rbt_range_min(target->value, &target->min) ||
+            rbt_range_max(target->value, &target->max) )
+            return 1;
 
     if(is_ptr(source->logic))
         if(rbt_logic_copy(&target->logic, source->logic))
