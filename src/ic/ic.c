@@ -23,11 +23,10 @@ int main(int argc, char * argv[]) {
                 if(context->blocks != NULL)
                     script_block_dump(context, stderr);
                 break;*/
+            } else{
+                printf("[%d]\n%s", context->item.id, context->buffer);
             }
         }
-
-        printf("[%d]\n%s", context->item.id, context->buffer);
-        /*script_block_dump(context, stderr);*/
 
         script_block_free_all(context);
     }

@@ -1761,15 +1761,15 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
     } else {
         /* write produce header */
         switch(lvl) {
-            case 1:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 1 weapons.\n"); break;                 /* lv1 weapons */
-            case 2:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 2 weapons.\n"); break;                 /* lv2 weapons */
-            case 3:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 3 weapons.\n"); break;                 /* lv3 weapons */
-            case 11: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 5 success rate.\n"); break; /* cooking sets */
-            case 12: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 4 success rate.\n"); break;
-            case 13: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 3 success rate.\n"); break;
-            case 14: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 2 success rate.\n"); break;
-            case 15: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 1 success rate.\n"); break;
-            case 21: status = block_stack_push(block, TYPE_ENG, "Use to manufacture metals.\n"); break;                    /* metals */
+            case 1:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 1 weapons."); break;                 /* lv1 weapons */
+            case 2:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 2 weapons."); break;                 /* lv2 weapons */
+            case 3:  status = block_stack_push(block, TYPE_ENG, "Use to craft level 3 weapons."); break;                 /* lv3 weapons */
+            case 11: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 5 success rate."); break; /* cooking sets */
+            case 12: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 4 success rate."); break;
+            case 13: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 3 success rate."); break;
+            case 14: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 2 success rate."); break;
+            case 15: status = block_stack_push(block, TYPE_ENG, "Use to cook recipes with rank 1 success rate."); break;
+            case 21: status = block_stack_push(block, TYPE_ENG, "Use to manufacture metals."); break;                    /* metals */
             case 24: break;
             default: status = exit_mesg("unsupported item level %d in item %d", lvl, block->item_id);
         }
@@ -1782,7 +1782,7 @@ int stack_eng_produce(block_r * block, char * expr, int * argc) {
                 if(item_id(block->script->db, item, iter->item_id)) {
                     status = exit_mesg("failed to find item id %d", iter->item_id);
                 /* write the produce item name */
-                } else if(!sprintf(buf, "Recipe for %s", item->name) && block_stack_push(block, TYPE_ENG, buf)) {
+                } else if(!sprintf(buf, "Recipe for %s", item->name) || block_stack_push(block, TYPE_ENG, buf)) {
                     status = exit_stop("failed to write item name");
                 /* write the produce ingredient item name */
                 } else {
@@ -2683,7 +2683,7 @@ int translate_pet_egg(block_r * block) {
     if( stack_eng_script(block, pet.pet_script) ||
         stack_eng_script(block, pet.loyal_script) ||
         block_stack_vararg(block, TYPE_ENG,"Egg containing %s.\n[Normal Bon"
-        "us]\n%s\n[Loyal Bonus]\n%s", pet.name, block->eng[0], block->eng[1]))
+        "us]\n%s[Loyal Bonus]\n%s", pet.name, block->eng[0], block->eng[1]))
         return CHECK_FAILED;
 
     return CHECK_PASSED;
