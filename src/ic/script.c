@@ -3658,7 +3658,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             status = exit_mesg("invalid expression detected in item id %d", block->item_id);
         } else {
             result = root->next;
-            
+
             iter = root;
             while (iter != NULL) {
                 if (iter->free == result) {
@@ -3852,7 +3852,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
     free_ptr(opt);
     free_ptr(var);
     *temp = object;
-    return CHECK_PASSED;
+    return status;
 }
 
 int evaluate_function(block_r * block, char ** expr, int start, int end, var_res * func, node * node) {
