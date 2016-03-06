@@ -1327,8 +1327,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
                 work.search = item;
                 work.count  = 0;
                 work.total  = MAX_STR_LIST;
-                if(rbt_range_work(node->value, stack_eng_item_work, &work))
-                    status = exit_stop("failed to push item names onto the stack");
+                status = rbt_range_work(node->value, stack_eng_item_work, &work);
             }
         }
     }
@@ -1386,8 +1385,7 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
             work.search = skill;
             work.count  = 0;
             work.total  = MAX_STR_LIST;
-            if(rbt_range_work(node->value, stack_eng_skill_work, &work))
-                status = exit_stop("failed to push skill names onto the stack");
+            status = rbt_range_work(node->value, stack_eng_skill_work, &work);
         }
     }
 
@@ -2728,7 +2726,7 @@ int translate_bonus(block_r * block, char * prefix) {
                 case 'e': status = stack_eng_map(block, block->ptr[j], MAP_EFFECT_FLAG, &cnt);                  break; /* Effect */
                 case 'k': status = stack_eng_skill(block, block->ptr[j], &cnt);                                 break; /* Skill */
                 case 's': status = stack_eng_map(block, block->ptr[j], MAP_SIZE_FLAG, &cnt);                    break; /* Size */
-                case 'c': status = (stack_eng_db(block, block->ptr[j], DB_MOB_ID, &cnt) &&
+                case 'c': status = (stack_eng_db(block, block->ptr[j], DB_MOB_ID | DB_NO_ERROR, &cnt) &&
                                     stack_eng_map(block, block->ptr[j], MAP_JOB_FLAG | MAP_CLASS_FLAG, &cnt));  break; /* Monster Class & Job ID * Monster ID */
                 case 'm': status = stack_eng_db(block, block->ptr[j], DB_ITEM_ID, &cnt);                        break; /* Item ID */
                 case 'g': status = stack_eng_map(block, block->ptr[j], MAP_REGEN_FLAG, &cnt);                   break; /* Regen */
@@ -3433,53 +3431,58 @@ int translate_bonus_script(block_r * block) {
 }
 
 int translate_transform(block_r * block) {
-    int err = 0;
-    int argc = 0;
+    int status = 0;
+    int count = 0;
+    int extra = 0;
     block_r * sc_start4 = NULL;
 
-    /* error on invalid arguments */
-    if(3 > block->ptr_cnt)
-        return exit_func_safe("getgroupitem is missing mob "
-        "id, duration, or status in item %d", block->item_id);
+    extra = block->ptr_cnt;
+    if(2 > block->ptr_cnt)
+        return exit_mesg("transform is missing mob "
+        "id or duration in item %d", block->item_id);
 
-    /* set default status values to zero */
+    /* set default status value arguments */
     switch(block->ptr_cnt) {
-        case 3: err = block_stack_push(block, TYPE_PTR, "0");
-        case 4: err = block_stack_push(block, TYPE_PTR, "0");
-        case 5: err = block_stack_push(block, TYPE_PTR, "0");
-        case 6: err = block_stack_push(block, TYPE_PTR, "0");
+        case 2: status = block_stack_push(block, TYPE_PTR, "0");
+        case 3: status = block_stack_push(block, TYPE_PTR, "0");
+        case 4: status = block_stack_push(block, TYPE_PTR, "0");
+        case 5: status = block_stack_push(block, TYPE_PTR, "0");
+        case 6: status = block_stack_push(block, TYPE_PTR, "0");
     }
-    if(err)
-        return exit_func_safe("failed to push defa"
-        "ult arguments in item %d", block->item_id);
+    if(status)
+        return exit_mesg("failed to push default"
+        " arguments in item %d", block->item_id);
 
-    /* push the mob name and duration */
-    if( stack_eng_db(block, block->ptr[0], DB_MOB_ID, &argc) || argc != 1 ||
-        stack_eng_time(block, block->ptr[1], 1))
-        return CHECK_FAILED;
+    /* handle mob name and durection */
+    if( stack_eng_db(block, block->ptr[0], DB_MOB_ID, &count) || count != 1 ||
+        stack_eng_time(block, block->ptr[1], 1)) {
+        status = 1;
+    } else if(block_stack_vararg(block, TYPE_ENG, "Transform into a %s for %s.", block->eng[0], block->eng[1])) {
+        status = exit_mesg("failed to write transform string for item %d", block->item_id);
+    } else if(extra > 2) {
+        if(script_block_new(block->script, &sc_start4)) {
+            status = exit_stop("out of memory");
+        } else {
+            /* initialize a sc_start4 block */
+            sc_start4->name = convert_string("sc_start4");
+            sc_start4->item_id = block->item_id;
+            sc_start4->type = 15;
+            if( block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[2]) ||
+                block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[1]) ||
+                block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[3]) ||
+                block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[4]) ||
+                block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[5]) ||
+                block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[6]) ||
+                translate_status(sc_start4) ) {
+                status = exit_mesg("failed to evaluate transform status in item %d", block->item_id);
+            } else if(block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", sc_start4->eng[sc_start4->eng_cnt - 1]) ) {
+                status = exit_mesg("failed to write transform ");
+            }
+            script_block_free(block->script, &sc_start4);
+        }
+    }
 
-    /* grab a empty block */
-    if(script_block_new(block->script, &sc_start4))
-        return SCRIPT_FAILED;
-
-    /* setup a fake status block */
-    sc_start4->name = convert_string("sc_start4");
-    sc_start4->item_id = block->item_id;
-    sc_start4->type = 15;
-    if( block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[2]) ||
-        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[1]) ||
-        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[3]) ||
-        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[4]) ||
-        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[5]) ||
-        block_stack_vararg(sc_start4, TYPE_PTR, "%s", block->ptr[6]) ||
-        translate_status(sc_start4))
-        err = exit_func_safe("failed to evaluate status in item %d", block->item_id);
-    else if(block_stack_vararg(block, TYPE_ENG, "Transform into a %s for %s.", block->eng[0], block->eng[1]) ||
-            block_stack_vararg(block, TYPE_ENG | FLAG_CONCAT, "%s", sc_start4->eng[sc_start4->eng_cnt - 1]))
-        err = exit_func_safe("failed to write translation in item %d", block->item_id);
-
-    script_block_free(block->script, &sc_start4);
-    return err;
+    return status;
 }
 
 int translate_setfalcon(block_r * block) {
@@ -3797,8 +3800,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
             object->type = NODE_TYPE_CONSTANT;
             object->min = map->id;
             object->max = map->id;
-            if( is_nil(object->formula) ||
-                rbt_range_init(&object->value, object->min, object->max, 0) )
+            if(rbt_range_init(&object->value, object->min, object->max, 0))
                 status = exit_stop("out of memory");
         } else if(calloc_ptr(cst) || !const_name(db, cst, str, len)) {
             object->type = NODE_TYPE_CONSTANT;
@@ -4371,7 +4373,7 @@ int evaluate_function_strcharinfo(block_r * block, int off, int cnt, var_res * f
     int len;
     int unused;
 
-    if(cnt != 1 || cnt != 2)
+    if(cnt != 1 && cnt != 2)
         return exit_mesg("invalid argument count to fun"
         "ction '%s' in %d", func->name, block->item_id);
 

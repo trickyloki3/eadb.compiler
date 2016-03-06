@@ -322,7 +322,7 @@
     int translate_getrandgroupitem(block_r *);
     int translate_getgroupitem(block_r *);
     int translate_bonus_script(block_r *);
-    int translate_transform(block_r *);
+    /* re */ int translate_transform(block_r *);
     int translate_setfalcon(block_r *);
     int translate_makerune(block_r *);
 
