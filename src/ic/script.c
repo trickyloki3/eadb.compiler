@@ -3635,6 +3635,9 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             operand++;
         }
 
+        /* add node to singly list for freeing */
+        iter->free = temp;
+
         if(operand > 1) {
             status = exit_mesg("invalid token '%s' detected in item id %d", expr[i], block->item_id);
         } else {
@@ -3646,9 +3649,6 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
                 status = 1;
             }
         }
-
-        /* add node to singly list for freeing */
-        iter->free = temp;
     }
 
     if(!status) {
@@ -3658,13 +3658,14 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
             status = exit_mesg("invalid expression detected in item id %d", block->item_id);
         } else {
             result = root->next;
-
-            /* remove result from the free list */
-            iter = root->free;
+            
+            iter = root;
             while (iter != NULL) {
-                if (iter->next == root->next)
-                    iter->next = root->next->next;
-                iter = iter->next;
+                if (iter->free == result) {
+                    iter->free = result->free;
+                    break;
+                }
+                iter = iter->free;
             }
 
             /* =.= */
@@ -3676,7 +3677,7 @@ node * evaluate_expression_recursive(block_r * block, char ** expr, int start, i
         }
     }
 
-    iter = root->free;
+    iter = root;
     while(iter != NULL) {
         temp = iter;
         iter = iter->free;
