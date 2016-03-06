@@ -4822,7 +4822,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
 
 int node_inherit(node * temp) {
     int status = 0;
-    node * parent = NULL;
+    node * copy = NULL;
 
     if(is_nil(temp))
         return 0;
@@ -4830,20 +4830,25 @@ int node_inherit(node * temp) {
     /* inherit only from left or right but not both;
      * predciates cannot be accurately interpreted */
     if( is_ptr(temp->left->logic) && is_nil(temp->right->logic) ) {
-        parent = temp->left;
+        copy = temp->left;
     } else if( is_nil(temp->left->logic) && is_ptr(temp->right->logic) ) {
-        parent = temp->right;
+        copy = temp->right;
     } else if( temp->left == temp->right && is_ptr(temp->left->logic) ) {
-        parent = temp->left;
+        copy = temp->left;
     }
-    if(parent) {
-        if(rbt_logic_copy(&temp->logic, parent->logic)) {
+    if(copy) {
+        if(rbt_logic_copy(&temp->logic, copy->logic)) {
             status = exit_stop("out of memory");
-        } else if(parent->formula) {
-            temp->formula = convert_string(parent->formula);
-            if(is_nil(temp->formula))
+        } else if(copy->formula) {
+            temp->formula = convert_string(copy->formula);
+            if(is_nil(temp->formula)) {
                 status = exit_stop("out of memory");
-        }
+            } else if (copy->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+                rbt_range_deit(&temp->logic->range);
+                if (rbt_range_dup(temp->value, &temp->logic->range))
+                    status = exit_stop("out of memory");
+            }
+        } 
     }
 
     /* inherit the return type */
