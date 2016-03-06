@@ -565,7 +565,7 @@ static int rbt_logic_not(struct rbt_logic * l, struct rbt_logic ** object) {
         type = or == l->type ? and : or;
         if( rbt_logic_not(l->l, &logic_1) ||
             rbt_logic_not(l->r, &logic_2) ||
-            rbt_logic_link(object, logic_1, logic_2, type) )
+            rbt_logic_op(logic_1, logic_2, object, type) )
             goto failed;
     }
 
