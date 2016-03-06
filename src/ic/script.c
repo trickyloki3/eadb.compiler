@@ -2332,7 +2332,7 @@ int stack_aux_formula(block_r * block, node * node, char * expr) {
         if(is_nil(buf))
             return 1;
 
-        if( !snprintf(buf, len, "%s (%s)", expr, node->formula) &&
+        if( !snprintf(buf, len, "%s (%s)", expr, node->formula) ||
             block_stack_push(block, TYPE_ENG, buf) )
             status = exit_stop("failed to push expression onto stack");
     }
@@ -3486,15 +3486,23 @@ int translate_transform(block_r * block) {
 }
 
 int translate_setfalcon(block_r * block) {
-    int flag = 0;
+    int status = 0;
+    node * node = NULL;
 
     if(1 != block->ptr_cnt)
         return exit_func_safe("setfalcon is missing"
         " flag argument in item %d", block->item_id);
 
-    if(evaluate_numeric_constant(block, block->ptr[0], &flag) ||
-       block_stack_vararg(block, TYPE_ENG, "%s", (flag) ? "Release a falcon." : "Summon a falcon."))
-        return CHECK_FAILED;
+    node = evaluate_expression(block, block->ptr[0], 0);
+    if(is_nil(node))
+        status = exit_mesg("failed to evaluate '%s' in item %d", block->item_id);
+
+    status = (node->min != node->max) ?
+        block_stack_vararg(block, TYPE_ENG, "Summon or release a falcon.") ||
+        stack_aux_formula(block, node, block->eng[block->eng_cnt - 1]) :
+        block_stack_vararg(block, TYPE_ENG, "%s", (node->max) ? "Release a falcon." : "Summon a falcon.");
+    if(status)
+        exit_mesg("failed to write setfalcon string in item %d", block->item_id);
 
     return CHECK_PASSED;
 }
@@ -3759,7 +3767,9 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
                 object->type = NODE_TYPE_VARIABLE;
                 object->min = var->min;
                 object->max = var->max;
-                if(rbt_range_init(&object->value, object->min, object->max, 0))
+                object->formula = convert_string(var->desc);
+                if( is_nil(object->formula) ||
+                    rbt_range_init(&object->value, object->min, object->max, 0))
                     status = exit_stop("out of memory");
             } else if(var->flag & FUNC_FLAG) {
                 object->type = NODE_TYPE_FUNCTION;
@@ -4802,28 +4812,38 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
     return 0;
 }
 
-int node_inherit(node * node) {
+int node_inherit(node * temp) {
     int status = 0;
+    node * parent = NULL;
 
-    if(is_nil(node))
+    if(is_nil(temp))
         return 0;
 
     /* inherit only from left or right but not both;
      * predciates cannot be accurately interpreted */
-    if( is_ptr(node->left->logic) && is_nil(node->right->logic) ) {
-        status = rbt_logic_copy(&node->logic, node->left->logic);
-    } else if( is_nil(node->left->logic) && is_ptr(node->right->logic) ) {
-        status = rbt_logic_copy(&node->logic, node->right->logic);
-    } else if( node->left == node->right && is_ptr(node->left->logic) ) {
-        status = rbt_logic_copy(&node->logic, node->left->logic);
+    if( is_ptr(temp->left->logic) && is_nil(temp->right->logic) ) {
+        parent = temp->left;
+    } else if( is_nil(temp->left->logic) && is_ptr(temp->right->logic) ) {
+        parent = temp->right;
+    } else if( temp->left == temp->right && is_ptr(temp->left->logic) ) {
+        parent = temp->left;
+    }
+    if(parent) {
+        if(rbt_logic_copy(&temp->logic, parent->logic)) {
+            status = exit_stop("out of memory");
+        } else if(parent->formula) {
+            temp->formula = convert_string(parent->formula);
+            if(is_nil(temp->formula))
+                status = exit_stop("out of memory");
+        }
     }
 
     /* inherit the return type */
     if(status) {
         exit_stop("failed to copy logic tree");
     } else {
-        node->return_type |= node->left->return_type;
-        node->return_type |= node->right->return_type;
+        temp->return_type |= temp->left->return_type;
+        temp->return_type |= temp->right->return_type;
     }
 
     return status;
