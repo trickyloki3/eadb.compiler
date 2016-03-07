@@ -41,6 +41,7 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function_pow(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
+/* re */ int script_generate_write_class_work(struct rbt_node *, void *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -5002,7 +5003,12 @@ int script_generate_var(block_r * block, rbt_logic * logic) {
         case 33:    /* checkmadogear */
         case 34:    /* upper */
         case 48:    /* checkmount */
-            script_generate_vararg(block->script, "%s", logic->name);
+            status = script_generate_vararg(block->script, "%s", logic->name);
+            break;
+        case 20:
+        case 21:
+        case 22:
+            status = script_generate_write_class(block, logic);
             break;
         default:
             /*status = exit_mesg("variable or function id %d is n"
@@ -5033,4 +5039,35 @@ int script_generate_write_range(block_r * block, rbt_logic * logic) {
            (min == max) ?
                 script_generate_vararg(block->script, "%s %d", logic->name, min) :
                 script_generate_vararg(block->script, "%s %d ~ %d", logic->name, min, max) ;
+}
+
+static int script_generate_write_class_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    struct range * range = node->val;
+    struct work * work = context;
+    char * value = NULL;
+
+    for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++) {
+        if(script_map_id(work->block, "job_type"  , i, &value)) {
+            return exit_mesg("failed to find class or job "
+            "id %d in item id %d", i, work->block->item_id);
+        } else {
+            if ((work->count == 0) ?
+                script_generate_vararg(work->search, "%s", value) :
+                script_generate_vararg(work->search, ", %s", value))
+                return exit_mesg("failed to write class or job string '%s'", value);
+            free_ptr(value);
+        }
+    }
+
+    return 0;
+}
+
+int script_generate_write_class(block_r * block, rbt_logic * logic) {
+    struct work work;
+    work.block = block;
+    work.count = 0;
+    work.total = MAX_STR_LIST;
+    work.search = block->script;
+    return rbt_range_work(logic->range, script_generate_write_class_work, &work);
 }
