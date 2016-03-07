@@ -1456,13 +1456,13 @@ static int stack_eng_int_re(block_r * block, node * node, int modifier, int flag
         return exit_stop("division by zero modifier");
 
     /* evaluate integer expression */
-    min = node->min / modifier;
-    max = node->max / modifier;
+    min = ((double) node->min) / modifier;
+    max = ((double) node->max) / modifier;
 
     /* build the conversion specifier;
      * %[+](.2f|d)[%%] ~ %[+](.2f|d)[%%] */
-    if( (node->min != 0 && min == 0) ||
-        (node->max != 0 && max == 0) ) {
+    if( (node->min != 0 && node->min / modifier == 0) ||
+        (node->max != 0 && node->max / modifier == 0) ) {
         flag |= FORMAT_FLOAT;
     } else {
         node->min /= modifier;
@@ -1560,12 +1560,12 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
         return exit_stop("division by zero modifier");
 
     /* evaluate integer expression */
-    min = node->min / modifier;
-    max = node->max / modifier;
+    min = ((double) node->min) / modifier;
+    max = ((double) node->max) / modifier;
 
     /* build the conversion specifier */
-    if( (node->min != 0 && min == 0) ||
-        (node->max != 0 && max == 0) ) {
+    if( (node->min != 0 && node->min / modifier == 0) ||
+        (node->max != 0 && node->max / modifier == 0) ) {
         flag |= FORMAT_FLOAT;
     } else {
         node->min /= modifier;
