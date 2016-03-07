@@ -4314,7 +4314,9 @@ int evaluate_function_callfunc(block_r * block, int off, int cnt, var_res * func
     }
 
     if(!status) {
-        if( rbt_range_min(temp->value, &temp->min) ||
+        temp->formula = convert_string("random");
+        if( is_nil(temp->formula) ||
+            rbt_range_min(temp->value, &temp->min) ||
             rbt_range_max(temp->value, &temp->max) )
             status = exit_stop("out of memory");
     }
@@ -4973,8 +4975,39 @@ int script_generate_var(block_r * block, rbt_logic * logic) {
     int status = 0;
 
     switch(logic->id) {
-        case 3:     status = script_generate_write_range(block, logic); break;
-        default:    status = exit_mesg("variable or function id %d is not supported in item %d", logic->id, block->item_id); break;
+        case 1:     /* getrefine */
+        case 2:     /* getequiprefinerycnt */
+        case 3:     /* readparam */
+        case 4:     /* getskilllv */
+        case 5:     /* random */
+        case 6:     /* pow */
+        case 10:    /* gettime */
+        case 17:    /* job level */
+        case 18:    /* base level */
+        case 19:    /* max hp */
+        case 23:    /* hp */
+        case 24:    /* zeny */
+        case 26:    /* callfunc */
+        case 27:    /* getrandgroupitem */
+        case 30:    /* countitem */
+        case 46:    /* max */
+        case 47:    /* min */
+        case 49:    /* groupranditem */
+            status = script_generate_write_range(block, logic);
+            break;
+        case 13:    /* isequipped */
+        case 28:    /* getpartnerid */
+        case 31:    /* checkoption */
+        case 32:    /* checkfalcon */
+        case 33:    /* checkmadogear */
+        case 34:    /* upper */
+        case 48:    /* checkmount */
+            script_generate_vararg(block->script, "%s", logic->name);
+            break;
+        default:
+            /*status = exit_mesg("variable or function id %d is n"
+            "ot supported in item %d", logic->id, block->item_id);*/
+            break;
     }
 
     return status;

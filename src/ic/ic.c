@@ -23,8 +23,8 @@ int main(int argc, char * argv[]) {
                 block_stack_dump(context->blocks, stderr);
                 break;*/
             } else{
-                printf("[%d]\n%s", context->item.id, context->buffer);
-                /*block_stack_dump(context->blocks, stderr);*/
+                /*printf("[%d]\n%s", context->item.id, context->buffer);
+                block_stack_dump(context->blocks, stderr);*/
             }
         }
 
