@@ -3036,12 +3036,11 @@ int translate_autobonus(block_r * block, int flag) {
     if(3 == block->ptr_cnt)
         block_stack_push(block, TYPE_PTR, "0");
 
-    if( script_recursive(block->script->db, block->script->mode, block->script->map, block->ptr[0], &buf) ||
-        stack_eng_int(block, block->ptr[1], 10, FORMAT_RATIO) ||
+    if( stack_eng_int(block, block->ptr[1], 10, FORMAT_RATIO) ||
         stack_eng_time(block, block->ptr[2], 1) ||
         stack_eng_trigger_bt(block, block->ptr[3]) ||
-        block_stack_vararg(block, TYPE_ENG, "Add %s chance to activate %"
-        "s for %s.\n%s", block->eng[0], block->eng[2], block->eng[1], buf))
+        block_stack_vararg(block, TYPE_ENG, "Add %s chance to activa"
+        "te %s for %s.", block->eng[0], block->eng[2], block->eng[1]))
         ret = CHECK_FAILED;
 
     SAFE_FREE(buf);
