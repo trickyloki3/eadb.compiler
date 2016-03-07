@@ -4707,7 +4707,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
             }
         }
 
-        if(rbt_logic_init(&node->logic, node->id, node->value))
+        if(rbt_logic_init(&node->logic, node->formula ? node->formula : node->id, node->value))
             return exit_mesg("failed on node %p", node);
     } else if(node->type & NODE_TYPE_UNARY) {
         /* handle unary operators */
