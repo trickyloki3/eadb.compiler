@@ -49,7 +49,7 @@ static int str_dup(char * name, char ** buffer, size_t * length) {
     return 0;
 }
 
-int rbt_logic_init(struct rbt_logic ** logic, char * name, rbt_range * range) {
+int rbt_logic_init(struct rbt_logic ** logic, char * name, rbt_range * range, int id) {
     struct rbt_logic * object = NULL;
 
     if( is_nil( logic) ||
@@ -63,6 +63,7 @@ int rbt_logic_init(struct rbt_logic ** logic, char * name, rbt_range * range) {
         return 1;
     }
 
+    object->id = id;
     object->type = var;
     object->next = object;
     object->prev = object;
@@ -169,7 +170,7 @@ static int rbt_logic_var_copy(struct rbt_logic ** object, struct rbt_logic * log
     if(var != logic->type)
         return 1;
 
-    return rbt_logic_init(object, logic->name, logic->range);
+    return rbt_logic_init(object, logic->name, logic->range, logic->id);
 }
 
 static int rbt_logic_and_copy(struct rbt_logic ** object, struct rbt_logic * root) {
@@ -472,7 +473,7 @@ static int rbt_logic_var(struct rbt_logic * l, struct rbt_logic * r, struct rbt_
             case or:    rbt_range_or (l->range, r->range, &range); break;
             case and:   rbt_range_and(l->range, r->range, &range); break;
         }
-        if(rbt_logic_init(&logic_1, l->name, range))
+        if(rbt_logic_init(&logic_1, l->name, range, l->id))
             goto failed;
 
         rbt_range_deit(&range);
@@ -559,7 +560,7 @@ static int rbt_logic_not(struct rbt_logic * l, struct rbt_logic ** object) {
 
     if(var == l->type) {
         if( rbt_range_not(l->range, &range) ||
-            rbt_logic_init(object, l->name, range) )
+            rbt_logic_init(object, l->name, range, l->id) )
             status = 1;
         free_ptr_call(range, rbt_range_deit);
     } else {

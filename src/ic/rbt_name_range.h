@@ -23,6 +23,7 @@
     };
 
     struct rbt_logic {
+        int id;
         int type;               /* var, and, or */
         char * name;
         size_t length;
@@ -35,7 +36,7 @@
         struct rbt_logic * prev;
     };
 
-    int rbt_logic_init(struct rbt_logic **, char *, rbt_range *);
+    int rbt_logic_init(struct rbt_logic **, char *, rbt_range *, int);
     int rbt_logic_deit(struct rbt_logic **);
     int rbt_logic_copy(struct rbt_logic **, struct rbt_logic *);
     int rbt_logic_dump(struct rbt_logic *);

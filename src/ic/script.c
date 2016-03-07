@@ -1092,7 +1092,12 @@ int script_generate(script_t * script) {
         switch(iter->type) {
             case 26: /* if */
             case 27: /* else */
-                /* traverse logic tree */
+                if(is_nil(iter->logic))
+                    return exit_mesg("missing logic tree fo"
+                    "r if block in item %d", iter->item_id);
+                if(script_generate_or(iter, iter->logic))
+                    return exit_mesg("failed to interpret logic expres"
+                    "sion '%s' in item %d", iter->ptr[0], iter->item_id);
                 break;
             case 28: /* set */
                 /* special cases for script engine
@@ -4707,7 +4712,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
             }
         }
 
-        if(rbt_logic_init(&node->logic, node->formula ? node->formula : node->id, node->value))
+        if(rbt_logic_init(&node->logic, node->formula ? node->formula : node->id, node->value, node->var))
             return exit_mesg("failed on node %p", node);
     } else if(node->type & NODE_TYPE_UNARY) {
         /* handle unary operators */
@@ -4925,4 +4930,74 @@ int node_remove(node * p) {
     p->next = p;
     p->prev = p;
     return CHECK_PASSED;
+}
+
+int script_generate_or(block_r * block, rbt_logic * logic) {
+    int status = 0;
+
+    switch(logic->type) {
+        case  or:   status = (logic->l && script_generate_or(block, logic->l)) ||
+                             (logic->r && script_generate_or(block, logic->r)); break;
+        case and:   status = script_generate_vararg(block->script, "[") ||
+                             script_generate_and(block, logic) ||
+                             script_generate_vararg(block->script, "]\n"); break;
+        case var:   status = script_generate_vararg(block->script, "[") ||
+                             script_generate_var(block, logic) ||
+                             script_generate_vararg(block->script, "]\n"); break;
+    }
+
+    return status;
+}
+
+int script_generate_and(block_r * block, rbt_logic * logic) {
+    int status = 0;
+
+    switch(logic->l->type) {
+        case and: status = script_generate_and(block, logic->l); break;
+        case var: status = script_generate_var(block, logic->l); break;
+        default:  status = 1;
+    }
+
+    if(!status) {
+        switch(logic->r->type) {
+            case and: status = script_generate_and(block, logic->r); break;
+            case var: status = script_generate_var(block, logic->r); break;
+            default:  status = 1;
+        }
+    }
+
+    return status;
+}
+
+int script_generate_var(block_r * block, rbt_logic * logic) {
+    int status = 0;
+
+    switch(logic->id) {
+        case 3:     status = script_generate_write_range(block, logic); break;
+        default:    status = exit_mesg("variable or function id %d is not supported in item %d", logic->id, block->item_id); break;
+    }
+
+    return status;
+}
+
+int script_generate_vararg(script_t * script, const char * format, ...) {
+    va_list vararg;
+
+    /* to-do: buffer overflow check */
+    va_start(vararg, format);
+    script->offset += vsnprintf(&script->buffer[script->\
+    offset], BUF_SIZE - script->offset, format, vararg);
+    va_end(vararg);
+
+    return 0;
+}
+
+int script_generate_write_range(block_r * block, rbt_logic * logic) {
+    int min = 0;
+    int max = 0;
+    return rbt_range_min(logic->range, &min) ||
+           rbt_range_max(logic->range, &max) ||
+           (min == max) ?
+                script_generate_vararg(block->script, "%s %d", logic->name, min) :
+                script_generate_vararg(block->script, "%s %d ~ %d", logic->name, min, max) ;
 }

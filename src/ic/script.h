@@ -374,4 +374,11 @@
     /* re */  int node_release(script_t *);                                 /* free node memory from script object */
     /* re */  int node_append(node *, node *);                              /* append to doubly linked list */
     /* re */  int node_remove(node *);                                      /* remove from doubly linked list */
+
+    /* condition generation */
+    int script_generate_or(block_r *, rbt_logic *);
+    int script_generate_and(block_r *, rbt_logic *);
+    int script_generate_var(block_r *, rbt_logic *);
+    int script_generate_vararg(script_t *, const char *, ...);
+    int script_generate_write_range(block_r *, rbt_logic *);
 #endif
