@@ -382,4 +382,5 @@
     int script_generate_vararg(script_t *, const char *, ...);
     int script_generate_write_range(block_r *, rbt_logic *);
     int script_generate_write_class(block_r *, rbt_logic *);
+    int script_generate_write_strcharinfo(block_r *, rbt_logic *);
 #endif

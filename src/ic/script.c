@@ -42,6 +42,7 @@ FILE * node_dbg = NULL;
 /* re */ int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
 /* re */ int script_generate_write_class_work(struct rbt_node *, void *, int);
+/* re */ int script_generate_write_strcharinfo_work(struct rbt_node *, void *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -5005,11 +5006,13 @@ int script_generate_var(block_r * block, rbt_logic * logic) {
         case 48:    /* checkmount */
             status = script_generate_vararg(block->script, "%s", logic->name);
             break;
-        case 20:
-        case 21:
-        case 22:
+        case 20:    /* baseclass */
+        case 21:    /* basejob */
+        case 22:    /* class */
             status = script_generate_write_class(block, logic);
             break;
+        case 29:    /* strcharinfo */
+            status = script_generate_write_strcharinfo(block, logic);
         default:
             /*status = exit_mesg("variable or function id %d is n"
             "ot supported in item %d", logic->id, block->item_id);*/
@@ -5048,7 +5051,7 @@ static int script_generate_write_class_work(struct rbt_node * node, void * conte
     char * value = NULL;
 
     for(i = range->min; i <= range->max && work->count < work->total; i++, work->count++) {
-        if(script_map_id(work->block, "job_type"  , i, &value)) {
+        if(script_map_id(work->block, "job_type", i, &value)) {
             return exit_mesg("failed to find class or job "
             "id %d in item id %d", i, work->block->item_id);
         } else {
@@ -5070,4 +5073,44 @@ int script_generate_write_class(block_r * block, rbt_logic * logic) {
     work.total = MAX_STR_LIST;
     work.search = block->script;
     return rbt_range_work(logic->range, script_generate_write_class_work, &work);
+}
+
+static int script_generate_write_strcharinfo_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    int status = 0;
+    struct range * range = node->val;
+    struct work * work = context;
+    map_res * map = NULL;
+
+    if(calloc_ptr(map))
+        return exit_stop("out of memory");
+
+    for(i = range->min; i <= range->max && work->count < work->total && !status; i++, work->count++) {
+        if(map_id(work->block->script->db, map, i)) {
+            status = exit_mesg("failed to find map id %"
+            "d in item id %d", i, work->block->item_id);
+        } else {
+            status = (work->count == 0) ?
+                script_generate_vararg(work->search, "%s", map->name) :
+                script_generate_vararg(work->search, ", %s", map->name);
+        }
+    }
+
+    free_ptr(map);
+    return status;
+}
+
+int script_generate_write_strcharinfo(block_r * block, rbt_logic * logic) {
+    struct work work;
+
+    if(0 == strcmp("map", logic->name)) {
+        work.block = block;
+        work.count = 0;
+        work.total = MAX_STR_LIST;
+        work.search = block->script;
+        return  script_generate_vararg(block->script, "On map ") ||
+                rbt_range_work(logic->range, script_generate_write_strcharinfo_work, &work);
+    }
+
+    return script_generate_vararg(block->script, "%s", logic->name);
 }
