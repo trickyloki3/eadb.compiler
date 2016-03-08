@@ -18,13 +18,11 @@ int main(int argc, char * argv[]) {
                 script_translate(context) ||
                 script_generate(context) ||
                 context->item.id == 0) {
-                /* dump the blocks
-                fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
+                /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
                 block_stack_dump(context->blocks, stderr);
                 break;*/
             } else{
-                /*printf("[%d]\n%s", context->item.id, context->buffer);
-                block_stack_dump(context->blocks, stderr);*/
+                /*printf("[%d]\n%s", context->item.id, context->buffer);*/
             }
         }
 
