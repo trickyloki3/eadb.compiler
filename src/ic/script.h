@@ -185,6 +185,7 @@
     #define MAP_TIME_FLAG                  0x080000
     #define MAP_STRCHARINFO_FLAG           0x100000
     #define MAP_STATUSEFFECT_FLAG          0x200000
+    #define MAP_GENDER_FLAG                0x400000
 
     /* stack_eng_db bitmask flags */
     #define DB_SKILL_ID                    0x01

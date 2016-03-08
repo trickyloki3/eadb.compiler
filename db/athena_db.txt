@@ -418,3 +418,9 @@ weapon_type = {
     [29] = "Dagger & Axe";
     [30] = "Sword & Axe";
 }
+
+gender = {
+    [0] = "Female";
+    [1] = "Male";
+    [2] = "Unisex";
+}

@@ -44,6 +44,7 @@ FILE * node_dbg = NULL;
 /* re */ int script_generate_write_class_work(struct rbt_node *, void *, int);
 /* re */ int script_generate_write_strcharinfo_work(struct rbt_node *, void *, int);
 /* re */ int script_generate_write_getequipid_work(struct rbt_node *, void *, int);
+/* re */ int script_generate_write_getiteminfo_work(struct rbt_node *, void *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -4168,12 +4169,12 @@ int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * f
         stack_eng_map(block, block->ptr[off + 1], MAP_ITEM_INFO_FLAG, &argc) || argc != 1 ) {
         status = exit_stop("failed to evaluate getiteminfo argument into constants");
     } else {
-        len = block->arg_cnt - len + 32;
+        len = block->arg_cnt - len + strlen(block->ptr[off + 1]) + 32;
         temp->formula = calloc(len, sizeof(char));
         if(is_nil(temp->formula)) {
             exit_stop("out of memory");
         } else {
-            sprintf(temp->formula, "%s's %s", block->eng[block->eng_cnt - 2], block->eng[block->eng_cnt - 1]);
+            sprintf(temp->formula, "%s's %s;%s", block->eng[block->eng_cnt - 2], block->eng[block->eng_cnt - 1], block->ptr[off + 1]);
 
             temp->min = func->min;
             temp->max = func->max;
@@ -5127,7 +5128,7 @@ int script_generate_write_strcharinfo(block_r * block, rbt_logic * logic) {
     return script_generate_vararg(block->script, "%s", logic->name);
 }
 
-int script_generate_write_getequipid_work(struct rbt_node * node, void * context, int flag) {
+static int script_generate_write_getequipid_work(struct rbt_node * node, void * context, int flag) {
     int i;
     int status = 0;
     item_t * item  = NULL;
@@ -5165,12 +5166,72 @@ int script_generate_write_getequipid(block_r * block, rbt_logic * logic) {
             script_generate_vararg(block->script, " equipped on %s", logic->name);
 }
 
-int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
-    int min = 0;
-    int max = 0;
-    rbt_range_min(logic->range, &min);
-    rbt_range_max(logic->range, &max);
-    fprintf(stderr, "%s %d %d\n", logic->name, min, max);
-    fprintf(stderr, "%s\n", block->ptr[0]);
+static int script_generate_write_getiteminfo_work(struct rbt_node * node, void * context, int flag) {
+    int i;
+    int status = 0;
+    char * value;
+    struct work * work = context;
+    struct range * range = node->val;
+
+    i = range->min;
+    while(i <= range->max && work->count < work->total && !status) {
+        value = NULL;
+        if( (work->flag & MAP_GENDER_FLAG       && !script_map_id(work->block, "gender", i, &value))        ||
+            (work->flag & MAP_ITEM_FLAG         && !script_map_id(work->block, "item_type", i, &value))     ||
+            (work->flag & MAP_LOCATION_FLAG     && !script_map_id(work->block, "item_location", i, &value)) ||
+            (work->flag & MAP_WEAPON_FLAG       && !script_map_id(work->block, "weapon_type", i, &value)) ) {
+            if(script_generate_vararg(work->search, (work->count == 0) ? "%s" : ", %s", value))
+                status = exit_mesg("failed to write map value str"
+                "ing %s in item %d", value, work->block->item_id);
+        }
+        if(is_nil(value))
+            status = exit_mesg("failed to map value %d on flag %"
+            "d in item %d", i, work->flag, work->block->item_id);
+
+        free_ptr(value);
+        work->count++;
+        i++;
+    }
+
     return 0;
+}
+
+int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
+    int i;
+    int len;
+    int type;
+    struct work work;
+
+    /* get the type expression */
+    len = strlen(logic->name);
+    for(i = 0; i < len; i++)
+        if(logic->name[i] == ';') {
+            logic->name[i] = '\0';
+            break;
+        }
+
+    /* get the type integer */
+    if( i >= len ||
+        block_stack_push(block, TYPE_PTR, &logic->name[i + 1]) ||
+        evaluate_numeric_constant(block, block->ptr[block->ptr_cnt - 1], &type) ||
+        block_stack_pop(block, TYPE_PTR) )
+        return exit_mesg("failed to get getiteminfo type for item %d\n", block->item_id);
+
+    if(script_generate_vararg(block->script, "%s is ", logic->name))
+        return exit_mesg("failed to write getiteminfo string for item %d\n", block->item_id);
+
+    work.block = block;
+    work.count = 0;
+    work.total = MAX_STR_LIST;
+    work.search = block->script;
+
+    switch (type) {
+        case 2:     work.flag = MAP_ITEM_FLAG;      break; /* item type */
+        case 4:     work.flag = MAP_GENDER_FLAG;    break; /* gender */
+        case 5:     work.flag = MAP_LOCATION_FLAG;  break; /* equip location */
+        case 11:    work.flag = MAP_WEAPON_FLAG;    break; /* weapon type */
+        default:    return exit_mesg("unsupported item info for getiteminfo in item %d", block->item_id);
+    }
+
+    return rbt_range_work(logic->range, script_generate_write_getiteminfo_work, &work);
 }
