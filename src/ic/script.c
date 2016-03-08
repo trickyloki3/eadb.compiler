@@ -4846,7 +4846,7 @@ int node_inherit(node * temp) {
             temp->formula = convert_string(copy->formula);
             if(is_nil(temp->formula)) {
                 status = exit_stop("out of memory");
-            } else if (copy->type & (NODE_TYPE_FUNCTION | NODE_TYPE_VARIABLE)) {
+            } else if(var == copy->logic->type) {
                 rbt_range_deit(&temp->logic->range);
                 if (rbt_range_dup(temp->value, &temp->logic->range))
                     status = exit_stop("out of memory");
@@ -5012,6 +5012,9 @@ int script_generate_var(block_r * block, rbt_logic * logic) {
         case 22:    /* class */
             status = script_generate_write_class(block, logic);
             break;
+        case 8:     /* getiteminfo */
+            status = script_generate_write_getiteminfo(block, logic);
+            break;
         case 9:     /* getequipid */
             status = script_generate_write_getequipid(block, logic);
             break;
@@ -5083,14 +5086,15 @@ int script_generate_write_class(block_r * block, rbt_logic * logic) {
 static int script_generate_write_strcharinfo_work(struct rbt_node * node, void * context, int flag) {
     int i;
     int status = 0;
-    struct range * range = node->val;
-    struct work * work = context;
     map_res * map = NULL;
+    struct work * work = context;
+    struct range * range = node->val;
 
     if(calloc_ptr(map))
         return exit_stop("out of memory");
 
-    for(i = range->min; i <= range->max && work->count < work->total && !status; i++, work->count++) {
+    i = range->min;
+    while(i <= range->max && work->count < work->total && !status) {
         if(map_id(work->block->script->db, map, i)) {
             status = exit_mesg("failed to find map id %"
             "d in item id %d", i, work->block->item_id);
@@ -5099,6 +5103,9 @@ static int script_generate_write_strcharinfo_work(struct rbt_node * node, void *
                 script_generate_vararg(work->search, "%s", map->name) :
                 script_generate_vararg(work->search, ", %s", map->name);
         }
+
+        work->count++;
+        i++;
     }
 
     free_ptr(map);
@@ -5156,4 +5163,14 @@ int script_generate_write_getequipid(block_r * block, rbt_logic * logic) {
     work.search = block->script;
     return  rbt_range_work(logic->range, script_generate_write_getequipid_work, &work) ||
             script_generate_vararg(block->script, " equipped on %s", logic->name);
+}
+
+int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
+    int min = 0;
+    int max = 0;
+    rbt_range_min(logic->range, &min);
+    rbt_range_max(logic->range, &max);
+    fprintf(stderr, "%s %d %d\n", logic->name, min, max);
+    fprintf(stderr, "%s\n", block->ptr[0]);
+    return 0;
 }

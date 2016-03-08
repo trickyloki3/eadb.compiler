@@ -320,7 +320,7 @@
     int translate_getgroupitem(block_r *);
     int translate_bonus_script(block_r *);
     /* re */ int translate_transform(block_r *);
-    int translate_setfalcon(block_r *);
+    /* re */ int translate_setfalcon(block_r *);
     int translate_makerune(block_r *);
 
     /* block expression evaluation interface */
@@ -376,12 +376,13 @@
     /* re */  int node_remove(node *);                                      /* remove from doubly linked list */
 
     /* condition generation */
-    int script_generate_or(block_r *, rbt_logic *);
-    int script_generate_and(block_r *, rbt_logic *);
-    int script_generate_var(block_r *, rbt_logic *);
-    int script_generate_vararg(script_t *, const char *, ...);
-    int script_generate_write_range(block_r *, rbt_logic *);
-    int script_generate_write_class(block_r *, rbt_logic *);
-    int script_generate_write_strcharinfo(block_r *, rbt_logic *);
-    int script_generate_write_getequipid(block_r *, rbt_logic *);
+    /* re */ int script_generate_or(block_r *, rbt_logic *);
+    /* re */ int script_generate_and(block_r *, rbt_logic *);
+    /* re */ int script_generate_var(block_r *, rbt_logic *);
+    /* re */ int script_generate_vararg(script_t *, const char *, ...);
+    /* re */ int script_generate_write_range(block_r *, rbt_logic *);
+    /* re */ int script_generate_write_class(block_r *, rbt_logic *);
+    /* re */ int script_generate_write_strcharinfo(block_r *, rbt_logic *);
+    /* re */ int script_generate_write_getequipid(block_r *, rbt_logic *);
+    /* re */ int script_generate_write_getiteminfo(block_r *, rbt_logic *);
 #endif
