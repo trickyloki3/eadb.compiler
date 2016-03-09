@@ -23,41 +23,41 @@
  */
 
 // script engine variables
-17,0x0,0x1,1,        70,                 joblevel,"Job Level";
-18,0x0,0x1,1,       175,                baselevel,"Base Level";
-19,0x0,0x1,1,   1000000,                    maxhp,"Max HP";
-20,0x0,0x1,0,      4212,                baseclass,"Base Class";
-21,0x0,0x1,0,      4212,                  basejob,"Base Job";
-22,0x0,0x1,0,      4212,                    class,"Class";
-23,0x0,0x1,1,   1000000,                       hp,"HP";
-24,0x0,0x1,0,2147483647,                     zeny,"Zeny";
-34,0x0,0x1,0,         1,                    upper,"Rebirth";
+17,0x0,0x1,1,        70,                 joblevel,"job level";
+18,0x0,0x1,1,       175,                baselevel,"base level";
+19,0x0,0x1,1,   1000000,                    maxhp,"max hp";
+20,0x0,0x1,0,      4212,                baseclass,"base class";
+21,0x0,0x1,0,      4212,                  basejob,"base job";
+22,0x0,0x1,0,      4212,                    class,"class";
+23,0x0,0x1,1,   1000000,                       hp,"hp";
+24,0x0,0x1,0,2147483647,                     zeny,"zeny";
+34,0x0,0x1,0,         1,                    upper,"rebirth";
 
 //simple functions
-1 ,0x0,0x6,0,        15,                getrefine,"Refine Level";
-2 ,0x0,0x2,0,        15,      getequiprefinerycnt,"Refine Level";
-3 ,0x0,0x2,1,       150,                readparam,"Paramater";
-4 ,0x0,0x2,0,2147483647,               getskilllv,"Skill";
-5 ,0x0,0x2,0,2147483647,                     rand,"Random";
-6 ,0x0,0x2,0,         0,                      pow,"Pow";
-10,0x0,0x2,0,2147483647,                  gettime,"Time";
-13,0x0,0x2,0,2147483647,               isequipped,"Equip ID";
-28,0x0,0x6,0,         1,             getpartnerid,"Partner Online";
-30,0x0,0x2,0,2147483647,                countitem,"Item Count";
-31,0x0,0x2,0,2147483647,              checkoption,"Companion";
-32,0x0,0x6,0,         1,              checkfalcon,"Falcon Companion";
-33,0x0,0x6,0,         1,            checkmadogear,"Operating Mado Gear";
-46,0x0,0x2,0,         0,                      max,"Max";
-47,0x0,0x2,0,         0,                      min,"Min";
-48,0x0,0x6,0,         8,               checkmount,"Riding Mount";
+1 ,0x0,0x6,0,        15,                getrefine,"refine level";
+2 ,0x0,0x2,0,        15,      getequiprefinerycnt,"refine level";
+3 ,0x0,0x2,1,       150,                readparam,"paramater";
+4 ,0x0,0x2,0,2147483647,               getskilllv,"skill";
+5 ,0x0,0x2,0,2147483647,                     rand,"random";
+6 ,0x0,0x2,0,         0,                      pow,"pow";
+10,0x0,0x2,0,2147483647,                  gettime,"time";
+13,0x0,0x2,0,2147483647,               isequipped,"equip id";
+28,0x0,0x6,0,         1,             getpartnerid,"partner online";
+30,0x0,0x2,0,2147483647,                countitem,"item count";
+31,0x0,0x2,0,2147483647,              checkoption,"companion";
+32,0x0,0x6,0,         1,              checkfalcon,"falcon companion";
+33,0x0,0x6,0,         1,            checkmadogear,"operating mado gear";
+46,0x0,0x2,0,         0,                      max,"max";
+47,0x0,0x2,0,         0,                      min,"min";
+48,0x0,0x6,0,         8,               checkmount,"riding mount";
 
 //non-condition functions
-26,0x0,0x2,0,         0,                 callfunc,"Function";
-27,0x1,0x2,0,         0,         getrandgroupitem,"Group Item";
-49,0x1,0x2,0,         0,            groupranditem,"Item Group";
+26,0x0,0x2,0,         0,                 callfunc,"function";
+27,0x1,0x2,0,         0,         getrandgroupitem,"group item";
+49,0x1,0x2,0,         0,            groupranditem,"item group";
 
 //complex functions
-8 ,0x0,0x2,0,2147483647,              getiteminfo,"Item Info";
-9 ,0x1,0x2,0,2147483647,               getequipid,"Equip ID";
-29,0x0,0x2,0,2147483647,              strcharinfo,"String Type";
-50,0x0,0x6,0,2147483647,                  eaclass,"Class";
+8 ,0x0,0x2,0,2147483647,              getiteminfo,"item info";
+9 ,0x1,0x2,0,2147483647,               getequipid,"equip id";
+29,0x0,0x2,0,2147483647,              strcharinfo,"string type";
+50,0x0,0x6,0,2147483647,                  eaclass,"class";

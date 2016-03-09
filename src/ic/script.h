@@ -159,7 +159,7 @@
     int script_translate(script_t *);
     int script_generate(script_t *);
     int script_combo(int, char *, int *, db_t *, int);
-    int script_recursive(db_t *, int, lua_State *, char *, char **);
+    /* re */ int script_recursive(db_t *, int, lua_State *, char *, char **);
 
     /* stack_eng_map bitmask flags */
     #define MAP_AMMO_FLAG                  0x000001
