@@ -5317,7 +5317,7 @@ int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
     switch (type) {
         case 9:     return  rbt_range_min(logic->range, &min) ||
                             rbt_range_max(logic->range, &max) ||
-                            script_generate_vararg(block->script, "%s %d %d", logic->name, min, max);
+                            script_generate_vararg(block->script, "%s %d ~ %d", logic->name, min, max);
         case 2:     work.flag = MAP_ITEM_FLAG;      break; /* item type */
         case 4:     work.flag = MAP_GENDER_FLAG;    break; /* gender */
         case 5:     work.flag = MAP_LOCATION_FLAG;  break; /* equip location */
