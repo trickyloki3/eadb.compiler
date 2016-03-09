@@ -243,7 +243,7 @@
 94   ,0       , bonus2,                         bSkillHeal,"%s heal amount using %s",2,k,0,2,1,0
 95   ,0       , bonus2,                        bSkillHeal2,"%s heal amount from %s",2,k,0,2,1,0
 82   ,0       ,  bonus,                          bCastrate,"%s cast time",1,0,1,0
-83   ,0       , bonus2,                          bCastrate,"%s cast time of %s.",2,k,0,2,1,0
+83   ,0       , bonus2,                          bCastrate,"%s cast time of %s",2,k,0,2,1,0
 86   ,0       ,  bonus,                         bDelayrate,"%s after cast delay",1,0,1,0
 89   ,0       ,  bonus,                         bFixedCast,"increase fixed cast time by %s",1,a,1,0
 84   ,0       ,  bonus,                     bFixedCastrate,"%s fixed cast time",1,0,1,0
@@ -251,12 +251,12 @@
 90   ,0       ,  bonus,                      bVariableCast,"increase variable cast time by %s",1,a,1,0
 87   ,0       ,  bonus,                  bVariableCastrate,"%s variable cast time",1,0,1,0
 88   ,0       , bonus2,                  bVariableCastrate,"%s variable cast time of %s",2,k,0,2,1,0
-91   ,0       , bonus2,                          bSkillAtk,"%s %s damage.",2,k,0,2,1,0
+91   ,0       , bonus2,                          bSkillAtk,"%s %s damage",2,k,0,2,1,0
 92   ,0       , bonus2,                        bSkillUseSP,"%s SP consumption for %s",2,k,6,2,1,0
 93   ,0       , bonus2,                    bSkillUseSPrate,"%s SP consumption for %s",2,k,0,2,1,0
-96   ,0       , bonus2,                     bSkillCooldown,"%s cooldown time for %s.",2,k,a,2,1,0
-97   ,0       , bonus2,                    bSkillFixedCast,"%s fixed cast time for %s.",2,k,a,2,1,0
-98   ,0       , bonus2,                 bSkillVariableCast,"%s variable cast time for %s.",2,k,a,2,1,0
+96   ,0       , bonus2,                     bSkillCooldown,"%s cooldown time for %s",2,k,a,2,1,0
+97   ,0       , bonus2,                    bSkillFixedCast,"%s fixed cast time for %s",2,k,a,2,1,0
+98   ,0       , bonus2,                 bSkillVariableCast,"%s variable cast time for %s",2,k,a,2,1,0
 
 /* new */
 217  ,0       , bonus3,                bStateNoRecoverRace,"%s chance to nullified reocvery for %s against %s enemies",3,r,2,a,3,1,2,0
