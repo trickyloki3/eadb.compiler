@@ -5001,6 +5001,7 @@ int node_remove(node * p) {
 int script_generate_or(block_r * block, rbt_logic * logic) {
     int status = 0;
 
+    block->script->count = 0;
     switch(logic->type) {
         case  or:   status = (logic->l && script_generate_or(block, logic->l)) ||
                              (logic->r && script_generate_or(block, logic->r)); break;
@@ -5037,6 +5038,9 @@ int script_generate_and(block_r * block, rbt_logic * logic) {
 
 int script_generate_var(block_r * block, rbt_logic * logic) {
     int status = 0;
+
+    if(block->script->count)
+        script_generate_vararg(block->script, ", ");
 
     switch(logic->id) {
         case 1:     /* getrefine */
@@ -5088,6 +5092,7 @@ int script_generate_var(block_r * block, rbt_logic * logic) {
             break;
     }
 
+    block->script->count++;
     return status;
 }
 

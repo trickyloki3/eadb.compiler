@@ -92,6 +92,7 @@
         token_r token;                                                          /* script token stack */
         char buffer[BUF_SIZE];                                                  /* script translation */
         int offset;                                                             /* script buffer size */
+        int count;
         block_r * blocks;
         block_r * free_blocks;
         node * free_nodes;
