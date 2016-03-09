@@ -15,17 +15,17 @@
 
 FILE * node_dbg = NULL;
 
-/* re */ static int stack_eng_item_work(struct rbt_node *, void *, int);
-/* re */ static int stack_eng_skill_work(struct rbt_node *, void *, int);
-/* re */ static int stack_eng_map_work(struct rbt_node *, void *, int);
-/* re */ static int stack_eng_db_work(struct rbt_node *, void *, int);
-/* re */ static int stack_eng_group_name(char **, const char *);
-/* re */ static int stack_eng_int_re(block_r *, node *, int, int);
-/* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
-/* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
-/* re */ static int evaluate_expression_end_parenthesis(char **, int, int, int *);
-/* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
-/* re */ static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
+/* re */ int stack_eng_item_work(struct rbt_node *, void *, int);
+/* re */ int stack_eng_skill_work(struct rbt_node *, void *, int);
+/* re */ int stack_eng_map_work(struct rbt_node *, void *, int);
+/* re */ int stack_eng_db_work(struct rbt_node *, void *, int);
+/* re */ int stack_eng_group_name(char **, const char *);
+/* re */ int stack_eng_int_re(block_r *, node *, int, int);
+/* re */ int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+/* re */ node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
+/* re */ int evaluate_expression_end_parenthesis(char **, int, int, int *);
+/* re */ int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
+/* re */ int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
 /* re */ int evaluate_function(block_r *, char **, int, int, var_res *, node *);
 /* re */ int evaluate_function_rand(block_r *, int, int, var_res *, node *);
 /* re */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
@@ -113,7 +113,6 @@ int block_reset(block_r * block) {
     /* reset block linking */
     block->link = NULL;
     block->set = NULL;
-    block->flag = 0;
     /* free set block's node */
     if(NULL != block->set_node) {
         node_free(block->set_node);
