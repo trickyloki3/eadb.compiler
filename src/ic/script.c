@@ -1136,68 +1136,37 @@ int script_combo(int item_id, char * buffer, int * offset, db_t * db, int mode) 
 }
 
 int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, char ** value) {
-    int i = 0;
-    int ret = 0;
-    int len = 0;
-    int level = 0;
+    int status = 0;
     script_t * script = NULL;
 
-    /* error on invalid references */
-    exit_null_safe(4, db, map, subscript, value);
+    if(script_check(subscript)) {
+        *value = convert_string("Empty script.");
+        if(is_nil(*value))
+            status = exit_stop("out of memory");
+    } else if(calloc_ptr(script)) {
+        status = exit_stop("out of memory");
+    } else {
+        script->db = db;
+        script->mode = mode;
+        script->map = map;
 
-    /* build a "sub-script" (lol) context */
-    script = calloc(1, sizeof(script_t));
-    if(NULL == script)
-        return CHECK_FAILED;
-
-    /* set the database and mapping references */
-    script->db = db;
-    script->mode = mode;
-    script->map = map;
-
-    /* set the initial buffer state */
-    script->offset = 0;
-    script->buffer[0] = '\0';
-
-    len = strlen(subscript);
-    if(0 < len)
-        for (i = 0; i < len; i++) {
-            if (i + 1 < len && subscript[i] == '/' && subscript[i + 1] == '*') {
-                level++;
-            } else if (i + 1 < len && subscript[i] == '*' && subscript[i + 1] == '/') {
-                level--;
-                i += 2;
-            }
-            if (!level && ';' == subscript[i])
-                goto compile;
+        if( script_lexical(&script->token, subscript) ||
+            script_analysis(script, &script->token, NULL, NULL) ||
+            script_translate(script) ||
+            script_generate(script) ) {
+            status = exit_mesg("failed to evaluate sub script '%s'", subscript);
+        } else {
+            *value = convert_string(script->buffer);
+            if(is_nil(*value))
+                status = exit_stop("out of memory");
         }
 
-    *value = convert_string("Empty script");
-    goto clean;
+        script_block_release(script);
+        node_release(script);
+        free_ptr(script);
+    }
 
-compile:
-    /* compile the item script */
-    if( script_lexical(&script->token, subscript) ||
-        script_analysis(script, &script->token, NULL, NULL) ||
-        script_translate(script) ||
-        script_generate(script))
-        goto failed;
-
-    /* copy the translated script to output */
-    *value = convert_string(script->buffer);
-
-clean:
-    /* free the block list */
-    script_block_release(script);
-    /* free the node list */
-    node_release(script);
-    /* free the sub-script context */
-    SAFE_FREE(script);
-    return ret;
-failed:
-    exit_func_safe("failed to translate subscript '%s'", subscript);
-    ret = CHECK_FAILED;
-    goto clean;
+    return status;
 }
 
 /* interpret the function call syntax by parsing each argument that
