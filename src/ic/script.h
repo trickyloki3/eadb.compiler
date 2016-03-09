@@ -325,8 +325,7 @@
 
     /* block expression evaluation interface */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */
-    #define EVALUATE_FLAG_KEEP_TEMP_TREE   0x002 /* keep the logic tree for ?: operators and set blocks */
-    #define EVALUATE_FLAG_EXPR_BOOL        0x004 /* relational operators evaluate to 0 ~ 1 */
+    #define EVALUATE_FLAG_EXPR_BOOL        0x002 /* relational operators evaluate to 0 ~ 1 */
     #define EVALUATE_FLAG_ALL              0xfff
     /* re */ int evaluate_numeric_constant(block_r *, char *, int *);
     /* re */ node * evaluate_expression(block_r *, char *, int);

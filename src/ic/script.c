@@ -4780,10 +4780,7 @@ int node_eval(node * node, FILE * stm, rbt_logic * logic_tree, rbt_tree * id_tre
                         status = 1;
 
                 /* keep the logic tree of ? conditional */
-                if(EVALUATE_FLAG_KEEP_TEMP_TREE & flag && !status)
-                    node->logic = logic;
-                else
-                    rbt_logic_deit(&logic);
+                node->logic = logic;
 
                 if(status)
                     return status;
