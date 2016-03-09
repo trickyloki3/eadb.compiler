@@ -255,6 +255,7 @@
     #define FORMAT_RATIO                    0x01
     #define FORMAT_PLUS                     0x02
     #define FORMAT_FLOAT                    0x04
+    #define FORMAT_NO_FORMULA               0x08
 
     /* stack_eng_coordinate negative values */
     #define COORD_RANDOM                    -1

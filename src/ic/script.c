@@ -1605,7 +1605,11 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
                         !sprintf(buf, fmt, neg, fabs(min), fabs(max)) :
                         !sprintf(buf, fmt, neg, abs(node->min), abs(node->max)) );
         }
-        if(status || stack_aux_formula(block, node, buf))
+
+        if (status ||
+           (flag & FORMAT_NO_FORMULA) ?
+                block_stack_push(block, TYPE_ENG, buf) :
+                stack_aux_formula(block, node, buf) )
             status = exit_stop("failed to write integer expression");
     }
 
@@ -2495,8 +2499,8 @@ int translate_heal(block_r * block) {
         status = exit_mesg("failed to evaluate sp expression '%s'", block->ptr[1]);
     } else {
         /* format the hp or sp using positive or negative prefixes */
-        if( stack_eng_int_signed_re(block, hp, 1, "Recover HP by", "Drain HP by", 0) ||
-            stack_eng_int_signed_re(block, sp, 1, "Recover SP by", "Drain SP by", 0) ) {
+        if( stack_eng_int_signed_re(block, hp, 1, "Recover HP by", "Drain HP by", FORMAT_NO_FORMULA) ||
+            stack_eng_int_signed_re(block, sp, 1, "Recover SP by", "Drain SP by", FORMAT_NO_FORMULA) ) {
             status = exit_stop("failed to write hp or sp expression");
         } else {
             /* build the final description */
