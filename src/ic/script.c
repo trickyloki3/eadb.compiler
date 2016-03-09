@@ -22,6 +22,10 @@ FILE * node_dbg = NULL;
 /* re */ int stack_eng_group_name(char **, const char *);
 /* re */ int stack_eng_int_re(block_r *, node *, int, int);
 /* re */ int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+/* re */ int evaluate_expression_formula_concat(struct rbt_node *, void *, int);
+/* re */ int evaluate_expression_formula_length(struct rbt_node *, void *, int);
+/* re */ int evaluate_expression_formula_re(block_r *, rbt_logic *, rbt_tree *);
+/* re */ int evaluate_expression_formula(block_r *, rbt_logic *, char **);
 /* re */ node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
 /* re */ int evaluate_expression_end_parenthesis(char **, int, int, int *);
 /* re */ int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
@@ -3553,8 +3557,91 @@ int evaluate_numeric_constant(block_r * block, char * expr, int * constant) {
     return status;
 }
 
+int evaluate_expression_formula_concat(struct rbt_node * node, void * context, int flag) {
+    struct string {
+        char * ptr;
+        int off;
+        int len;
+    } * string = context;
+
+    string->off = sprintf(&string->ptr[string->off], string->off ? ", %s" : "%s", node->val);
+    return 0;
+}
+
+int evaluate_expression_formula_length(struct rbt_node * node, void * context, int flag) {
+     *((int *) context) += strlen(node->val) + 3;
+     return 0;
+}
+
+int evaluate_expression_formula_re(block_r * block, rbt_logic * logic, rbt_tree * tree) {
+    int status = 0;
+    int hash = 0;
+    rbt_node * name = NULL;
+
+    switch(logic->type) {
+        case var:
+            hash = sdbm(logic->name);
+            if(rbt_search(tree, &name, hash))
+                if( rbt_node_init(&name, hash, logic->name) ||
+                    rbt_insert(tree, name)) {
+                    rbt_node_deit(&name);
+                    status = exit_stop("out of memory");
+                }
+            break;
+        /* iterate the logic tree recursively */
+        default:
+            status = evaluate_expression_formula_re(block, logic->l, tree) ||
+                     evaluate_expression_formula_re(block, logic->r, tree);
+            break;
+    }
+
+    return status;
+}
+
+int evaluate_expression_formula(block_r * block, rbt_logic * logic, char ** formula) {
+    int status = 0;
+    int length = 0;
+    rbt_tree * tree = NULL;
+    rbt_node * temp = NULL;
+
+    struct string {
+        char * ptr;
+        int off;
+        int len;
+    } string;
+
+    if( rbt_tree_init(&tree) ||
+        evaluate_expression_formula_re(block, logic, tree) ) {
+        status = exit_stop("out of memory");
+    } else if(!rbt_deploy(tree, evaluate_expression_formula_length, &length) && 0 < length) {
+        string.ptr = calloc(length, sizeof(char));
+        if(is_nil(string.ptr)) {
+            status = exit_stop("out of memory");
+        } else {
+            string.off = 0;
+            string.len = length;
+            if(rbt_deploy(tree, evaluate_expression_formula_concat, &string)) {
+                status = exit_stop("failed to write formula string");
+            } else {
+                free_ptr(*formula);
+                *formula = string.ptr;
+            }
+        }
+    }
+
+    while(tree->root) {
+        temp = tree->root;
+        rbt_delete(tree, temp);
+        free_ptr(temp);
+    }
+
+    rbt_tree_deit(&tree);
+    return status;
+}
+
 /* lowest level function for evaluating expressions
- * stack_eng_* and evaluate_function_* are both one
+ * stack_eng_* an
+ d evaluate_function_* are both one
  * level above */
 node * evaluate_expression(block_r * block, char * expr, int flag) {
     int status = 0;
@@ -3579,6 +3666,10 @@ node * evaluate_expression(block_r * block, char * expr, int flag) {
                     rbt_logic_append(logic, block->logic);
                 block->logic = logic;
             }
+        } else if(node->logic) {
+            /* build the dependency formula */
+            if(evaluate_expression_formula(block, node->logic, &node->formula))
+                status = 1;
         }
     }
 
@@ -3586,7 +3677,7 @@ node * evaluate_expression(block_r * block, char * expr, int flag) {
     return node;
 }
 
-node * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag) {
+static node * evaluate_expression_recursive(block_r * block, char ** expr, int start, int end, rbt_logic * logic_tree, rbt_tree * id_tree, int flag) {
     int  i = 0;
     int  status = 0;
     char operator = 0;
@@ -5198,6 +5289,8 @@ static int script_generate_write_getiteminfo_work(struct rbt_node * node, void *
 int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
     int i;
     int len;
+    int min;
+    int max;
     int type;
     struct work work;
 
@@ -5225,11 +5318,15 @@ int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
     work.search = block->script;
 
     switch (type) {
+        case 9:     return  rbt_range_min(logic->range, &min) ||
+                            rbt_range_max(logic->range, &max) ||
+                            script_generate_vararg(block->script, "%s %d %d", logic->name, min, max);
         case 2:     work.flag = MAP_ITEM_FLAG;      break; /* item type */
         case 4:     work.flag = MAP_GENDER_FLAG;    break; /* gender */
         case 5:     work.flag = MAP_LOCATION_FLAG;  break; /* equip location */
         case 11:    work.flag = MAP_WEAPON_FLAG;    break; /* weapon type */
-        default:    return exit_mesg("unsupported item info for getiteminfo in item %d", block->item_id);
+        default:    return exit_mesg("unsupported item info %d for "
+                    "getiteminfo in item %d", type, block->item_id);
     }
 
     return rbt_range_work(logic->range, script_generate_write_getiteminfo_work, &work);

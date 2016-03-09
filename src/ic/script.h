@@ -76,7 +76,6 @@
         /* the logic tree is set for if, else, and for
          * blocks which is inherited by child blocks */
         rbt_logic * logic;
-        
 
         /* reference script context */
         struct script_t * script;
