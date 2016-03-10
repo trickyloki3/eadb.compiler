@@ -1149,6 +1149,7 @@ int script_combo(script_t * script) {
             if(script_recursive(script->db, script->mode, script->map, iter->script, &buffer))
                 break;
             script->offset += sprintf(&script->buffer[script->offset], "%s\n", buffer);
+            free_ptr(buffer);
             iter = iter->next;
         }
         item_combo_free(&combo);
