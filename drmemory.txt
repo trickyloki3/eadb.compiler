@@ -1,0 +1,37 @@
+Dr. Memory version 1.9.1 build 1 built on Feb  1 2016 23:44:21
+Dr. Memory results for pid 1876: "ic.exe"
+Application cmdline: "ic"
+Recorded 116 suppression(s) from default C:\Program Files (x86)\Dr. Memory\bin\suppress-default.txt
+
+Error #1: UNINITIALIZED READ: reading 0x0018f86a-0x0018f870 6 byte(s) within 0x0018f858-0x0018f870
+# 0 system call NtTraceControl parameter #1                  
+# 1 ntdll.dll!EtwEventSetInformation                                       +0xef     (0x776aa0b0 <ntdll.dll+0x2a0b0>)
+# 2 try_get_function                                                        [f:\dd\vctools\crt\vcruntime\src\internal\winapi_downlevel.cpp:263]
+# 3 __vcrt_EventSetInformation                                              [f:\dd\vctools\crt\vcruntime\src\internal\winapi_downlevel.cpp:342]
+# 4 __vcrt_trace_logging_provider::TraceLoggingSetInformation               [f:\dd\vctools\crt\vcruntime\inc\traceloggingprovider.h:1590]
+# 5 __vcrt_trace_logging_provider::TraceLoggingRegister                     [f:\dd\vctools\crt\vcruntime\inc\traceloggingprovider.h:1568]
+# 6 __vcrt_initialize_telemetry_provider                                    [f:\dd\vctools\crt\vcruntime\src\misc\telemetry.cpp:40]
+# 7 __scrt_common_main_seh                                                  [f:\dd\vctools\crt\vcstartup\src\startup\exe_common.inl:211]
+# 8 KERNEL32.dll!BaseThreadInitThunk                                       +0x23     (0x76dc38f4 <KERNEL32.dll+0x138f4>)
+Note: @0:00:00.339 in thread 5996
+
+===========================================================================
+FINAL SUMMARY:
+
+DUPLICATE ERROR COUNTS:
+
+SUPPRESSIONS USED:
+
+ERRORS FOUND:
+      0 unique,     0 total unaddressable access(es)
+      1 unique,     1 total uninitialized access(es)
+      0 unique,     0 total invalid heap argument(s)
+      0 unique,     0 total GDI usage error(s)
+      0 unique,     0 total handle leak(s)
+      0 unique,     0 total warning(s)
+      0 unique,     0 total,      0 byte(s) of leak(s)
+      0 unique,     0 total,      0 byte(s) of possible leak(s)
+ERRORS IGNORED:
+     10 unique,    52 total,  10661 byte(s) of still-reachable allocation(s)
+         (re-run with "-show_reachable" for details)
+Details: C:\Users\trickyloki3\AppData\Roaming\Dr. Memory\DrMemory-ic.exe.1876.000\results.txt
