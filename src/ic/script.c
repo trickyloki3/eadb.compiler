@@ -1148,7 +1148,7 @@ int script_combo(script_t * script) {
             script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->group);
             if(script_recursive(script->db, script->mode, script->map, iter->script, script->item.id, &buffer))
                 break;
-            script->offset += sprintf(&script->buffer[script->offset], "%s\n", buffer);
+            script->offset += sprintf(&script->buffer[script->offset], "%s", buffer);
             free_ptr(buffer);
             iter = iter->next;
         }
@@ -3600,6 +3600,7 @@ int evaluate_expression_formula(block_r * block, rbt_logic * logic, char ** form
     int length = 0;
     rbt_tree * tree = NULL;
     rbt_node * temp = NULL;
+    rbt_logic * iter = NULL;
 
     struct string {
         char * ptr;
@@ -3607,21 +3608,28 @@ int evaluate_expression_formula(block_r * block, rbt_logic * logic, char ** form
         int len;
     } string;
 
-    if( rbt_tree_init(&tree) ||
-        evaluate_expression_formula_re(block, logic, tree) ) {
+    if(rbt_tree_init(&tree)) {
         status = exit_stop("out of memory");
-    } else if(!rbt_deploy(tree, evaluate_expression_formula_length, &length) && 0 < length) {
-        string.ptr = calloc(length, sizeof(char));
-        if(is_nil(string.ptr)) {
-            status = exit_stop("out of memory");
-        } else {
-            string.off = 0;
-            string.len = length;
-            if(rbt_deploy(tree, evaluate_expression_formula_concat, &string)) {
-                status = exit_stop("failed to write formula string");
+    } else {
+        iter = logic;
+        do {
+            status = evaluate_expression_formula_re(block, iter, tree);
+            iter = iter->next;
+        } while(iter != logic && !status);
+
+        if(!status && !rbt_deploy(tree, evaluate_expression_formula_length, &length) && 0 < length) {
+            string.ptr = calloc(length, sizeof(char));
+            if(is_nil(string.ptr)) {
+                status = exit_stop("out of memory");
             } else {
-                free_ptr(*formula);
-                *formula = string.ptr;
+                string.off = 0;
+                string.len = length;
+                if(rbt_deploy(tree, evaluate_expression_formula_concat, &string)) {
+                    status = exit_stop("failed to write formula string");
+                } else {
+                    free_ptr(*formula);
+                    *formula = string.ptr;
+                }
             }
         }
     }
