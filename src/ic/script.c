@@ -15,40 +15,40 @@
 
 FILE * node_dbg = NULL;
 
-/* re */ int stack_eng_item_work(struct rbt_node *, void *, int);
-/* re */ int stack_eng_skill_work(struct rbt_node *, void *, int);
-/* re */ int stack_eng_map_work(struct rbt_node *, void *, int);
-/* re */ int stack_eng_db_work(struct rbt_node *, void *, int);
-/* re */ int stack_eng_group_name(char **, const char *);
-/* re */ int stack_eng_int_re(block_r *, node *, int, int);
-/* re */ int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
-/* re */ int evaluate_expression_formula_concat(struct rbt_node *, void *, int);
-/* re */ int evaluate_expression_formula_length(struct rbt_node *, void *, int);
-/* re */ int evaluate_expression_formula_re(block_r *, rbt_logic *, rbt_tree *);
-/* re */ int evaluate_expression_formula(block_r *, rbt_logic *, char **);
-/* re */ node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
-/* re */ int evaluate_expression_end_parenthesis(char **, int, int, int *);
-/* re */ int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
-/* re */ int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
-/* re */ int evaluate_function(block_r *, char **, int, int, var_res *, node *);
-/* re */ int evaluate_function_rand(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_pow(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
-/* re */ int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
-/* re */ int script_generate_write_class_work(struct rbt_node *, void *, int);
-/* re */ int script_generate_write_strcharinfo_work(struct rbt_node *, void *, int);
-/* re */ int script_generate_write_getequipid_work(struct rbt_node *, void *, int);
-/* re */ int script_generate_write_getiteminfo_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_item_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_skill_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_map_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_db_work(struct rbt_node *, void *, int);
+/* re */ static int stack_eng_group_name(char **, const char *);
+/* re */ static int stack_eng_int_re(block_r *, node *, int, int);
+/* re */ static int stack_eng_int_signed_re(block_r *, node *, int, const char *, const char *, int);
+/* re */ static int evaluate_expression_formula_concat(struct rbt_node *, void *, int);
+/* re */ static int evaluate_expression_formula_length(struct rbt_node *, void *, int);
+/* re */ static int evaluate_expression_formula_re(block_r *, rbt_logic *, rbt_tree *);
+/* re */ static int evaluate_expression_formula(block_r *, rbt_logic *, char **);
+/* re */ static node * evaluate_expression_recursive(block_r *, char **, int, int, rbt_logic *, rbt_tree * id_tree, int);
+/* re */ static int evaluate_expression_end_parenthesis(char **, int, int, int *);
+/* re */ static int evaluate_expression_sub(block_r *, char **, int *, int, rbt_logic *, rbt_tree *, int, node **);
+/* re */ static int evaluate_expression_var(block_r *, char **, int *, int, rbt_logic *, int, node **);
+/* re */ static int evaluate_function(block_r *, char **, int, int, var_res *, node *);
+/* re */ static int evaluate_function_rand(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_groupranditem(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_readparam(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_getskilllv(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_isequipped(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_getequiprefinerycnt(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_getiteminfo(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_getequipid(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_gettime(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_callfunc(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_countitem(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_pow(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_strcharinfo(block_r *, int, int, var_res *, node *);
+/* re */ static int evaluate_function_setoption(block_r *, int, int, var_res *, node *);
+/* re */ static int script_generate_write_class_work(struct rbt_node *, void *, int);
+/* re */ static int script_generate_write_strcharinfo_work(struct rbt_node *, void *, int);
+/* re */ static int script_generate_write_getequipid_work(struct rbt_node *, void *, int);
+/* re */ static int script_generate_write_getiteminfo_work(struct rbt_node *, void *, int);
 
 int block_init(block_r ** block) {
     block_r * _block = NULL;
@@ -3577,7 +3577,7 @@ int evaluate_expression_formula_re(block_r * block, rbt_logic * logic, rbt_tree 
 
     switch(logic->type) {
         case var:
-            hash = sdbm(logic->name);
+            hash = sdbm((unsigned char *) logic->name);
             if(rbt_search(tree, &name, hash))
                 if( rbt_node_init(&name, hash, logic->name) ||
                     rbt_insert(tree, name)) {
