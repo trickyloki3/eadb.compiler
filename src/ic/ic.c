@@ -17,6 +17,7 @@ int main(int argc, char * argv[]) {
                 script_analysis(context, &context->token, NULL, NULL) ||
                 script_translate(context) ||
                 script_generate(context) ||
+                script_combo(context) ||
                 context->item.id == 0) {
                 /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
                 block_stack_dump(context->blocks, stderr);

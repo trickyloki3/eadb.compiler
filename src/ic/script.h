@@ -159,7 +159,7 @@
     int script_parse(token_r *, int *, block_r *, char, char, int);
     int script_translate(script_t *);
     int script_generate(script_t *);
-    int script_combo(int, char *, int *, db_t *, int);
+    int script_combo(script_t *);
     /* re */ int script_recursive(db_t *, int, lua_State *, char *, char **);
 
     /* stack_eng_map bitmask flags */

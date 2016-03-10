@@ -1122,7 +1122,7 @@ int script_generate(script_t * script) {
             default:
                 top = iter->eng_cnt - 1;
                 if(NULL == iter->eng[top])
-                    return exit_func_safe("invalid translated string in item %d", iter->item_id);
+                    return exit_func_safe("missing item description in item %d", iter->item_id);
                 script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->eng[top]);
         }
         iter = iter->next;
@@ -1131,8 +1131,30 @@ int script_generate(script_t * script) {
     return SCRIPT_PASSED;
 }
 
-int script_combo(int item_id, char * buffer, int * offset, db_t * db, int mode) {
-    return exit_abt_safe("maintenance");
+int script_combo(script_t * script) {
+    combo_t * combo = NULL;
+    combo_t * iter = NULL;
+    char * buffer = NULL;
+
+    /* only supported on rathena */
+    if(script->mode != RATHENA)
+        return 0;
+
+    if(item_combo_id(script->db, &combo, script->item.id)) {
+        return 0;   /* no combo wombo jumbo */
+    } else {
+        iter = combo;
+        while(is_ptr(iter)) {
+            script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->group);
+            if(script_recursive(script->db, script->mode, script->map, iter->script, &buffer))
+                break;
+            script->offset += sprintf(&script->buffer[script->offset], "%s\n", buffer);
+            iter = iter->next;
+        }
+        item_combo_free(&combo);
+    }
+
+    return 0;
 }
 
 int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, char ** value) {

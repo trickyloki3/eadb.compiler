@@ -102,7 +102,7 @@
 214  ,0       , bonus2,                        bSkillUseSP,"%s SP consumption when using %s",2,k,6,2,1,0
 64   ,0       ,  bonus,                         bUseSPrate,"%s SP consumption",1,0,1,0
 200  ,0       ,  bonus,                           bNoRegen,"disable %s natural regeneration",1,g,1,0
-212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"Any damage over %s of max HP is absorbed",1,0,1,0
+212  ,0       ,  bonus,                    bAbsorbDmgMaxHP,"any damage over %s of max HP is absorbed",1,0,1,0
 185  ,0       , bonus2,                        bExpAddRace,"%s EXP from %s enemies",2,r,0,2,1,0
 186  ,0       , bonus2,                       bExpAddClass,"%s EXP from %s enemies",2,j,0,2,1,0
 189  ,0       ,  bonus,                bUnbreakableGarment,"garment is indestructible",0
@@ -128,7 +128,7 @@
 209  ,0       , bonus2,                         bComaClass,"%s chance of inflicting coma on %s enemies",2,j,2,2,1,0
 210  ,0       , bonus2,                          bComaRace,"%s chance of inflicting coma on %s enemies",2,r,2,2,1,0
 184  ,0       , bonus2,                   bCriticalAddRace,"%s critical chance on %s enemies",2,r,0,2,1,0
-99   ,0       , bonus2,                      bAddSkillBlow,"Knock enemy back by %s cells using %s",2,k,9,2,1,0
+99   ,0       , bonus2,                      bAddSkillBlow,"knock enemy back by %s cells using %s",2,k,9,2,1,0
 100  ,0       , bonus3,                     bAddEffOnSkill,"%s chance of inflicting %s when using %s",3,k,e,2,3,2,1,0
 101  ,0       , bonus4,                     bAddEffOnSkill,"%s chance of inflicting %s when using %s %s",4,k,e,2,d,4,2,1,0,3
 102  ,0       , bonus4,                  bAutoSpellOnSkill,"%s chance of casting level %s %s when using %s",4,k,k,9,1,4,3,2,1,0
@@ -165,7 +165,7 @@
 37   ,0       ,  bonus,                          bFleeRate,"FLEE %s",1,0,1,0
 22   ,0       ,  bonus,                             bFlee2,"Perfect Dodge %s",1,6,1,0
 38   ,0       ,  bonus,                         bFlee2Rate,"Perfect Dogde %s",1,0,1,0
-7    ,0       ,  bonus,                          bAllStats,"All Status %s",1,6,1,0
+7    ,0       ,  bonus,                          bAllStats,"all status %s",1,6,1,0
 8    ,0       ,  bonus,                            bAgiVit,"AGI, VIT %s",1,6,1,0
 9    ,0       ,  bonus,                         bAgiDexStr,"STR, AGI, DEX %s",1,6,1,0
 10   ,1       ,  bonus,                             bMaxHP,"Max HP %s",1,6,1,0
@@ -234,10 +234,10 @@
 73   ,0       , bonus2,                       bHPDrainRate,"%s chance to absorb %s HP on physical attack",2,1,0,2,0,1
 74   ,0       , bonus2,                       bSPDrainRate,"%s chance to absorb %s SP on physical attack",2,1,0,2,0,1
 75   ,0       , bonus3,                       bSPDrainRate,"%s chance to %s %s SP on physical attack",3,1,0,h,3,0,2,1
-76   ,0       , bonus2,                       bHPRegenRate,"Gain %s HP every %s",2,9,a,2,0,1
-77   ,0       , bonus2,                       bSPRegenRate,"Gain %s SP every %s",2,9,a,2,0,1
-78   ,0       , bonus2,                        bHPLossRate,"Lose %s HP every %s",2,9,a,2,0,1
-79   ,0       , bonus2,                        bSPLossRate,"Lose %s SP every %s",2,9,a,2,0,1
+76   ,0       , bonus2,                       bHPRegenRate,"gain %s HP every %s",2,9,a,2,0,1
+77   ,0       , bonus2,                       bSPRegenRate,"gain %s SP every %s",2,9,a,2,0,1
+78   ,0       , bonus2,                        bHPLossRate,"lose %s HP every %s",2,9,a,2,0,1
+79   ,0       , bonus2,                        bSPLossRate,"lose %s SP every %s",2,9,a,2,0,1
 80   ,0       , bonus2,                   bAddItemHealRate,"%s HP recovery from %s",2,y,0,2,1,0
 81   ,0       , bonus2,              bAddItemGroupHealRate,"%s HP recovery from items in %s",2,y,0,2,1,0
 94   ,0       , bonus2,                         bSkillHeal,"%s heal amount using %s",2,k,0,2,1,0
