@@ -1146,7 +1146,7 @@ int script_combo(script_t * script) {
         iter = combo;
         while(is_ptr(iter)) {
             script->offset += sprintf(&script->buffer[script->offset], "%s\n", iter->group);
-            if(script_recursive(script->db, script->mode, script->map, iter->script, &buffer))
+            if(script_recursive(script->db, script->mode, script->map, iter->script, script->item.id, &buffer))
                 break;
             script->offset += sprintf(&script->buffer[script->offset], "%s\n", buffer);
             free_ptr(buffer);
@@ -1158,7 +1158,7 @@ int script_combo(script_t * script) {
     return 0;
 }
 
-int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, char ** value) {
+int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, int item_id, char ** value) {
     int status = 0;
     script_t * script = NULL;
 
@@ -1172,6 +1172,7 @@ int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, cha
         script->db = db;
         script->mode = mode;
         script->map = map;
+        script->item.id = item_id;
 
         if( script_lexical(&script->token, subscript) ||
             script_analysis(script, &script->token, NULL, NULL) ||
@@ -2273,7 +2274,7 @@ int stack_eng_script(block_r * block, char * script) {
     int status = 0;
     char * buf = NULL;
 
-    if( script_recursive(block->script->db, block->script->mode, block->script->map, script, &buf) ||
+    if( script_recursive(block->script->db, block->script->mode, block->script->map, script, block->item_id, &buf) ||
         block_stack_push(block, TYPE_ENG, buf))
         status = exit_mesg("failed to write or evaluate script '%s'", script);
 
@@ -2595,7 +2596,7 @@ int translate_status(block_r * block) {
         if(NULL == item ||
            evaluate_numeric_constant(block, block->ptr[2], &id) ||
            item_id(block->script->db, item, id) ||
-           script_recursive(block->script->db, block->script->mode, block->script->map, item->script, &buffer) ||
+           script_recursive(block->script->db, block->script->mode, block->script->map, item->script, block->item_id, &buffer) ||
            block_stack_push(block, TYPE_ENG, buffer))
             error = CHECK_FAILED;
         SAFE_FREE(item);
