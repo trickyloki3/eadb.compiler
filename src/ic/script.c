@@ -3659,7 +3659,7 @@ node * evaluate_expression(block_r * block, char * expr, int flag) {
                 status = 1;
             } else {
                 /* set the root to the latest logic tree */
-                if (block->logic)
+                if(block->logic)
                     rbt_logic_append(logic, block->logic);
                 block->logic = logic;
             }
@@ -4923,6 +4923,9 @@ int node_inherit(node * temp) {
         copy = temp->right;
     } else if( temp->left == temp->right && is_ptr(temp->left->logic) ) {
         copy = temp->left;
+    } else if( is_ptr(temp->left->logic) && is_ptr(temp->right->logic) ) {
+        if(rbt_logic_op(temp->left->logic, temp->right->logic, &temp->logic, and))
+            status = exit_stop("failed to merge logic tree");
     }
     if(copy) {
         if(rbt_logic_copy(&temp->logic, copy->logic)) {
@@ -4937,15 +4940,13 @@ int node_inherit(node * temp) {
                     status = exit_stop("out of memory");
             }
         }
+        if(status)
+            exit_stop("failed to copy logic tree");
     }
 
     /* inherit the return type */
-    if(status) {
-        exit_stop("failed to copy logic tree");
-    } else {
-        temp->return_type |= temp->left->return_type;
-        temp->return_type |= temp->right->return_type;
-    }
+    temp->return_type |= temp->left->return_type;
+    temp->return_type |= temp->right->return_type;
 
     return status;
 }
