@@ -327,6 +327,7 @@
 
     /* script sc_status translation functions */
     int translate_status_itemscript(block_r *);
+    int translate_status_endure(block_r *);
 
     /* block expression evaluation interface */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */

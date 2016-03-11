@@ -2588,9 +2588,8 @@ int translate_status(block_r * block) {
 
     /* sc_itemscript is a special case */
     switch(id) {
-        case 289: return translate_status_itemscript(block); /* sc_itemscript */
-        case 21: /* sc_endure */
-            break;
+        case 21:  return translate_status_endure(block);        /* sc_endure */
+        case 289: return translate_status_itemscript(block);    /* sc_itemscript */
     }
 
     /* error on empty format string which
@@ -3543,6 +3542,26 @@ int translate_status_itemscript(block_r * block) {
 
     free_ptr(item);
     free_ptr(buffer);
+    return status;
+}
+
+int translate_status_endure(block_r * block) {
+    int status = 0;
+    int infinite = 0;
+
+    if( stack_eng_int(block, block->ptr[2], 1, 0) ||
+        stack_eng_int(block, block->ptr[3], 1, 0) ||
+        evaluate_numeric_constant(block, block->ptr[5], &infinite) )
+        return 1;
+
+    if(infinite) {
+        status = block_stack_vararg(block, TYPE_ENG, "Increase MDEF"
+        " by %s and endure infinite number of hits.", block->eng[1]);
+    } else {
+        status = block_stack_vararg(block, TYPE_ENG, "Increase MDEF by %s and endu"
+        "re %s number of hits for %s.", block->eng[1], block->eng[2], block->eng[0]);
+    }
+
     return status;
 }
 
