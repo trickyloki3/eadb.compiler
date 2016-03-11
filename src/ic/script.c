@@ -2577,10 +2577,6 @@ int translate_status(block_r * block) {
     int error = 0;
     status_res status;
 
-    /* evaluate item script */
-    item_t * item = NULL;
-    char * buffer = NULL;
-
     if(block->ptr_cnt < 3)
         return exit_func_safe("missing status id, time, or values"
         " argument for %s in item %d", block->name, block->item_id);
@@ -2591,17 +2587,10 @@ int translate_status(block_r * block) {
         return exit_func_safe("undefined status '%s' in item id %d", block->ptr[0], block->item_id);
 
     /* sc_itemscript is a special case */
-    if(id == 289) {
-        item = calloc(1, sizeof(item_t));
-        if(NULL == item ||
-           evaluate_numeric_constant(block, block->ptr[2], &id) ||
-           item_id(block->script->db, item, id) ||
-           script_recursive(block->script->db, block->script->mode, block->script->map, item->script, block->item_id, &buffer) ||
-           block_stack_push(block, TYPE_ENG, buffer))
-            error = CHECK_FAILED;
-        SAFE_FREE(item);
-        SAFE_FREE(buffer);
-        return error;
+    switch(id) {
+        case 289: return translate_status_itemscript(block); /* sc_itemscript */
+        case 21: /* sc_endure */
+            break;
     }
 
     /* error on empty format string which
@@ -3534,6 +3523,27 @@ int translate_makerune(block_r * block) {
             return CHECK_FAILED;
 
     return CHECK_PASSED;
+}
+
+int translate_status_itemscript(block_r * block) {
+    int status = 0;
+    int id = 0;
+    item_t * item = NULL;
+    char * buffer = NULL;
+
+    if(calloc_ptr(item)) {
+        status = exit_stop("out of memory");
+    } else if(evaluate_numeric_constant(block, block->ptr[2], &id)) {
+        status = exit_mesg("failed to evaluate '%s' into a constant", block->ptr[2]);
+    } else if(item_id(block->script->db, item, id)) {
+        status = exit_mesg("failed to find item id %d in item id %d", id, block->item_id);
+    } else if(stack_eng_script(block, item->script)) {
+        status = 1;
+    }
+
+    free_ptr(item);
+    free_ptr(buffer);
+    return status;
 }
 
 int evaluate_numeric_constant(block_r * block, char * expr, int * constant) {

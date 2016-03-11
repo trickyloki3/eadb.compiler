@@ -325,6 +325,9 @@
     /* re */ int translate_setfalcon(block_r *);
     int translate_makerune(block_r *);
 
+    /* script sc_status translation functions */
+    int translate_status_itemscript(block_r *);
+
     /* block expression evaluation interface */
     #define EVALUATE_FLAG_KEEP_LOGIC_TREE  0x001 /* keep the logic tree */
     #define EVALUATE_FLAG_EXPR_BOOL        0x002 /* relational operators evaluate to 0 ~ 1 */

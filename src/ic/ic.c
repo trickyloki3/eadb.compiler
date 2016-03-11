@@ -1,8 +1,8 @@
 #include <script.h>
 
-#define RE_PATH     "resource.db"
-#define RA_PATH     "rathena.db"
-#define MAP_PATH    "db/athena_db.txt"
+#define RE_PATH     "..\\build\\resource.db"
+#define RA_PATH     "..\\build\\rathena.db"
+#define MAP_PATH    "..\\db\\athena_db.txt"
 
 int main(int argc, char * argv[]) {
     script_t * context = NULL;
@@ -23,7 +23,7 @@ int main(int argc, char * argv[]) {
                 block_stack_dump(context->blocks, stderr);
                 break;*/
             } else{
-                printf("[%d]\n%s", context->item.id, context->buffer);
+                /*printf("[%d]\n%s", context->item.id, context->buffer);*/
             }
         }
 
