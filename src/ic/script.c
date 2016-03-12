@@ -306,9 +306,6 @@ int block_stack_dump(block_r * block, FILE * stream) {
                     putc(iter->arg[i], stream):
                     putc(iter->arg[i], stream);
             putc('\n', stream);
-
-
-            rbt_logic_dump(iter->logic);
             fprintf(stream, "------------;\n");
         }
         iter = iter->next;

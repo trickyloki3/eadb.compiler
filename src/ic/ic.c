@@ -52,12 +52,16 @@ int getpath(int argc, char ** argv) {
         if(0 >= len || '-' != str[0])
             continue;
         for(j = 1; j < len && !status; j++) {
-            switch(str[0]) {
-                case 'd': status = setpath(&path_db, str); break;
-                case 'a': status = setpath(&path_map, str); break;
-                case 'i': status = setpath(&path_item, str); break;
-                case 'o': status = setpath(&path_output, str); break;
-                case 'm': status = setmode(&mode_athena, str); break;
+            if (i + 1 >= argc) {
+                status = exit_mesg("missing argument for '%c'", str[0]);
+            } else {
+                switch(str[j]) {
+                    case 'd': status = setpath(&path_db, argv[i + 1]); break;
+                    case 'a': status = setpath(&path_map, argv[i + 1]); break;
+                    case 'i': status = setpath(&path_item, argv[i + 1]); break;
+                    case 'o': status = setpath(&path_output, argv[i + 1]); break;
+                    case 'm': status = setmode(&mode_athena, argv[i + 1]); break;
+                }
             }
         }
     }
@@ -105,7 +109,7 @@ int main(int argc, char * argv[]) {
         status = exit_mesg("%s -d <db-path> -a <map-path> -"
         "i <item-path> -m <mode> -o <output-path>", argv[0]);
     } else {
-        if(script_init(&script, path_db, path_map, path_item, mode_athena)) {
+        if(script_init(&script, path_db, path_item, path_map, mode_athena)) {
             status = exit_stop("fail to load script context");
         } else {
             while(!item_iterate(script->db, &script->item)) {
@@ -118,7 +122,8 @@ int main(int argc, char * argv[]) {
                         script_generate(script) ||
                         script_combo(script) ) {
                         fprintf(file_error, "[%d] script: %s\n", script->item.id, script->item.script);
-                        block_stack_dump(script->blocks, file_error);
+                        if(script->blocks)
+                            block_stack_dump(script->blocks, file_error);
                     } else{
                         fprintf(file_output, "[%d]\n%s", script->item.id, script->buffer);
                     }
