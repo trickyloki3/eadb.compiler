@@ -151,7 +151,7 @@ int load_native_general(FILE * stm, void * mem, int trim_size, native_config_t *
       index_col = 0;
       bracket = 0;
       quote = 0;
-      line_size = strlen(buf);
+      line_size = (int) strlen(buf);
 
       for(offset_buf = 0; offset_buf < line_size; offset_buf++) {
          /* check bracket levels */

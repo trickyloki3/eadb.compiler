@@ -42,7 +42,7 @@ int main(int argc, char * argv[]) {
     if(NULL == get_argv('p') ||
        NULL == get_argv('o') ||
        NULL == get_argv('m')) {
-        len = strlen(argv[0]);
+        len = (int) strlen(argv[0]);
         for(i = len - 2; i >= 0; i--)
             if(argv[0][i] == '/' ||
                argv[0][i] == '\\') {
@@ -90,8 +90,8 @@ int main(int argc, char * argv[]) {
         goto clean;
     }
 
-    output_len = strlen(output_path);
-    server_len = strlen(server_path);
+    output_len = (int) strlen(output_path);
+    server_len = (int) strlen(server_path);
 
 #ifdef WITH_HERCULES
     /* load the server's databases */

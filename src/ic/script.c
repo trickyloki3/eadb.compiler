@@ -199,7 +199,7 @@ int block_stack_push(block_r * block, int type, const char * str) {
     buf = &block->arg[off];
 
     /* check buffer size */
-    len = strlen(str) + 1;
+    len = (int) strlen(str) + 1;
     if ((off + len) >= BUF_SIZE)
         return exit_func_safe("buffer overflow in item %d", block->item_id);
 
@@ -259,7 +259,7 @@ int block_stack_pop(block_r * block, int type) {
     }
 
     /* update buffer state */
-    len = strlen(buf) + 1;
+    len = (int) strlen(buf) + 1;
     block->arg_cnt -= len;
 
     /* removing the last string at block->eng[0] or block->ptr[0]
@@ -559,7 +559,7 @@ int script_lexical(token_r * token, char * script) {
     exit_null_safe(2, token, script);
 
     /* check script length */
-    len = strlen(script);
+    len = (int) strlen(script);
     if(len >= BUF_SIZE) {
         exit_func_safe("script %s exceed buffer size of %d", script, BUF_SIZE);
         return SCRIPT_FAILED;
@@ -663,7 +663,7 @@ int script_analysis(script_t * script, token_r * token_list, block_r * parent, b
     /* parse tokens to build blocks */
     for(i = 0; i < token_cnt; i++) {
         if(token[i][0] == '{' || token[i][0] == '}') continue;
-        if(!block_name(script->db, &block_type, token[i], strlen(token[i]))) {
+        if(!block_name(script->db, &block_type, token[i], (int) strlen(token[i]))) {
             /* count the number of blocks parsed */
             block_cnt++;
 
@@ -896,7 +896,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
                 /* include last token */
                 if(flag & FLAG_PARSE_LAST_TOKEN) {
                     /* write the argument */
-                    len = strlen(script_ptr[i]);
+                    len = (int) strlen(script_ptr[i]);
                     for(j = 0; j < len; j++)
                         arg[arg_cnt++] = script_ptr[i][j];
 
@@ -921,7 +921,7 @@ int script_parse(token_r * token, int * position, block_r * block, char delimit,
             continue;
 
         /* write the argument */
-        len = strlen(script_ptr[i]);
+        len = (int) strlen(script_ptr[i]);
         for (j = 0; j < len; j++)
             arg[arg_cnt++] = script_ptr[i][j];
 
@@ -1200,7 +1200,7 @@ int stack_ptr_call(block_r * block, char * expr, int * argc) {
     int len = 0;
     token_r * token = NULL;
 
-    len = strlen(expr);
+    len = (int) strlen(expr);
     if( 0 >= len ||                             /* check empty expression */
         (expr[0] != '(' && expr[len] != ')') || /* check empty argument */
         calloc_ptr(token) )
@@ -1297,7 +1297,7 @@ int stack_eng_item(block_r * block, char * expr, int * argc, int flag) {
     top = block->eng_cnt;
 
     /* check for empty expression */
-    len = strlen(expr);
+    len = (int) strlen(expr);
     if(0 >= len || calloc_ptr(item))
         return 1;
 
@@ -1362,7 +1362,7 @@ int stack_eng_skill(block_r * block, char * expr, int * argc) {
     top = block->eng_cnt;
 
     /* check for empty expression */
-    len = strlen(expr);
+    len = (int) strlen(expr);
     if(0 >= len || calloc_ptr(skill))
         return 1;
 
@@ -1585,7 +1585,7 @@ static int stack_eng_int_signed_re(block_r * block, node * node, int modifier, c
     cnv[off++] = '\0';
 
     /* build buffer */
-    len = strlen(pos) + strlen(neg) + 128;
+    len = (int) strlen(pos) + (int) strlen(neg) + 128;
     buf = calloc(len, sizeof(char));
     if(is_nil(buf)) {
         status = exit_stop("out of memory");
@@ -2006,7 +2006,7 @@ static int stack_eng_group_name(char ** target, const char * source) {
     int length;
     char * buffer;
 
-    length = strlen(source);
+    length = (int) strlen(source);
     if(0 >= length)
         return 1;
 
@@ -2301,7 +2301,7 @@ int stack_eng_aspd(block_r * block, char * expr) {
     int    len;
     char * buf = NULL;
 
-    len = strlen(expr);
+    len = (int) strlen(expr);
     if(0 >= len)
         return 1;
 
@@ -2328,7 +2328,7 @@ int stack_aux_formula(block_r * block, node * node, char * expr) {
         if(block_stack_push(block, TYPE_ENG, expr))
             return 1;
     } else {
-        len = strlen(expr) + strlen(node->formula) + 16;
+        len = (int) strlen(expr) + (int) strlen(node->formula) + 16;
         buf = calloc(len, sizeof(char));
         if(is_nil(buf))
             return 1;
@@ -2585,7 +2585,7 @@ int translate_status(block_r * block) {
 
     /* error on empty format string which
      * indicates that it is not implemented */
-    if(0 >= strlen(status.format))
+    if(0 >= (int) strlen(status.format))
         return exit_func_safe("%s is not implemented in item %d", status.name, block->item_id);
 
     /* evaluate the values by type */
@@ -2688,7 +2688,7 @@ int translate_bonus(block_r * block, char * prefix) {
         status = exit_stop("bonus block has zero arguments");
     } else if(calloc_ptr(bonus)) {
         status = exit_stop("out of memory");
-    } else if(bonus_name(block->script->db, bonus, prefix, strlen(prefix), block->ptr[0], strlen(block->ptr[0]))) {
+    } else if(bonus_name(block->script->db, bonus, prefix, (int) strlen(prefix), block->ptr[0], (int) strlen(block->ptr[0]))) {
         status = exit_mesg("failed to evaluate bonus argument '%s' from item id %d", block->ptr[0], block->item_id);
     } else {
         /* translate each bonus argument by argument type */
@@ -3586,7 +3586,7 @@ int evaluate_expression_formula_concat(struct rbt_node * node, void * context, i
 }
 
 int evaluate_expression_formula_length(struct rbt_node * node, void * context, int flag) {
-     *((int *) context) += strlen(node->val) + 3;
+     *((int *) context) += (int) strlen(node->val) + 3;
      return 0;
 }
 
@@ -3867,7 +3867,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
     node * object = NULL;
     db_t * db = block->script->db;
     char * str = expr[*start];
-    size_t len = strlen(str);
+    size_t len = (int) strlen(str);
 
     int index = 0;
     int status = 0;
@@ -3884,7 +3884,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
         return exit_stop("out of memory");
 
     if( calloc_ptr(var) ||
-        !var_name(db, var, str, len) ) {
+        !var_name(db, var, str, (int) len) ) {
         object->var = var->id;
         object->logic_count = 1;
         object->id = convert_string(var->desc);
@@ -3926,7 +3926,7 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
         object->id = convert_string(str);
         if(is_nil(object->id)) {
             status = exit_stop("out of memory");
-        } else if(calloc_ptr(opt) || !opt_name(db, opt, str, len)) {
+        } else if(calloc_ptr(opt) || !opt_name(db, opt, str, (int) len)) {
             object->type = NODE_TYPE_CONSTANT;
             object->min = opt->flag;
             object->max = opt->flag;
@@ -3934,13 +3934,13 @@ static int evaluate_expression_var(block_r * block, char ** expr, int * start, i
             if( is_nil(object->formula) ||
                 rbt_range_init(&object->value, object->min, object->max, 0) )
                 status = exit_stop("out of memory");
-        } else if(calloc_ptr(map) || !map_name(db, map, str, len)) {
+        } else if(calloc_ptr(map) || !map_name(db, map, str, (int) len)) {
             object->type = NODE_TYPE_CONSTANT;
             object->min = map->id;
             object->max = map->id;
             if(rbt_range_init(&object->value, object->min, object->max, 0))
                 status = exit_stop("out of memory");
-        } else if(calloc_ptr(cst) || !const_name(db, cst, str, len)) {
+        } else if(calloc_ptr(cst) || !const_name(db, cst, str, (int) len)) {
             object->type = NODE_TYPE_CONSTANT;
             object->min = cst->value;
             object->max = cst->value;
@@ -4169,7 +4169,7 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
 
     /* search by skill name or id */
     if( isalpha(block->ptr[off][0]) || '_' == block->ptr[off][0] )
-        status = skill_name(block->script->db, skill, block->ptr[off], strlen(block->ptr[off]));
+        status = skill_name(block->script->db, skill, block->ptr[off], (int) strlen(block->ptr[off]));
     if (status &&!evaluate_numeric_constant(block, block->ptr[off], &id))
         status = skill_id(block->script->db, skill, id);
 
@@ -4181,7 +4181,7 @@ int evaluate_function_getskilllv(block_r * block, int off, int cnt, var_res * fu
         if(rbt_range_init(&temp->value, temp->min, temp->max, 0)) {
             exit_stop("out of memory");
         } else {
-            len = strlen(skill->desc) + 16;
+            len = (int) strlen(skill->desc) + 16;
             temp->formula = calloc(len, sizeof(char));
             if(is_nil(temp->formula)) {
                 status = exit_stop("out of memory");
@@ -4251,7 +4251,7 @@ int evaluate_function_getequiprefinerycnt(block_r * block, int off, int cnt, var
     if(stack_eng_map(block, block->ptr[off], MAP_REFINE_FLAG, &unused)) {
         status = exit_mesg("failed to resolve '%s' to an refinement slot", block->ptr[off]);
     } else {
-        len = block->arg_cnt - len + strlen(temp->id) + 16;
+        len = block->arg_cnt - len + (int) strlen(temp->id) + 16;
 
         temp->formula = calloc(len, sizeof(char));
         if(is_nil(temp->formula)) {
@@ -4284,7 +4284,7 @@ int evaluate_function_getiteminfo(block_r * block, int off, int cnt, var_res * f
         stack_eng_map(block, block->ptr[off + 1], MAP_ITEM_INFO_FLAG, &argc) || argc != 1 ) {
         status = exit_stop("failed to evaluate getiteminfo argument into constants");
     } else {
-        len = block->arg_cnt - len + strlen(block->ptr[off + 1]) + 32;
+        len = block->arg_cnt - len + (int) strlen(block->ptr[off + 1]) + 32;
         temp->formula = calloc(len, sizeof(char));
         if(is_nil(temp->formula)) {
             exit_stop("out of memory");
@@ -5323,7 +5323,7 @@ int script_generate_write_getiteminfo(block_r * block, rbt_logic * logic) {
     struct work work;
 
     /* get the type expression */
-    len = strlen(logic->name);
+    len = (int) strlen(logic->name);
     for(i = 0; i < len; i++)
         if(logic->name[i] == ';') {
             logic->name[i] = '\0';

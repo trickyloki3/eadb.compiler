@@ -248,7 +248,7 @@ int const_ra_load(void * db, int row, int col, char * val) {
         case 0: strnload(record->name, MAX_NAME_SIZE, val);                             break;
         case 1:
             /* constant can be represented as hexadecimal or decimal */
-            record->value = (strlen(val) > 2 && val[0] == '0' && val[1] == 'x') ?
+            record->value = ((int) strlen(val) > 2 && val[0] == '0' && val[1] == 'x') ?
                 convert_integer(val, 16):
                 convert_integer(val, 10);                                               break;
         case 2: record->type = convert_integer(val, 10);                                break;
@@ -330,21 +330,21 @@ int ra_db_init(ra_db_t ** ra, const char * path) {
         goto failed;
     }
 
-    if( SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_INSERT, strlen(RA_ITEM_INSERT), &_ra->item_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_MOB_INSERT, strlen(RA_MOB_INSERT), &_ra->mob_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_SKILL_INSERT, strlen(RA_SKILL_INSERT), &_ra->skill_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_PRODUCE_INSERT, strlen(RA_PRODUCE_INSERT), &_ra->produce_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_MERC_INSERT, strlen(RA_MERC_INSERT), &_ra->mercenary_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_PET_INSERT, strlen(RA_PET_INSERT), &_ra->pet_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_GROUP_INSERT, strlen(RA_ITEM_GROUP_INSERT), &_ra->item_group_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_CONST_INSERT, strlen(RA_CONST_INSERT), &_ra->const_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_COMBO_INSERT, strlen(RA_ITEM_COMBO_INSERT), &_ra->item_combo_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_CONST_SEARCH, strlen(RA_CONST_SEARCH), &_ra->const_ra_name_search, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_NAME, strlen(RA_ITEM_SEARCH_NAME), &_ra->item_ra_name_search, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_ID, strlen(RA_ITEM_SEARCH_ID), &_ra->item_ra_id_search, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_INSERT, strlen(RA_ITEM_PACKAGE_INSERT), &_ra->item_package_ra_sql_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_META_INSERT, strlen(RA_ITEM_PACKAGE_META_INSERT), &_ra->item_package_meta_insert, NULL) ||
-        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_QUERY, strlen(RA_ITEM_PACKAGE_QUERY), &_ra->item_package_query, NULL)) {
+    if( SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_INSERT, (int) strlen(RA_ITEM_INSERT), &_ra->item_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_MOB_INSERT, (int) strlen(RA_MOB_INSERT), &_ra->mob_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_SKILL_INSERT, (int) strlen(RA_SKILL_INSERT), &_ra->skill_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_PRODUCE_INSERT, (int) strlen(RA_PRODUCE_INSERT), &_ra->produce_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_MERC_INSERT, (int) strlen(RA_MERC_INSERT), &_ra->mercenary_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_PET_INSERT, (int) strlen(RA_PET_INSERT), &_ra->pet_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_GROUP_INSERT, (int) strlen(RA_ITEM_GROUP_INSERT), &_ra->item_group_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_CONST_INSERT, (int) strlen(RA_CONST_INSERT), &_ra->const_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_COMBO_INSERT, (int) strlen(RA_ITEM_COMBO_INSERT), &_ra->item_combo_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_CONST_SEARCH, (int) strlen(RA_CONST_SEARCH), &_ra->const_ra_name_search, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_NAME, (int) strlen(RA_ITEM_SEARCH_NAME), &_ra->item_ra_name_search, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_SEARCH_ID, (int) strlen(RA_ITEM_SEARCH_ID), &_ra->item_ra_id_search, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_INSERT, (int) strlen(RA_ITEM_PACKAGE_INSERT), &_ra->item_package_ra_sql_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_META_INSERT, (int) strlen(RA_ITEM_PACKAGE_META_INSERT), &_ra->item_package_meta_insert, NULL) ||
+        SQLITE_OK != sqlite3_prepare_v2(_ra->db, RA_ITEM_PACKAGE_QUERY, (int) strlen(RA_ITEM_PACKAGE_QUERY), &_ra->item_package_query, NULL)) {
         fprintf(stderr, "[load]: failed prepare sql statments; %s.\n", sqlite3_errmsg(_ra->db));
         goto failed;
     }
@@ -429,8 +429,8 @@ int ra_db_item_load_record(item_ra * items, int size, sqlite3_stmt * sql) {
         item = &items[i];
         if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, item->id) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 2, item->aegis, strlen(item->aegis), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 3, item->eathena, strlen(item->eathena), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 2, item->aegis, (int) strlen(item->aegis), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 3, item->eathena, (int) strlen(item->eathena), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 4, item->type) ||
             SQLITE_OK != sqlite3_bind_int(sql, 5, item->buy) ||
             SQLITE_OK != sqlite3_bind_int(sql, 6, item->sell) ||
@@ -449,9 +449,9 @@ int ra_db_item_load_record(item_ra * items, int size, sqlite3_stmt * sql) {
             SQLITE_OK != sqlite3_bind_int(sql,19, item->elv_max) ||
             SQLITE_OK != sqlite3_bind_int(sql, 20, item->refineable) ||
             SQLITE_OK != sqlite3_bind_int(sql, 21, item->view) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 22, item->script, strlen(item->script), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 23, item->onequip, strlen(item->onequip), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 24, item->onunequip, strlen(item->onunequip), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 22, item->script, (int) strlen(item->script), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 23, item->onequip, (int) strlen(item->onequip), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 24, item->onunequip, (int) strlen(item->onunequip), SQLITE_STATIC) ||
             SQLITE_DONE != sqlite3_step(sql) ||
             SQLITE_OK != sqlite3_reset(sql)) {
             fprintf(stderr, "[load]: failed to add %s to item db.\n", item->aegis);
@@ -495,9 +495,9 @@ int ra_db_mob_load_record(mob_ra * mobs, int size, sqlite3_stmt * sql) {
         mob = &mobs[i];
         if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, mob->id) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 2, mob->sprite, strlen(mob->sprite), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 3, mob->kro, strlen(mob->kro), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 4, mob->iro, strlen(mob->iro), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 2, mob->sprite, (int) strlen(mob->sprite), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 3, mob->kro, (int) strlen(mob->kro), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 4, mob->iro, (int) strlen(mob->iro), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 5, mob->lv) ||
             SQLITE_OK != sqlite3_bind_int(sql, 6, mob->hp) ||
             SQLITE_OK != sqlite3_bind_int(sql, 7, mob->sp) ||
@@ -594,23 +594,23 @@ int ra_db_skill_load_record(skill_ra * skills, int size, sqlite3_stmt * sql) {
         skill = &skills[i];
         if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, skill->id) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 2, skill->range.str, strlen(skill->range.str), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 2, skill->range.str, (int) strlen(skill->range.str), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 3, skill->hit) ||
             SQLITE_OK != sqlite3_bind_int(sql, 4, skill->inf) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 5, skill->element.str, strlen(skill->element.str), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 5, skill->element.str, (int) strlen(skill->element.str), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 6, skill->nk) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 7, skill->splash.str, strlen(skill->splash.str), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 7, skill->splash.str, (int) strlen(skill->splash.str), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 8, skill->maxlv) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 9, skill->hit_amount.str, strlen(skill->hit_amount.str), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 10, skill->cast_cancel, strlen(skill->cast_cancel), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 9, skill->hit_amount.str, (int) strlen(skill->hit_amount.str), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 10, skill->cast_cancel, (int) strlen(skill->cast_cancel), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 11, skill->cast_def_reduce_rate) ||
             SQLITE_OK != sqlite3_bind_int(sql, 12, skill->inf2) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 13, skill->maxcount.str, strlen(skill->maxcount.str), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 14, skill->type, strlen(skill->type), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 15, skill->blow_count.str, strlen(skill->blow_count.str), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 13, skill->maxcount.str, (int) strlen(skill->maxcount.str), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 14, skill->type, (int) strlen(skill->type), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 15, skill->blow_count.str, (int) strlen(skill->blow_count.str), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 16, skill->inf3) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 17, skill->name, strlen(skill->name), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 18, skill->desc, strlen(skill->desc), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 17, skill->name, (int) strlen(skill->name), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 18, skill->desc, (int) strlen(skill->desc), SQLITE_STATIC) ||
             SQLITE_DONE != sqlite3_step(sql) ||
             SQLITE_OK != sqlite3_reset(sql)) {
             fprintf(stderr, "[load]: failed to add %s to skill db.\n", skill->name);
@@ -660,9 +660,9 @@ int ra_db_produce_load_record(produce_ra * produces, int size, sqlite3_stmt * sq
             SQLITE_OK != sqlite3_bind_int(sql, 4, produce->skill_id) ||
             SQLITE_OK != sqlite3_bind_int(sql, 5, produce->skill_lv) ||
             !array_to_string(buf, produce->item_id_req) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 6, buf, strlen(buf), SQLITE_TRANSIENT) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 6, buf, (int) strlen(buf), SQLITE_TRANSIENT) ||
             !array_to_string_cnt(buf, produce->item_amount_req, array_field_cnt(buf) + 1) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 7, buf, strlen(buf), SQLITE_TRANSIENT) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 7, buf, (int) strlen(buf), SQLITE_TRANSIENT) ||
             SQLITE_DONE != sqlite3_step(sql) ||
             SQLITE_OK != sqlite3_reset(sql)) {
             fprintf(stderr, "[load]: failed to add %d to produce db.\n", produce->id);
@@ -706,8 +706,8 @@ int ra_db_merc_load_record(mercenary_ra * mercs, int size, sqlite3_stmt * sql) {
         merc = &mercs[i];
         if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, merc->id) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 2, merc->sprite, strlen(merc->sprite), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 3, merc->name, strlen(merc->name), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 2, merc->sprite, (int) strlen(merc->sprite), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 3, merc->name, (int) strlen(merc->name), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 4, merc->lv) ||
             SQLITE_OK != sqlite3_bind_int(sql, 5, merc->hp) ||
             SQLITE_OK != sqlite3_bind_int(sql, 6, merc->sp) ||
@@ -774,8 +774,8 @@ int ra_db_pet_load_record(pet_ra * pets, int size, sqlite3_stmt * sql) {
         pet = &pets[i];
         if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
             SQLITE_OK != sqlite3_bind_int(sql, 1, pet->mob_id) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 2, pet->name, strlen(pet->name), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 3, pet->jname, strlen(pet->jname), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 2, pet->name, (int) strlen(pet->name), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 3, pet->jname, (int) strlen(pet->jname), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 4, pet->lure_id) ||
             SQLITE_OK != sqlite3_bind_int(sql, 5, pet->egg_id) ||
             SQLITE_OK != sqlite3_bind_int(sql, 6, pet->equip_id) ||
@@ -793,8 +793,8 @@ int ra_db_pet_load_record(pet_ra * pets, int size, sqlite3_stmt * sql) {
             SQLITE_OK != sqlite3_bind_int(sql, 18, pet->attack_rate) ||
             SQLITE_OK != sqlite3_bind_int(sql, 19, pet->defence_attack_rate) ||
             SQLITE_OK != sqlite3_bind_int(sql, 20, pet->change_target_rate) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 21, pet->pet_script, strlen(pet->pet_script), SQLITE_STATIC) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 22, pet->loyal_script, strlen(pet->loyal_script), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 21, pet->pet_script, (int) strlen(pet->pet_script), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 22, pet->loyal_script, (int) strlen(pet->loyal_script), SQLITE_STATIC) ||
             SQLITE_DONE != sqlite3_step(sql) ||
             SQLITE_OK != sqlite3_reset(sql)) {
             fprintf(stderr, "[load]: failed to add %s to pet db.\n", pet->name);
@@ -836,7 +836,7 @@ int ra_db_const_load_record(const_ra * constants, int size, sqlite3_stmt * sql) 
     for(i = 0; i < size; i++) {
         constant = &constants[i];
         if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
-            SQLITE_OK != sqlite3_bind_text(sql, 1, constant->name, strlen(constant->name), SQLITE_STATIC) ||
+            SQLITE_OK != sqlite3_bind_text(sql, 1, constant->name, (int) strlen(constant->name), SQLITE_STATIC) ||
             SQLITE_OK != sqlite3_bind_int(sql, 2, constant->value) ||
             SQLITE_OK != sqlite3_bind_int(sql, 3, constant->type) ||
             SQLITE_DONE != sqlite3_step(sql) ||
@@ -854,7 +854,7 @@ int ra_db_const_load_record(const_ra * constants, int size, sqlite3_stmt * sql) 
 
 int const_ra_name_search(sqlite3_stmt * sql, char * name, const_ra * constant) {
     if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
-        SQLITE_OK != sqlite3_bind_text(sql, 1, name, strlen(name), SQLITE_STATIC) ||
+        SQLITE_OK != sqlite3_bind_text(sql, 1, name, (int) strlen(name), SQLITE_STATIC) ||
         SQLITE_ROW != sqlite3_step(sql)) {
         fprintf(stderr, "FAILED %s\n", name);
         sqlite3_reset(sql);
@@ -870,7 +870,7 @@ int const_ra_name_search(sqlite3_stmt * sql, char * name, const_ra * constant) {
 }
 
 int item_ra_name_search(sqlite3_stmt * sql, char * name, item_ra * item) {
-    int len = strlen(name);
+    int len = (int) strlen(name);
 
     if( SQLITE_OK != sqlite3_clear_bindings(sql) ||
         SQLITE_OK != sqlite3_bind_text(sql, 1, name, len, SQLITE_STATIC) ||
@@ -1070,7 +1070,7 @@ int ra_db_item_combo_load_record(ra_db_t * ra, combo_ra * combos, int size) {
             for(j = 0; j < item_array.size; j++) {
                 if( SQLITE_OK != sqlite3_clear_bindings(ra->item_combo_ra_sql_insert) ||
                     SQLITE_OK != sqlite3_bind_int(ra->item_combo_ra_sql_insert, 1, item_list[j]) ||
-                    SQLITE_OK != sqlite3_bind_text(ra->item_combo_ra_sql_insert, 2, combo->script, strlen(combo->script), SQLITE_STATIC) ||
+                    SQLITE_OK != sqlite3_bind_text(ra->item_combo_ra_sql_insert, 2, combo->script, (int) strlen(combo->script), SQLITE_STATIC) ||
                     SQLITE_OK != sqlite3_bind_text(ra->item_combo_ra_sql_insert, 3, buf, off, SQLITE_STATIC) ||
                     SQLITE_DONE != sqlite3_step(ra->item_combo_ra_sql_insert) ||
                     SQLITE_OK != sqlite3_reset(ra->item_combo_ra_sql_insert)) {

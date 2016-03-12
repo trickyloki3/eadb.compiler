@@ -48,7 +48,7 @@ int getpath(int argc, char ** argv) {
 
     for(i = 1; i < argc && !status; i++) {
         str = argv[i];
-        len = strlen(str);
+        len = (int) strlen(str);
         if(0 >= len || '-' != str[0])
             continue;
         for(j = 1; j < len; j++) {

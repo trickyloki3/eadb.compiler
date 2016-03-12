@@ -36,7 +36,7 @@ int map_res_load(void * db, int row, int col, char * val) {
     switch(col) {
         case 0:
             /* remove the file extension for the map name */
-            for(i = strlen(val); i >= 0; i--) if(val[i] == '.') { val[i] = '\0'; break; }
+            for(i = (int) strlen(val); i >= 0; i--) if(val[i] == '.') { val[i] = '\0'; break; }
             strnload(record->map, MAX_NAME_SIZE, val);         break;
         case 1: strnload(record->name, MAX_NAME_SIZE, val); break;
         default: exit_func_safe("invalid column field %d in map database", col);
@@ -177,14 +177,14 @@ int opt_db_init(opt_db_t ** opt, const char * path) {
       goto failed;
    }
 
-   if(SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_OPT_INSERT, strlen(RES_OPT_INSERT), &_opt->option_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_MAP_INSERT, strlen(RES_MAP_INSERT), &_opt->map_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_BNS_INSERT, strlen(RES_BNS_INSERT), &_opt->bonus_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_STA_INSERT, strlen(RES_STA_INSERT), &_opt->status_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_VAR_INSERT, strlen(RES_VAR_INSERT), &_opt->var_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_BLK_INSERT, strlen(RES_BLK_INSERT), &_opt->block_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_RID_INSERT, strlen(RES_RID_INSERT), &_opt->id_res_sql_insert, NULL) ||
-      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_NID_INSERT, strlen(RES_NID_INSERT), &_opt->numid_res_sql_insert, NULL)) {
+   if(SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_OPT_INSERT, (int) strlen(RES_OPT_INSERT), &_opt->option_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_MAP_INSERT, (int) strlen(RES_MAP_INSERT), &_opt->map_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_BNS_INSERT, (int) strlen(RES_BNS_INSERT), &_opt->bonus_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_STA_INSERT, (int) strlen(RES_STA_INSERT), &_opt->status_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_VAR_INSERT, (int) strlen(RES_VAR_INSERT), &_opt->var_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_BLK_INSERT, (int) strlen(RES_BLK_INSERT), &_opt->block_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_RID_INSERT, (int) strlen(RES_RID_INSERT), &_opt->id_res_sql_insert, NULL) ||
+      SQLITE_OK != sqlite3_prepare_v2(_opt->db, RES_NID_INSERT, (int) strlen(RES_NID_INSERT), &_opt->numid_res_sql_insert, NULL)) {
       fprintf(stderr, "[load]: failed prepare sql statments; %s.\n", sqlite3_errmsg(_opt->db));
       goto failed;
    }
@@ -261,8 +261,8 @@ int opt_db_res_load_record(option_res * options, int size, sqlite3_stmt * sql) {
    for(i = 0; i < size; i++) {
       option = &options[i];
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 1, option->option, strlen(option->option), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, option->name, strlen(option->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 1, option->option, (int) strlen(option->option), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 2, option->name, (int) strlen(option->name), SQLITE_STATIC) ||
          SQLITE_OK != sqlite3_bind_int(sql, 3, option->flag) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
@@ -305,8 +305,8 @@ int opt_db_map_load_record(map_res * maps, int size, sqlite3_stmt * sql) {
       map = &maps[i];
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql, 1, map->id) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, map->map, strlen(map->map), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 3, map->name, strlen(map->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 2, map->map, (int) strlen(map->map), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 3, map->name, (int) strlen(map->name), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to map db.\n", map->map);
@@ -351,15 +351,15 @@ int opt_db_bns_load_record(bonus_res * bonuses, int size, sqlite3_stmt * sql) {
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql, 1, bonus->id) ||
          SQLITE_OK != sqlite3_bind_int(sql, 2, bonus->attr) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 3, bonus->prefix, strlen(bonus->prefix), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 4, bonus->bonus, strlen(bonus->bonus), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 5, bonus->format, strlen(bonus->format), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 3, bonus->prefix, (int) strlen(bonus->prefix), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 4, bonus->bonus, (int) strlen(bonus->bonus), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 5, bonus->format, (int) strlen(bonus->format), SQLITE_STATIC) ||
          SQLITE_OK != sqlite3_bind_int(sql, 6, bonus->type_cnt) ||
          NULL == array_to_string_cnt(buf, bonus->type, bonus->type_cnt) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 7, buf, strlen(buf), SQLITE_TRANSIENT) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 7, buf, (int) strlen(buf), SQLITE_TRANSIENT) ||
          SQLITE_OK != sqlite3_bind_int(sql, 8, bonus->order_cnt) ||
          NULL == array_to_string_cnt(buf, bonus->order, bonus->order_cnt) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 9, buf, strlen(buf), SQLITE_TRANSIENT) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 9, buf, (int) strlen(buf), SQLITE_TRANSIENT) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to bonus db.\n", bonus->bonus);
@@ -403,15 +403,15 @@ int opt_db_sta_load_record(status_res * statuses, int size, sqlite3_stmt * sql) 
 
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql, 1, status->id) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, status->name, strlen(status->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 2, status->name, (int) strlen(status->name), SQLITE_STATIC) ||
          SQLITE_OK != sqlite3_bind_int(sql, 3, status->val1) ||
          SQLITE_OK != sqlite3_bind_int(sql, 4, status->val2) ||
          SQLITE_OK != sqlite3_bind_int(sql, 5, status->val3) ||
          SQLITE_OK != sqlite3_bind_int(sql, 6, status->val4) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 7, status->format, strlen(status->format), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 7, status->format, (int) strlen(status->format), SQLITE_STATIC) ||
          SQLITE_OK != sqlite3_bind_int(sql, 8, status->offset_count) ||
          NULL == array_to_string_cnt(buf, status->offset, status->offset_count) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 9, buf, strlen(buf), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 9, buf, (int) strlen(buf), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to status db.\n", status->name);
@@ -458,8 +458,8 @@ int opt_db_var_load_record(var_res * vars, int size, sqlite3_stmt * sql) {
          SQLITE_OK != sqlite3_bind_int(sql, 3, var->flag) ||
          SQLITE_OK != sqlite3_bind_int(sql, 4, var->min) ||
          SQLITE_OK != sqlite3_bind_int(sql, 5, var->max) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 6, var->name, strlen(var->name), SQLITE_STATIC) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 7, var->desc, strlen(var->desc), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 6, var->name, (int) strlen(var->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 7, var->desc, (int) strlen(var->desc), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to variable db.\n", var->name);
@@ -501,7 +501,7 @@ int opt_db_blk_load_record(block_res * blocks, int size, sqlite3_stmt * sql) {
       block = &blocks[i];
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql, 1, block->id) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, block->name, strlen(block->name), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 2, block->name, (int) strlen(block->name), SQLITE_STATIC) ||
          SQLITE_OK != sqlite3_bind_int(sql, 3, block->flag) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
@@ -544,7 +544,7 @@ int opt_db_rid_load_record(nid_res * rids, int size, sqlite3_stmt * sql) {
       rid = &rids[i];
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql, 1, rid->id) ||
-         SQLITE_OK != sqlite3_bind_text(sql, 2, rid->res, strlen(rid->res), SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql, 2, rid->res, (int) strlen(rid->res), SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to rid db.\n", rid->res);
@@ -587,7 +587,7 @@ int opt_db_nid_load_record(nid_res * nids, int size, sqlite3_stmt * sql) {
       nid = &nids[i];
       if(SQLITE_OK != sqlite3_clear_bindings(sql) ||
          SQLITE_OK != sqlite3_bind_int(sql,1,nid->id) ||
-         SQLITE_OK != sqlite3_bind_text(sql,2,nid->res,strlen(nid->res),SQLITE_STATIC) ||
+         SQLITE_OK != sqlite3_bind_text(sql,2,nid->res, (int) strlen(nid->res),SQLITE_STATIC) ||
          SQLITE_DONE != sqlite3_step(sql) ||
          SQLITE_OK != sqlite3_reset(sql)) {
           fprintf(stderr, "[load]: failed to add %s to nid db.\n", nid->res);

@@ -71,7 +71,7 @@ int parse_argv(char ** argv, int argc) {
 
     /* parse each argument string from argv */
     for (i = 1; i < argc; i++) {
-        len = strlen(argv[i]);
+        len = (int) strlen(argv[i]);
         str = argv[i];
 
         /* check for double -- hypens for long option matching */
@@ -133,7 +133,7 @@ int path_concat(char * path, size_t len, size_t max, const char * sub_path) {
     }
 
     /* get length of sub-path */
-    sub_len = strlen(sub_path);
+    sub_len = (int) strlen(sub_path);
     if(0 == sub_len)
         return CHECK_FAILED;
 
@@ -190,7 +190,7 @@ void strncopy(char * buf, int size, const unsigned char * str) {
    }
 
    src = (const char *) str;
-   len = strlen(src);
+   len = (int) strlen(src);
    if(len <= 0) {
       buf[0] = '\0';
       return;
@@ -216,7 +216,7 @@ int strnload(char * buf, int size, char * str) {
    if(size <= 0)
       return exit_abt_safe("invalid buffer size");
 
-   len = strlen(str);
+   len = (int) strlen(str);
 
    /* check destination is as large as source */
    if(len > size - 1) {
@@ -236,8 +236,8 @@ int ncs_strcmp(const char * s1, const char * s2) {
    int inx_2 = 0;
    int s_len_adj_1 = 0;
    int s_len_adj_2 = 0;
-   int s_len_1 = strlen(s1);
-   int s_len_2 = strlen(s2);
+   int s_len_1 = (int) strlen(s1);
+   int s_len_2 = (int) strlen(s2);
 
    for(;; inx_1++, inx_2++) {
       /* jump to the next number and alpha */
@@ -273,7 +273,7 @@ int convert_integer(const char * str, int base) {
    exit_null_safe(1, str);
 
    /* check empty string */
-   len = strlen(str);
+   len = (int) strlen(str);
    if (len <= 0)
        /*return exit_abt_safe("empty string");*/
        return 0;
@@ -318,7 +318,7 @@ void convert_integer_delimit(char * src, char * delimiters, int argc, ...) {
 
    if(NULL != src && NULL != delimiters) {
        /* check source string is greater than 0 */
-      len = strlen(src);
+      len = (int) strlen(src);
       if (len > 0) {
           for (i = 0, ptr = src; i < argc; i++) {
               /* copy substring from source buffer until delimiter */
@@ -393,7 +393,7 @@ int convert_integer_delimit_static(const char * str, const char * delimiters, in
    array_w array;
    memset(&array, 0, sizeof(array_w));
 
-   len = strlen(str);
+   len = (int) strlen(str);
    if(0 >= len) {
       memset(list, 0, sizeof(int) * size);
       *argc = 0;
@@ -429,7 +429,7 @@ int convert_uinteger(const char * str, int base) {
    exit_null_safe(1, str);
 
    /* check empty string */
-   len = strlen(str);
+   len = (int) strlen(str);
    if(len <= 0)
       /*return exit_abt_safe("empty string");*/
       return 0;
@@ -468,7 +468,7 @@ char * convert_string(const char * str) {
    if (NULL == str)
        return NULL;
 
-   len = strlen(str);
+   len = (int) strlen(str);
    if(len <= 0)
       return NULL;
 
@@ -489,7 +489,7 @@ char * convert_stringn(const char * str, int * size) {
    if(NULL == str)
       return NULL;
 
-   len = strlen(str);
+   len = (int) strlen(str);
    if(len <= 0)
       return NULL;
 
@@ -552,7 +552,7 @@ const char * substr_delimit(const char * src, char * des, const char * delimiter
          }
 
    /* copy source to destination buffer if source buffer does not contain any delimiters */
-   len = strlen(src);
+   len = (int) strlen(src);
    strncpy(des, src, len + 1);
    return &src[len];
 }
@@ -578,7 +578,7 @@ char * array_to_string_cnt(char * buffer, int * array, int size) {
 int array_field_cnt(char * buf) {
    int i = 0;
    int cnt = 0;
-   int len = strlen(buf);
+   int len = (int) strlen(buf);
    for(i = 0; i < len; i++)
       if(buf[i] == ':') cnt++;
    return cnt;
