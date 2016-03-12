@@ -117,9 +117,8 @@ int main(int argc, char * argv[]) {
                         script_translate(script) ||
                         script_generate(script) ||
                         script_combo(script) ) {
-                        /*fprintf(stderr, "[%d] script: %s\n", context->item.id, context->item.script);
-                        block_stack_dump(context->blocks, stderr);
-                        break;*/
+                        fprintf(file_error, "[%d] script: %s\n", script->item.id, script->item.script);
+                        block_stack_dump(script->blocks, file_error);
                     } else{
                         fprintf(file_output, "[%d]\n%s", script->item.id, script->buffer);
                     }
