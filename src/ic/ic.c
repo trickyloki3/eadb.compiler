@@ -51,9 +51,10 @@ int getpath(int argc, char ** argv) {
         len = strlen(str);
         if(0 >= len || '-' != str[0])
             continue;
-        for(j = 1; j < len && !status; j++) {
-            if (i + 1 >= argc) {
-                status = exit_mesg("missing argument for '%c'", str[0]);
+        for(j = 1; j < len; j++) {
+            if( i + 1 >= argc ||
+                '-' == argv[i + 1][0] ) {
+                status = exit_mesg("missing argument for '%c'", str[j]);
             } else {
                 switch(str[j]) {
                     case 'd': status = setpath(&path_db, argv[i + 1]); break;
@@ -63,6 +64,8 @@ int getpath(int argc, char ** argv) {
                     case 'm': status = setmode(&mode_athena, argv[i + 1]); break;
                 }
             }
+            if(status)
+                return status;
         }
     }
 
