@@ -7,12 +7,6 @@
  */
 #include "script.h"
 
-#define calloc_ptr(x)       (NULL == ((x) = calloc(1, sizeof(*(x)))))
-#define free_ptr(x)         if(x) { free(x); (x) = NULL; }
-#define is_nil(x)           ((x) == NULL)
-#define is_ptr(x)           ((x) != NULL)
-#define is_last(x)          ((x) == (x)->next)
-
 FILE * node_dbg = NULL;
 
 /* re */ static int stack_eng_item_work(struct rbt_node *, void *, int);

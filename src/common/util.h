@@ -26,7 +26,12 @@
         #define __func__ __FUNCTION__
     #endif
 
-    #define SAFE_FREE(X) if(NULL != (X)) { free(X); (X) = NULL; }
+    #define SAFE_FREE(X)        if(NULL != (X)) { free(X); (X) = NULL; }
+    #define calloc_ptr(x)       (NULL == ((x) = calloc(1, sizeof(*(x)))))
+    #define free_ptr(x)         if(x) { free(x); (x) = NULL; }
+    #define is_nil(x)           ((x) == NULL)
+    #define is_ptr(x)           ((x) != NULL)
+    #define is_last(x)          ((x) == (x)->next)
 
     /* error functions */
     extern char err_buf[BUF_SIZE];
