@@ -63,15 +63,15 @@ int getpath(int argc, char ** argv) {
     }
 
     if(NULL == path_db) {
-        status = exit_stop("missing -d <db-path>\n");
+        status = exit_stop("missing -d <db-path>");
     } else if(NULL == path_map) {
-        status = exit_stop("missing -a <map-path>\n");
+        status = exit_stop("missing -a <map-path>");
     } else if(NULL == path_item) {
-        status = exit_stop("missing -i <item-path>\n");
+        status = exit_stop("missing -i <item-path>");
     } else if(NULL == path_output) {
-        status = exit_stop("missing -o <output-path>\n");
+        status = exit_stop("missing -o <output-path>");
     } else if(0 > mode_athena) {
-        status = exit_stop("missing -m <mode>\n");
+        status = exit_stop("missing -m <mode>");
     } else {
         file_output = fopen(path_output, "w");
         if(NULL == file_output) {
@@ -88,8 +88,10 @@ int getpath(int argc, char ** argv) {
         free_ptr(path_map);
         free_ptr(path_item);
         free_ptr(path_output);
-        fclose(file_output);
-        fclose(file_error);
+        if(file_output)
+            fclose(file_output);
+        if (file_error)
+            fclose(file_error);
     }
 
     return status;
@@ -100,8 +102,8 @@ int main(int argc, char * argv[]) {
     script_t * script = NULL;
 
     if(getpath(argc, argv)) {
-        status = exit_mesg("%s -d <db-path> -a <map-path> -i"
-        " <item-path> -m <mode> -o <output-path>\n", argv[0]);
+        status = exit_mesg("%s -d <db-path> -a <map-path> -"
+        "i <item-path> -m <mode> -o <output-path>", argv[0]);
     } else {
         if(script_init(&script, path_db, path_map, path_item, mode_athena)) {
             status = exit_stop("fail to load script context");
@@ -131,8 +133,10 @@ int main(int argc, char * argv[]) {
         free_ptr(path_map);
         free_ptr(path_item);
         free_ptr(path_output);
-        fclose(file_output);
-        fclose(file_error);
+        if (file_output)
+            fclose(file_output);
+        if (file_error)
+            fclose(file_error);
     }
 
     return status;
