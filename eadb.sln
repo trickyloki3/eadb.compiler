@@ -26,9 +26,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "db", "src\db.vcxproj", "{E6
 		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F} = {70875BE3-0FE4-443A-9CD0-E6669DE8E70F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsort", "libsort\libsort.vcxproj", "{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librbt", "lib\librbt\librbt.vcxproj", "{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librbt", "librbt\librbt.vcxproj", "{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsort", "lib\libsort\libsort.vcxproj", "{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -122,22 +122,6 @@ Global
 		{E6F756BD-7A5B-42EE-926A-08800C5775A7}.Release|x64.Build.0 = Release|x64
 		{E6F756BD-7A5B-42EE-926A-08800C5775A7}.Release|x86.ActiveCfg = Release|Win32
 		{E6F756BD-7A5B-42EE-926A-08800C5775A7}.Release|x86.Build.0 = Release|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x64.ActiveCfg = Debug (MTd)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x64.Build.0 = Debug (MTd)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x86.ActiveCfg = Debug (MTd)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x86.Build.0 = Debug (MTd)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x64.ActiveCfg = Debug (MTd)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x64.Build.0 = Debug (MTd)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x86.ActiveCfg = Debug (MTd)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x86.Build.0 = Debug (MTd)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x64.ActiveCfg = Release (MT)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x64.Build.0 = Release (MT)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x86.ActiveCfg = Release (MT)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x86.Build.0 = Release (MT)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x64.ActiveCfg = Release (MT)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x64.Build.0 = Release (MT)|x64
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x86.ActiveCfg = Release (MT)|Win32
-		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x86.Build.0 = Release (MT)|Win32
 		{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}.Debug (MTd)|x64.ActiveCfg = Debug (MTd)|x64
 		{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}.Debug (MTd)|x64.Build.0 = Debug (MTd)|x64
 		{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}.Debug (MTd)|x86.ActiveCfg = Debug (MTd)|Win32
@@ -154,6 +138,22 @@ Global
 		{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}.Release|x64.Build.0 = Release (MT)|x64
 		{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}.Release|x86.ActiveCfg = Release (MT)|Win32
 		{FE15D3AF-62E5-4088-AC35-2C266AE39FEB}.Release|x86.Build.0 = Release (MT)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x64.ActiveCfg = Debug (MTd)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x64.Build.0 = Debug (MTd)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x86.ActiveCfg = Debug (MTd)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug (MTd)|x86.Build.0 = Debug (MTd)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x64.ActiveCfg = Debug (MTd)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x64.Build.0 = Debug (MTd)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x86.ActiveCfg = Debug (MTd)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Debug|x86.Build.0 = Debug (MTd)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x64.ActiveCfg = Release (MT)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x64.Build.0 = Release (MT)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x86.ActiveCfg = Release (MT)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release (MT)|x86.Build.0 = Release (MT)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x64.ActiveCfg = Release (MT)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x64.Build.0 = Release (MT)|x64
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x86.ActiveCfg = Release (MT)|Win32
+		{70875BE3-0FE4-443A-9CD0-E6669DE8E70F}.Release|x86.Build.0 = Release (MT)|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

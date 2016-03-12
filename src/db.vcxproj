@@ -109,7 +109,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)libsort\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)lib\libsort\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
@@ -126,7 +126,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)libsort\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)lib\libsort\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
@@ -145,7 +145,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)libsort\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)lib\libsort\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
@@ -166,7 +166,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)libsort\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\libconfig\;$(SolutionDir)lib\lua5\;$(SolutionDir)lib\sqlite3\;$(SolutionDir)src\db\;$(SolutionDir)src\common\;$(SolutionDir)lib\libsort\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LIBCONFIG_STATIC;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\$(ProjectName).pdb</ProgramDataBaseFileName>
