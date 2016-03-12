@@ -1,6 +1,0 @@
-[submodule "libsort"]
-	path = libsort
-	url = https://github.com/trickyloki3/libsort.git
-[submodule "librbt"]
-	path = librbt
-	url = https://github.com/trickyloki3/librbt.git
