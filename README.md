@@ -31,6 +31,8 @@ ic -i eathena.db -a ..\\db\\athena_db.txt -d resource.db -o result.txt -m eathen
 ic -i rathena.db -a ..\\db\\athena_db.txt -d resource.db -o result.txt -m rathena
 ```
 
+![example](http://i.imgur.com/FrtpCka.jpg)
+
 # Sample
 
 **Support complex predicate generation** : Item ID 4427 : [Sword Guardian Card](http://ratemyserver.net/index.php?iname=4427&page=re_item_db&quick=1&isearch=Search)
