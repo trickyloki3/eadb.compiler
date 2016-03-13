@@ -2306,7 +2306,7 @@ int stack_eng_aspd(block_r * block, char * expr) {
     status = (block->script->mode == RATHENA) ?
              !snprintf(buf, len, "(%s) * readparam(bAgi) / 200", expr) ||
              stack_eng_int(block, buf, 1, FORMAT_PLUS):
-             stack_eng_int(block, buf, 1, FORMAT_PLUS);
+             stack_eng_int(block, expr, 1, FORMAT_PLUS);
 
     free_ptr(buf);
     return status;
@@ -4217,7 +4217,7 @@ int evaluate_function_isequipped(block_r * block, int off, int cnt, var_res * fu
                 off += sprintf(&temp->formula[off], "%s, ", block->eng[i]);
             switch(block->eng_cnt - top) {
                 case 0:  sprintf(&temp->formula[off], "%s is equipped", block->eng[i]); break;
-                case 1:  sprintf(&temp->formula[off - 2], "and %s is equipped", block->eng[i]); break;
+                case 1:  sprintf(&temp->formula[off - off ? 2 : 0], "and %s is equipped", block->eng[i]); break;
                 default: sprintf(&temp->formula[off], "and %s is equipped", block->eng[i]); break;
             }
 

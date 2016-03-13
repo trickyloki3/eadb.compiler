@@ -214,7 +214,7 @@
 52   ,0       ,  bonus,                       bSplashRange,"each hit deals AoE damage to a %s grid",1,w,1,0
 53   ,0       ,  bonus,                    bSplashAddRange,"each hit deals AoE damage to a %s grid",1,w,1,0
 56   ,0       ,  bonus,                      bSPDrainValue,"%s SP for each physical attack",1,6,1,0
-57   ,0       , bonus2,                      bSPDrainValue,"%s SP %s for each physical attack %s",2,6,h,2,0,1
+57   ,0       , bonus2,                      bSPDrainValue,"%s SP %s for each physical attack",2,6,h,2,0,1
 58   ,0       ,  bonus,                      bHPDrainValue,"%s HP for each physical attack",1,6,1,0
 59   ,0       , bonus2,                      bHPDrainValue,"%s HP for each physical attack %s",2,6,x,2,1,0
 60   ,0       ,  bonus,                       bSPGainValue,"%s SP for each enemy defeated using physical attacks",1,6,1,0
