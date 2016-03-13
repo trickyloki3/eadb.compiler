@@ -1,5 +1,9 @@
 #include <script.h>
+#if defined(_WIN32)
 #include <windows.h>
+#else
+#define MAX_PATH PATH_MAX
+#endif
 
 char * path_db = NULL;
 char * path_map = NULL;
@@ -30,7 +34,11 @@ int setpath(char ** result, char * path) {
     buffer = calloc(MAX_PATH, sizeof(char));
     if(NULL == buffer) {
         status = exit_stop("out of memory");
+#if defined(_WIN32)
     } else if(0 >= GetFullPathName(path, MAX_PATH, buffer, NULL)) {
+#else
+    } else if(NULL == realpath(path, buffer)) {
+#endif
         status = exit_mesg("failed to resolve path '%s", path);
     } else {
         *result = buffer;
@@ -60,8 +68,12 @@ int getpath(int argc, char ** argv) {
                     case 'd': status = setpath(&path_db, argv[i + 1]); break;
                     case 'a': status = setpath(&path_map, argv[i + 1]); break;
                     case 'i': status = setpath(&path_item, argv[i + 1]); break;
-                    case 'o': status = setpath(&path_output, argv[i + 1]); break;
                     case 'm': status = setmode(&mode_athena, argv[i + 1]); break;
+#if defined(_WIN32)
+                    case 'o': status = setpath(&path_output, argv[i + 1]); break;
+#else
+                    case 'o': path_output = convert_string(argv[i + 1]); break;
+#endif
                 }
             }
             if(status)

@@ -1,7 +1,7 @@
 # build paramaters
 CC=gcc
-CFLAGS=-std=c99 -pedantic -Wall -g -O -I/usr/local/include -Ilibsort -Ilibrbt
-LDFLAGS=/usr/local/lib/liblua.a libsort/libsort.a librbt/librbt.a
+CFLAGS=-std=c99 -pedantic -Wall -g -O -I/usr/local/include -Ilib/libsort -Ilib/librbt
+LDFLAGS=/usr/local/lib/liblua.a lib/libsort/libsort.a lib/librbt/librbt.a
 LIB=-lsqlite3 -lm
 
 OBJ_DIR=src
@@ -12,7 +12,7 @@ CM_DIR=src/common
 CFLAGS+=-I$(DB_DIR) -I$(IC_DIR) -I$(CM_DIR)
 
 # item script compiler object files
-IC_OBJ:=db_search.c rbt_name_range.c rbt_range.c script.c util.c libsort/libsort.a
+IC_OBJ:=db_search.c rbt_name_range.c rbt_range.c script.c util.c lib/libsort/libsort.a
 IC_OBJ:=$(patsubst %.c,$(OBJ_DIR)/%.o,$(IC_OBJ))
 
 # item database loader object files
@@ -25,19 +25,19 @@ TEST_OBJ:=$(patsubst %.c,$(OBJ_DIR)/%.o,$(TEST_OBJ))
 # default target compiles the tools
 all: ic dbc
 
-libsort/libsort.a:
-	$(MAKE) -C libsort
+lib/libsort/libsort.a:
+	$(MAKE) -C lib/libsort
 
-librbt/librbt.a:
-	$(MAKE) -C librbt
+lib/librbt/librbt.a:
+	$(MAKE) -C lib/librbt
 
-ic: $(IC_DIR)/ic.c $(IC_OBJ) librbt/librbt.a
+ic: $(IC_DIR)/ic.c $(IC_OBJ) lib/librbt/librbt.a
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
 
-dbc: $(DB_DIR)/db.c $(DB_OBJ) librbt/librbt.a libsort/libsort.a
+dbc: $(DB_DIR)/db.c $(DB_OBJ) lib/librbt/librbt.a lib/libsort/libsort.a
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
 
-test: src/test/main.c $(TEST_OBJ) librbt/librbt.a libsort/libsort.a
+test: src/test/main.c $(TEST_OBJ) lib/librbt/librbt.a lib/libsort/libsort.a
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) $(LIB)
 
 $(OBJ_DIR)/%.o: $(DB_DIR)/%.c
@@ -61,5 +61,5 @@ clean:
 	rm -rf dbc.dSYM
 	rm -rf test.dSYM
 	rm -f .DS_Store
-	$(MAKE) -C librbt clean
-	$(MAKE) -C libsort clean
+	$(MAKE) -C lib/librbt clean
+	$(MAKE) -C lib/libsort clean
