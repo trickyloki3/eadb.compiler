@@ -32,6 +32,7 @@ ic -i rathena.db -a ..\\db\\athena_db.txt -d resource.db -o result.txt -m rathen
 ```
 
 ![example](http://i.imgur.com/FrtpCka.jpg)
+![example](http://i.imgur.com/tP4M31e.png)
 
 # Sample
 
