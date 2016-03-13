@@ -1,10 +1,3 @@
-/*
- *   file: db_search.c
- *   date: 03/08/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #include "db_search.h"
 
 int init_db(sqlite3 ** db, const char * path) {

@@ -1,10 +1,3 @@
-/*
- *   file: db_eathena.h
- *   date: 02/28/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #ifndef DB_EATHENA_H
 #define DB_EATHENA_H
      #include "load.h"

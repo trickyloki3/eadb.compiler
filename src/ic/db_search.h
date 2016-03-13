@@ -1,10 +1,3 @@
-/*
- *   file: db_search.h
- *   date: 03/08/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #ifndef DB_SEARCH_H
 #define DB_SEARCH_H
     #include "util.h"

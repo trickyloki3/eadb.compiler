@@ -1,11 +1,3 @@
-/*
- *   file: load.h
- *   date: 5/10/2014
- * update: 11/09/2014
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #ifndef LOAD_H
 #define LOAD_H
     #include "util.h"

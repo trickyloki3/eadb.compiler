@@ -1,10 +1,3 @@
-/*
- *   file: script.c
- *   date: 11/12/2014
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #include "script.h"
 
 FILE * node_dbg = NULL;

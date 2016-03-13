@@ -1,11 +1,4 @@
-/*
- *   file: db_rathena.c
- *   date: 03/01/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
- #include "db_rathena.h"
+#include "db_rathena.h"
 
 native_config_t load_ra_native[RATHENA_DB_COUNT] = {
     { item_ra_load, sentinel_newline, delimit_cvs, CHECK_BRACKET | SKIP_NEXT_WS | CHECK_FIELD_COUNT, ITEM_RA_FIELD_COUNT, sizeof(item_ra) },

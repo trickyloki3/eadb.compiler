@@ -1,10 +1,3 @@
-/*
- *   file: db_eathena.c
- *   date: 02/28/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #include "db_eathena.h"
 #include "libsort.h"
 

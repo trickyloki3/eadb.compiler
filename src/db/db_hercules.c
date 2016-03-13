@@ -1,11 +1,4 @@
-/*
- *   file: db_hercules.c
- *   date: 03/01/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
- #include "db_hercules.h"
+#include "db_hercules.h"
 
 native_config_t load_he_native[HERCULES_DB_COUNT] = {
     { mob_he_load, sentinel_newline, delimit_cvs, SKIP_NEXT_WS | CHECK_FIELD_COUNT, MOB_HE_FIELD_COUNT, sizeof(mob_he) },

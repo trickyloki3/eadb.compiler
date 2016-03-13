@@ -1,10 +1,3 @@
-/*
- *   file: db_resources.c
- *   date: 03/07/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #include "db_resources.h"
 
 native_config_t load_res_native[RESOURCE_DB_COUNT] = {

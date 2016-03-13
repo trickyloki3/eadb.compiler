@@ -1,28 +1,18 @@
-/*
- *    file: script.c
- *    date: 11/12/2014
- *    auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #ifndef SCRIPT_H
 #define SCRIPT_H
-    /* standard c library */
     #include <math.h>
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
     #include <ctype.h>
 
-    /* lua api */
     #include "lua.h"
     #include "lauxlib.h"
 
-    /* eadb */
-    #include "rbt.h"
     #include "util.h"
-    #include "rbt_name_range.h"
+    #include "rbt.h"
     #include "rbt_range.h"
+    #include "rbt_name_range.h"
     #include "db_search.h"
 
     #define SCRIPT_PASSED                         CHECK_PASSED

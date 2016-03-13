@@ -1,10 +1,3 @@
-/*
- *   file: db_rathena.h
- *   date: 03/01/2015
- *   auth: trickyloki3
- * github: https://github.com/trickyloki3
- *  email: tricky.loki3@gmail.com
- */
 #ifndef DB_RATHENA_H
 #define DB_RATHENA_H
     #include "load.h"
