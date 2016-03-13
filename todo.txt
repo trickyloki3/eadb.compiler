@@ -1,1 +1,22 @@
- * Translate script engine variables.
+to-do:
+ * translate script engine variables
+ * idnum2itemdesctable.txt and itemInfo.lua
+   a separate executable in the build chain
+   item_db.txt -> db -> ic -> fmt -> output
+
+maybe:
+ * inno setup for windows installer
+ * rpm package for red hat (fedora, centos)
+ * deb package for ubuntu and debian
+ * osx package for osx
+ * autotool / cmake for linux and osx
+
+major:
+i plan on creating a grf library and tool for the purpose
+of trying my hand at developing a gui application without
+c# and implementing another file format
+
+also i plan on creating a simple item database web
+application that servers can use, but mostly it is
+for showing off the eadb.compiler project
+
