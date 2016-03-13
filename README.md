@@ -29,6 +29,58 @@ ic -i rathena.db -a ..\\db\\athena_db.txt -d resource.db -o result.txt -m rathen
 ```
 
 # Sample
+Item ID 4427 : [Sword Guardian Card](http://ratemyserver.net/index.php?iname=4427&page=re_item_db&quick=1&isearch=Search)
+
+Support complex predicate generation.
+```
+.@i = getiteminfo(getequipid(EQI_HAND_R),11);
+if(.@i==2||.@i==3) {
+    bonus bHit,5;
+    bonus bCritical,5;
+    bonus2 bSkillAtk,62,25;
+}
+```
+```
+[4427]
+[right hand's weapon type is one-handed sword, two-handed sword]
+HIT +5
+CRIT +5
++25% Bowling Bash damage
+```
+
+Item ID 4427 : [Sword Guardian Card](http://ratemyserver.net/index.php?iname=4427&page=re_item_db&quick=1&isearch=Search)
+
+Support complex predicate generation.
+```
+.@i = getiteminfo(getequipid(EQI_HAND_R),11);
+if(.@i==2||.@i==3) {
+    bonus bHit,5;
+    bonus bCritical,5;
+    bonus2 bSkillAtk,62,25;
+}
+```
+```
+[4427]
+[right hand's weapon type is one-handed sword, two-handed sword]
+HIT +5
+CRIT +5
++25% Bowling Bash damage
+```
+
+Item ID 4299 : [Clock Card](http://ratemyserver.net/index.php?iname=4299&page=re_item_db&quick=1&isearch=Search)
+
+Support item combo generation.
+```
+bonus3 bAutoSpellWhenHit,"CR_AUTOGUARD",3+7*(getskilllv("CR_AUTOGUARD")==10),30;
+```
+```
+[4299]
++3% chance of casting level 3 ~ 10 (Guard Level) Guard when hit
+[Tower Keeper Card, Alarm Card, Clock Card, Punk Card Combo]
+DEF +3
+MDEF +3
+```
+
 Item ID 1426 : [Glorious Spear](http://ratemyserver.net/index.php?iname=1426&page=re_item_db&quick=1&isearch=Search)
 
 Support nested if-else predicate generation.
