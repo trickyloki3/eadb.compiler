@@ -102,3 +102,37 @@ ASPD +10%
 [crusader]
 +10% chance of casting level 5 Gloria Domini when attacking
 ```
+
+**Support pet script generation** : Item ID 12340 : [Chewy Rice Powder](http://ratemyserver.net/index.php?iname=12340&page=re_item_db&quick=1&isearch=Search)
+
+```
+pet 1815;
+```
+```
+[12340]
+Egg containing Rice Cake.
+[Normal Bonus]
+[HP < 50% and SP < 100%]
+Cast Defending Aura [Lv. 3] for every 240 seconds.
+[Loyal Bonus]
++1% neutral resistance
+Max HP -1%
+```
+
+**Support item group generation.** : Item ID 603 : [Old Blue Box](http://ratemyserver.net/index.php?iname=603&page=re_item_db&quick=1&isearch=Search)
+
+```
+getrandgroupitem(IG_BlueBox,1);
+```
+```
+[603]
+Select 1 item from Blue Box group.
+ * 52 healing items
+ * 44 usable items
+ * 423 etc items
+ * 210 armor items
+ * 239 weapon items
+ * 20 pet equipment items
+ * 28 ammo items
+ * 6 delay usable items
+```

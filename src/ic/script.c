@@ -1147,7 +1147,7 @@ int script_recursive(db_t * db, int mode, lua_State * map, char * subscript, int
     script_t * script = NULL;
 
     if(script_check(subscript)) {
-        *value = convert_string("Empty script.");
+        *value = convert_string("Empty script.\n");
         if(is_nil(*value))
             status = exit_stop("out of memory");
     } else if(calloc_ptr(script)) {
