@@ -41,7 +41,7 @@
     #define EA_ITEM_DELETE          "DROP TABLE IF EXISTS item_ea;"
     #define EA_ITEM_INSERT          "INSERT INTO item_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define EA_ITEM_CREATE          "CREATE TABLE IF NOT EXISTS item_ea("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    aegis TEXT,"\
                                     "    eathena TEXT,"\
                                     "    type INTEGER,"\
@@ -129,7 +129,7 @@
     #define EA_MOB_DELETE           "DROP TABLE IF EXISTS mob_ea;"
     #define EA_MOB_INSERT           "INSERT INTO mob_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define EA_MOB_CREATE           "CREATE TABLE IF NOT EXISTS mob_ea("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    sprite TEXT,"\
                                     "    kro TEXT,"\
                                     "    iro TEXT,"\
@@ -213,7 +213,7 @@
     #define EA_SKILL_DELETE         "DROP TABLE IF EXISTS skill_ea;"
     #define EA_SKILL_INSERT         "INSERT INTO skill_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define EA_SKILL_CREATE         "CREATE TABLE IF NOT EXISTS skill_ea("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    range TEXT,"\
                                     "    hit INTEGER,"\
                                     "    inf INTEGER,"\
@@ -245,7 +245,7 @@
     #define EA_PRODUCE_DELETE       "DROP TABLE IF EXISTS produce_ea;"
     #define EA_PRODUCE_INSERT       "INSERT INTO produce_ea VALUES(?, ?, ?, ?, ?, ?);"
     #define EA_PRODUCE_CREATE       "CREATE TABLE IF NOT EXISTS produce_ea("\
-                                    "    item_id INTEGER PRIMARY KEY,"\
+                                    "    item_id INTEGER,"\
                                     "    item_lv INTEGER,"\
                                     "    req_skill INTEGER,"\
                                     "    req_skill_lv INTEGER,"\
@@ -285,7 +285,7 @@
     #define EA_MERC_DELETE          "DROP TABLE IF EXISTS mercenary_ea;"
     #define EA_MERC_INSERT          "INSERT INTO mercenary_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define EA_MERC_CREATE          "CREATE TABLE IF NOT EXISTS mercenary_ea("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    sprite TEXT,"\
                                     "    name TEXT,"\
                                     "    lv INTEGER,"\
@@ -341,7 +341,7 @@
     #define EA_PET_DELETE           "DROP TABLE IF EXISTS pet_ea;"
     #define EA_PET_INSERT           "INSERT INTO pet_ea VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define EA_PET_CREATE           "CREATE TABLE IF NOT EXISTS pet_ea("\
-                                    "    mob_id INTEGER PRIMARY KEY,"\
+                                    "    mob_id INTEGER,"\
                                     "    pet_name TEXT,"\
                                     "    pet_jname TEXT,"\
                                     "    lure_id INTEGER,"\
@@ -375,8 +375,7 @@
     #define EA_ITEM_GROUP_INSERT        "INSERT INTO item_group_ea VALUES(?, ?);"
     #define EA_ITEM_GROUP_CREATE        "CREATE TABLE IF NOT EXISTS item_group_ea("\
                                         "    group_id INTEGER,"\
-                                        "    size INTEGER,"\
-                                        "    PRIMARY KEY(group_id)"\
+                                        "    size INTEGER"\
                                         ");"
     #define EA_ITEM_GROUP_ENTRY_DELETE  "DROP TABLE IF EXISTS item_group_record_ea;"
     #define EA_ITEM_GROUP_ENTRY_INSERT  "INSERT INTO item_group_record_ea VALUES(?, ?, ?);"

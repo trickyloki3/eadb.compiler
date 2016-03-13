@@ -45,7 +45,7 @@
     #define RA_ITEM_SEARCH_ID       "SELECT id, eathena, script, type FROM item_ra WHERE id = ? COLLATE NOCASE;"
     #define RA_ITEM_INSERT          "INSERT INTO item_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_ITEM_CREATE          "CREATE TABLE IF NOT EXISTS item_ra("\
-                                    "   id INTEGER PRIMARY KEY,"\
+                                    "   id INTEGER,"\
                                     "   aegis TEXT,"\
                                     "   eathena TEXT,"\
                                     "   type INTEGER,"\
@@ -134,7 +134,7 @@
 
     #define RA_MOB_INSERT           "INSERT INTO mob_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_MOB_CREATE           "CREATE TABLE IF NOT EXISTS mob_ra("\
-                                    "   id INTEGER PRIMARY KEY,"\
+                                    "   id INTEGER,"\
                                     "   sprite TEXT,"\
                                     "   kro TEXT,"\
                                     "   iro TEXT,"\
@@ -217,7 +217,7 @@
 
     #define RA_SKILL_INSERT         "INSERT INTO skill_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_SKILL_CREATE         "CREATE TABLE IF NOT EXISTS skill_ra("\
-                                    "   id INTEGER PRIMARY KEY,"\
+                                    "   id INTEGER,"\
                                     "   range TEXT,"\
                                     "   hit INTEGER,"\
                                     "   inf INTEGER,"\
@@ -251,7 +251,7 @@
 
     #define RA_PRODUCE_INSERT       "INSERT INTO produce_ra VALUES(?, ?, ?, ?, ?, ?, ?);"
     #define RA_PRODUCE_CREATE       "CREATE TABLE IF NOT EXISTS produce_ra("\
-                                    "   id INTEGER PRIMARY KEY,"\
+                                    "   id INTEGER,"\
                                     "   item_id INTEGER,"\
                                     "   item_lv INTEGER,"\
                                     "   req_skill INTEGER,"\
@@ -292,7 +292,7 @@
 
     #define RA_MERC_INSERT          "INSERT INTO mercenary_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_MERC_CREATE          "CREATE TABLE IF NOT EXISTS mercenary_ra("\
-                                    "   id INTEGER PRIMARY KEY,"\
+                                    "   id INTEGER,"\
                                     "   sprite TEXT,"\
                                     "   name TEXT,"\
                                     "   lv INTEGER,"\
@@ -348,7 +348,7 @@
 
     #define RA_PET_INSERT           "INSERT INTO pet_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_PET_CREATE           "CREATE TABLE IF NOT EXISTS pet_ra("\
-                                    "   mob_id INTEGER PRIMARY KEY,"\
+                                    "   mob_id INTEGER,"\
                                     "   pet_name TEXT,"\
                                     "   pet_jname TEXT,"\
                                     "   lure_id INTEGER,"\
@@ -479,8 +479,7 @@
                                         "shadow INTEGER,"\
                                         "confirm_usable INTEGER,"\
                                         "bind INTEGER,"\
-                                        "rent INTEGER,"\
-                                        "PRIMARY KEY(group_id, subgroup_id));"
+                                        "rent INTEGER);"
     #define RA_ITEM_PACKAGE_META_DELETE "DROP TABLE IF EXISTS item_package_meta_ra;"
     #define RA_ITEM_PACKAGE_META_INSERT "INSERT INTO item_package_meta_ra VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     #define RA_ITEM_PACKAGE_QUERY       "SELECT * FROM item_package_ra ORDER BY group_id, random;"

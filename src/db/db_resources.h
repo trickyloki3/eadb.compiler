@@ -24,8 +24,7 @@
     #define RES_OPT_CREATE          "CREATE TABLE IF NOT EXISTS option_res("\
                                     "    option TEXT,"\
                                     "    name TEXT,"\
-                                    "    flag INTEGER,"\
-                                    "    PRIMARY KEY(option)"\
+                                    "    flag INTEGER"\
                                     ");"
 
 
@@ -41,8 +40,7 @@
     #define RES_MAP_CREATE          "CREATE TABLE IF NOT EXISTS map_res("\
                                     "    id INTEGER,"\
                                     "    map TEXT,"\
-                                    "    name TEXT,"\
-                                    "    PRIMARY KEY(id)"\
+                                    "    name TEXT"\
                                     ");"
 
     /* bonus table consist of a set of template strings and argument types for translating bonuses. */
@@ -69,8 +67,7 @@
                                     "    type_param TEXT,"\
                                     "    type_cnt INTEGER,"\
                                     "    order_param TEXT,"\
-                                    "    order_cnt INTEGER,"\
-                                    "    PRIMARY KEY(id, pref, buff)"\
+                                    "    order_cnt INTEGER"\
                                     ");"
 
     /* status table consist of a set of template strings and argument types for translating statuses */
@@ -97,8 +94,7 @@
                                     "val4 INTEGER, "\
                                     "format TEXT, "\
                                     "offset_count INTEGER, "\
-                                    "offset TEXT, "\
-                                    "PRIMARY KEY(id, name)"\
+                                    "offset TEXT"\
                                     ");"
 
     /* variable table contain specific information on the script engine's special variables */
@@ -115,7 +111,7 @@
     #define RES_VAR_DELETE          "DROP TABLE IF EXISTS var_res;"
     #define RES_VAR_INSERT          "INSERT INTO var_res VALUES(?, ?, ?, ?, ?, ?, ?);"
     #define RES_VAR_CREATE          "CREATE TABLE IF NOT EXISTS var_res("\
-                                    "id INTEGER PRIMARY KEY,"\
+                                    "id INTEGER,"\
                                     "type INTEGER, "\
                                     "flag INTEGER, "\
                                     "min INTEGER, "\
@@ -134,7 +130,7 @@
     #define RES_BLK_DELETE          "DROP TABLE IF EXISTS block_res;"
     #define RES_BLK_INSERT          "INSERT INTO block_res VALUES(?, ?, ?);"
     #define RES_BLK_CREATE          "CREATE TABLE IF NOT EXISTS block_res("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    key TEXT,"\
                                     "    flag INTEGER"\
                                     ");"
@@ -148,13 +144,13 @@
     #define RES_RID_DELETE          "DROP TABLE IF EXISTS id_res;"
     #define RES_RID_INSERT          "INSERT INTO id_res VALUES(?, ?);"
     #define RES_RID_CREATE          "CREATE TABLE IF NOT EXISTS id_res("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    res TEXT"\
                                     ");"
 
     #define RES_NID_DELETE          "DROP TABLE IF EXISTS numid_res;"
     #define RES_NID_CREATE          "CREATE TABLE IF NOT EXISTS numid_res("\
-                                    "    id INTEGER PRIMARY KEY,"\
+                                    "    id INTEGER,"\
                                     "    res TEXT"\
                                     ");"
     #define RES_NID_INSERT          "INSERT INTO numid_res VALUES(?, ?);"
