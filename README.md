@@ -7,6 +7,9 @@ A set of tools for translating **item_db.txt** into **idnum2itemdesctable.txt** 
  * **fmt** - format and write item attributes, flavour text, and script description
 
 ```item_db.txt --> db --> ic --> fmt --> idnum2itemdesctable.txt or itemInfo.lua```
+
+**All suggestions and questions are welcome at tricky.loki3@gmail.com.**
+
 # Build
 Windows
  1. Open the visual studio 2015 solution
