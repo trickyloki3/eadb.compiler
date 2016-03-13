@@ -12,8 +12,8 @@ Windows
  1. Open the visual studio 2015 solution
  2. Build x86 or x64 in debug or release mode.
 
-Linux / OSX
-1. make
+Linux | OSX
+ 1. make
 
 # Usage
 ```
@@ -26,4 +26,49 @@ db -p D:\\Git\\eadb.compiler\\db -o . -m resource
 ic -i <item-db-path> -a <map-path> -d <resource-path> -o <output-path> -m <mode>
 ic -i eathena.db -a ..\\db\\athena_db.txt -d resource.db -o result.txt -m eathena
 ic -i rathena.db -a ..\\db\\athena_db.txt -d resource.db -o result.txt -m rathena
+```
+
+# Sample
+Item ID 1426 : [Glorious Spear](http://ratemyserver.net/index.php?iname=1426&page=re_item_db&quick=1&isearch=Search)
+
+Support nested if-else predicate generation.
+
+```
+bonus2 bAddRace,RC_DemiHuman,95;
+bonus2 bAddRace,RC_Player,95;
+bonus2 bIgnoreDefRaceRate,RC_DemiHuman,20;
+bonus2 bIgnoreDefRaceRate,RC_Player,20;
+bonus bUnbreakableWeapon,1;
+.@r = getrefine();
+if(.@r>5) {
+    bonus2 bAddRace,RC_DemiHuman,pow(((.@r>14)?14:.@r)-4,2);
+    bonus2 bAddRace,RC_Player,pow(((.@r>14)?14:.@r)-4,2);
+    bonus2 bIgnoreDefRaceRate,RC_DemiHuman,5;
+    bonus2 bIgnoreDefRaceRate,RC_Player,5; bonus bAspdRate,10;
+}
+if(.@r>8) {
+    if(BaseJob==Job_Knight)
+        bonus4 bAutoSpellOnSkill,"KN_PIERCE","NPC_CRITICALWOUND",2,200;
+    else if(BaseJob==Job_Crusader)
+        bonus3 bAutoSpell,"PA_PRESSURE",5,100;
+}
+```
+```
+[1426]
++95% physical damage against demi-human enemies
++95% physical damage against player enemies
+pierce +20% physical defense of demi-human enemies
+pierce +20% physical defense of player enemies
+weapon is indestructible
+[refine level 6 ~ 15]
++16% ~ +121% (pow) physical damage against demi-human enemies
++16% ~ +121% (pow) physical damage against player enemies
+pierce +5% physical defense of demi-human enemies
+pierce +5% physical defense of player enemies
+ASPD +10%
+[refine level 9 ~ 15]
+[knight]
++20% chance of casting level 2 Critical Wounds when using Pierce
+[crusader]
++10% chance of casting level 5 Gloria Domini when attacking
 ```
