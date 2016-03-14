@@ -273,6 +273,11 @@
     #define RA_ITEM_GROUP_ID_RECORD         "SELECT * FROM item_package_ra WHERE group_id = ? and random = ? ORDER BY item_id;"
     #define RA_ITEM_SUBGROUP_SEARCH         "SELECT subgroup_id FROM item_package_meta_ra WHERE group_id = ?;"
 
+    /* item script description table */
+    #define ITEM_DESC_CREATE                "CREATE TABLE IF NOT EXISTS item_desc(id INTEGER, desc TEXT);"
+    #define ITEM_DESC_DELETE                "DROP TABLE IF EXISTS item_desc;"
+    #define ITEM_DESC_INSERT                "INSERT INTO item_desc VALUES(?, ?);"
+
     typedef struct sql_t {
         char * query;
         sqlite3_stmt * stmt;
@@ -310,6 +315,8 @@
         sql_t * item_combo;
         /* server item database iterate */
         sql_t * item_db;
+        /* item description table */
+        sql_t * item_desc_insert;
     } db_t;
 
     /* load resource and server sqlite3 databases */
@@ -369,4 +376,7 @@
     int item_combo_id(db_t *, combo_t **, int);
     int item_combo_free(combo_t **);
     int item_subgroup_id(db_t *, int *, int *, int);
+
+    /* item description table insertion */
+    int item_desc_insert(db_t *, int, char *);
 #endif

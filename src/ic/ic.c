@@ -141,6 +141,8 @@ int main(int argc, char * argv[]) {
                             block_stack_dump(script->blocks, file_error);
                     } else{
                         fprintf(file_output, "[%d]\n%s", script->item.id, script->buffer);
+                        if(item_desc_insert(script->db, script->item.id, script->buffer))
+                            exit_mesg("failed to write %d and %s", script->item.id, script->buffer);
                     }
                 }
                 script_block_free_all(script);

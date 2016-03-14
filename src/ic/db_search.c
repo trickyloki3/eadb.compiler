@@ -5,7 +5,7 @@ int init_db(sqlite3 ** db, const char * path) {
 
     exit_null_safe(2, db, path);
 
-    if(SQLITE_OK != sqlite3_open_v2(path, &_db, SQLITE_OPEN_READONLY, NULL)) {
+    if(SQLITE_OK != sqlite3_open_v2(path, &_db, SQLITE_OPEN_READWRITE, NULL)) {
         if(NULL != _db) {
             fprintf(stderr, "[load]: failed to load %s; %s.\n", path, sqlite3_errmsg(_db));
             sqlite3_close(_db);
@@ -58,7 +58,10 @@ int init_db_load(db_t ** db, const char * re_path, const char * db_path, int ser
        init_db_prep_sql(_db->re, &_db->var_name, RE_VAR_NAME_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->block_name, RE_BLOCK_NAME_SEARCH) ||
        init_db_prep_sql(_db->re, &_db->sprite_id, RE_SPR_ID_SEARCH) ||
-       init_db_prep_sql(_db->re, &_db->usprite_id, RE_NSPR_ID_SEARCH))
+       init_db_prep_sql(_db->re, &_db->usprite_id, RE_NSPR_ID_SEARCH) ||
+       SQLITE_OK != sqlite3_exec(_db->db, ITEM_DESC_DELETE ITEM_DESC_CREATE, NULL, NULL, NULL) ||
+       init_db_prep_sql(_db->db, &_db->item_desc_insert, ITEM_DESC_INSERT) ||
+       SQLITE_OK != sqlite3_exec(_db->db, "BEGIN IMMEDIATE TRANSACTION;", NULL, NULL, NULL) )
         goto failed;
 
     /* prepare server database queries */
@@ -133,7 +136,9 @@ int deit_db_load(db_t ** db) {
     exit_null_safe(2, db, *db);
 
     _db = *db;
-    if((_db->item_subgroup_id && deit_db_prep_sql(_db->db, &_db->item_subgroup_id)) ||
+    sqlite3_exec(_db->db, "COMMIT TRANSACTION;", NULL, NULL, NULL);
+    if((_db->item_desc_insert && deit_db_prep_sql(_db->db, &_db->item_desc_insert)) ||
+       (_db->item_subgroup_id && deit_db_prep_sql(_db->db, &_db->item_subgroup_id)) ||
        (_db->item_combo && deit_db_prep_sql(_db->db, &_db->item_combo)) ||
        (_db->item_group_record && deit_db_prep_sql(_db->db, &_db->item_group_record)) ||
        (_db->item_group_id && deit_db_prep_sql(_db->db, &_db->item_group_id)) ||
@@ -999,5 +1004,21 @@ int item_subgroup_id(db_t * db, int * buffer, int * length, int group_id) {
     } while(SQLITE_DONE != sqlite3_step(stmt));
 
     *length = offset;
+    return CHECK_PASSED;
+}
+
+int item_desc_insert(db_t * db, int id, char * buffer) {
+    sqlite3_stmt * stmt = db->item_desc_insert->stmt;
+
+    if(SQLITE_OK != sqlite3_reset(stmt) ||
+       SQLITE_OK != sqlite3_clear_bindings(stmt) ||
+       SQLITE_OK != sqlite3_bind_int(stmt, 1, id) ||
+       SQLITE_OK != sqlite3_bind_text(stmt, 2, buffer, (int) strlen(buffer), SQLITE_STATIC) ||
+       SQLITE_DONE != sqlite3_step(stmt) ) {
+        fprintf(stderr, "[fail]: failed to execute sql statement; %s.\n[fail]"
+        ": %s query.\n", sqlite3_errmsg(db->db), db->item_desc_insert->query);
+        return CHECK_FAILED;
+    }
+
     return CHECK_PASSED;
 }
